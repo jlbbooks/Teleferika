@@ -1,11 +1,12 @@
-// projects_list_page.dart
+import 'dart:async'; // For Timer
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:teleferika/project_details_page.dart';
 
 import 'db/database_helper.dart';
-import 'db/models/project_model.dart'; // Import your logger
-import 'logger.dart'; // Make sure this path is correct
+import 'db/models/project_model.dart';
+import 'logger.dart';
+import 'project_details_page.dart';
 
 class ProjectsListPage extends StatefulWidget {
   const ProjectsListPage({super.key});
@@ -15,25 +16,31 @@ class ProjectsListPage extends StatefulWidget {
 }
 
 class _ProjectsListPageState extends State<ProjectsListPage> {
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
   late Future<List<ProjectModel>> _projectsFuture;
+  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
-  // State for multi-selection
   bool _isSelectionMode = false;
-  final Set<int> _selectedProjectIds = {}; // Store IDs of selected projects
+  final Set<int> _selectedProjectIds = {};
+
+  // --- For Flashing ---
+  int? _flashingProjectId; // ID of the project to flash
+  bool _isFlashing = false; // To control the flash state
+  Timer? _flashTimer; // Timer to reset the flash
+  // --- End Flashing ---
 
   @override
   void initState() {
     super.initState();
-    _refreshProjectsList();
+    _projectsFuture = _dbHelper.getAllProjects();
+  }
+
+  @override
+  void dispose() {
+    _flashTimer?.cancel(); // Cancel timer if page is disposed
+    super.dispose();
   }
 
   void _refreshProjectsList() {
-    // If we are in selection mode when refreshing, exit selection mode
-    // as the list items might change.
-    if (_isSelectionMode) {
-      _exitSelectionMode();
-    }
     setState(() {
       _projectsFuture = _dbHelper.getAllProjects();
     });
@@ -44,37 +51,63 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
       if (_selectedProjectIds.contains(projectId)) {
         _selectedProjectIds.remove(projectId);
         if (_selectedProjectIds.isEmpty) {
-          _isSelectionMode =
-              false; // Exit selection mode if no items are selected
+          _isSelectionMode = false;
         }
       } else {
         _selectedProjectIds.add(projectId);
-        _isSelectionMode = true; // Enter selection mode if not already
       }
     });
   }
 
-  void _onItemLongPress(int projectId) {
+  void _onItemLongPress(ProjectModel project) {
+    if (project.id == null) return;
     setState(() {
       _isSelectionMode = true;
-      _toggleSelection(projectId);
+      _toggleSelection(project.id!);
     });
   }
 
-  void _onItemTap(ProjectModel project) {
+  void _onItemTap(ProjectModel project) async {
     if (_isSelectionMode) {
-      _toggleSelection(project.id!);
+      if (project.id != null) {
+        _toggleSelection(project.id!);
+      }
     } else {
       logger.info("Navigating to details for project: ${project.name}");
-      Navigator.push(
+      // Navigate to ProjectDetailsPage and wait for a result.
+      // The result can be a map like {'modified': true, 'id': projectId}
+      final result = await Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => ProjectDetailsPage(project: project)),
-      ).then((_) {
-        // This 'then' block executes when ProjectDetailsPage is popped.
-        // Refresh the list in case any details (like name or lastUpdate) were changed.
+      );
+
+      // --- Handle Result for Flashing ---
+      if (result is Map<String, dynamic> &&
+          result['modified'] == true &&
+          result['id'] != null) {
+        _startFlashing(result['id'] as int);
+        _refreshProjectsList(); // Refresh list to show updated data
+      } else if (result == true) {
+        // Fallback for simple boolean result (e.g. from new project creation)
         _refreshProjectsList();
-      });
+      }
+      // --- End Handle Result ---
     }
+  }
+
+  void _startFlashing(int projectId) {
+    _flashTimer?.cancel(); // Cancel any existing flash timer
+    setState(() {
+      _flashingProjectId = projectId;
+      _isFlashing = true;
+    });
+    _flashTimer = Timer(const Duration(milliseconds: 700), () {
+      // Duration of the flash
+      setState(() {
+        _isFlashing = false;
+        _flashingProjectId = null; // Clear after flash
+      });
+    });
   }
 
   void _exitSelectionMode() {
@@ -85,78 +118,67 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
   }
 
   Future<void> _deleteSelectedProjects() async {
-    if (_selectedProjectIds.isEmpty) {
-      return;
-    }
+    if (_selectedProjectIds.isEmpty) return;
 
-    // Confirmation Dialog
-    bool? confirmDelete = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            'Delete Project${_selectedProjectIds.length > 1 ? 's' : ''}?',
-          ),
-          content: Text(
-            'Are you sure you want to delete ${_selectedProjectIds.length} selected project${_selectedProjectIds.length > 1 ? 's' : ''}? This cannot be undone.',
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () => Navigator.of(context).pop(false),
-            ),
-            TextButton(
-              child: Text('Delete', style: TextStyle(color: Colors.red)),
-              onPressed: () => Navigator.of(context).pop(true),
-            ),
-          ],
-        );
-      },
-    );
+    bool confirmDelete =
+        await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Text(
+                "Delete Project${_selectedProjectIds.length > 1 ? 's' : ''}?",
+              ),
+              content: Text(
+                "Are you sure you want to delete ${_selectedProjectIds.length} selected project${_selectedProjectIds.length > 1 ? 's' : ''}? This action cannot be undone.",
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text("Cancel"),
+                  onPressed: () => Navigator.of(context).pop(false),
+                ),
+                TextButton(
+                  child: const Text(
+                    "Delete",
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  onPressed: () => Navigator.of(context).pop(true),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
 
-    if (confirmDelete == true) {
+    if (confirmDelete) {
       try {
-        for (int projectId in _selectedProjectIds) {
-          await _dbHelper.deleteProject(projectId);
+        for (int id in _selectedProjectIds) {
+          await _dbHelper.deleteProject(id);
         }
-        logger.info("Deleted ${_selectedProjectIds.length} projects.");
+        logger.info("${_selectedProjectIds.length} project(s) deleted.");
+        _exitSelectionMode();
+        _refreshProjectsList();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              '${_selectedProjectIds.length} project${_selectedProjectIds.length > 1 ? 's' : ''} deleted.',
-            ),
+            content: Text('${_selectedProjectIds.length} project(s) deleted.'),
+            backgroundColor: Colors.green,
           ),
         );
       } catch (e, stackTrace) {
         logger.severe("Error deleting projects", e, stackTrace);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error deleting projects: $e')));
-      } finally {
-        _refreshProjectsList(); // This will also exit selection mode
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting projects: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
 
   void _navigateToAddProjectPage() async {
     logger.info("Navigating to ProjectDetailsPage for a new project.");
+    ProjectModel newProject = ProjectModel(name: ''); // id will be null
 
-    // Create a new, empty ProjectModel instance.
-    // Name can be empty initially, user will fill it on ProjectDetailsPage.
-    // lastUpdate will be set by the database upon saving.
-    // 'date' can be null initially, user can set it via date picker.
-    ProjectModel newProject = ProjectModel(
-      name: '', // Start with an empty name
-      // Initialize other fields to null or default as appropriate
-      note: null,
-      azimuth: null,
-      date: null, // Project specific date, can be set by user
-      // id will be null for a new project
-      // lastUpdate will be set on save
-    );
-
-    // Navigate to ProjectDetailsPage and wait for a result.
-    // The result 'true' can indicate that a save (new project creation) happened.
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -164,19 +186,62 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
       ),
     );
 
-    // If the ProjectDetailsPage indicates something was saved (e.g., returns true),
-    // then refresh the projects list.
     if (result == true) {
-      // Or check if newProject.id is now non-null
-      logger.info(
-        "Returned from ProjectDetailsPage after possible new project creation. Refreshing list.",
-      );
+      // New project was created and saved
+      // Potentially, the new project could be flashed too if desired.
+      // For now, just refresh. If ProjectDetailsPage pops with the new project ID,
+      // you could call _startFlashing(newProjectId).
       _refreshProjectsList();
-    } else {
-      logger.info(
-        "Returned from ProjectDetailsPage without saving a new project (or result was not true).",
-      );
     }
+  }
+
+  Widget _buildProjectItem(ProjectModel project) {
+    final dateFormat = DateFormat('MMM d, yyyy HH:mm');
+    String lastUpdateText = project.lastUpdate != null
+        ? dateFormat.format(project.lastUpdate!)
+        : 'No updates';
+    if (project.date != null) {
+      lastUpdateText =
+          'Proj. Date: ${DateFormat('MMM d, yyyy').format(project.date!)} | Upd: ${project.lastUpdate != null ? DateFormat('HH:mm').format(project.lastUpdate!) : "-"}';
+    }
+
+    // --- Flashing Logic ---
+    Color itemColor = Theme.of(context).cardColor; // Default card color
+    if (_flashingProjectId == project.id && _isFlashing) {
+      itemColor = Colors.orange.shade100; // Flash color
+    }
+    // --- End Flashing Logic ---
+
+    return Card(
+      elevation: 2.0,
+      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      color: itemColor, // Apply conditional color
+      child: ListTile(
+        leading: _isSelectionMode
+            ? Checkbox(
+                value: _selectedProjectIds.contains(project.id),
+                onChanged: (bool? value) {
+                  if (project.id != null) {
+                    _toggleSelection(project.id!);
+                  }
+                },
+              )
+            : const Icon(Icons.folder_outlined, size: 30),
+        title: Text(
+          project.name.isNotEmpty ? project.name : "Untitled Project",
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        ),
+        subtitle: Text(
+          'ID: ${project.id ?? "New"} | $lastUpdateText',
+          style: const TextStyle(fontSize: 12.0, color: Colors.grey),
+        ),
+        trailing: !_isSelectionMode
+            ? const Icon(Icons.arrow_forward_ios, size: 16.0)
+            : null,
+        onTap: () => _onItemTap(project),
+        onLongPress: () => _onItemLongPress(project),
+      ),
+    );
   }
 
   @override
@@ -184,143 +249,57 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
     return Scaffold(
       appBar: _isSelectionMode
           ? AppBar(
-              title: Text('${_selectedProjectIds.length} selected'),
+              title: Text("${_selectedProjectIds.length} selected"),
               leading: IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: _exitSelectionMode,
               ),
               actions: [
                 IconButton(
-                  icon: const Icon(Icons.delete),
-                  tooltip: 'Delete selected projects',
-                  onPressed: _selectedProjectIds.isNotEmpty
-                      ? _deleteSelectedProjects
-                      : null, // Disable if none selected
+                  icon: const Icon(Icons.delete_outline),
+                  tooltip: "Delete Selected",
+                  onPressed: _deleteSelectedProjects,
                 ),
               ],
             )
-          : null, // No AppBar if not in selection mode (title is in the body)
-      body: Column(
-        children: <Widget>[
-          // App Title (only shown if not in selection mode)
-          if (!_isSelectionMode)
-            Container(
-              padding: const EdgeInsets.only(top: 60.0, bottom: 20.0),
-              alignment: Alignment.center,
-              child: const Text(
-                'Teleferika',
-                style: TextStyle(fontSize: 32.0, fontWeight: FontWeight.bold),
-              ),
+          : AppBar(
+              title: const Text('Teleferika Projects'),
+              actions: [
+                // IconButton for future settings/search can go here
+              ],
             ),
+      body: FutureBuilder<List<ProjectModel>>(
+        future: _projectsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            logger.severe(
+              "Error loading projects",
+              snapshot.error,
+              snapshot.stackTrace,
+            );
+            return Center(child: Text("Error: ${snapshot.error}"));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(
+              child: Text("No projects yet. Tap '+' to add one!"),
+            );
+          }
 
-          Expanded(
-            child: FutureBuilder<List<ProjectModel>>(
-              future: _projectsFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  logger.warning(
-                    "Error loading projects: ${snapshot.error}",
-                    snapshot.error,
-                    snapshot.stackTrace,
-                  );
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'No projects yet. Tap + to add one!',
-                      style: TextStyle(fontSize: 18.0),
-                    ),
-                  );
-                }
-
-                final projects = snapshot.data!;
-                return ListView.builder(
-                  itemCount: projects.length,
-                  itemBuilder: (context, index) {
-                    final project = projects[index];
-                    final bool isSelected = _selectedProjectIds.contains(
-                      project.id!,
-                    );
-                    String formattedDate = project.lastUpdate != null
-                        ? DateFormat(
-                            'MMM d, yyyy HH:mm',
-                          ).format(project.lastUpdate!)
-                        : 'N/A';
-
-                    const int selectedAlpha = 26;
-
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 6.0,
-                      ),
-                      elevation: isSelected ? 4.0 : 1.0,
-                      // Slightly raise selected items
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        side: isSelected
-                            ? BorderSide(
-                                color: Theme.of(context).primaryColor,
-                                width: 2,
-                              )
-                            : BorderSide.none,
-                      ),
-                      child: ListTile(
-                        title: Text(
-                          project.name,
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                        subtitle: Text('Last updated: $formattedDate'),
-                        leading: _isSelectionMode
-                            ? Icon(
-                                isSelected
-                                    ? Icons.check_circle
-                                    : Icons.radio_button_unchecked,
-                                color: isSelected
-                                    ? Theme.of(context).primaryColor
-                                    : null,
-                              )
-                            : null,
-                        // No leading icon if not in selection mode
-                        trailing: !_isSelectionMode
-                            ? const Icon(Icons.arrow_forward_ios, size: 16.0)
-                            : null,
-                        // No trailing arrow if in selection mode
-                        onTap: () => _onItemTap(project),
-                        onLongPress: () => _onItemLongPress(project.id!),
-                        selected: isSelected,
-                        selectedTileColor: Theme.of(
-                          context,
-                        ).primaryColor.withAlpha(selectedAlpha),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-
-          // Add Project Button
-          if (!_isSelectionMode) // Only show if not in selection mode
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.add_circle_outline),
-                label: const Text('ADD NEW PROJECT'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  textStyle: const TextStyle(
-                    fontSize: 18.0,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                onPressed: _navigateToAddProjectPage,
-              ),
-            ),
-        ],
+          final projects = snapshot.data!;
+          return ListView.builder(
+            itemCount: projects.length,
+            itemBuilder: (context, index) {
+              final project = projects[index];
+              return _buildProjectItem(project);
+            },
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _navigateToAddProjectPage,
+        tooltip: 'Add New Project',
+        child: const Icon(Icons.add),
       ),
     );
   }
