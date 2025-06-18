@@ -277,11 +277,11 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
               const SizedBox(height: 16),
 
               InputDecorator(
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: "Project Date",
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
                   contentPadding: EdgeInsets.symmetric(
-                    horizontal: 1.0,
+                    horizontal: 12.0,
                     vertical: 1.0,
                   ),
                 ),
@@ -293,9 +293,11 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
                   trailing: const Icon(Icons.calendar_month_outlined),
                   onTap: () => _selectProjectDate(context),
                   contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12.0,
-                    vertical: 8.0,
+                    horizontal: 0,
+                    vertical: 5.0,
                   ),
+                  dense: true,
+                  // visualDensity: const VisualDensity.compact,
                 ),
               ),
               const SizedBox(height: 16),
