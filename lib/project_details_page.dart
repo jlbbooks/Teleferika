@@ -88,13 +88,11 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     );
 
     try {
-      int popupDuration = 2;
+      int popupDuration = 1;
 
       if (projectToSave.id == null) {
         // Creating a new project
         final newId = await _dbHelper.insertProject(projectToSave);
-        // projectToSave.id will still be null here, newId is the actual ID.
-        // projectToSave.lastUpdate might be set by dbHelper.insertProject
         logger.info(
           "New project created with ID: $newId and Name: ${projectToSave.name}",
         );
@@ -106,11 +104,10 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
           ),
         );
         await Future.delayed(Duration(seconds: popupDuration));
-        Navigator.pop(context, true); // Pop with true for new project creation
+        // Pop with details for the new project
+        Navigator.pop(context, {'modified': true, 'id': newId, 'isNew': true});
       } else {
-        // Updating an existing project
         await _dbHelper.updateProject(projectToSave);
-        // projectToSave.lastUpdate should be updated by dbHelper.updateProject
         setState(() {
           _lastUpdateTime = projectToSave.lastUpdate;
           widget.project.name = projectToSave.name;
@@ -127,11 +124,8 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
             duration: Duration(seconds: popupDuration),
           ),
         );
-        // await Future.delayed(Duration(seconds: popupDuration)); // Optional delay before pop
-        Navigator.pop(context, {
-          'modified': true,
-          'id': projectToSave.id,
-        }); // Pop with modification details
+        // await Future.delayed(Duration(seconds: popupDuration)); // Optional delay
+        Navigator.pop(context, {'modified': true, 'id': projectToSave.id});
       }
     } catch (e, stackTrace) {
       logger.severe("Error saving project details", e, stackTrace);

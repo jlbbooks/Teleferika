@@ -155,14 +155,14 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
           await _dbHelper.deleteProject(id);
         }
         logger.info("${_selectedProjectIds.length} project(s) deleted.");
-        _exitSelectionMode();
-        _refreshProjectsList();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${_selectedProjectIds.length} project(s) deleted.'),
             backgroundColor: Colors.green,
           ),
         );
+        _exitSelectionMode();
+        _refreshProjectsList();
       } catch (e, stackTrace) {
         logger.severe("Error deleting projects", e, stackTrace);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -186,12 +186,30 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
       ),
     );
 
-    if (result == true) {
-      // New project was created and saved
-      // Potentially, the new project could be flashed too if desired.
-      // For now, just refresh. If ProjectDetailsPage pops with the new project ID,
-      // you could call _startFlashing(newProjectId).
+    // --- Handle Result for Flashing New Project ---
+    if (result is Map<String, dynamic> &&
+        result['modified'] == true &&
+        result['id'] != null &&
+        result['isNew'] == true) {
+      // Check if it's a new project
+      logger.info(
+        "New project created (ID: ${result['id']}). Refreshing and flashing.",
+      );
+      _refreshProjectsList(); // Refresh list to show the new project
+      // Slight delay to ensure the list has rebuilt with the new item before flashing
+      Future.delayed(const Duration(milliseconds: 100), () {
+        _startFlashing(result['id'] as int);
+      });
+    } else if (result == true) {
+      // Fallback for older/other true results, just refresh
+      logger.info(
+        "Returned from ProjectDetailsPage with a generic true result. Refreshing list.",
+      );
       _refreshProjectsList();
+    } else {
+      logger.info(
+        "Returned from ProjectDetailsPage without saving a new project or result was not as expected.",
+      );
     }
   }
 
