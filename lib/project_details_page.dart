@@ -1,10 +1,16 @@
 // project_details_page.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:teleferika/points_tool_view.dart';
 
+import 'compass_tool_view.dart';
 import 'db/database_helper.dart'; // Ensure correct path
 import 'db/models/project_model.dart'; // Ensure correct path
 import 'logger.dart';
+import 'map_tool_view.dart';
+
+// At the top of project_details_page.dart, or in a separate file
+enum ActiveCardTool { compass, points, map }
 
 class ProjectDetailsPage extends StatefulWidget {
   final ProjectModel project;
@@ -22,6 +28,8 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
 
   late DateTime? _projectDate;
   late DateTime? _lastUpdateTime;
+
+  ActiveCardTool? _activeCardTool; // To track the currently active Card button
 
   // GlobalKey for the Form
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -48,7 +56,30 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     super.dispose();
   }
 
+  void _toggleActiveCardTool(ActiveCardTool tool) {
+    setState(() {
+      if (_activeCardTool == tool) {
+        _activeCardTool = null; // Deactivate if already active
+      } else {
+        _activeCardTool = tool; // Activate the new tool
+      }
+      logger.info("Active Card tool toggled to: $_activeCardTool");
+    });
+  }
+
   Future<void> _saveProjectDetails() async {
+    // TODO: IMPORTANT: If a card tool is active, the form is not visible.
+    // Saving might not make sense or should save only what's always visible (if anything).
+    // For now, let's assume save is primarily for the main form.
+    if (_activeCardTool != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Close the active tool to modify project details.'),
+        ),
+      );
+      return; // Prevent saving if a tool is active and form is hidden
+    }
+
     // --- VALIDATE THE FORM ---
     if (!_formKey.currentState!.validate()) {
       // If form is not valid, display errors and stop.
@@ -163,13 +194,6 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     );
   }
 
-  void _onToolsButtonPressed(String toolName) {
-    logger.info("$toolName button tapped.");
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$toolName functionality to be implemented.')),
-    );
-  }
-
   void _onSetPoint(String pointType) {
     logger.info("Set $pointType Point button tapped.");
     ScaffoldMessenger.of(context).showSnackBar(
@@ -186,6 +210,8 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     String formattedLastUpdate = _lastUpdateTime != null
         ? DateFormat('MMM d, yyyy HH:mm:ss').format(_lastUpdateTime!)
         : 'Not yet saved';
+
+    bool isMainFormVisible = _activeCardTool == null;
 
     return Scaffold(
       appBar: AppBar(
@@ -240,20 +266,20 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: <Widget>[
-                          _toolButton(
-                            Icons.explore_outlined,
-                            'Compass',
-                            () => _onToolsButtonPressed('Compass'),
+                          _buildCardToolButton(
+                            tool: ActiveCardTool.compass,
+                            icon: Icons.explore_outlined,
+                            label: 'Compass',
                           ),
-                          _toolButton(
-                            Icons.list_alt_outlined,
-                            'Points',
-                            () => _onToolsButtonPressed('Points'),
+                          _buildCardToolButton(
+                            tool: ActiveCardTool.points,
+                            icon: Icons.list_alt_outlined,
+                            label: 'Points',
                           ),
-                          _toolButton(
-                            Icons.map_outlined,
-                            'Map',
-                            () => _onToolsButtonPressed('Map'),
+                          _buildCardToolButton(
+                            tool: ActiveCardTool.map,
+                            icon: Icons.map_outlined,
+                            label: 'Map',
                           ),
                         ],
                       ),
@@ -261,119 +287,123 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
                   ),
                 ),
               ),
+
               const SizedBox(height: 20),
 
-              // --- MODIFIED Project Name to TextFormField ---
-              _buildTextFormField(
-                controller: _nameController,
-                label: "Project Name",
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Project name cannot be empty.';
-                  }
-                  return null; // Return null if valid
-                },
-              ),
-              const SizedBox(height: 16),
-
-              InputDecorator(
-                decoration: InputDecoration(
-                  labelText: "Project Date",
-                  border: const OutlineInputBorder(),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 12.0,
-                    vertical: 1.0,
-                  ),
-                ),
-                child: ListTile(
-                  title: Text(
-                    formattedProjectDate,
-                    style: const TextStyle(fontSize: 18.0),
-                  ),
-                  trailing: const Icon(Icons.calendar_month_outlined),
-                  onTap: () => _selectProjectDate(context),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 0,
-                    vertical: 5.0,
-                  ),
-                  dense: true,
-                  // visualDensity: const VisualDensity.compact,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Note field can remain TextField if no specific validation needed, or convert to TextFormField
-              _buildTextField(_noteController, "Notes", maxLines: 4),
-              const SizedBox(height: 16),
-
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                // Align to start for validator message
-                children: [
-                  Expanded(
-                    // --- MODIFIED Azimuth to TextFormField ---
-                    child: _buildTextFormField(
-                      controller: _azimuthController,
-                      label: "Azimuth (°)",
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                        signed: true,
-                      ),
+              // --- Conditional Main Form Area ---
+              if (isMainFormVisible)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildTextFormField(
+                      controller: _nameController,
+                      label: "Project Name",
                       validator: (value) {
-                        if (value != null && value.isNotEmpty) {
-                          if (double.tryParse(value) == null) {
-                            return 'Invalid number format.';
-                          }
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Project name cannot be empty.';
                         }
-                        return null; // Return null if valid or empty
+                        return null;
                       },
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  // Calculate button might be less critical if direct input is validated
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    // Align with text field
-                    child: ElevatedButton(
-                      onPressed: _calculateAzimuth,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 12,
+                    const SizedBox(height: 16),
+                    InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: "Project Date",
+                        border: const OutlineInputBorder(),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12.0,
+                          vertical: 11.0,
                         ),
                       ),
-                      child: const Text("Calculate"),
+                      child: ListTile(
+                        title: Text(
+                          formattedProjectDate,
+                          style: const TextStyle(fontSize: 18.0),
+                        ),
+                        trailing: const Icon(Icons.calendar_month_outlined),
+                        onTap: () => _selectProjectDate(context),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 0,
+                          vertical: 5.0,
+                        ),
+                        dense: true,
+                        visualDensity: VisualDensity.compact,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              _buildReadOnlyField(
-                "Last Updated",
-                formattedLastUpdate,
-                textStyle: const TextStyle(fontSize: 13.0, color: Colors.grey),
-              ),
-              const SizedBox(height: 30),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: _majorActionButton(
-                      Icons.flag_outlined,
-                      'SET START',
-                      () => _onSetPoint("Start"),
+                    const SizedBox(height: 16),
+                    _buildTextField(_noteController, "Notes", maxLines: 4),
+                    const SizedBox(height: 16),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: _buildTextFormField(
+                            controller: _azimuthController,
+                            label: "Azimuth (°)",
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                              signed: true,
+                            ),
+                            validator: (value) {
+                              if (value != null && value.isNotEmpty) {
+                                if (double.tryParse(value) == null) {
+                                  return 'Invalid number format.';
+                                }
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: ElevatedButton(
+                            onPressed: _calculateAzimuth,
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 12,
+                              ),
+                            ),
+                            child: const Text("Calculate"),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _majorActionButton(
-                      Icons.sports_score_outlined,
-                      'SET END',
-                      () => _onSetPoint("End"),
+                    const SizedBox(height: 16),
+                    _buildReadOnlyField(
+                      "Last Updated",
+                      formattedLastUpdate,
+                      textStyle: const TextStyle(
+                        fontSize: 13.0,
+                        color: Colors.grey,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
+                    const SizedBox(height: 30),
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: _majorActionButton(
+                            Icons.flag_outlined,
+                            'SET START',
+                            () => _onSetPoint("Start"),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _majorActionButton(
+                            Icons.sports_score_outlined,
+                            'SET END',
+                            () => _onSetPoint("End"),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                )
+              else // Show placeholder if a card tool is active
+                _buildActiveToolView(), // Call helper to display the active tool's widget
             ],
           ),
         ),
@@ -381,12 +411,43 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     );
   }
 
-  Widget _toolButton(IconData icon, String label, VoidCallback onPressed) {
+  // --- Helper to build toggleable Card Tool Buttons ---
+  Widget _buildCardToolButton({
+    required ActiveCardTool tool,
+    required IconData icon,
+    required String label,
+  }) {
+    bool isActive = _activeCardTool == tool;
     return ElevatedButton.icon(
       icon: Icon(icon, size: 20),
       label: Text(label),
-      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        foregroundColor: isActive
+            ? Theme.of(context).colorScheme.onPrimary
+            : null,
+        backgroundColor: isActive
+            ? Theme.of(context).colorScheme.primary
+            : null,
+        // You can add more styling for active state, e.g., side borders
+        // side: isActive ? BorderSide(color: Theme.of(context).colorScheme.primary, width: 2) : null,
+      ),
+      onPressed: () => _toggleActiveCardTool(tool),
     );
+  }
+
+  Widget _buildActiveToolView() {
+    switch (_activeCardTool) {
+      case ActiveCardTool.compass:
+        return CompassToolView(project: widget.project); // Pass necessary data
+      case ActiveCardTool.points:
+        return PointsToolView(project: widget.project); // Pass necessary data
+      case ActiveCardTool.map:
+        return MapToolView(project: widget.project); // Pass necessary data
+      case null:
+        // This case should ideally not be reached if isMainFormVisible handles it,
+        // but as a fallback:
+        return const SizedBox.shrink(); // Or an error message
+    }
   }
 
   // Original _buildTextField for fields without form validation (like Notes)
