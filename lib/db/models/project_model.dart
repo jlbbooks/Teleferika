@@ -5,7 +5,8 @@ class ProjectModel {
   int? startingPointId;
   int? endingPointId;
   double? azimuth;
-  DateTime? lastUpdate; // New field
+  String? note;
+  DateTime? lastUpdate;
 
   ProjectModel({
     this.id,
@@ -13,6 +14,7 @@ class ProjectModel {
     this.startingPointId,
     this.endingPointId,
     this.azimuth,
+    this.note,
     this.lastUpdate,
   });
 
@@ -23,6 +25,7 @@ class ProjectModel {
       'starting_point_id': startingPointId,
       'ending_point_id': endingPointId,
       'azimuth': azimuth,
+      'note': note,
       // Store DateTime as ISO8601 string or Unix timestamp (milliseconds)
       'last_update': lastUpdate?.toIso8601String(),
     };
@@ -35,6 +38,7 @@ class ProjectModel {
       startingPointId: map['starting_point_id'],
       endingPointId: map['ending_point_id'],
       azimuth: map['azimuth'],
+      note: map['note'],
       // Parse from ISO8601 string or Unix timestamp
       lastUpdate: map['last_update'] != null
           ? DateTime.tryParse(map['last_update']) // Handles if parsing fails

@@ -1,6 +1,7 @@
 // projects_list_page.dart
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:teleferika/project_details_page.dart';
 
 import 'db/database_helper.dart';
 import 'db/models/project_model.dart'; // Import your logger
@@ -62,18 +63,17 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
 
   void _onItemTap(ProjectModel project) {
     if (_isSelectionMode) {
-      _toggleSelection(
-        project.id!,
-      ); // Allow tap to select/deselect in selection mode
+      _toggleSelection(project.id!);
     } else {
-      // Navigate to project details (your existing logic)
       logger.info("Navigating to details for project: ${project.name}");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Tapped on ${project.name} (Implement Navigation)'),
-        ),
-      );
-      // Example: Navigator.push(context, MaterialPageRoute(builder: (_) => ProjectDetailsPage(project: project)));
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => ProjectDetailsPage(project: project)),
+      ).then((_) {
+        // This 'then' block executes when ProjectDetailsPage is popped.
+        // Refresh the list in case any details (like name or lastUpdate) were changed.
+        _refreshProjectsList();
+      });
     }
   }
 

@@ -9,7 +9,7 @@ import 'models/project_model.dart';
 class DatabaseHelper {
   static const _databaseName = "Photogrammetry.db";
 
-  static const _databaseVersion = 2; // Incremented due to schema change
+  static const _databaseVersion = 3; // Incremented due to schema change
 
   static const tableProjects = 'projects';
   static const tablePoints = 'points';
@@ -67,6 +67,7 @@ class DatabaseHelper {
         $columnStartingPointId INTEGER,
         $columnEndingPointId INTEGER,
         $columnAzimuth REAL,
+        $columnNote TEXT,
         $columnLastUpdate TEXT 
       )
     '''); // TEXT for ISO8601 DateTime string
@@ -110,7 +111,12 @@ class DatabaseHelper {
       );
     }
     // Add more migration steps here for future versions
-    // if (oldVersion < 3) { ... }
+    if (oldVersion < 3) {
+      // Add note column to projects table if upgrading from version 2
+      await db.execute(
+        'ALTER TABLE $tableProjects ADD COLUMN $columnNote TEXT',
+      );
+    }
   }
 
   // --- Project Methods ---
