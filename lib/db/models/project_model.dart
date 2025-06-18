@@ -1,9 +1,11 @@
+// project_model.dart
 class ProjectModel {
   final int? id;
   String name;
   int? startingPointId;
   int? endingPointId;
   double? azimuth;
+  DateTime? lastUpdate; // New field
 
   ProjectModel({
     this.id,
@@ -11,10 +13,9 @@ class ProjectModel {
     this.startingPointId,
     this.endingPointId,
     this.azimuth,
+    this.lastUpdate,
   });
 
-  // Convert a Project into a Map. The keys must correspond to the names of the
-  // columns in the database.
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -22,10 +23,11 @@ class ProjectModel {
       'starting_point_id': startingPointId,
       'ending_point_id': endingPointId,
       'azimuth': azimuth,
+      // Store DateTime as ISO8601 string or Unix timestamp (milliseconds)
+      'last_update': lastUpdate?.toIso8601String(),
     };
   }
 
-  // Implement fromMap if you need to convert from a Map back to a Project
   factory ProjectModel.fromMap(Map<String, dynamic> map) {
     return ProjectModel(
       id: map['id'],
@@ -33,11 +35,15 @@ class ProjectModel {
       startingPointId: map['starting_point_id'],
       endingPointId: map['ending_point_id'],
       azimuth: map['azimuth'],
+      // Parse from ISO8601 string or Unix timestamp
+      lastUpdate: map['last_update'] != null
+          ? DateTime.tryParse(map['last_update']) // Handles if parsing fails
+          : null,
     );
   }
 
   @override
   String toString() {
-    return 'Project{id: $id, name: $name, startingPointId: $startingPointId, endingPointId: $endingPointId, azimuth: $azimuth}';
+    return 'ProjectModel{id: $id, name: $name, startingPointId: $startingPointId, endingPointId: $endingPointId, azimuth: $azimuth, lastUpdate: $lastUpdate}';
   }
 }

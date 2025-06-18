@@ -1,13 +1,15 @@
+// main.dart
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 
 import 'db/database_helper.dart';
-import 'logger.dart';
+import 'logger.dart'; // Assuming logger.dart is in the same directory (lib)
+import 'projects_list_page.dart'; // Import your ProjectsListPage
 
 void main() {
-  // Ensure Flutter bindings are initialized before doing async work or using plugins.
   WidgetsFlutterBinding.ensureInitialized();
+  // Call the setupLogging function from logger.dart
   setupLogging();
   runApp(const MyAppRoot());
 }
@@ -21,11 +23,12 @@ class MyAppRoot extends StatefulWidget {
 
 class _MyAppRootState extends State<MyAppRoot> {
   bool _isLoading = true;
-  final int _minimumSplashTimeSeconds = 3; // Minimum time for splash screen
+  final int _minimumSplashTimeSeconds = 3;
 
   @override
   void initState() {
     super.initState();
+    // Use the logger instance from logger.dart
     logger.info("MyAppRoot initState: Starting app initialization.");
     _initializeApp();
   }
@@ -39,8 +42,9 @@ class _MyAppRootState extends State<MyAppRoot> {
       await dbHelper.database;
       logger.info("Database initialized successfully.");
 
+      // Simulate other checks (e.g., license, remote config)
       await Future.delayed(const Duration(milliseconds: 500));
-      logger.config("License check simulated successfully.");
+      logger.config("Other essential checks simulated successfully.");
       // Add more initialization steps here if needed
     } catch (e, stackTrace) {
       logger.severe("Error during app initialization", e, stackTrace);
@@ -63,6 +67,7 @@ class _MyAppRootState extends State<MyAppRoot> {
     }
 
     if (mounted) {
+      // Check if the widget is still in the tree
       setState(() {
         _isLoading = false;
       });
@@ -80,7 +85,7 @@ class _MyAppRootState extends State<MyAppRoot> {
       logger.finest("Building LoadingPage.");
       return const LoadingPage();
     } else {
-      logger.finest("Building MyApp.");
+      logger.finest("Building MyApp (which now loads ProjectsListPage).");
       return const MyApp();
     }
   }
@@ -89,16 +94,12 @@ class _MyAppRootState extends State<MyAppRoot> {
 class LoadingPage extends StatelessWidget {
   const LoadingPage({super.key});
 
-  // Create a logger for this specific widget/class if needed for more granular logging
-  // static final Logger _loadingPageLogger = Logger('LoadingPage');
-
   @override
   Widget build(BuildContext context) {
-    // _loadingPageLogger.fine("Building LoadingPage UI.");
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: Colors.blueAccent, // Or your app's splash background
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -123,68 +124,20 @@ class LoadingPage extends StatelessWidget {
   }
 }
 
-// Your existing MyApp and MyHomePage
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Teleferika', // Updated title
+      title: 'Teleferika',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
+        // Example theme color
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Teleferika Home Page'),
-    );
-  }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  // static final Logger _homePageLogger = Logger('MyHomePage'); // Logger for this page
-
-  void _incrementCounter() {
-    // _homePageLogger.info("Counter incremented.");
-    setState(() {
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
+      debugShowCheckedModeBanner: false,
+      home: const ProjectsListPage(), // Set ProjectsListPage as the home screen
     );
   }
 }
