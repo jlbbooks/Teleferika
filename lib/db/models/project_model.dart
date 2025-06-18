@@ -1,33 +1,36 @@
-// project_model.dart
+// db/models/project_model.dart
 class ProjectModel {
   final int? id;
   String name;
+  String? note;
   int? startingPointId;
   int? endingPointId;
   double? azimuth;
-  String? note;
-  DateTime? lastUpdate;
+  DateTime? lastUpdate; // Tracks when the record was last modified in DB
+  DateTime? date; // User-settable date for the project
 
   ProjectModel({
     this.id,
     required this.name,
+    this.note,
     this.startingPointId,
     this.endingPointId,
     this.azimuth,
-    this.note,
     this.lastUpdate,
+    this.date, // Add to constructor
   });
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'name': name,
+      'note': note,
       'starting_point_id': startingPointId,
       'ending_point_id': endingPointId,
       'azimuth': azimuth,
-      'note': note,
-      // Store DateTime as ISO8601 string or Unix timestamp (milliseconds)
       'last_update': lastUpdate?.toIso8601String(),
+      'date': date?.toIso8601String(),
+      // Store as ISO8601 string (date part only if desired, but full DateTime is fine)
     };
   }
 
@@ -35,19 +38,21 @@ class ProjectModel {
     return ProjectModel(
       id: map['id'],
       name: map['name'],
+      note: map['note'],
       startingPointId: map['starting_point_id'],
       endingPointId: map['ending_point_id'],
       azimuth: map['azimuth'],
-      note: map['note'],
-      // Parse from ISO8601 string or Unix timestamp
       lastUpdate: map['last_update'] != null
-          ? DateTime.tryParse(map['last_update']) // Handles if parsing fails
+          ? DateTime.tryParse(map['last_update'])
+          : null,
+      date: map['date'] != null
+          ? DateTime.tryParse(map['date']) // Parse from ISO8601 string
           : null,
     );
   }
 
   @override
   String toString() {
-    return 'ProjectModel{id: $id, name: $name, startingPointId: $startingPointId, endingPointId: $endingPointId, azimuth: $azimuth, lastUpdate: $lastUpdate}';
+    return 'ProjectModel{id: $id, name: $name, note: $note, ..., date: $date, lastUpdate: $lastUpdate}';
   }
 }

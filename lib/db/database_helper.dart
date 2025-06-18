@@ -2,6 +2,7 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
+import '../logger.dart';
 import 'models/image_model.dart';
 import 'models/point_model.dart';
 import 'models/project_model.dart';
@@ -9,7 +10,7 @@ import 'models/project_model.dart';
 class DatabaseHelper {
   static const _databaseName = "Photogrammetry.db";
 
-  static const _databaseVersion = 3; // Incremented due to schema change
+  static const _databaseVersion = 4; // Incremented due to schema change
 
   static const tableProjects = 'projects';
   static const tablePoints = 'points';
@@ -20,7 +21,8 @@ class DatabaseHelper {
   static const columnStartingPointId = 'starting_point_id';
   static const columnEndingPointId = 'ending_point_id';
   static const columnAzimuth = 'azimuth';
-  static const columnLastUpdate = 'last_update'; // New column
+  static const columnLastUpdate = 'last_update';
+  static const columnDate = 'date';
 
   static const columnProjectId = 'project_id';
   static const columnLatitude = 'latitude';
@@ -68,7 +70,10 @@ class DatabaseHelper {
         $columnEndingPointId INTEGER,
         $columnAzimuth REAL,
         $columnNote TEXT,
-        $columnLastUpdate TEXT 
+        $columnLastUpdate TEXT,
+        $columnDate TEXT,
+        FOREIGN KEY ($columnStartingPointId) REFERENCES $tablePoints ($columnId) ON DELETE SET NULL,
+        FOREIGN KEY ($columnEndingPointId) REFERENCES $tablePoints ($columnId) ON DELETE SET NULL
       )
     '''); // TEXT for ISO8601 DateTime string
 
@@ -109,6 +114,7 @@ class DatabaseHelper {
         'UPDATE $tableProjects SET $columnLastUpdate = ? WHERE $columnLastUpdate IS NULL',
         [now],
       );
+      logger.info("Applied migrations for version 2");
     }
     // Add more migration steps here for future versions
     if (oldVersion < 3) {
@@ -116,6 +122,14 @@ class DatabaseHelper {
       await db.execute(
         'ALTER TABLE $tableProjects ADD COLUMN $columnNote TEXT',
       );
+      logger.info("Applied migrations for version 3: Added $columnNote column");
+    }
+    if (oldVersion < 4) {
+      // Add note column to projects table if upgrading from version 2
+      await db.execute(
+        'ALTER TABLE $tableProjects ADD COLUMN $columnDate TEXT',
+      );
+      logger.info("Applied migrations for version 3: Added $columnDate column");
     }
   }
 

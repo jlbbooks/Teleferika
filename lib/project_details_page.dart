@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // For date formatting
+import 'package:intl/intl.dart';
 
 import 'db/database_helper.dart'; // For potential updates
 import 'db/models/project_model.dart';
@@ -16,25 +16,30 @@ class ProjectDetailsPage extends StatefulWidget {
 
 class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
   late TextEditingController _nameController;
-  late TextEditingController
-  _noteController; // Assuming 'note' will be part of ProjectModel
+  late TextEditingController _noteController;
   late TextEditingController _azimuthController;
 
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  // State variable for the user-settable project date
+  late DateTime? _projectDate;
 
-  // Local placeholder for notes if not in ProjectModel yet
-  String _projectNoteContent = ""; //"""Initial project notes can go here...";
+  // Keep track of the last update timestamp separately for display
+  late DateTime? _lastUpdateTime;
+
+  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.project.name);
     _noteController = TextEditingController(
-      text: widget.project.note ?? _projectNoteContent,
+      text: widget.project.note ?? '',
     ); // Use project.note if available
     _azimuthController = TextEditingController(
       text: widget.project.azimuth?.toString() ?? '',
     );
+    // Initialize the local state for project date from the model
+    _projectDate = widget.project.date;
+    _lastUpdateTime = widget.project.lastUpdate;
   }
 
   @override
@@ -48,7 +53,10 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
   Future<void> _saveProjectDetails() async {
     if (_nameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Project name cannot be empty.')),
+        const SnackBar(
+          content: Text('Project name cannot be empty.'),
+          duration: Duration(seconds: 2),
+        ),
       );
       return;
     }
@@ -58,21 +66,47 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
         ? _noteController.text
         : null; // Save note to model
     widget.project.azimuth = double.tryParse(_azimuthController.text);
+    widget.project.date = _projectDate; // Assign the picked project date
     // lastUpdate is handled by dbHelper.updateProject
 
     try {
       await _dbHelper.updateProject(widget.project);
       logger.info("Project details saved: ${widget.project.name}");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Project "${widget.project.name}" updated.')),
+        SnackBar(
+          content: Text('Project "${widget.project.name}" updated.'),
+          duration: const Duration(seconds: 2),
+        ),
       );
+      // Refresh the _lastUpdateTime for display after save
+      setState(() {
+        _lastUpdateTime = widget.project.lastUpdate;
+      });
       // You might want to pop or refresh previous screen if needed
-      // Navigator.pop(context, true); // Indicate success
+      // TODO: Navigator.pop(context, true); // Indicate success
     } catch (e, stackTrace) {
       logger.severe("Error saving project details", e, stackTrace);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error saving project: $e')));
+    }
+  }
+
+  Future<void> _selectProjectDate(BuildContext context) async {
+    final DateTime? pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _projectDate ?? DateTime.now(),
+      // Use current project date or now
+      firstDate: DateTime(1900),
+      // Sensible earliest date
+      lastDate: DateTime(2101), // Sensible latest date
+    );
+
+    if (pickedDate != null && pickedDate != _projectDate) {
+      setState(() {
+        _projectDate = pickedDate;
+        logger.info("New Project Date selected: $_projectDate");
+      });
     }
   }
 
@@ -104,8 +138,14 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    String formattedLastUpdate = widget.project.lastUpdate != null
-        ? DateFormat('MMM d, yyyy HH:mm:ss').format(widget.project.lastUpdate!)
+    // Formatter for the user-settable project date (date only)
+    String formattedProjectDate = _projectDate != null
+        ? DateFormat('MMM d, yyyy').format(_projectDate!)
+        : 'Tap to set date';
+
+    // Formatter for the system-managed last update timestamp (date and time)
+    String formattedLastUpdate = _lastUpdateTime != null
+        ? DateFormat('MMM d, yyyy HH:mm:ss').format(_lastUpdateTime!)
         : 'Not yet saved';
 
     return Scaffold(
@@ -125,7 +165,6 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
-        // Adjust top padding
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
@@ -135,10 +174,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
               alignment: Alignment.center,
               child: const Text(
                 'Teleferika',
-                style: TextStyle(
-                  fontSize: 30.0, // Slightly smaller if AppBar is present
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 30.0, fontWeight: FontWeight.bold),
               ),
             ),
 
@@ -184,18 +220,42 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
             ),
             const SizedBox(height: 20),
 
-            // TextFields
+            // TextFields & Date Fields
             _buildTextField(_nameController, "Project Name"),
             const SizedBox(height: 16),
-            // Assuming ProjectModel has a 'note' field that is nullable String
-            // If not, you need to add it or handle notes differently.
+
+            // --- New Project Date Selector ---
+            InputDecorator(
+              decoration: const InputDecoration(
+                labelText: "Project Date", // Label for the date picker
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 1.0,
+                  vertical: 1.0,
+                ), // Minimal padding for ListTile
+              ),
+              child: ListTile(
+                title: Text(
+                  formattedProjectDate,
+                  style: const TextStyle(fontSize: 18.0),
+                ),
+                trailing: const Icon(Icons.calendar_month_outlined),
+                // Date specific icon
+                onTap: () => _selectProjectDate(context),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12.0,
+                  vertical: 8.0,
+                ), // Padding inside ListTile
+              ),
+            ),
+            // --- End New Project Date Selector ---
+            const SizedBox(height: 16),
+
             _buildTextField(_noteController, "Notes", maxLines: 4),
             const SizedBox(height: 16),
-            _buildReadOnlyField("Last Updated", formattedLastUpdate),
-            const SizedBox(height: 16),
+
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
-              // Align items vertically
               children: [
                 Expanded(
                   child: _buildTextField(
@@ -220,6 +280,10 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
                 ),
               ],
             ),
+            const SizedBox(height: 16),
+
+            // Display for Last Update (read-only)
+            _buildReadOnlyField("Last Updated", formattedLastUpdate),
             const SizedBox(height: 30),
 
             // Start and End Point Buttons
@@ -249,13 +313,15 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     );
   }
 
+  // Add _buildReadOnlyField if it was removed or ensure it's present for "Last Updated"
+
   Widget _toolButton(IconData icon, String label, VoidCallback onPressed) {
     return ElevatedButton.icon(
       icon: Icon(icon, size: 20),
       label: Text(label),
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        // textStyle: TextStyle(fontSize: 12), // Smaller text if needed
+        // textStyle: TextStyle(fontSize: 12),
         // padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       ),
     );
