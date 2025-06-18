@@ -8,9 +8,9 @@
 
 ```
 properties
-    storePassword=upercut2k10
+    storePassword=...la password...
     keyAlias=upload
-    keyPassword=upercut2k10
+    keyPassword=...la password...
     storeFile=../../keys/jlb-keystore.jks
 #   Path relative to android directory
 ```
