@@ -26,7 +26,8 @@ val keystoreProperties = loadKeystoreProperties()
 android {
     namespace = "com.jlbbooks.teleferika"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // https://developer.android.com/ndk/downloads/
+    ndkVersion = "27.2.12479018" //flutter.ndkVersion
 
     signingConfigs {
         create("release") { // This will be used for your release build if you don't override it
