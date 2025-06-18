@@ -139,22 +139,44 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
   }
 
   void _navigateToAddProjectPage() async {
-    // Navigate to your Add/Edit Project Page.
-    // final result = await Navigator.push(context, MaterialPageRoute(builder: (context) => const AddEditProjectPage()));
-    // if (result == true) {
-    //   _refreshProjectsList();
-    // }
-    logger.info("Navigating to Add Project Page (Placeholder)");
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Add New Project Tapped (Implement Navigation)'),
+    logger.info("Navigating to ProjectDetailsPage for a new project.");
+
+    // Create a new, empty ProjectModel instance.
+    // Name can be empty initially, user will fill it on ProjectDetailsPage.
+    // lastUpdate will be set by the database upon saving.
+    // 'date' can be null initially, user can set it via date picker.
+    ProjectModel newProject = ProjectModel(
+      name: '', // Start with an empty name
+      // Initialize other fields to null or default as appropriate
+      note: null,
+      azimuth: null,
+      date: null, // Project specific date, can be set by user
+      // id will be null for a new project
+      // lastUpdate will be set on save
+    );
+
+    // Navigate to ProjectDetailsPage and wait for a result.
+    // The result 'true' can indicate that a save (new project creation) happened.
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProjectDetailsPage(project: newProject),
       ),
     );
-    // For now, let's add a dummy project to see the list update
-    await _dbHelper.insertProject(
-      ProjectModel(name: "New Project ${DateTime.now().millisecond}"),
-    ); // More unique name
-    _refreshProjectsList();
+
+    // If the ProjectDetailsPage indicates something was saved (e.g., returns true),
+    // then refresh the projects list.
+    if (result == true) {
+      // Or check if newProject.id is now non-null
+      logger.info(
+        "Returned from ProjectDetailsPage after possible new project creation. Refreshing list.",
+      );
+      _refreshProjectsList();
+    } else {
+      logger.info(
+        "Returned from ProjectDetailsPage without saving a new project (or result was not true).",
+      );
+    }
   }
 
   @override
