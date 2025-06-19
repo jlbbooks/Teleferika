@@ -144,17 +144,19 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
         'Point added via Compass: ID $newPointId, Lat: ${position.latitude}, Lon: ${position.longitude}, Heading used for note: $heading, Ordinal: $nextOrdinal',
       );
 
-      ScaffoldMessenger.of(
-        context,
-      ).removeCurrentSnackBar(); // Remove "Fetching location..."
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Point #$nextOrdinal added at Lat: ${position.latitude.toStringAsFixed(4)}, Lon: ${position.longitude.toStringAsFixed(4)}',
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).removeCurrentSnackBar(); // Remove "Fetching location..."
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Point #$nextOrdinal added at Lat: ${position.latitude.toStringAsFixed(4)}, Lon: ${position.longitude.toStringAsFixed(4)}',
+            ),
+            backgroundColor: Colors.green,
           ),
-          backgroundColor: Colors.green,
-        ),
-      );
+        );
+      }
 
       // Refresh PointsToolView if it's active or if you always want it updated
       _pointsToolViewKey.currentState
@@ -166,13 +168,15 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
       }
     } catch (e, stackTrace) {
       logger.severe("Error adding point from compass", e, stackTrace);
-      ScaffoldMessenger.of(context).removeCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error adding point: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).removeCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error adding point: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
   // --- End Logic for Adding Point ---

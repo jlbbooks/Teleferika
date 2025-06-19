@@ -34,9 +34,7 @@ class DatabaseHelper {
   static const columnImagePath = 'image_path';
 
   DatabaseHelper._privateConstructor();
-
   static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
-
   static Database? _database;
 
   Future<Database> get database async {
@@ -51,7 +49,7 @@ class DatabaseHelper {
       path,
       version: _databaseVersion,
       onCreate: _onCreate,
-      onUpgrade: _onUpgrade, // Add onUpgrade callback
+      onUpgrade: _onUpgrade,
       onConfigure: _onConfigure,
     );
   }
@@ -178,7 +176,6 @@ class DatabaseHelper {
     );
   }
 
-  // ... (setProjectStartingPoint, setProjectEndingPoint - consider if these should also update last_update)
   Future<int> setProjectStartingPoint(int projectId, int? pointId) async {
     Database db = await instance.database;
     // Also update last_update for the project
@@ -210,13 +207,11 @@ class DatabaseHelper {
       whereArgs: [id],
     );
   }
+  // --- End Project Methods ---
 
   // --- Point Methods ---
   Future<int> insertPoint(PointModel point) async {
     Database db = await instance.database;
-    // Potentially update the parent project's last_update timestamp
-    // This requires fetching the project, updating its timestamp, and saving it
-    // Or, more simply, pass the project to an updateProjectLastUpdate method
     await _updateProjectTimestamp(point.projectId);
     return await db.insert(tablePoints, point.toMap());
   }
@@ -224,6 +219,8 @@ class DatabaseHelper {
   Future<int> updatePoint(PointModel point) async {
     Database db = await instance.database;
     await _updateProjectTimestamp(point.projectId);
+    // TODO: Be careful if updating ordinal_number directly; may require re-sequencing logic
+    // similar to deletion if order changes. For now, assume simple field updates.
     return await db.update(
       tablePoints,
       point.toMap(),
@@ -232,35 +229,86 @@ class DatabaseHelper {
     );
   }
 
-  Future<int> deletePoint(int id) async {
+  /// Deletes a single point and re-sequences the ordinal numbers of subsequent points.
+  Future<int> deletePoint(int pointIdToDelete) async {
     Database db = await instance.database;
-    // If you delete a point, you might want to update the parent project's last_update
-    // This requires first fetching the point to get its projectId, then updating the project.
-    PointModel? point = await getPointById(id);
-    if (point != null) {
-      await _updateProjectTimestamp(point.projectId);
-    }
-    return await db.delete(
+    int count = 0;
+
+    // Use a transaction to ensure atomicity
+    await db.transaction((txn) async {
+      // 1. Get the point's details BEFORE deleting
+      PointModel? pointToDelete = await _getPointByIdWithTransaction(
+        txn,
+        pointIdToDelete,
+      );
+
+      if (pointToDelete == null) {
+        logger.warning(
+          "Point with ID $pointIdToDelete not found for deletion.",
+        );
+        return; // Exit transaction if point not found
+      }
+
+      int projectId = pointToDelete.projectId;
+      int deletedOrdinal = pointToDelete.ordinalNumber;
+
+      // 2. Delete the point
+      count = await txn.delete(
+        tablePoints,
+        where: '$columnId = ?',
+        whereArgs: [pointIdToDelete],
+      );
+
+      if (count > 0) {
+        // 3. Decrement ordinal numbers of subsequent points in the same project
+        await txn.rawUpdate(
+          '''
+        UPDATE $tablePoints
+        SET $columnOrdinalNumber = $columnOrdinalNumber - 1
+        WHERE $columnProjectId = ? AND $columnOrdinalNumber > ?
+        ''',
+          [projectId, deletedOrdinal],
+        );
+        logger.info(
+          "Point ID $pointIdToDelete (Ordinal $deletedOrdinal, Project $projectId) deleted and ordinals re-sequenced.",
+        );
+        await _updateProjectTimestampWithTransaction(txn, projectId);
+      }
+    });
+    return count;
+  }
+
+  /// Helper to get a point by ID within a transaction.
+  Future<PointModel?> _getPointByIdWithTransaction(
+    Transaction txn,
+    int id,
+  ) async {
+    final List<Map<String, dynamic>> maps = await txn.query(
       tablePoints,
       where: '$columnId = ?',
       whereArgs: [id],
     );
+    if (maps.isNotEmpty) {
+      return PointModel.fromMap(maps.first);
+    }
+    return null;
   }
 
   Future<int?> getLastPointOrdinal(int projectId) async {
     final db = await instance.database;
     final List<Map<String, dynamic>> result = await db.query(
       tablePoints,
-      columns: ['MAX(ordinal_number) as max_ordinal'],
-      where: 'project_id = ?',
+      columns: ['MAX($columnOrdinalNumber) as max_ordinal'], // Use constant
+      where: '$columnProjectId = ?', // Use constant
       whereArgs: [projectId],
     );
 
     if (result.isNotEmpty && result.first['max_ordinal'] != null) {
       return result.first['max_ordinal'] as int?;
     }
-    return null; // No points yet for this project
+    return null;
   }
+  // --- End Point Methods ---
 
   // --- Image Methods ---
   Future<int> insertImage(ImageModel image) async {
@@ -289,11 +337,8 @@ class DatabaseHelper {
 
   Future<int> deleteImage(int id) async {
     Database db = await instance.database;
-    // If you delete an image, you might want to update the parent project's last_update
-    // This requires fetching the image, then the point, then the project.
-    // Simpler: find the image, get pointId, then call _updateProjectTimestampForPoint(pointId)
-    // For now, let's keep it simpler or handle in UI logic if complex.
-    // A direct update if you had the pointId readily:
+    // TODO: Potentially re-sequence image ordinals if they have their own sequence per point
+    // For now, simple delete
     // ImageModel? image = await getImageById(id); // You'd need a getImageById
     // if (image != null) {
     //   PointModel? point = await getPointById(image.pointId);
@@ -308,7 +353,7 @@ class DatabaseHelper {
     );
   }
 
-  // Helper to update project's last_update timestamp
+  // --- Helper Methods ---
   Future<void> _updateProjectTimestamp(int projectId) async {
     Database db = await instance.database;
     String now = DateTime.now().toIso8601String();
@@ -320,7 +365,20 @@ class DatabaseHelper {
     );
   }
 
-  // ... (getPointsForProject, getPointById, getImagesForPoint as before)
+  /// Helper to update project's last_update timestamp within a transaction
+  Future<void> _updateProjectTimestampWithTransaction(
+    Transaction txn,
+    int projectId,
+  ) async {
+    String now = DateTime.now().toIso8601String();
+    await txn.update(
+      tableProjects,
+      {columnLastUpdate: now},
+      where: '$columnId = ?',
+      whereArgs: [projectId],
+    );
+  }
+
   Future<List<PointModel>> getPointsForProject(int projectId) async {
     Database db = await instance.database;
     final List<Map<String, dynamic>> maps = await db.query(
@@ -334,21 +392,7 @@ class DatabaseHelper {
     });
   }
 
-  Future<int> deletePointsByIds(List<int> ids) async {
-    if (ids.isEmpty) return 0;
-    final db = await instance.database;
-    // Using a transaction for batch delete can be more efficient if supported,
-    // but for simplicity, a loop or a single query with 'IN' clause works.
-    final String placeholders = ids.map((_) => '?').join(',');
-    final int count = await db.delete(
-      tablePoints,
-      where: 'id IN ($placeholders)',
-      whereArgs: ids,
-    );
-    logger.info("Deleted $count rows from $tablePoints where ids were in $ids");
-    return count;
-  }
-
+  // getPointById without transaction (for external use)
   Future<PointModel?> getPointById(int id) async {
     Database db = await instance.database;
     final List<Map<String, dynamic>> maps = await db.query(
@@ -360,6 +404,81 @@ class DatabaseHelper {
       return PointModel.fromMap(maps.first);
     }
     return null;
+  }
+
+  /// Deletes multiple points and re-sequences ordinal numbers for each affected project.
+  Future<int> deletePointsByIds(List<int> ids) async {
+    if (ids.isEmpty) return 0;
+    Database db = await instance.database;
+    int totalDeletedCount = 0;
+
+    // Use a transaction for the overall operation
+    await db.transaction((txn) async {
+      // 1. Collect all points to be deleted to find affected project IDs
+      List<PointModel> pointsToDelete = [];
+      for (int id in ids) {
+        PointModel? p = await _getPointByIdWithTransaction(txn, id);
+        if (p != null) {
+          pointsToDelete.add(p);
+        }
+      }
+
+      if (pointsToDelete.isEmpty) {
+        logger.info("No valid points found for deletion from IDs: $ids");
+        return;
+      }
+
+      // 2. Group points by project ID
+      Map<int, List<PointModel>> pointsByProject = {};
+      for (var p in pointsToDelete) {
+        pointsByProject.putIfAbsent(p.projectId, () => []).add(p);
+      }
+
+      // 3. Delete the points
+      final String placeholders = ids.map((_) => '?').join(',');
+      totalDeletedCount = await txn.delete(
+        tablePoints,
+        where: '$columnId IN ($placeholders)',
+        whereArgs: ids,
+      );
+      logger.info(
+        "Attempted to delete $totalDeletedCount points with IDs: $ids",
+      );
+
+      if (totalDeletedCount > 0) {
+        // 4. For each affected project, re-sequence the remaining points
+        for (int projectId in pointsByProject.keys) {
+          final List<Map<String, dynamic>>
+          remainingPointsMaps = await txn.query(
+            tablePoints,
+            where: '$columnProjectId = ?',
+            whereArgs: [projectId],
+            orderBy:
+                '$columnOrdinalNumber ASC', // Order by current (potentially gappy) ordinal
+          );
+
+          List<PointModel> remainingPoints = remainingPointsMaps
+              .map((map) => PointModel.fromMap(map))
+              .toList();
+
+          // Re-assign ordinal numbers
+          for (int i = 0; i < remainingPoints.length; i++) {
+            if (remainingPoints[i].ordinalNumber != i) {
+              // Only update if necessary
+              await txn.update(
+                tablePoints,
+                {columnOrdinalNumber: i},
+                where: '$columnId = ?',
+                whereArgs: [remainingPoints[i].id],
+              );
+            }
+          }
+          logger.info("Re-sequenced ordinals for project ID $projectId.");
+          await _updateProjectTimestampWithTransaction(txn, projectId);
+        }
+      }
+    });
+    return totalDeletedCount;
   }
 
   Future<List<ImageModel>> getImagesForPoint(int pointId) async {

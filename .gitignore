@@ -56,3 +56,4 @@ app.*.map.json
 
 #dati sensibili
 /keys/
+/android/build/reports/problems/problems-report.html

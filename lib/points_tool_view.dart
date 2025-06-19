@@ -189,7 +189,8 @@ class PointsToolViewState extends State<PointsToolView> {
             ElevatedButton.icon(
               icon: const Icon(Icons.add_location_alt_outlined),
               label: const Text('Add Point'),
-              onPressed: _addNewPoint,
+              onPressed:
+                  null, // TODO: Implement point creation dialog/logic: _addNewPoint,
             ),
           ],
         ),
