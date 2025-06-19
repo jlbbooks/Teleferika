@@ -266,117 +266,143 @@ class _PointsToolViewState extends State<PointsToolView> {
   }
   // --- End Delete Logic ---
 
+  /// Builds the main content area based on the state of _pointsFuture.
+  Widget _buildPointsListArea(BuildContext context) {
+    return FutureBuilder<List<PointModel>>(
+      future: _pointsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          logger.severe(
+            "Error loading points: ${snapshot.error}",
+            snapshot.error,
+            snapshot.stackTrace,
+          );
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 24.0),
+              child: Text(
+                'No points added to this project yet.\nTap "Add Point" to get started!',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16.0),
+              ),
+            ),
+          );
+        }
+
+        final points = snapshot.data!;
+        // The ListView itself for displaying points
+        return _buildPointsListView(context, points);
+      },
+    );
+  }
+
+  /// Builds the ListView of points.
+  Widget _buildPointsListView(BuildContext context, List<PointModel> points) {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: points.length,
+      itemBuilder: (context, index) {
+        final point = points[index];
+        return _buildPointItem(context, point); // Delegate to item builder
+      },
+    );
+  }
+
+  /// Builds a single point item Card for the ListView.
+  Widget _buildPointItem(BuildContext context, PointModel point) {
+    final bool isSelected = _selectedPointIds.contains(point.id);
+    final Color baseColor = Theme.of(context).primaryColorLight;
+    const double selectedOpacity = 0.3;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
+      color: isSelected
+          ? baseColor.withAlpha((selectedOpacity * 255).round())
+          : null,
+      child: ListTile(
+        leading: _isSelectionMode
+            ? Checkbox(
+                value: isSelected,
+                onChanged: (bool? value) {
+                  if (point.id != null) {
+                    _togglePointSelection(point.id!);
+                  }
+                },
+              )
+            : CircleAvatar(child: Text('${point.ordinalNumber}')),
+        title: Text(
+          'Lat: ${point.latitude.toStringAsFixed(5)}, Lon: ${point.longitude.toStringAsFixed(5)}',
+        ),
+        subtitle: Text(point.note ?? 'No note'),
+        trailing: !_isSelectionMode
+            ? IconButton(
+                icon: const Icon(
+                  Icons.edit_note_outlined,
+                  color: Colors.blueGrey,
+                ),
+                tooltip: 'Edit Point',
+                onPressed: () {
+                  logger.info("Edit tapped for point ID: ${point.id}");
+                  // TODO: Implement point editing
+                },
+              )
+            : null,
+        onTap: () => _handlePointTap(point),
+        onLongPress: () => _handlePointLongPress(point),
+      ),
+    );
+  }
+
+  // --- End Widget Building Helper Methods ---
+  // --- Point Item Interaction Handlers ---
+  void _handlePointTap(PointModel point) {
+    if (_isSelectionMode) {
+      if (point.id != null) {
+        _togglePointSelection(point.id!);
+      }
+    } else {
+      // TODO: Implement point details view or other non-selection tap action
+      logger.info(
+        "Tapped on point ID: ${point.id}. Project: ${widget.project.name}",
+      );
+      // Example: Navigate to a detail screen
+      // Navigator.push(context, MaterialPageRoute(builder: (context) => PointDetailPage(point: point)));
+    }
+  }
+
+  void _handlePointLongPress(PointModel point) {
+    if (!_isSelectionMode) {
+      setState(() {
+        _isSelectionMode = true;
+        if (point.id != null) {
+          _selectedPointIds.add(point.id!);
+        }
+      });
+      logger.fine(
+        "Selection mode activated by long press on point ID: ${point.id}",
+      );
+    }
+    // If already in selection mode, a long press currently does nothing.
+    // You could add other behaviors here if needed, e.g., open a context menu for that specific item.
+  }
+  // --- End Point Item Interaction Handlers ---
+
   @override
   Widget build(BuildContext context) {
+    logger.finest(
+      "PointsToolView build method called. Selection mode: $_isSelectionMode",
+    );
     return Column(
-      // Make this Column take only the space its children need
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment:
-          CrossAxisAlignment.stretch, // To make Cards fill width
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildTopBar(context), // Use the dynamic top bar
-        FutureBuilder<List<PointModel>>(
-          future: _pointsFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              logger.severe(
-                "Error loading points: ${snapshot.error}",
-                snapshot.error,
-                snapshot.stackTrace,
-              );
-              return Center(child: Text('Error: ${snapshot.error}'));
-            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return const Center(
-                child: Text(
-                  'No points added to this project yet.\nTap "Add Point" to get started!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16.0),
-                ),
-              );
-            }
-
-            final points = snapshot.data!;
-            return ListView.builder(
-              shrinkWrap:
-                  true, // Important: Allows ListView to size itself to its content
-              physics:
-                  const NeverScrollableScrollPhysics(), // Important: Disables internal scrolling
-              itemCount: points.length,
-              itemBuilder: (context, index) {
-                final point = points[index];
-                final bool isSelected = _selectedPointIds.contains(point.id);
-
-                // Get the base color
-                final Color baseColor = Theme.of(context).primaryColorLight;
-                // Define the opacity value
-                const double selectedOpacity = 0.3;
-
-                return Card(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 12.0,
-                    vertical: 4.0,
-                  ),
-                  color: isSelected
-                      ? baseColor.withAlpha((selectedOpacity * 255).round())
-                      : null, // Highlight selected
-                  child: ListTile(
-                    leading: _isSelectionMode
-                        ? Checkbox(
-                            value: isSelected,
-                            onChanged: (bool? value) {
-                              if (point.id != null) {
-                                _togglePointSelection(point.id!);
-                              }
-                            },
-                          )
-                        : CircleAvatar(child: Text('${point.ordinalNumber}')),
-                    title: Text(
-                      'Lat: ${point.latitude.toStringAsFixed(5)}, Lon: ${point.longitude.toStringAsFixed(5)}',
-                    ),
-                    subtitle: Text(point.note ?? 'No note'),
-                    trailing: !_isSelectionMode
-                        ? IconButton(
-                            icon: const Icon(
-                              Icons.edit_note_outlined,
-                              color: Colors.blueGrey,
-                            ),
-                            tooltip: 'Edit Point',
-                            onPressed: () {
-                              logger.info(
-                                "Edit tapped for point ID: ${point.id}",
-                              );
-                              // TODO: Implement point editing
-                            },
-                          )
-                        : null, // No trailing icon in selection mode, or maybe a different one
-                    onTap: () {
-                      if (_isSelectionMode) {
-                        if (point.id != null) {
-                          _togglePointSelection(point.id!);
-                        }
-                      } else {
-                        // TODO: Implement point details view or selection
-                        logger.info("Tapped on point ID: ${point.id}");
-                      }
-                    },
-                    onLongPress: () {
-                      if (!_isSelectionMode) {
-                        setState(() {
-                          _isSelectionMode = true;
-                          if (point.id != null) {
-                            _selectedPointIds.add(point.id!);
-                          }
-                        });
-                      }
-                    },
-                  ),
-                );
-              },
-            );
-          },
-        ),
+        _buildTopBar(context), // Top action bar (already extracted)
+        _buildPointsListArea(context), // Extracted FutureBuilder and its logic
       ],
     );
   }
