@@ -20,7 +20,9 @@ class PointsToolView extends StatefulWidget {
 }
 
 class PointsToolViewState extends State<PointsToolView> {
-  late Future<List<PointModel>> _pointsFuture;
+  // We need to manage the list of points directly in the state for ReorderableListView
+  List<PointModel> _points = []; // Holds the current list of points
+  Future<void>? _loadPointsFuture; // To manage the initial loading state
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
   // --- State for Selection Mode ---
@@ -31,55 +33,60 @@ class PointsToolViewState extends State<PointsToolView> {
   @override
   void initState() {
     super.initState();
-    _loadPoints();
+    _loadPointsFuture =
+        _loadPoints(); // Initialize the future for FutureBuilder
+  }
+
+  // Make _loadPoints return Future<void> and update _points
+  Future<void> _loadPoints() async {
+    if (widget.project.id == null) {
+      if (mounted) setState(() => _points = []);
+      return;
+    }
+    try {
+      final pointsFromDb = await _dbHelper.getPointsForProject(
+        widget.project.id!,
+      );
+      if (mounted) {
+        setState(() {
+          _points = pointsFromDb;
+        });
+      }
+    } catch (e, stackTrace) {
+      logger.severe("Error loading points in PointsToolView", e, stackTrace);
+      if (mounted) {
+        setState(() => _points = []); // Set to empty on error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading points: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   // Make _loadPoints public or create a new public refresh method
   void refreshPoints() {
     logger.info("PointsToolView: External refresh requested.");
+    // Re-assign the future to trigger FutureBuilder if it's still relying on it initially
+    // or directly call _loadPoints if FutureBuilder is only for initial load.
+    // For simplicity, if _loadPoints directly updates _points, this is fine.
     _loadPoints();
   }
 
-  void _loadPoints() {
-    if (widget.project.id == null) {
-      logger.warning("PointsToolView: Project ID is null, cannot load points.");
-      // TODO: Handle the case where project ID might be null (e.g., if it's a new, unsaved project)
-      // For now, assign an empty list future.
-      setState(() {
-        _pointsFuture = Future.value([]);
-      });
-      return;
-    }
-    logger.info(
-      "PointsToolView: Loading points for project ID: ${widget.project.id}",
-    );
-    // When reloading, ensure selection mode is reset if it doesn't make sense to keep it
-    if (_isSelectionMode) {
-      // Only clear if currently in selection mode
-      _clearSelection();
-    }
-    setState(() {
-      _pointsFuture = _dbHelper.getPointsForProject(widget.project.id!);
-    });
-  }
-
   void _clearSelection() {
-    if (_isSelectionMode || _selectedPointIds.isNotEmpty) {
-      // Check if there's anything to clear
-      setState(() {
-        _isSelectionMode = false;
-        _selectedPointIds.clear();
-      });
-      logger.fine("Selection mode cleared.");
-    }
+    setState(() {
+      _isSelectionMode = false;
+      _selectedPointIds.clear();
+    });
   }
 
   void _toggleSelectionMode() {
     setState(() {
       _isSelectionMode = !_isSelectionMode;
       if (!_isSelectionMode) {
-        // _selectedPointIds.clear(); // Already handled by _clearSelection if called from close button
-        _clearSelection(); // Use the helper here for consistency
+        _selectedPointIds.clear();
       }
     });
   }
@@ -88,93 +95,100 @@ class PointsToolViewState extends State<PointsToolView> {
     setState(() {
       if (_selectedPointIds.contains(pointId)) {
         _selectedPointIds.remove(pointId);
-        // If selection mode is active and becomes empty, optionally exit selection mode
-        if (_isSelectionMode && _selectedPointIds.isEmpty) {
-          // You could choose to automatically exit selection mode here:
-          // _clearSelection();
-          // Or leave it active until the user explicitly cancels.
-          // For now, let's keep it active.
+        if (_selectedPointIds.isEmpty && _isSelectionMode) {
+          // Optionally exit selection mode if last item is deselected
+          // _isSelectionMode = false;
         }
       } else {
         _selectedPointIds.add(pointId);
-        // If not in selection mode and an item is selected by some other means (e.g. programmatic)
-        // ensure selection mode is activated. This is mostly handled by onLongPress.
-        // if (!_isSelectionMode) {
-        //   _isSelectionMode = true;
-        // }
       }
     });
   }
 
-  // Placeholder for adding a new point - we'll implement this later
-  void _addNewPoint() async {
-    logger.info(
-      "Add new point button tapped for project: ${widget.project.name}",
-    );
-    // TODO: Implement point creation dialog/logic
-    // For now, let's simulate adding a point and refresh
-    if (widget.project.id != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Save the project first to add points."),
-          backgroundColor: Colors.orange,
-        ),
+  Future<void> _handleReorder(int oldIndex, int newIndex) async {
+    if (widget.project.id == null) return;
+
+    // Adjust newIndex for ReorderableListView's behavior when moving down
+    if (newIndex > oldIndex) {
+      newIndex -= 1;
+    }
+
+    // Prevent reordering outside bounds or if indexes are the same
+    if (newIndex < 0 || newIndex >= _points.length || oldIndex == newIndex) {
+      logger.fine(
+        "Reorder attempt with invalid indices or no change: old $oldIndex, new $newIndex",
       );
       return;
     }
 
-    try {
-      final nextOrdinal =
-          await _dbHelper.getLastPointOrdinal(widget.project.id!) ?? -1;
-      final newPointOrdinal = nextOrdinal + 1;
+    final PointModel item = _points.removeAt(oldIndex);
+    _points.insert(newIndex, item);
 
-      final newPoint = PointModel(
-        projectId: widget.project.id!,
-        // Placeholder coordinates, ideally get from map or user input in a real scenario
-        latitude: 0.0,
-        longitude: 0.0,
-        ordinalNumber: newPointOrdinal,
-        note: 'New point #${newPointOrdinal}',
-      );
-      await _dbHelper.insertPoint(newPoint);
-      logger.info(
-        'Successfully added new point #${newPointOrdinal} for project ID ${widget.project.id}',
-      );
+    // Update UI immediately
+    setState(() {});
 
-      // AFTER point is inserted, update the project's start/end points
-      await _dbHelper.updateProjectStartEndPoints(widget.project.id!);
+    logger.info(
+      "Reordered point ${item.id} from index $oldIndex to $newIndex. Updating ordinals.",
+    );
+
+    // Create a list of PointModels with their new ordinals
+    List<PointModel> updatedPointsForDB = [];
+    for (int i = 0; i < _points.length; i++) {
+      if (_points[i].ordinalNumber != i) {
+        // Check if ordinal actually changed
+        _points[i].ordinalNumber = i; // Update local model's ordinal
+        updatedPointsForDB.add(_points[i]);
+      }
+    }
+
+    if (updatedPointsForDB.isEmpty && _points.isNotEmpty) {
+      // This case can happen if the reorder didn't actually change ordinal sequence
+      // relative to db, e.g. dragging an item and dropping in same effective ordinal slot
+      // or if the list was already out of sync with DB ordinals for some reason.
+      // We might still want to ensure the start/end points are correct.
       logger.fine(
-        'Updated start/end points for project ID ${widget.project.id} after adding point.',
+        "No ordinal changes detected for DB update, but ensuring start/end points are current.",
       );
+    }
 
-      refreshPoints(); // Refresh current view
+    try {
+      // Use a transaction to update all ordinals and then project start/end points
+      final db = await _dbHelper.database;
+      await db.transaction((txn) async {
+        for (PointModel pointToUpdate in updatedPointsForDB) {
+          await txn.update(
+            DatabaseHelper.tablePoints,
+            {DatabaseHelper.columnOrdinalNumber: pointToUpdate.ordinalNumber},
+            where: '${DatabaseHelper.columnId} = ?',
+            whereArgs: [pointToUpdate.id],
+          );
+        }
+        // After updating all point ordinals, update the project's start and end points
+        await _dbHelper.updateProjectStartEndPoints(
+          widget.project.id!,
+          txn: txn,
+        );
+      });
+
+      logger.info(
+        "Successfully updated ordinals and project start/end points after reorder.",
+      );
       widget.onPointsChanged?.call(); // Notify parent
-
-      // Remove the "Adding new point..." SnackBar before showing success
-      ScaffoldMessenger.of(context).removeCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Point #${newPointOrdinal} added successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
     } catch (e, stackTrace) {
       logger.severe(
-        'Error adding new point for project ID ${widget.project.id}',
+        "Error updating database after reorder for project ${widget.project.id}",
         e,
         stackTrace,
       );
-
-      // Remove any intermediate SnackBar (like "Adding new point...")
-      ScaffoldMessenger.of(context).removeCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Failed to add new point. Please try again. Error: ${e.toString()}',
-          ),
+          content: Text('Error saving new point order: ${e.toString()}'),
           backgroundColor: Colors.red,
         ),
       );
+      // If DB update fails, revert the list in UI to previous state (reload from DB)
+      // This is important to keep UI consistent with DB
+      await _loadPoints();
     }
   }
 
@@ -216,10 +230,7 @@ class PointsToolViewState extends State<PointsToolView> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'Points for: ${widget.project.name}',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+            Text('Points:', style: Theme.of(context).textTheme.titleLarge),
             ElevatedButton.icon(
               icon: const Icon(Icons.add_location_alt_outlined),
               label: const Text('Add Point'),
@@ -274,111 +285,113 @@ class PointsToolViewState extends State<PointsToolView> {
 
   // --- Delete Logic ---
   Future<void> _deleteSelectedPoints() async {
-    if (_selectedPointIds.isEmpty) return;
-    try {
-      final count = await _dbHelper.deletePointsByIds(
-        _selectedPointIds.toList(),
-      );
-      logger.info('Successfully deleted $count points.');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('$count point(s) deleted.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-      // DBHelper now handles re-sequencing and updating project's start/end IDs
-      _clearSelection(); // Clear selection UI state
-      refreshPoints(); // Refresh the list in this view
+    if (_selectedPointIds.isEmpty || widget.project.id == null) return;
 
-      widget.onPointsChanged
-          ?.call(); // Notify parent that points (and project start/end) changed
-    } catch (error, stackTrace) {
-      logger.severe('Error deleting points', error, stackTrace);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error deleting points: $error'),
-            backgroundColor: Colors.red,
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Deletion'),
+          content: Text(
+            'Are you sure you want to delete ${_selectedPointIds.length} selected point(s)? This action cannot be undone.',
           ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+            ),
+            TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+              ),
+              child: const Text('Delete'),
+              onPressed: () {
+                Navigator.of(context).pop(true);
+              },
+            ),
+          ],
         );
+      },
+    );
+    if (confirmed == true) {
+      try {
+        final count = await _dbHelper.deletePointsByIds(
+          _selectedPointIds.toList(),
+        );
+        logger.info('Successfully deleted $count points.');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('$count point(s) deleted.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+        _clearSelection();
+        await _loadPoints(); // Reload points to reflect deletions and re-sequencing
+        widget.onPointsChanged?.call();
+      } catch (error, stackTrace) {
+        logger.severe('Error deleting points', error, stackTrace);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error deleting points: $error'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
   // --- End Delete Logic ---
 
-  /// Builds the main content area based on the state of _pointsFuture.
-  Widget _buildPointsListArea(BuildContext context) {
-    return FutureBuilder<List<PointModel>>(
-      future: _pointsFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          logger.severe(
-            "Error loading points: ${snapshot.error}",
-            snapshot.error,
-            snapshot.stackTrace,
-          );
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 24.0),
-              child: Text(
-                'No points added to this project yet.\nTap "Add Point" to get started!',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16.0),
-              ),
-            ),
-          );
-        }
-
-        final points = snapshot.data!;
-        // The ListView itself for displaying points
-        return _buildPointsListView(context, points);
-      },
-    );
-  }
-
-  /// Builds the ListView of points.
-  Widget _buildPointsListView(BuildContext context, List<PointModel> points) {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: points.length,
-      itemBuilder: (context, index) {
-        final point = points[index];
-        return _buildPointItem(context, point); // Delegate to item builder
-      },
-    );
-  }
-
   /// Builds a single point item Card for the ListView.
-  Widget _buildPointItem(BuildContext context, PointModel point) {
+  Widget _buildPointItem(BuildContext context, PointModel point, int index) {
+    // index needed for Key
     final bool isSelected = _selectedPointIds.contains(point.id);
     final Color baseColor = Theme.of(context).primaryColorLight;
     const double selectedOpacity = 0.3;
 
     return Card(
+      key: ValueKey(point.id ?? index), // Crucial for ReorderableListView
       margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
-      color: isSelected
+      elevation: _isSelectionMode && isSelected
+          ? 4.0
+          : 1.0, // Add elevation change
+      shape: RoundedRectangleBorder(
+        // Optional: Add border for selected items
+        side: _isSelectionMode && isSelected
+            ? BorderSide(color: Theme.of(context).primaryColor, width: 1.5)
+            : BorderSide.none,
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      color: _isSelectionMode && isSelected
           ? baseColor.withAlpha((selectedOpacity * 255).round())
-          : null,
+          : null, // Keep existing background color logic
       child: ListTile(
         leading: _isSelectionMode
             ? Checkbox(
                 value: isSelected,
+                activeColor: Theme.of(context).primaryColor,
                 onChanged: (bool? value) {
-                  if (point.id != null) {
-                    _togglePointSelection(point.id!);
-                  }
+                  if (point.id != null) _togglePointSelection(point.id!);
                 },
               )
-            : CircleAvatar(child: Text('${point.ordinalNumber}')),
+            : ReorderableDragStartListener(
+                index: index,
+                child: Padding(
+                  // Add some padding around the handle for easier touch
+                  padding: const EdgeInsets.all(8.0),
+                  child: Icon(
+                    Icons.drag_handle,
+                    color: Theme.of(context).hintColor, // Subtle color
+                  ),
+                ),
+              ),
         title: Text(
-          'Lat: ${point.latitude.toStringAsFixed(5)}, Lon: ${point.longitude.toStringAsFixed(5)}',
+          'P${point.ordinalNumber}: Lat: ${point.latitude.toStringAsFixed(5)}, Lon: ${point.longitude.toStringAsFixed(5)}',
         ),
         subtitle: Text(point.note ?? 'No note'),
         trailing: !_isSelectionMode
@@ -395,12 +408,25 @@ class PointsToolViewState extends State<PointsToolView> {
               )
             : null,
         onTap: () => _handlePointTap(point),
-        onLongPress: () => _handlePointLongPress(point),
+        // ReorderableListView handles long press for drag if not in selection mode.
+        // If you need specific long press logic, it might conflict or need careful handling.
+        // For simplicity, we let ReorderableListView manage the drag on long press
+        // via the ReorderableDragStartListener.
+        onLongPress: _isSelectionMode
+            ? () =>
+                  _handlePointLongPress(
+                    point,
+                  ) // Allow long press toggle within selection mode
+            : () {
+                // If not in selection mode, long press on ListTile body should enable it
+                // and select the item. Drag handle is separate.
+                _handlePointLongPress(point);
+              },
       ),
     );
   }
-
   // --- End Widget Building Helper Methods ---
+
   // --- Point Item Interaction Handlers ---
   void _handlePointTap(PointModel point) {
     if (_isSelectionMode) {
@@ -413,38 +439,96 @@ class PointsToolViewState extends State<PointsToolView> {
         "Tapped on point ID: ${point.id}. Project: ${widget.project.name}",
       );
       // Example: Navigate to a detail screen
-      // Navigator.push(context, MaterialPageRoute(builder: (context) => PointDetailPage(point: point)));
+      // TODO: Navigator.push(context, MaterialPageRoute(builder: (context) => PointDetailPage(point: point)));
     }
   }
 
   void _handlePointLongPress(PointModel point) {
-    if (!_isSelectionMode) {
-      setState(() {
+    if (point.id == null) return;
+
+    setState(() {
+      if (!_isSelectionMode) {
+        // If not in selection mode, enter it and select the current item
         _isSelectionMode = true;
-        if (point.id != null) {
-          _selectedPointIds.add(point.id!);
-        }
-      });
-      logger.fine(
-        "Selection mode activated by long press on point ID: ${point.id}",
-      );
-    }
-    // If already in selection mode, a long press currently does nothing.
-    // You could add other behaviors here if needed, e.g., open a context menu for that specific item.
+        _selectedPointIds.add(point.id!);
+        logger.fine(
+          "Long press initiated selection mode for point ID: ${point.id}",
+        );
+      } else {
+        // If already in selection mode, just toggle the selection of the current item
+        _togglePointSelection(point.id!);
+        logger.fine(
+          "Long press in selection mode, toggled point ID: ${point.id}",
+        );
+      }
+    });
   }
   // --- End Point Item Interaction Handlers ---
 
   @override
   Widget build(BuildContext context) {
     logger.finest(
-      "PointsToolView build method called. Selection mode: $_isSelectionMode",
+      "PointsToolView build method called. Selection mode: $_isSelectionMode, Points count: ${_points.length}",
     );
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildTopBar(context), // Top action bar (already extracted)
-        _buildPointsListArea(context), // Extracted FutureBuilder and its logic
+        _buildTopBar(context),
+        FutureBuilder<void>(
+          future: _loadPointsFuture, // Use the future for initial load
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting &&
+                _points.isEmpty) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError && _points.isEmpty) {
+              // Error already logged in _loadPoints, SnackBar shown there
+              return Center(
+                child: Text(
+                  'Error loading points. Please try again.\n${snapshot.error.toString()}',
+                ),
+              );
+            }
+
+            if (_points.isEmpty) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24.0),
+                  child: Text(
+                    'No points added to this project yet.\nTap "Add Point" to get started!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 16.0),
+                  ),
+                ),
+              );
+            }
+
+            // Once points are loaded (or if already loaded), display ReorderableListView
+            return ReorderableListView.builder(
+              shrinkWrap: true,
+              physics:
+                  const NeverScrollableScrollPhysics(), // If inside another scrollable
+              itemCount: _points.length,
+              itemBuilder: (context, index) {
+                final point = _points[index];
+                // Pass index for ReorderableDragStartListener and Key
+                return _buildPointItem(context, point, index);
+              },
+              // Disable reordering if in selection mode
+              onReorder: _isSelectionMode
+                  ? (int oldI, int newI) {}
+                  : _handleReorder,
+              // Optional: Customize drag feedback
+              // TODO: proxyDecorator: (Widget child, int index, Animation<double> animation) {
+              //   return Material(
+              //     elevation: 4.0,
+              //     color: Colors.transparent, // Or some highlight color
+              //     child: child,
+              //   );
+              // },
+            );
+          },
+        ),
       ],
     );
   }

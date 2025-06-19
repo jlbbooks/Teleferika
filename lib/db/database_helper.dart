@@ -446,20 +446,6 @@ class DatabaseHelper {
     );
   }
 
-  /// Helper to update project's last_update timestamp within a transaction
-  Future<void> _updateProjectTimestampWithTransaction(
-    Transaction txn,
-    int projectId,
-  ) async {
-    String now = DateTime.now().toIso8601String();
-    await txn.update(
-      tableProjects,
-      {columnLastUpdate: now},
-      where: '$columnId = ?',
-      whereArgs: [projectId],
-    );
-  }
-
   Future<List<PointModel>> getPointsForProject(int projectId) async {
     Database db = await instance.database;
     final List<Map<String, dynamic>> maps = await db.query(
