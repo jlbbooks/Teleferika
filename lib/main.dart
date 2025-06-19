@@ -1,8 +1,10 @@
 // main.dart
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import 'app_config.dart';
 import 'db/database_helper.dart';
 import 'logger.dart'; // Assuming logger.dart is in the same directory (lib)
 import 'projects_list_page.dart'; // Import your ProjectsListPage
@@ -97,7 +99,14 @@ class LoadingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
+      debugShowCheckedModeBanner: kDebugMode,
+      localizationsDelegates: AppConfig.localizationsDelegates,
+      supportedLocales: AppConfig.supportedLocales,
+      // --- Dynamic Theme Settings ---
+      theme: AppConfig.lightTheme, // Your defined light theme
+      darkTheme: AppConfig.darkTheme, // Your defined dark theme
+      themeMode: ThemeMode.system, // This is the key!
+      // --- End Dynamic Theme Settings ---
       home: Scaffold(
         backgroundColor: Colors.blueAccent, // Or your app's splash background
         body: Center(
@@ -109,7 +118,7 @@ class LoadingPage extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               Text(
-                'Loading Teleferika...',
+                'Loading ${AppConfig.appName}...',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18.0,
@@ -130,13 +139,15 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Teleferika',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
-        // Example theme color
-        useMaterial3: true,
-      ),
-      debugShowCheckedModeBanner: false,
+      title: AppConfig.appName,
+      // --- Dynamic Theme Settings ---
+      theme: AppConfig.lightTheme, // Your defined light theme
+      darkTheme: AppConfig.darkTheme, // Your defined dark theme
+      themeMode: ThemeMode.system, // This is the key!
+      // --- End Dynamic Theme Settings ---
+      debugShowCheckedModeBanner: kDebugMode,
+      localizationsDelegates: AppConfig.localizationsDelegates,
+      supportedLocales: AppConfig.supportedLocales,
       home: const ProjectsListPage(), // Set ProjectsListPage as the home screen
     );
   }
