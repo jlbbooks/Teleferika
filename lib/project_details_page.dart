@@ -938,7 +938,8 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
       // More accurate 'isNew' for the calling page if it wants to know if THIS project (by id) was just created
     };
     logger.info("Popping ProjectDetailsPage with result: $result");
-    Navigator.pop(context, result);
+    // FIXME: actually we should return some values, but for now just a bool will do, so the full list is reloaded. Simplify logic to remove _isNewProjectOnLoad, since now we must manually save then pop
+    Navigator.pop(context, true); //result);
     return true; // Allow pop after manually calling Navigator.pop
     // Or `return false` if Navigator.pop already handled it and you don't want
     // WillPopScope to pop again. `true` is usually fine here since we popped.
