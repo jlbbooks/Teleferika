@@ -224,12 +224,25 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    String formattedProjectDate = _projectDate != null
-        ? DateFormat('MMM d, yyyy').format(_projectDate!)
-        : 'Tap to set date';
+    String formattedProjectDate;
+    if (_projectDate != null) {
+      // Use a common, locale-aware skeleton.
+      // yMMMd() is a good general purpose format (e.g., "Sep 10, 2023" or "10 Sep 2023")
+      // You can explore other skeletons like:
+      // DateFormat.yMd(Localizations.localeOf(context).toString()).format(_projectDate!)
+      // DateFormat.yMEd(Localizations.localeOf(context).toString()).format(_projectDate!) // Includes day of week
+      // DateFormat.MMMMEEEEd(Localizations.localeOf(context).toString()).format(_projectDate!) // Very verbose
 
+      // Get the current locale from the context
+      final locale = Localizations.localeOf(context).toString();
+      formattedProjectDate = DateFormat.yMMMd(locale).format(_projectDate!);
+    } else {
+      formattedProjectDate = 'Tap to set date';
+    }
     String formattedLastUpdate = _lastUpdateTime != null
-        ? DateFormat('MMM d, yyyy HH:mm:ss').format(_lastUpdateTime!)
+        ? DateFormat.yMMMd(
+            Localizations.localeOf(context).toString(),
+          ).add_Hm().format(_lastUpdateTime!) // Also localize time
         : 'Not yet saved';
 
     bool isMainFormVisible = _activeCardTool == null;

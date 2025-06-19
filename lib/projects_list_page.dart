@@ -3,6 +3,7 @@ import 'dart:async'; // For Timer
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import 'app_config.dart';
 import 'db/database_helper.dart';
 import 'db/models/project_model.dart';
 import 'logger.dart';
@@ -214,15 +215,33 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
   }
 
   Widget _buildProjectItem(ProjectModel project) {
-    final dateFormat = DateFormat('MMM d, yyyy HH:mm');
-    String lastUpdateText = project.lastUpdate != null
-        ? dateFormat.format(project.lastUpdate!)
-        : 'No updates';
-    if (project.date != null) {
-      lastUpdateText =
-          'Proj. Date: ${DateFormat('MMM d, yyyy').format(project.date!)} | Upd: ${project.lastUpdate != null ? DateFormat('HH:mm').format(project.lastUpdate!) : "-"}';
-    }
+    // Get the current locale from the context for date formatting
+    final locale = Localizations.localeOf(context).toString();
 
+    // Define locale-aware date formatters
+    // For "Proj. Date: MMM d, yyyy | Upd: HH:mm"
+    // We'll use yMMMd for the project date part and Hm for the time part.
+    final DateFormat projectDateFormat = DateFormat.yMMMd(locale);
+    final DateFormat timeFormat = DateFormat.Hm(locale); // For HH:mm
+
+    // For "Last Update: MMM d, yyyy HH:mm" (fallback if project.date is null)
+    // We'll use yMMMd for the date part and Hm for the time part.
+    final DateFormat lastUpdateDateTimeFormat = DateFormat.yMMMd(
+      locale,
+    ).add_Hm();
+    String lastUpdateText;
+    if (project.date != null) {
+      String formattedProjectDate = projectDateFormat.format(project.date!);
+      String formattedUpdateTime = project.lastUpdate != null
+          ? timeFormat.format(project.lastUpdate!)
+          : "-";
+      lastUpdateText =
+          'Proj. Date: $formattedProjectDate | Upd: $formattedUpdateTime';
+    } else {
+      lastUpdateText = project.lastUpdate != null
+          ? 'Last Update: ${lastUpdateDateTimeFormat.format(project.lastUpdate!)}'
+          : 'No updates';
+    }
     // --- Flashing Logic ---
     Color itemColor = Theme.of(context).cardColor; // Default card color
     if (_flashingProjectId == project.id && _isFlashing) {
@@ -281,7 +300,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
               ],
             )
           : AppBar(
-              title: const Text('Teleferika Projects'),
+              title: const Text('${AppConfig.appName} Projects'),
               actions: [
                 // IconButton for future settings/search can go here
               ],
