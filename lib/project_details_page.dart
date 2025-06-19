@@ -1,4 +1,6 @@
 // project_details_page.dart
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
@@ -13,6 +15,38 @@ import 'map_tool_view.dart';
 
 // At the top of project_details_page.dart, or in a separate file
 enum ActiveCardTool { compass, points, map }
+
+// Helper function to convert degrees to radians
+double _degreesToRadians(double degrees) {
+  return degrees * math.pi / 180.0;
+}
+
+// Helper function to convert radians to degrees
+double _radiansToDegrees(double radians) {
+  return radians * 180.0 / math.pi;
+}
+
+/// Calculates the initial bearing (azimuth) from a start point to an end point.
+/// Returns the bearing in degrees (0-360).
+double calculateBearingFromPoints(PointModel startPoint, PointModel endPoint) {
+  final double lat1Rad = _degreesToRadians(startPoint.latitude);
+  final double lon1Rad = _degreesToRadians(startPoint.longitude);
+  final double lat2Rad = _degreesToRadians(endPoint.latitude);
+  final double lon2Rad = _degreesToRadians(endPoint.longitude);
+
+  final double dLon = lon2Rad - lon1Rad;
+
+  final double y = math.sin(dLon) * math.cos(lat2Rad);
+  final double x =
+      math.cos(lat1Rad) * math.sin(lat2Rad) -
+      math.sin(lat1Rad) * math.cos(lat2Rad) * math.cos(dLon);
+
+  double bearingRad = math.atan2(y, x);
+  double bearingDeg = _radiansToDegrees(bearingRad);
+
+  // Normalize to 0-360 degrees
+  return (bearingDeg + 360) % 360;
+}
 
 class ProjectDetailsPage extends StatefulWidget {
   final ProjectModel project;
@@ -51,6 +85,39 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     );
     _projectDate = widget.project.date;
     _lastUpdateTime = widget.project.lastUpdate;
+
+    // Refresh project data on init to ensure start/end points are current
+    _loadProjectDetails();
+  }
+
+  Future<void> _loadProjectDetails() async {
+    if (widget.project.id == null) return;
+    ProjectModel? updatedProject = await _dbHelper.getProjectById(
+      widget.project.id!,
+    );
+    if (updatedProject != null && mounted) {
+      setState(() {
+        // Update the local widget.project instance which is used by UI elements
+        // This is important because widget.project is final.
+        // We can't directly assign widget.project = updatedProject
+        // So we update its mutable properties.
+        widget.project.name = updatedProject.name;
+        widget.project.note = updatedProject.note;
+        widget.project.azimuth = updatedProject.azimuth;
+        widget.project.date = updatedProject.date;
+        widget.project.lastUpdate = updatedProject.lastUpdate;
+        widget.project.startingPointId = updatedProject.startingPointId;
+        widget.project.endingPointId = updatedProject.endingPointId;
+
+        // Also update controllers if they are not reflecting an unsaved state
+        _nameController.text = updatedProject.name;
+        _noteController.text = updatedProject.note ?? '';
+        _azimuthController.text =
+            updatedProject.azimuth?.toStringAsFixed(2) ?? '';
+        _projectDate = updatedProject.date;
+        _lastUpdateTime = updatedProject.lastUpdate;
+      });
+    }
   }
 
   @override
@@ -143,6 +210,10 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
       logger.info(
         'Point added via Compass: ID $newPointId, Lat: ${position.latitude}, Lon: ${position.longitude}, Heading used for note: $heading, Ordinal: $nextOrdinal',
       );
+
+      // AFTER point is inserted, update the project's start/end points
+      await _dbHelper.updateProjectStartEndPoints(widget.project.id!);
+      await _loadProjectDetails(); // Reload project to get updated start/end IDs for the UI
 
       if (mounted) {
         ScaffoldMessenger.of(
@@ -313,13 +384,96 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     }
   }
 
-  void _calculateAzimuth() {
-    logger.info("Calculate Azimuth button tapped.");
-    // This button's function might change or be removed if validation is purely inline.
-    // Or it could be used for a more complex calculation that populates the field.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Azimuth calculation to be implemented.')),
+  Future<void> _calculateAzimuth() async {
+    logger.info(
+      "Calculate Azimuth button tapped for project: ${widget.project.name}",
     );
+
+    if (_activeCardTool != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Close the active tool before calculating azimuth.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final int? startPointId = widget.project.startingPointId;
+    final int? endPointId = widget.project.endingPointId;
+
+    if (startPointId == null || endPointId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Starting and/or ending point not set. Cannot calculate azimuth.',
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    if (startPointId == endPointId) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Starting and ending points are the same. Azimuth is undefined or 0.',
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final PointModel? startPoint = await _dbHelper.getPointById(startPointId);
+      final PointModel? endPoint = await _dbHelper.getPointById(endPointId);
+
+      if (startPoint == null || endPoint == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Could not retrieve point data for calculation. Please check points.',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+        logger.severe(
+          "Error calculating azimuth: StartPoint (ID $startPointId) or EndPoint (ID $endPointId) not found.",
+        );
+        return;
+      }
+
+      final double calculatedAzimuth = calculateBearingFromPoints(
+        startPoint,
+        endPoint,
+      );
+
+      setState(() {
+        _azimuthController.text = calculatedAzimuth.toStringAsFixed(2);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Azimuth calculated: ${calculatedAzimuth.toStringAsFixed(2)}°',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+      logger.info(
+        "Azimuth calculated successfully: ${calculatedAzimuth.toStringAsFixed(2)}° from P${startPoint.ordinalNumber} to P${endPoint.ordinalNumber}",
+      );
+    } catch (e, stackTrace) {
+      logger.severe("Error during azimuth calculation: $e", e, stackTrace);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error calculating azimuth: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _onSetPoint(String pointType) {
@@ -635,6 +789,26 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     }
   }
 
+  // If PointsToolView handles its own additions/deletions and calls DB directly:
+  // PointsToolView would also need to call _dbHelper.updateProjectStartEndPoints(projectId)
+  // and then notify ProjectDetailsPage to reload project details (e.g., via a callback).
+  // For now, _initiateAddPointFromCompass is the main adder.
+  // Deletions from PointsToolView will trigger the DB helper's updated delete methods.
+  // After deletion in PointsToolView, it calls _loadPoints, which is good.
+  // We also need ProjectDetailsPage to be aware that widget.project start/end might have changed.
+  // This can be done by passing a callback from ProjectDetailsPage to PointsToolView
+  // that PointsToolView calls after a successful deletion, which then calls _loadProjectDetails.
+
+  // Example callback for PointsToolView:
+  void _onPointsChanged() async {
+    logger.info(
+      "ProjectDetailsPage: Points changed, reloading project details.",
+    );
+    await _loadProjectDetails(); // Reload project details to get new start/end IDs
+    _pointsToolViewKey.currentState
+        ?.refreshPoints(); // Ensure PointsToolView itself also refreshes its internal list
+  }
+
   Widget _buildActiveToolView() {
     switch (_activeCardTool) {
       case ActiveCardTool.compass:
@@ -647,6 +821,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
         return PointsToolView(
           key: _pointsToolViewKey, // Assign the GlobalKey
           project: widget.project,
+          onPointsChanged: _onPointsChanged,
         );
       case ActiveCardTool.map:
         return MapToolView(project: widget.project);

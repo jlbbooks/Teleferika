@@ -7,8 +7,13 @@ import 'package:teleferika/logger.dart';
 
 class PointsToolView extends StatefulWidget {
   final ProjectModel project;
+  final VoidCallback? onPointsChanged; // Callback for when points are modified
 
-  const PointsToolView({super.key, required this.project});
+  const PointsToolView({
+    super.key,
+    required this.project,
+    this.onPointsChanged, // Add to constructor
+  });
 
   @override
   State<PointsToolView> createState() => PointsToolViewState();
@@ -102,43 +107,72 @@ class PointsToolViewState extends State<PointsToolView> {
   }
 
   // Placeholder for adding a new point - we'll implement this later
-  void _addNewPoint() {
+  void _addNewPoint() async {
     logger.info(
       "Add new point button tapped for project: ${widget.project.name}",
     );
     // TODO: Implement point creation dialog/logic
     // For now, let's simulate adding a point and refresh
     if (widget.project.id != null) {
-      final newPoint = PointModel(
-        projectId: widget.project.id!,
-        // Replace with actual data later (e.g., from GPS or form)
-        latitude: 45.0 + (DateTime.now().second / 100.0), // Dummy data
-        longitude: 14.0 + (DateTime.now().minute / 100.0), // Dummy data
-        ordinalNumber: 0, // This will need logic to determine the next ordinal
-        note: "Test Point ${DateTime.now().toIso8601String()}",
-      );
-      _dbHelper
-          .insertPoint(newPoint)
-          .then((id) {
-            logger.info("Simulated point added with ID: $id. Refreshing list.");
-            _loadPoints(); // Refresh the list
-          })
-          .catchError((error, stackTrace) {
-            logger.severe("Error inserting simulated point", error, stackTrace);
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text("Error adding point: $error"),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          });
-    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Save the project first to add points."),
           backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final nextOrdinal =
+          await _dbHelper.getLastPointOrdinal(widget.project.id!) ?? -1;
+      final newPointOrdinal = nextOrdinal + 1;
+
+      final newPoint = PointModel(
+        projectId: widget.project.id!,
+        // Placeholder coordinates, ideally get from map or user input in a real scenario
+        latitude: 0.0,
+        longitude: 0.0,
+        ordinalNumber: newPointOrdinal,
+        note: 'New point #${newPointOrdinal}',
+      );
+      await _dbHelper.insertPoint(newPoint);
+      logger.info(
+        'Successfully added new point #${newPointOrdinal} for project ID ${widget.project.id}',
+      );
+
+      // AFTER point is inserted, update the project's start/end points
+      await _dbHelper.updateProjectStartEndPoints(widget.project.id!);
+      logger.fine(
+        'Updated start/end points for project ID ${widget.project.id} after adding point.',
+      );
+
+      refreshPoints(); // Refresh current view
+      widget.onPointsChanged?.call(); // Notify parent
+
+      // Remove the "Adding new point..." SnackBar before showing success
+      ScaffoldMessenger.of(context).removeCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Point #${newPointOrdinal} added successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e, stackTrace) {
+      logger.severe(
+        'Error adding new point for project ID ${widget.project.id}',
+        e,
+        stackTrace,
+      );
+
+      // Remove any intermediate SnackBar (like "Adding new point...")
+      ScaffoldMessenger.of(context).removeCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to add new point. Please try again. Error: ${e.toString()}',
+          ),
+          backgroundColor: Colors.red,
         ),
       );
     }
@@ -254,11 +288,12 @@ class PointsToolViewState extends State<PointsToolView> {
           ),
         );
       }
-      // No need to call setState here for _isSelectionMode and _selectedPointIds
-      // because _loadPoints() will be called, which now calls _clearSelection().
-      // However, if _loadPoints wasn't guaranteed to clear it, you would do:
-      // _clearSelection(); // Clear selection state
-      _loadPoints(); // Refresh the list (this will also call _clearSelection)
+      // DBHelper now handles re-sequencing and updating project's start/end IDs
+      _clearSelection(); // Clear selection UI state
+      refreshPoints(); // Refresh the list in this view
+
+      widget.onPointsChanged
+          ?.call(); // Notify parent that points (and project start/end) changed
     } catch (error, stackTrace) {
       logger.severe('Error deleting points', error, stackTrace);
       if (mounted) {

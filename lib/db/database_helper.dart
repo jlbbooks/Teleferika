@@ -188,6 +188,83 @@ class DatabaseHelper {
     );
   }
 
+  /// Fetches all points for a project, sorted by ordinal,
+  /// and updates the project's starting_point_id and ending_point_id.
+  /// Can be called within a transaction by passing the txn object.
+  Future<void> updateProjectStartEndPoints(
+    int projectId, {
+    Transaction? txn,
+  }) async {
+    final dbOrTxn =
+        txn ?? await instance.database; // Use transaction if provided
+
+    final List<Map<String, dynamic>> pointsMaps = await dbOrTxn.query(
+      tablePoints,
+      columns: [columnId, columnOrdinalNumber], // Only need ID and ordinal
+      where: '$columnProjectId = ?',
+      whereArgs: [projectId],
+      orderBy: '$columnOrdinalNumber ASC',
+    );
+
+    int? newStartingPointId;
+    int? newEndingPointId;
+
+    if (pointsMaps.isNotEmpty) {
+      newStartingPointId =
+          pointsMaps.first[columnId] as int?; // First point (ordinal 0)
+      newEndingPointId =
+          pointsMaps.last[columnId] as int?; // Last point (highest ordinal)
+    }
+    // If pointsMaps is empty, both will remain null, effectively clearing them.
+
+    // Get current project's start/end to avoid unnecessary updates
+    final List<Map<String, dynamic>> currentProjectMaps = await dbOrTxn.query(
+      tableProjects,
+      columns: [columnStartingPointId, columnEndingPointId],
+      where: '$columnId = ?',
+      whereArgs: [projectId],
+    );
+
+    bool needsUpdate = false;
+    if (currentProjectMaps.isNotEmpty) {
+      final currentStartId =
+          currentProjectMaps.first[columnStartingPointId] as int?;
+      final currentEndId =
+          currentProjectMaps.first[columnEndingPointId] as int?;
+      if (currentStartId != newStartingPointId ||
+          currentEndId != newEndingPointId) {
+        needsUpdate = true;
+      }
+    } else {
+      // Project not found, should not happen if projectId is valid
+      logger.warning(
+        "Project ID $projectId not found while trying to update start/end points.",
+      );
+      return;
+    }
+
+    if (needsUpdate) {
+      logger.info(
+        "Updating start/end points for project $projectId: StartID: $newStartingPointId, EndID: $newEndingPointId",
+      );
+      await dbOrTxn.update(
+        tableProjects,
+        {
+          columnStartingPointId: newStartingPointId,
+          columnEndingPointId: newEndingPointId,
+          // Also update the last_update timestamp for the project
+          columnLastUpdate: DateTime.now().toIso8601String(),
+        },
+        where: '$columnId = ?',
+        whereArgs: [projectId],
+      );
+    } else {
+      logger.fine(
+        "No change needed for start/end points of project $projectId.",
+      );
+    }
+  }
+
   Future<int> setProjectEndingPoint(int projectId, int? pointId) async {
     Database db = await instance.database;
     String now = DateTime.now().toIso8601String();
@@ -212,6 +289,9 @@ class DatabaseHelper {
   // --- Point Methods ---
   Future<int> insertPoint(PointModel point) async {
     Database db = await instance.database;
+    // The actual updateProjectStartEndPoints will be called from the page state
+    // after successful insertion and ordinal assignment.
+    // However, we still want to update the project's timestamp for any point modification.
     await _updateProjectTimestamp(point.projectId);
     return await db.insert(tablePoints, point.toMap());
   }
@@ -272,7 +352,8 @@ class DatabaseHelper {
         logger.info(
           "Point ID $pointIdToDelete (Ordinal $deletedOrdinal, Project $projectId) deleted and ordinals re-sequenced.",
         );
-        await _updateProjectTimestampWithTransaction(txn, projectId);
+        // AFTER re-sequencing, update the project's start and end points
+        await updateProjectStartEndPoints(projectId, txn: txn);
       }
     });
     return count;
@@ -422,7 +503,6 @@ class DatabaseHelper {
           pointsToDelete.add(p);
         }
       }
-
       if (pointsToDelete.isEmpty) {
         logger.info("No valid points found for deletion from IDs: $ids");
         return;
@@ -474,7 +554,8 @@ class DatabaseHelper {
             }
           }
           logger.info("Re-sequenced ordinals for project ID $projectId.");
-          await _updateProjectTimestampWithTransaction(txn, projectId);
+          // AFTER re-sequencing for this project, update its start and end points
+          await updateProjectStartEndPoints(projectId, txn: txn);
         }
       }
     });
