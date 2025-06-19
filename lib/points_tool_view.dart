@@ -4,6 +4,7 @@ import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/logger.dart';
+import 'package:teleferika/point_details_page.dart';
 
 class PointsToolView extends StatefulWidget {
   final ProjectModel project;
@@ -428,18 +429,42 @@ class PointsToolViewState extends State<PointsToolView> {
   // --- End Widget Building Helper Methods ---
 
   // --- Point Item Interaction Handlers ---
-  void _handlePointTap(PointModel point) {
+  Future<void> _handlePointTap(PointModel point) async {
+    // Make it async
     if (_isSelectionMode) {
       if (point.id != null) {
         _togglePointSelection(point.id!);
       }
     } else {
-      // TODO: Implement point details view or other non-selection tap action
+      // Non-selection mode tap: Navigate to detail page
       logger.info(
-        "Tapped on point ID: ${point.id}. Project: ${widget.project.name}",
+        "Tapped on point ID: ${point.id} (P${point.ordinalNumber}). Navigating to details.",
       );
-      // Example: Navigate to a detail screen
-      // TODO: Navigator.push(context, MaterialPageRoute(builder: (context) => PointDetailPage(point: point)));
+      if (!mounted) return; // Guard against navigation if widget is disposed
+
+      // Navigate to PointDetailsPage and wait for a result
+      final result = await Navigator.push<PointModel?>(
+        // Expect PointModel or null
+        context,
+        MaterialPageRoute(builder: (context) => PointDetailsPage(point: point)),
+      );
+
+      // If the page returned a result (meaning point was updated and saved)
+      if (result != null) {
+        logger.info(
+          "Returned from PointDetailsPage for P${point.ordinalNumber}. Point was updated. Refreshing list.",
+        );
+        // `result` is the updated PointModel
+        // Refresh the list to show any changes
+        await _loadPoints(); // Reloads all points for the project
+
+        // Optionally, if you want to notify the overall project page too:
+        widget.onPointsChanged?.call();
+      } else {
+        logger.info(
+          "Returned from PointDetailsPage for P${point.ordinalNumber}. No update reported.",
+        );
+      }
     }
   }
 
