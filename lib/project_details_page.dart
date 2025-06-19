@@ -201,6 +201,27 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     );
   }
 
+  AppBar _appBar() {
+    return AppBar(
+      title: Text(
+        widget.project.name.isNotEmpty && _nameController.text.isNotEmpty
+            ? _nameController
+                  .text // Use controller text for potentially unsaved name
+            : (widget.project.name.isNotEmpty
+                  ? widget.project.name
+                  : "Project Details"),
+      ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.save),
+          tooltip: 'Save Project',
+          onPressed:
+              _saveProjectDetails, // This will now trigger form validation first
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     String formattedProjectDate = _projectDate != null
@@ -214,24 +235,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     bool isMainFormVisible = _activeCardTool == null;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.project.name.isNotEmpty && _nameController.text.isNotEmpty
-              ? _nameController
-                    .text // Use controller text for potentially unsaved name
-              : (widget.project.name.isNotEmpty
-                    ? widget.project.name
-                    : "Project Details"),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
-            tooltip: 'Save Project',
-            onPressed:
-                _saveProjectDetails, // This will now trigger form validation first
-          ),
-        ],
-      ),
+      appBar: _appBar(),
       // --- WRAP MAIN CONTENT WITH FORM ---
       body: Form(
         key: _formKey, // Assign the key to the Form
@@ -240,14 +244,6 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              Container(
-                padding: const EdgeInsets.only(top: 10.0, bottom: 20.0),
-                alignment: Alignment.center,
-                child: const Text(
-                  'Teleferika',
-                  style: TextStyle(fontSize: 30.0, fontWeight: FontWeight.bold),
-                ),
-              ),
               Card(
                 elevation: 2.0,
                 margin: const EdgeInsets.symmetric(vertical: 10.0),
@@ -263,25 +259,51 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: <Widget>[
-                          _buildCardToolButton(
-                            tool: ActiveCardTool.compass,
-                            icon: Icons.explore_outlined,
-                            label: 'Compass',
-                          ),
-                          _buildCardToolButton(
-                            tool: ActiveCardTool.points,
-                            icon: Icons.list_alt_outlined,
-                            label: 'Points',
-                          ),
-                          _buildCardToolButton(
-                            tool: ActiveCardTool.map,
-                            icon: Icons.map_outlined,
-                            label: 'Map',
-                          ),
-                        ],
+                      LayoutBuilder(
+                        builder:
+                            (BuildContext context, BoxConstraints constraints) {
+                              // Define a threshold for switching layout
+                              // You might need to adjust this value based on testing
+                              const double narrowLayoutThreshold =
+                                  350.0; // e.g., for total width of 3 buttons
+                              const double buttonSpacing =
+                                  8.0; // spacing between buttons
+
+                              bool useVerticalLayout =
+                                  constraints.maxWidth < narrowLayoutThreshold;
+
+                              return Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: <Widget>[
+                                  _buildCardToolButton(
+                                    tool: ActiveCardTool.compass,
+                                    icon: Icons.explore_outlined,
+                                    label: 'Compass',
+                                    useVerticalLayout:
+                                        useVerticalLayout, // Pass the flag
+                                  ),
+                                  if (useVerticalLayout)
+                                    const SizedBox(width: buttonSpacing),
+                                  _buildCardToolButton(
+                                    tool: ActiveCardTool.points,
+                                    icon: Icons.list_alt_outlined,
+                                    label: 'Points',
+                                    useVerticalLayout:
+                                        useVerticalLayout, // Pass the flag
+                                  ),
+                                  if (useVerticalLayout)
+                                    const SizedBox(width: buttonSpacing),
+                                  _buildCardToolButton(
+                                    tool: ActiveCardTool.map,
+                                    icon: Icons.map_outlined,
+                                    label: 'Map',
+                                    useVerticalLayout:
+                                        useVerticalLayout, // Pass the flag
+                                  ),
+                                ],
+                              );
+                            },
                       ),
                     ],
                   ),
@@ -416,23 +438,60 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     required ActiveCardTool tool,
     required IconData icon,
     required String label,
+    required bool useVerticalLayout, // New parameter
   }) {
     bool isActive = _activeCardTool == tool;
-    return ElevatedButton.icon(
-      icon: Icon(icon, size: 20),
-      label: Text(label),
-      style: ElevatedButton.styleFrom(
-        foregroundColor: isActive
-            ? Theme.of(context).colorScheme.onPrimary
-            : null,
-        backgroundColor: isActive
-            ? Theme.of(context).colorScheme.primary
-            : null,
-        // You can add more styling for active state, e.g., side borders
-        // side: isActive ? BorderSide(color: Theme.of(context).colorScheme.primary, width: 2) : null,
-      ),
-      onPressed: () => _toggleActiveCardTool(tool),
+    final Color? activeForegroundColor = isActive
+        ? Theme.of(context).colorScheme.onPrimary
+        : null;
+    final Color? activeBackgroundColor = isActive
+        ? Theme.of(context).colorScheme.primary
+        : null;
+    final ButtonStyle activeStyle = ElevatedButton.styleFrom(
+      foregroundColor: activeForegroundColor,
+      backgroundColor: activeBackgroundColor,
+      padding: useVerticalLayout
+          ? const EdgeInsets.symmetric(
+              vertical: 8.0,
+              horizontal: 4.0,
+            ) // Adjust padding for vertical
+          : const EdgeInsets.symmetric(
+              horizontal: 12.0,
+              vertical: 8.0,
+            ), // Original or adjusted padding
+      textStyle: const TextStyle(
+        fontSize: 12,
+      ), // Potentially smaller text for vertical
     );
+
+    if (useVerticalLayout) {
+      return Expanded(
+        // Ensure buttons take up available space in the Row
+        child: ElevatedButton(
+          style: activeStyle,
+          onPressed: () => _toggleActiveCardTool(tool),
+          child: Column(
+            mainAxisSize:
+                MainAxisSize.min, // So the column doesn't expand unnecessarily
+            children: <Widget>[
+              Icon(icon, size: 24), // Adjust size as needed
+              const SizedBox(height: 4), // Space between icon and label
+              Text(label, textAlign: TextAlign.center),
+            ],
+          ),
+        ),
+      );
+    } else {
+      // Using Flexible or Expanded so buttons can share space,
+      // but ElevatedButton.icon already handles its sizing well.
+      // If they still overflow, wrap with Expanded.
+      return ElevatedButton.icon(
+        style: activeStyle,
+        icon: Icon(icon, size: 20),
+        label: Text(label),
+        onPressed: () => _toggleActiveCardTool(tool),
+      );
+    }
   }
 
   Widget _buildActiveToolView() {
