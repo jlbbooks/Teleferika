@@ -29,12 +29,12 @@ class PointModel {
 
   factory PointModel.fromMap(Map<String, dynamic> map) {
     return PointModel(
-      id: map['id'],
-      projectId: map['project_id'],
-      latitude: map['latitude'],
-      longitude: map['longitude'],
-      ordinalNumber: map['ordinal_number'],
-      note: map['note'],
+      id: map['id'] as int?, // Ensure correct type casting from map
+      projectId: map['project_id'] as int,
+      latitude: map['latitude'] as double,
+      longitude: map['longitude'] as double,
+      ordinalNumber: map['ordinal_number'] as int,
+      note: map['note'] as String?,
     );
   }
 

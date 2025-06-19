@@ -319,6 +319,21 @@ class DatabaseHelper {
     });
   }
 
+  Future<int> deletePointsByIds(List<int> ids) async {
+    if (ids.isEmpty) return 0;
+    final db = await instance.database;
+    // Using a transaction for batch delete can be more efficient if supported,
+    // but for simplicity, a loop or a single query with 'IN' clause works.
+    final String placeholders = ids.map((_) => '?').join(',');
+    final int count = await db.delete(
+      tablePoints,
+      where: 'id IN ($placeholders)',
+      whereArgs: ids,
+    );
+    logger.info("Deleted $count rows from $tablePoints where ids were in $ids");
+    return count;
+  }
+
   Future<PointModel?> getPointById(int id) async {
     Database db = await instance.database;
     final List<Map<String, dynamic>> maps = await db.query(
