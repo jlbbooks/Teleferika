@@ -4,19 +4,23 @@ import 'dart:math' as math; // For PI
 
 import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
-import 'package:permission_handler/permission_handler.dart'; // For requesting permissions
+import 'package:permission_handler/permission_handler.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/logger.dart';
 
+// Define a typedef for the callback function for clarity
+typedef AddPointFromCompassCallback = void Function(double heading);
+
 class CompassToolView extends StatefulWidget {
   final ProjectModel project;
+  final AddPointFromCompassCallback? onAddPointFromCompass;
   // You can add callbacks, e.g., for when "Add Point" is pressed
   // final Function(double heading, LatLng location)? onAddPoint;
 
   const CompassToolView({
     super.key,
     required this.project,
-    // this.onAddPoint,
+    this.onAddPointFromCompass,
   });
 
   @override
@@ -27,6 +31,7 @@ class _CompassToolViewState extends State<CompassToolView> {
   double? _heading; // Current heading from the compass
   StreamSubscription<CompassEvent>? _compassSubscription;
   bool _hasPermissions = false;
+
   @override
   void initState() {
     super.initState();
@@ -55,7 +60,7 @@ class _CompassToolViewState extends State<CompassToolView> {
       setState(() {
         _hasPermissions = false;
       });
-      // Optionally, show a message to the user or guide them to settings.
+      // TODO: Optionally, show a message to the user or guide them to settings.
     }
   }
 
@@ -76,20 +81,21 @@ class _CompassToolViewState extends State<CompassToolView> {
     super.dispose();
   }
 
-  void _handleAddPoint() {
+  void _handleAddPointPressed() {
     if (_heading != null) {
       logger.info(
-        "Add Point button tapped. Current Heading: ${_heading!.toStringAsFixed(1)}°",
+        "Add Point button tapped in Compass. Current Heading: ${_heading!.toStringAsFixed(1)}°",
       );
-      // Here you would typically get the current location (e.g., using geolocator plugin)
-      // and then call a method to save this point, potentially using a callback:
-      // widget.onAddPoint?.call(_heading!, currentLocation);
+      // Invoke the callback passed from the parent widget
+      widget.onAddPointFromCompass?.call(_heading!);
+
+      // Show immediate feedback in CompassToolView
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Point added (simulated) at heading: ${_heading!.toStringAsFixed(1)}°',
+            'Add Point signal sent with heading: ${_heading!.toStringAsFixed(1)}°',
           ),
-          backgroundColor: Colors.green,
+          backgroundColor: Colors.blueAccent, // Different color to distinguish
         ),
       );
     } else {
@@ -164,9 +170,7 @@ class _CompassToolViewState extends State<CompassToolView> {
               // The phone's heading tells you where North is relative to the phone's top.
               // So, to make the compass image point North correctly, you rotate it by -_heading.
               angle: (_heading != null) ? (-(_heading!) * (math.pi / 180)) : 0,
-              child: Image.asset(
-                'assets/images/compass-rose.png',
-              ), // Ensure you have this image
+              child: Image.asset('assets/images/compass-rose.png'),
             ),
           ),
 
@@ -180,12 +184,12 @@ class _CompassToolViewState extends State<CompassToolView> {
           // --- Add Point Button ---
           ElevatedButton.icon(
             icon: const Icon(Icons.add_location_alt_outlined),
-            label: const Text('Add Point'),
+            label: const Text('Add Point with Current Heading'),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               textStyle: const TextStyle(fontSize: 16),
             ),
-            onPressed: _handleAddPoint,
+            onPressed: _handleAddPointPressed,
           ),
           const SizedBox(height: 10),
           Text(

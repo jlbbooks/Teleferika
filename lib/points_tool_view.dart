@@ -11,10 +11,10 @@ class PointsToolView extends StatefulWidget {
   const PointsToolView({super.key, required this.project});
 
   @override
-  State<PointsToolView> createState() => _PointsToolViewState();
+  State<PointsToolView> createState() => PointsToolViewState();
 }
 
-class _PointsToolViewState extends State<PointsToolView> {
+class PointsToolViewState extends State<PointsToolView> {
   late Future<List<PointModel>> _pointsFuture;
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
@@ -26,6 +26,12 @@ class _PointsToolViewState extends State<PointsToolView> {
   @override
   void initState() {
     super.initState();
+    _loadPoints();
+  }
+
+  // Make _loadPoints public or create a new public refresh method
+  void refreshPoints() {
+    logger.info("PointsToolView: External refresh requested.");
     _loadPoints();
   }
 

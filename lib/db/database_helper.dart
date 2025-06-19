@@ -211,7 +211,7 @@ class DatabaseHelper {
     );
   }
 
-  // --- Point Methods --- (No changes needed here for this step)
+  // --- Point Methods ---
   Future<int> insertPoint(PointModel point) async {
     Database db = await instance.database;
     // Potentially update the parent project's last_update timestamp
@@ -247,7 +247,22 @@ class DatabaseHelper {
     );
   }
 
-  // --- Image Methods --- (No changes needed here for this step)
+  Future<int?> getLastPointOrdinal(int projectId) async {
+    final db = await instance.database;
+    final List<Map<String, dynamic>> result = await db.query(
+      tablePoints,
+      columns: ['MAX(ordinal_number) as max_ordinal'],
+      where: 'project_id = ?',
+      whereArgs: [projectId],
+    );
+
+    if (result.isNotEmpty && result.first['max_ordinal'] != null) {
+      return result.first['max_ordinal'] as int?;
+    }
+    return null; // No points yet for this project
+  }
+
+  // --- Image Methods ---
   Future<int> insertImage(ImageModel image) async {
     Database db = await instance.database;
     // Potentially update the parent project's last_update timestamp

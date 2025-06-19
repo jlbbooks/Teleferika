@@ -1,10 +1,12 @@
 // project_details_page.dart
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:teleferika/points_tool_view.dart';
 
 import 'compass_tool_view.dart';
 import 'db/database_helper.dart'; // Ensure correct path
+import 'db/models/point_model.dart';
 import 'db/models/project_model.dart'; // Ensure correct path
 import 'logger.dart';
 import 'map_tool_view.dart';
@@ -31,10 +33,13 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
 
   ActiveCardTool? _activeCardTool; // To track the currently active Card button
 
-  // GlobalKey for the Form
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+
+  // GlobalKey to access PointsToolView's state if needed for refresh
+  // This is one way to trigger refresh. Another is to manage points list here.
+  final GlobalKey<PointsToolViewState> _pointsToolViewKey =
+      GlobalKey<PointsToolViewState>();
 
   @override
   void initState() {
@@ -66,6 +71,111 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
       logger.info("Active Card tool toggled to: $_activeCardTool");
     });
   }
+
+  // --- Logic for Adding Point from Compass ---
+  Future<Position> _determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      logger.warning('Location services are disabled.');
+      throw Exception('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        logger.warning('Location permissions are denied.');
+        throw Exception('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      logger.warning(
+        'Location permissions are permanently denied, we cannot request permissions.',
+      );
+      throw Exception(
+        'Location permissions are permanently denied, we cannot request permissions.',
+      );
+    }
+    return await Geolocator.getCurrentPosition();
+  }
+
+  Future<int> _getNextOrdinalNumber(int projectId) async {
+    final lastOrdinal = await _dbHelper.getLastPointOrdinal(projectId);
+    return (lastOrdinal ?? -1) + 1; // If no points, next ordinal is 0
+  }
+
+  Future<void> _initiateAddPointFromCompass(double heading) async {
+    if (widget.project.id == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please save the project before adding points.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Fetching location...'),
+          duration: Duration(seconds: 2), // Short duration
+        ),
+      );
+
+      final position = await _determinePosition();
+      final nextOrdinal = await _getNextOrdinalNumber(widget.project.id!);
+
+      final newPoint = PointModel(
+        projectId: widget.project.id!,
+        latitude: position.latitude,
+        longitude: position.longitude,
+        ordinalNumber: nextOrdinal,
+        // You might want a default note or a way to add one later
+        note: 'Point from Compass (H: ${heading.toStringAsFixed(1)}°)',
+      );
+
+      final newPointId = await _dbHelper.insertPoint(newPoint);
+      logger.info(
+        'Point added via Compass: ID $newPointId, Lat: ${position.latitude}, Lon: ${position.longitude}, Heading used for note: $heading, Ordinal: $nextOrdinal',
+      );
+
+      ScaffoldMessenger.of(
+        context,
+      ).removeCurrentSnackBar(); // Remove "Fetching location..."
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Point #$nextOrdinal added at Lat: ${position.latitude.toStringAsFixed(4)}, Lon: ${position.longitude.toStringAsFixed(4)}',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      // Refresh PointsToolView if it's active or if you always want it updated
+      _pointsToolViewKey.currentState
+          ?.refreshPoints(); // Call refreshPoints on PointsToolView
+
+      // Optionally, if the compass tool is active, and you want to switch to points view:
+      if (_activeCardTool == ActiveCardTool.compass) {
+        _toggleActiveCardTool(ActiveCardTool.points);
+      }
+    } catch (e, stackTrace) {
+      logger.severe("Error adding point from compass", e, stackTrace);
+      ScaffoldMessenger.of(context).removeCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error adding point: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+  // --- End Logic for Adding Point ---
 
   Future<void> _saveProjectDetails() async {
     // TODO: IMPORTANT: If a card tool is active, the form is not visible.
@@ -524,15 +634,20 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
   Widget _buildActiveToolView() {
     switch (_activeCardTool) {
       case ActiveCardTool.compass:
-        return CompassToolView(project: widget.project); // Pass necessary data
+        return CompassToolView(
+          project: widget.project,
+          onAddPointFromCompass:
+              _initiateAddPointFromCompass, // Pass the callback
+        );
       case ActiveCardTool.points:
-        return PointsToolView(project: widget.project); // Pass necessary data
+        return PointsToolView(
+          key: _pointsToolViewKey, // Assign the GlobalKey
+          project: widget.project,
+        );
       case ActiveCardTool.map:
-        return MapToolView(project: widget.project); // Pass necessary data
-      case null:
-        // This case should ideally not be reached if isMainFormVisible handles it,
-        // but as a fallback:
-        return const SizedBox.shrink(); // Or an error message
+        return MapToolView(project: widget.project);
+      default:
+        return const SizedBox.shrink();
     }
   }
 
