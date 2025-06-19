@@ -108,6 +108,44 @@ class _CompassToolViewState extends State<CompassToolView> {
     }
   }
 
+  Widget _buildProjectAzimuthText() {
+    String azimuthText;
+    Color textColor =
+        Theme.of(context).textTheme.bodySmall?.color ?? Colors.black;
+    bool hasCalculatedAzimuth = widget.project.azimuth != null;
+
+    if (hasCalculatedAzimuth) {
+      azimuthText =
+          'Project Azimuth: ${widget.project.azimuth!.toStringAsFixed(1)}°';
+    } else {
+      // Inferring message based on null azimuth.
+      // The actual check for 2 points for calculation happens elsewhere (e.g. ProjectDetailsPage)
+      if (widget.project.startingPointId == null ||
+          widget.project.endingPointId == null) {
+        azimuthText = 'Project Azimuth: (Requires at least 2 points)';
+        textColor = Colors.orange.shade700;
+      } else {
+        // This case might mean calculation hasn't been explicitly triggered yet
+        // or resulted in null for other reasons.
+        azimuthText = 'Project Azimuth: Not yet calculated';
+        textColor = Colors.grey.shade600;
+      }
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(
+        top: 8.0,
+      ), // Add some spacing from the coordinates
+      child: Text(
+        azimuthText,
+        style: Theme.of(
+          context,
+        ).textTheme.bodySmall?.copyWith(color: textColor),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_hasPermissions) {
@@ -207,10 +245,10 @@ class _CompassToolViewState extends State<CompassToolView> {
                         (projectAzimuthArrowRotationDegrees * (math.pi / 180)),
                     child: Image.asset(
                       'assets/images/direction_arrow.png',
-                      width: 200, // Adjust size to be smaller than compass rose
-                      height: 200,
+                      width: 180, // Adjust size to be smaller than compass rose
+                      height: 180,
                       color: Colors.blueGrey.withAlpha(
-                        (0.6 * 255).round(),
+                        (0.7 * 255).round(),
                       ), // Optional: color the arrow
                     ),
                   ),
@@ -234,6 +272,7 @@ class _CompassToolViewState extends State<CompassToolView> {
             ),
             onPressed: _handleAddPointPressed,
           ),
+          _buildProjectAzimuthText(),
         ],
       ),
     );
