@@ -142,6 +142,24 @@ class _CompassToolViewState extends State<CompassToolView> {
       );
     }
 
+    // Determine the rotation for the project azimuth arrow
+    double projectAzimuthArrowRotationDegrees = 0;
+    if (widget.project.azimuth != null && _heading != null) {
+      // The arrow should point to project.azimuth relative to true North.
+      // The compass image is rotated by -_heading to keep its "North" marking pointing to true North.
+      // So, the arrow, overlaid on this compass, needs to be rotated such that
+      // its final orientation aligns with project.azimuth.
+      // If the arrow image itself points "up" (0 degrees),
+      // we rotate it by (project.azimuth - _heading).
+      projectAzimuthArrowRotationDegrees = widget.project.azimuth! - _heading!;
+    } else if (widget.project.azimuth != null && _heading == null) {
+      // If heading is not yet available, but we have a project azimuth,
+      // just point the arrow to project.azimuth relative to the phone's top for now.
+      // This might not be perfectly aligned with the (not yet rotated) compass rose
+      // but gives an initial direction.
+      projectAzimuthArrowRotationDegrees = widget.project.azimuth!;
+    }
+
     return Container(
       padding: const EdgeInsets.all(16.0),
       alignment: Alignment.center,
@@ -161,19 +179,44 @@ class _CompassToolViewState extends State<CompassToolView> {
           ),
           const SizedBox(height: 20),
 
-          // --- Compass Rose ---
+          // --- Compass Rose and Project Azimuth Arrow ---
           SizedBox(
             width: 250, // Adjust size as needed
             height: 250,
-            child: Transform.rotate(
-              // The compass image itself might be oriented with North (0 degrees) at the top.
-              // The phone's heading tells you where North is relative to the phone's top.
-              // So, to make the compass image point North correctly, you rotate it by -_heading.
-              angle: (_heading != null) ? (-(_heading!) * (math.pi / 180)) : 0,
-              child: Image.asset('assets/images/compass-rose.png'),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // 1. Compass Rose (Rotates to keep North up)
+                Transform.rotate(
+                  // The compass image itself might be oriented with North (0 degrees) at the top.
+                  // The phone's heading tells you where North is relative to the phone's top.
+                  // So, to make the compass image point North correctly, you rotate it by -_heading.
+                  angle: (_heading != null)
+                      ? (-(_heading!) * (math.pi / 180))
+                      : 0,
+                  child: Image.asset('assets/images/compass_rose.png'),
+                ),
+                // 2. Project Azimuth Arrow (Conditionally displayed and rotated)
+                if (widget.project.azimuth != null)
+                  Transform.rotate(
+                    // The arrow's angle is relative to the phone's top.
+                    // If compass rose image North is at its top, and project azimuth is X,
+                    // and phone's top is currently facing Y (_heading),
+                    // then the arrow on screen should be rotated by (X - Y)
+                    angle:
+                        (projectAzimuthArrowRotationDegrees * (math.pi / 180)),
+                    child: Image.asset(
+                      'assets/images/direction_arrow.png',
+                      width: 200, // Adjust size to be smaller than compass rose
+                      height: 200,
+                      color: Colors.blueGrey.withAlpha(
+                        (0.6 * 255).round(),
+                      ), // Optional: color the arrow
+                    ),
+                  ),
+              ],
             ),
           ),
-
           // Alternative: CustomPaint for a drawn compass (more complex but flexible)
           // child: CustomPaint(
           //   size: const Size(200, 200),
@@ -190,11 +233,6 @@ class _CompassToolViewState extends State<CompassToolView> {
               textStyle: const TextStyle(fontSize: 16),
             ),
             onPressed: _handleAddPointPressed,
-          ),
-          const SizedBox(height: 10),
-          Text(
-            'Project: ${widget.project.name}',
-            style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
       ),
