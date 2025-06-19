@@ -127,16 +127,24 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
         logger.info(
           "New project created with ID: $newId and Name: ${projectToSave.name}",
         );
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Project "${projectToSave.name}" created.'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: popupDuration),
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Project "${projectToSave.name}" created.'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: popupDuration),
+            ),
+          );
+        }
         await Future.delayed(Duration(seconds: popupDuration));
         // Pop with details for the new project
-        Navigator.pop(context, {'modified': true, 'id': newId, 'isNew': true});
+        if (mounted) {
+          Navigator.pop(context, {
+            'modified': true,
+            'id': newId,
+            'isNew': true,
+          });
+        }
       } else {
         await _dbHelper.updateProject(projectToSave);
         setState(() {
@@ -148,24 +156,30 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
           widget.project.lastUpdate = projectToSave.lastUpdate;
         });
         logger.info("Project details updated: ${projectToSave.name}");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Project "${projectToSave.name}" updated.'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: popupDuration),
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Project "${projectToSave.name}" updated.'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: popupDuration),
+            ),
+          );
+        }
         // await Future.delayed(Duration(seconds: popupDuration)); // Optional delay
-        Navigator.pop(context, {'modified': true, 'id': projectToSave.id});
+        if (mounted) {
+          Navigator.pop(context, {'modified': true, 'id': projectToSave.id});
+        }
       }
     } catch (e, stackTrace) {
       logger.severe("Error saving project details", e, stackTrace);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error saving project: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving project: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

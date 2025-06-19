@@ -119,12 +119,14 @@ class _PointsToolViewState extends State<PointsToolView> {
           })
           .catchError((error, stackTrace) {
             logger.severe("Error inserting simulated point", error, stackTrace);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text("Error adding point: $error"),
-                backgroundColor: Colors.red,
-              ),
-            );
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text("Error adding point: $error"),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
           });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -237,12 +239,14 @@ class _PointsToolViewState extends State<PointsToolView> {
         _selectedPointIds.toList(),
       );
       logger.info('Successfully deleted $count points.');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('$count point(s) deleted.'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$count point(s) deleted.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
       // No need to call setState here for _isSelectionMode and _selectedPointIds
       // because _loadPoints() will be called, which now calls _clearSelection().
       // However, if _loadPoints wasn't guaranteed to clear it, you would do:
@@ -250,12 +254,14 @@ class _PointsToolViewState extends State<PointsToolView> {
       _loadPoints(); // Refresh the list (this will also call _clearSelection)
     } catch (error, stackTrace) {
       logger.severe('Error deleting points', error, stackTrace);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error deleting points: $error'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting points: $error'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
   // --- End Delete Logic ---
@@ -302,13 +308,18 @@ class _PointsToolViewState extends State<PointsToolView> {
                 final point = points[index];
                 final bool isSelected = _selectedPointIds.contains(point.id);
 
+                // Get the base color
+                final Color baseColor = Theme.of(context).primaryColorLight;
+                // Define the opacity value
+                const double selectedOpacity = 0.3;
+
                 return Card(
                   margin: const EdgeInsets.symmetric(
                     horizontal: 12.0,
                     vertical: 4.0,
                   ),
                   color: isSelected
-                      ? Theme.of(context).primaryColorLight.withOpacity(0.3)
+                      ? baseColor.withAlpha((selectedOpacity * 255).round())
                       : null, // Highlight selected
                   child: ListTile(
                     leading: _isSelectionMode

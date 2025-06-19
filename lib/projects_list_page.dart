@@ -156,22 +156,28 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
           await _dbHelper.deleteProject(id);
         }
         logger.info("${_selectedProjectIds.length} project(s) deleted.");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${_selectedProjectIds.length} project(s) deleted.'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                '${_selectedProjectIds.length} project(s) deleted.',
+              ),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
         _exitSelectionMode();
         _refreshProjectsList();
       } catch (e, stackTrace) {
         logger.severe("Error deleting projects", e, stackTrace);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error deleting projects: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error deleting projects: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
