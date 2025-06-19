@@ -411,6 +411,8 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
           backgroundColor: Colors.orange,
         ),
       );
+      _azimuthController.text = '';
+      widget.project.azimuth = null;
       return;
     }
 
@@ -423,6 +425,8 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
           backgroundColor: Colors.orange,
         ),
       );
+      _azimuthController.text = '';
+      widget.project.azimuth = null;
       return;
     }
 
