@@ -65,12 +65,24 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
   late DateTime? _projectDate;
   late DateTime? _lastUpdateTime;
 
+  late ProjectModel _currentProject;
+
   ActiveCardTool? _activeCardTool; // To track the currently active Card button
 
-  // To track if any modifications were made that should be reported back
-  bool _projectWasModifiedSinceLoad = false;
+  // Tracks if the form fields have changes not yet saved
+  bool _isFormCurrentlyDirty = false;
+  bool _isLoading = false;
+
+  // Tracks if a save occurred this session
+  bool _projectWasSavedThisSession = false;
+
   // To know if the project was new when the page was opened
   bool _isNewProjectOnLoad = false;
+  // Store initial values to compare against for dirty checking
+  String? _initialName;
+  String? _initialNote;
+  String? _initialAzimuthText;
+  DateTime? _initialProjectDate;
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
@@ -83,62 +95,105 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
   @override
   void initState() {
     super.initState();
-    _isNewProjectOnLoad = widget.project.id == null;
-    _nameController = TextEditingController(text: widget.project.name);
-    _noteController = TextEditingController(text: widget.project.note ?? '');
+    _currentProject =
+        widget.project; // Initialize with the project passed to the widget
+
+    _isNewProjectOnLoad = _currentProject.id == null;
+    _nameController = TextEditingController(text: _currentProject.name);
+    _noteController = TextEditingController(text: _currentProject.note ?? '');
     _azimuthController = TextEditingController(
-      text: widget.project.azimuth?.toStringAsFixed(2) ?? '',
+      text: _currentProject.azimuth?.toStringAsFixed(2) ?? '',
     );
     _projectDate =
-        widget.project.date ?? (_isNewProjectOnLoad ? DateTime.now() : null);
-    _lastUpdateTime = widget.project.lastUpdate;
+        _currentProject.date ?? (_isNewProjectOnLoad ? DateTime.now() : null);
+    _lastUpdateTime = _currentProject.lastUpdate;
+
+    _setInitialFormValuesAndResetDirtyState(); // Set baseline and mark form as not dirty
+
+    // Add listeners
+    _nameController.addListener(_handleFormChange);
+    _noteController.addListener(_handleFormChange);
+    _azimuthController.addListener(_handleFormChange);
 
     if (!_isNewProjectOnLoad) {
       // Only load if it's an existing project
       _loadProjectDetails();
     } else {
       logger.info(
-        "ProjectDetailsPage initialized for a NEW project. Name: ${widget.project.name}",
+        "ProjectDetailsPage initialized for a NEW project. Name: ${_currentProject.name}",
       );
     }
   }
 
   Future<void> _loadProjectDetails() async {
-    if (widget.project.id == null) return;
-    ProjectModel? updatedProject = await _dbHelper.getProjectById(
-      widget.project.id!,
-    );
-    if (updatedProject != null && mounted) {
-      setState(() {
-        // Update the local widget.project instance which is used by UI elements
-        // This is important because widget.project is final.
-        // We can't directly assign widget.project = updatedProject
-        // So we update its mutable properties.
-        widget.project.name = updatedProject.name;
-        widget.project.note = updatedProject.note;
-        widget.project.azimuth = updatedProject.azimuth;
-        widget.project.date = updatedProject.date;
-        widget.project.lastUpdate = updatedProject.lastUpdate;
-        widget.project.startingPointId = updatedProject.startingPointId;
-        widget.project.endingPointId = updatedProject.endingPointId;
+    if (_currentProject.id == null) return;
+    setStateIfMounted(() => _isLoading = true);
+    try {
+      final projectDataFromDb = await _dbHelper.getProjectById(
+        _currentProject.id!,
+      );
+      if (projectDataFromDb != null && mounted) {
+        setState(() {
+          _currentProject = (projectDataFromDb);
 
-        // Also update controllers if they are not reflecting an unsaved state
-        _nameController.text = updatedProject.name;
-        _noteController.text = updatedProject.note ?? '';
-        _azimuthController.text =
-            updatedProject.azimuth?.toStringAsFixed(2) ?? '';
-        _projectDate = updatedProject.date;
-        _lastUpdateTime = updatedProject.lastUpdate;
-      });
+          _nameController.text = _currentProject.name;
+          _noteController.text = _currentProject.note ?? '';
+          _azimuthController.text =
+              _currentProject.azimuth?.toStringAsFixed(2) ?? '';
+          _projectDate = _currentProject.date;
+          _lastUpdateTime = _currentProject.lastUpdate;
+
+          // After loading data and updating controllers, reset the baseline
+          _setInitialFormValuesAndResetDirtyState();
+        });
+      }
+    } catch (e, stackTrace) {
+      // TODO: errors
+      /* ... error handling ... */
+    } finally {
+      setStateIfMounted(() => _isLoading = false);
     }
   }
 
   @override
   void dispose() {
+    _nameController.removeListener(_handleFormChange);
+    _noteController.removeListener(_handleFormChange);
+    _azimuthController.removeListener(_handleFormChange);
     _nameController.dispose();
     _noteController.dispose();
     _azimuthController.dispose();
     super.dispose();
+  }
+
+  void _setInitialFormValuesAndResetDirtyState() {
+    _initialName = _nameController.text;
+    _initialNote = _noteController.text;
+    _initialAzimuthText = _azimuthController.text;
+    _initialProjectDate = _projectDate;
+
+    if (mounted && _isFormCurrentlyDirty) {
+      setState(() {
+        _isFormCurrentlyDirty = false;
+      });
+    } else {
+      _isFormCurrentlyDirty =
+          false; // Directly set if not mounted or no change needed
+    }
+  }
+
+  void _handleFormChange() {
+    final bool changed =
+        _nameController.text != _initialName ||
+        _noteController.text != _initialNote ||
+        _azimuthController.text != _initialAzimuthText ||
+        _projectDate != _initialProjectDate;
+
+    if (changed != _isFormCurrentlyDirty) {
+      setStateIfMounted(() {
+        _isFormCurrentlyDirty = changed;
+      });
+    }
   }
 
   void _toggleActiveCardTool(ActiveCardTool? tool) {
@@ -189,7 +244,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
   }
 
   Future<void> _initiateAddPointFromCompass(double heading) async {
-    if (widget.project.id == null) {
+    if (_currentProject.id == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please save the project before adding points.'),
@@ -208,10 +263,10 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
       );
 
       final position = await _determinePosition();
-      final nextOrdinal = await _getNextOrdinalNumber(widget.project.id!);
+      final nextOrdinal = await _getNextOrdinalNumber(_currentProject.id!);
 
       final newPoint = PointModel(
-        projectId: widget.project.id!,
+        projectId: _currentProject.id!,
         latitude: position.latitude,
         longitude: position.longitude,
         ordinalNumber: nextOrdinal,
@@ -225,7 +280,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
       );
 
       // AFTER point is inserted, update the project's start/end points
-      await _dbHelper.updateProjectStartEndPoints(widget.project.id!);
+      await _dbHelper.updateProjectStartEndPoints(_currentProject.id!);
       await _loadProjectDetails(); // Reload project to get updated start/end IDs for the UI
 
       if (mounted) {
@@ -266,140 +321,177 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
   // --- End Logic for Adding Point ---
 
   Future<void> _saveProjectDetails() async {
-    // TODO: IMPORTANT: If a card tool is active, the form is not visible.
-    // Saving might not make sense or should save only what's always visible (if anything).
-    // For now, let's assume save is primarily for the main form.
+    // 1. Check if there are actual changes to save or if it's a new project
+    //    (New projects can be "saved" even if no fields were touched yet, to create the initial record)
+    if (!_isFormCurrentlyDirty && !_isNewProjectOnLoad) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No changes to save.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    // 2. Prevent saving if a card tool is active
     if (_activeCardTool != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Close the active tool to modify project details.'),
+          backgroundColor: Colors.orange,
         ),
       );
-      return; // Prevent saving if a tool is active and form is hidden
-    }
-
-    // --- VALIDATE THE FORM ---
-    if (!_formKey.currentState!.validate()) {
-      // If form is not valid, display errors and stop.
-      logger.warning("Form validation failed.");
       return;
     }
-    // --- END FORM VALIDATION ---
 
-    // Form is valid, proceed with saving.
-    // Azimuth value is already parsed or null if empty by this point via the controller's text.
-    // The validator for azimuth ensures it's a valid double if not empty.
+    // 3. Validate the form
+    if (!_formKey.currentState!.validate()) {
+      logger.warning("Form validation failed.");
+      // Optionally, show a SnackBar if you want more explicit feedback than just field errors
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   const SnackBar(
+      //     content: Text('Please correct the errors in the form.'),
+      //     backgroundColor: Colors.orange,
+      //   ),
+      // );
+      return;
+    }
+
+    // If all checks pass, proceed with saving
+    setStateIfMounted(() => _isLoading = true);
+
+    // Parse Azimuth (validator should have caught errors, but good to be safe)
     double? azimuthValue;
     if (_azimuthController.text.isNotEmpty) {
       azimuthValue = double.tryParse(_azimuthController.text);
-      // Validator should have caught error, but as a fallback:
       if (azimuthValue == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Internal error: Invalid Azimuth despite validation.',
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Internal error: Invalid Azimuth despite validation.',
+              ),
+              backgroundColor: Colors.red,
             ),
-            backgroundColor: Colors.red,
-          ),
-        );
+          );
+        }
+        setStateIfMounted(() => _isLoading = false);
         return;
       }
     }
 
+    // Prepare the project model to save
+    // Note: For a new project, widget.project.id will be null.
+    // startingPointId and endingPointId are preserved from the current widget.project state
     ProjectModel projectToSave = ProjectModel(
-      id: widget.project.id,
-      name: _nameController.text,
-      note: _noteController.text.isNotEmpty ? _noteController.text : null,
+      id: _currentProject.id,
+      name: _nameController.text.trim(), // Trim whitespace
+      note: _noteController.text.trim().isNotEmpty
+          ? _noteController.text.trim()
+          : null,
       azimuth: azimuthValue,
       date: _projectDate,
-      startingPointId: widget.project.startingPointId,
-      endingPointId: widget.project.endingPointId,
-      // lastUpdate will be set by the database
+      startingPointId: _currentProject.startingPointId,
+      endingPointId: _currentProject.endingPointId,
+      // lastUpdate will be set by the database or on successful save
     );
 
     try {
-      int popupDuration = 1;
-
+      String successMessage;
       if (projectToSave.id == null) {
-        // Creating a new project
+        // ---- CREATING A NEW PROJECT ----
         final newId = await _dbHelper.insertProject(projectToSave);
-        // Update the current widget.project instance with the new ID and other details
-        // Fetch the newly saved project to get all DB-generated fields (like lastUpdate)
+        // Fetch the newly saved project to get all DB-generated fields (like lastUpdate and the ID itself)
         final savedProject = await _dbHelper.getProjectById(newId);
+
         if (savedProject != null && mounted) {
           setState(() {
-            // Use one setState
-            widget.project.updateFromModel(
-              savedProject,
-            ); // Assumes ProjectModel has this helper
-            // Update controllers and local state to reflect the saved state
-            _nameController.text = savedProject.name;
-            _noteController.text = savedProject.note ?? '';
-            _azimuthController.text =
-                savedProject.azimuth?.toStringAsFixed(2) ?? '';
-            _projectDate = savedProject.date;
-            _lastUpdateTime = savedProject.lastUpdate; // Important!
+            // Update the page's main project instance with the saved data
+            _currentProject = savedProject;
 
-            _projectWasModifiedSinceLoad = true; // Mark as modified
+            // Update controllers and local state to reflect the fully saved state
+            _nameController.text =
+                _currentProject.name; // Should match, but good practice
+            _noteController.text = _currentProject.note ?? '';
+            _azimuthController.text =
+                _currentProject.azimuth?.toStringAsFixed(2) ?? '';
+            _projectDate = _currentProject.date;
+            _lastUpdateTime = _currentProject.lastUpdate; // Crucial for display
+
+            _projectWasSavedThisSession =
+                true; // Mark that a save operation happened
             _isNewProjectOnLoad =
                 false; // It's no longer "new" in the context of this page load
-            // If you have dirty checking, reset it here:
-            // _setInitialFormValues();
-            // _isFormDirty = false;
+
+            // After saving, the form is now based on the saved data, so reset dirty check
+            _setInitialFormValuesAndResetDirtyState();
           });
+          successMessage = 'Project "${_currentProject.name}" created.';
           logger.info(
-            "New project created and state updated. ID: $newId, Name: ${savedProject.name}",
+            "New project created and state updated. ID: $newId, Name: ${_currentProject.name}",
           );
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Project "${savedProject.name}" created.'),
-              backgroundColor: Colors.green,
-            ),
-          );
+        } else {
+          throw Exception("Failed to retrieve the newly created project.");
         }
       } else {
+        // ---- UPDATING AN EXISTING PROJECT ----
         await _dbHelper.updateProject(projectToSave);
         // Fetch the updated project to get new lastUpdate, etc.
-        final savedProject = await _dbHelper.getProjectById(projectToSave.id!);
-        if (savedProject != null && mounted) {
-          setState(() {
-            // Use one setState
-            widget.project.updateFromModel(savedProject);
-            // Update controllers and local state if they could differ from projectToSave
-            _nameController.text =
-                savedProject.name; // Should match, but good practice
-            _noteController.text = savedProject.note ?? '';
-            _azimuthController.text =
-                savedProject.azimuth?.toStringAsFixed(2) ?? '';
-            _projectDate = savedProject.date;
-            _lastUpdateTime = savedProject.lastUpdate; // Important!
+        final updatedProjectFromDb = await _dbHelper.getProjectById(
+          projectToSave.id!,
+        );
 
-            _projectWasModifiedSinceLoad = true; // Mark as modified
-            // If you have dirty checking, reset it here:
-            // _setInitialFormValues();
-            // _isFormDirty = false;
+        if (updatedProjectFromDb != null && mounted) {
+          setState(() {
+            // Update the page's main project instance
+            _currentProject = updatedProjectFromDb;
+
+            // Update controllers and local state
+            _nameController.text = _currentProject.name;
+            _noteController.text = _currentProject.note ?? '';
+            _azimuthController.text =
+                _currentProject.azimuth?.toStringAsFixed(2) ?? '';
+            _projectDate = _currentProject.date;
+            _lastUpdateTime = _currentProject.lastUpdate;
+
+            _projectWasSavedThisSession =
+                true; // Mark that a save operation happened
+
+            // After saving, the form is now based on the saved data, so reset dirty check
+            _setInitialFormValuesAndResetDirtyState();
           });
+          successMessage = 'Project "${_currentProject.name}" updated.';
           logger.info(
-            "Project details updated and state refreshed: ${savedProject.name}",
+            "Project details updated and state refreshed for ID: ${_currentProject.id}, Name: ${_currentProject.name}",
           );
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Project "${savedProject.name}" updated.'),
-              backgroundColor: Colors.green,
-            ),
+        } else {
+          throw Exception(
+            "Failed to retrieve the updated project (ID: ${projectToSave.id}).",
           );
         }
+      }
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(successMessage),
+            backgroundColor: Colors.green,
+          ),
+        );
       }
     } catch (e, stackTrace) {
       logger.severe("Error saving project details", e, stackTrace);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error saving project: $e'),
+            content: Text('Error saving project: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
       }
+    } finally {
+      setStateIfMounted(() => _isLoading = false);
     }
   }
 
@@ -418,16 +510,22 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     );
 
     if (pickedDate != null && pickedDate != _projectDate) {
-      setState(() {
+      setStateIfMounted(() {
         _projectDate = pickedDate;
-        logger.info("New Project Date selected: $_projectDate");
+        _handleFormChange(); // Call the unified handler
+      });
+    } else if (pickedDate == null && _projectDate != null && mounted) {
+      // Handle clearing date
+      setState(() {
+        _projectDate = null;
+        _handleFormChange();
       });
     }
   }
 
   Future<void> _calculateAzimuth() async {
     logger.info(
-      "Calculate Azimuth button tapped for project: ${widget.project.name}",
+      "Calculate Azimuth button tapped for project: ${_currentProject.name}",
     );
 
     if (_activeCardTool != null) {
@@ -440,8 +538,8 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
       return;
     }
 
-    final int? startPointId = widget.project.startingPointId;
-    final int? endPointId = widget.project.endingPointId;
+    final int? startPointId = _currentProject.startingPointId;
+    final int? endPointId = _currentProject.endingPointId;
 
     if (startPointId == null || endPointId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -453,7 +551,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
         ),
       );
       _azimuthController.text = '';
-      widget.project.azimuth = null;
+      _currentProject.azimuth = null;
       return;
     }
 
@@ -467,7 +565,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
         ),
       );
       _azimuthController.text = '';
-      widget.project.azimuth = null;
+      _currentProject.azimuth = null;
       return;
     }
 
@@ -531,19 +629,28 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
   AppBar _appBar() {
     return AppBar(
       title: Text(
-        widget.project.name.isNotEmpty && _nameController.text.isNotEmpty
+        _currentProject.name.isNotEmpty && _nameController.text.isNotEmpty
             ? _nameController
                   .text // Use controller text for potentially unsaved name
-            : (widget.project.name.isNotEmpty
-                  ? widget.project.name
+            : (_currentProject.name.isNotEmpty
+                  ? _currentProject.name
                   : "Project Details"),
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.save),
+          icon: Icon(
+            Icons.save_outlined,
+            color: _isFormCurrentlyDirty && !_isLoading
+                ? Colors
+                      .greenAccent
+                      .shade400 // "Glowing" green
+                : null, // Default color
+          ),
           tooltip: 'Save Project',
           onPressed:
-              _saveProjectDetails, // This will now trigger form validation first
+              (_isFormCurrentlyDirty || _isNewProjectOnLoad) && !_isLoading
+              ? _saveProjectDetails
+              : null,
         ),
       ],
     );
@@ -789,17 +896,46 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
       return false; // Prevent immediate pop, let the UI update to close the tool
     }
 
+    if (_isFormCurrentlyDirty) {
+      final bool? discardChanges = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Unsaved Changes'),
+            content: const Text(
+              'You have unsaved changes. Are you sure you want to discard them and go back?',
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Cancel'),
+                onPressed: () => Navigator.of(context).pop(false),
+              ),
+              TextButton(
+                child: const Text('Discard'),
+                onPressed: () => Navigator.of(context).pop(true),
+              ),
+            ],
+          );
+        },
+      );
+      if (discardChanges == null || !discardChanges) {
+        return false; // User cancelled or dialog dismissed, do not pop
+      }
+      // If user chose to discard, proceed to pop but indicate no *new* save happened for this specific pop action
+      // _projectWasSavedThisSession remains as is.
+    }
+
     // If no tool is active, proceed to pop with results
     Map<String, dynamic> result = {
-      'modified': _projectWasModifiedSinceLoad,
-      'id': widget
-          .project
+      'modified': _projectWasSavedThisSession,
+      'id': _currentProject
           .id, // This will be the new ID if it was a new project and saved
-      'isNew': _isNewProjectOnLoad && !_projectWasModifiedSinceLoad,
-      // 'isNew' is true if it was new when loaded AND no save has occurred.
-      // If it was new and saved, _projectWasModifiedSinceLoad is true, making 'isNew' false,
-      // which is correct as it's no longer "new" from the perspective of the calling page
-      // if it now exists in the DB.
+      'isNew':
+          _isNewProjectOnLoad &&
+          _projectWasSavedThisSession &&
+          _currentProject.id != null,
+      // 'isNew': _isNewProjectOnLoad && !_projectWasSavedThisSession, // Logic if it was new AND no save occurred
+      // More accurate 'isNew' for the calling page if it wants to know if THIS project (by id) was just created
     };
     logger.info("Popping ProjectDetailsPage with result: $result");
     Navigator.pop(context, result);
@@ -893,18 +1029,18 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     switch (_activeCardTool) {
       case ActiveCardTool.compass:
         return CompassToolView(
-          project: widget.project,
+          project: _currentProject,
           onAddPointFromCompass:
               _initiateAddPointFromCompass, // Pass the callback
         );
       case ActiveCardTool.points:
         return PointsToolView(
           key: _pointsToolViewKey, // Assign the GlobalKey
-          project: widget.project,
+          project: _currentProject,
           onPointsChanged: _onPointsChanged,
         );
       case ActiveCardTool.map:
-        return MapToolView(project: widget.project);
+        return MapToolView(project: _currentProject);
       default:
         return const SizedBox.shrink();
     }
