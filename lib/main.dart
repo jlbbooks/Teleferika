@@ -3,6 +3,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'app_config.dart';
 import 'db/database_helper.dart';
@@ -93,8 +94,42 @@ class _MyAppRootState extends State<MyAppRoot> {
   }
 }
 
-class LoadingPage extends StatelessWidget {
+class LoadingPage extends StatefulWidget {
   const LoadingPage({super.key});
+
+  @override
+  State<LoadingPage> createState() => _LoadingPageState();
+}
+
+class _LoadingPageState extends State<LoadingPage> {
+  String _appVersion = ''; // State variable to hold the app version
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVersionInfo();
+  }
+
+  Future<void> _loadVersionInfo() async {
+    try {
+      final PackageInfo packageInfo = await PackageInfo.fromPlatform();
+      if (mounted) {
+        // Check if the widget is still in the tree
+        setState(() {
+          // You can choose to display version, buildNumber, or both
+          _appVersion = 'v${packageInfo.version} (${packageInfo.buildNumber})';
+          // _appVersion = 'v${packageInfo.version}'; // Just version
+        });
+      }
+    } catch (e, stackTrace) {
+      logger.warning("Could not get package info: $e", e, stackTrace);
+      if (mounted) {
+        setState(() {
+          _appVersion = 'v?.?.?'; // Fallback version display
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,10 +140,11 @@ class LoadingPage extends StatelessWidget {
       // --- Dynamic Theme Settings ---
       theme: AppConfig.lightTheme, // Your defined light theme
       darkTheme: AppConfig.darkTheme, // Your defined dark theme
-      themeMode: ThemeMode.system, // This is the key!
+      themeMode: ThemeMode.system, // Auto-switch light/dark theme!
       // --- End Dynamic Theme Settings ---
       home: Scaffold(
-        backgroundColor: Colors.blueAccent, // Or your app's splash background
+        backgroundColor:
+            Colors.blueAccent, // TODO: Or your app's splash background
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -125,6 +161,17 @@ class LoadingPage extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+              const SizedBox(height: 10), // Add some space
+              if (_appVersion.isNotEmpty) // Only show if version is loaded
+                Text(
+                  _appVersion,
+                  style: TextStyle(
+                    color: Colors.white.withAlpha(
+                      (0.7 * 255).round(),
+                    ), // Slightly dimmer
+                    fontSize: 12.0,
+                  ),
+                ),
             ],
           ),
         ),
