@@ -1193,7 +1193,19 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
           newlyAddedPointId: _newlyAddedPointId,
         );
       case ActiveCardTool.map:
-        return MapToolView(project: _currentProject);
+        // If the parent of this Column is scrollable, MapToolView needs constraints.
+        // Option A: Give it a fixed height
+        return SizedBox(
+          height:
+              MediaQuery.of(context).size.height *
+              0.6, // e.g., 60% of screen height
+          child: MapToolView(project: _currentProject),
+        );
+      // Option B: If _buildActiveCardToolView is already in a context that allows expansion
+      // return Expanded(
+      //   // Or Flexible
+      //   child: MapToolView(project: _currentProject),
+      // );
       default:
         return const SizedBox.shrink();
     }

@@ -292,11 +292,10 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
   @override
   Widget build(BuildContext context) {
     String titleText = '${AppConfig.appName} Projects';
-    // Append appVersion to title if available, accessed via widget.appVersion
+    String? version;
     if (widget.appVersion != null && widget.appVersion!.isNotEmpty) {
-      titleText += ' [${widget.appVersion}]';
+      version = ' [${widget.appVersion}]';
     }
-
     return Scaffold(
       appBar: _isSelectionMode
           ? AppBar(
@@ -319,19 +318,11 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
                 children: [
                   Text(titleText),
 
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: Text(
-                      widget.appVersion!,
-                      style: TextStyle(
-                        fontSize: 12.0,
-                        color:
-                            Theme.of(context).appBarTheme.titleTextStyle?.color
-                                ?.withOpacity(0.7) ??
-                            Colors.white.withOpacity(0.7),
-                      ),
+                  if (version != null)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: Text(version, style: TextStyle(fontSize: 10.0)),
                     ),
-                  ),
                 ],
               ),
               actions: [
