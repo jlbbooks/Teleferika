@@ -38,6 +38,18 @@ class PointsToolViewState extends State<PointsToolView> {
         _loadPoints(); // Initialize the future for FutureBuilder
   }
 
+  // @override
+  // void didUpdateWidget(PointsToolView oldWidget) {
+  //   super.didUpdateWidget(oldWidget);
+  //   // If the project ID changes, refetch points (might not be necessary if project instance is the same
+  //   // and only its internal start/end IDs change, then a simple setState in parent might be enough)
+  //   if (widget.project.id != oldWidget.project.id) {
+  //     _loadPoints();
+  //   }
+  //   // If start/end points change on the *same* project, we might need a way to just rebuild
+  //   // This is often handled by the parent calling setState which causes this child to rebuild.
+  // }
+
   // Make _loadPoints return Future<void> and update _points
   Future<void> _loadPoints() async {
     if (widget.project.id == null) {
@@ -51,6 +63,8 @@ class PointsToolViewState extends State<PointsToolView> {
       if (mounted) {
         setState(() {
           _points = pointsFromDb;
+          // Ensure points are sorted by ordinal for ReorderableListView
+          _points.sort((a, b) => (a.ordinalNumber).compareTo(b.ordinalNumber));
         });
       }
     } catch (e, stackTrace) {
@@ -70,9 +84,6 @@ class PointsToolViewState extends State<PointsToolView> {
   // Make _loadPoints public or create a new public refresh method
   void refreshPoints() {
     logger.info("PointsToolView: External refresh requested.");
-    // Re-assign the future to trigger FutureBuilder if it's still relying on it initially
-    // or directly call _loadPoints if FutureBuilder is only for initial load.
-    // For simplicity, if _loadPoints directly updates _points, this is fine.
     _loadPoints();
   }
 
@@ -353,30 +364,65 @@ class PointsToolViewState extends State<PointsToolView> {
   /// Builds a single point item Card for the ListView.
   Widget _buildPointItem(BuildContext context, PointModel point, int index) {
     // index needed for Key
-    final bool isSelected = _selectedPointIds.contains(point.id);
-    final Color baseColor = Theme.of(context).primaryColorLight;
+    final bool isSelectedForDelete = _selectedPointIds.contains(point.id);
+    final Color baseSelectionColor = Theme.of(context).primaryColorLight;
     const double selectedOpacity = 0.3;
+
+    // --- MODIFICATION START: Determine if it's a start or end point ---
+    final bool isProjectStartPoint =
+        point.id != null && point.id == widget.project.startingPointId;
+    final bool isProjectEndPoint =
+        point.id != null && point.id == widget.project.endingPointId;
+    String? specialRoleText;
+    Color? specialRoleColor;
+    Color cardHighlightColor = Theme.of(context).cardColor; // Default
+    BorderSide cardBorder = BorderSide.none;
+
+    if (isProjectStartPoint && isProjectEndPoint) {
+      specialRoleText = "Start & End Point";
+      specialRoleColor = Colors.purpleAccent.shade700;
+      cardHighlightColor = Colors.purple.shade50.withAlpha(
+        ((1 - selectedOpacity) * 255).round(),
+      );
+      cardBorder = BorderSide(color: Colors.purpleAccent.shade400, width: 2.0);
+    } else if (isProjectStartPoint) {
+      specialRoleText = "Start Point";
+      specialRoleColor = Colors.green.shade700;
+      cardHighlightColor = Colors.green.shade50.withAlpha(
+        ((1 - selectedOpacity) * 255).round(),
+      );
+      cardBorder = BorderSide(color: Colors.green.shade400, width: 2.0);
+    } else if (isProjectEndPoint) {
+      specialRoleText = "End Point";
+      specialRoleColor = Colors.red.shade700;
+      cardHighlightColor = Colors.red.shade50.withAlpha(
+        ((1 - selectedOpacity) * 255).round(),
+      );
+      cardBorder = BorderSide(color: Colors.red.shade400, width: 2.0);
+    }
+    // --- MODIFICATION END ---
 
     return Card(
       key: ValueKey(point.id ?? index), // Crucial for ReorderableListView
       margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
-      elevation: _isSelectionMode && isSelected
+      elevation: _isSelectionMode && isSelectedForDelete
           ? 4.0
-          : 1.0, // Add elevation change
+          : (isProjectStartPoint || isProjectEndPoint ? 3.0 : 1.0),
       shape: RoundedRectangleBorder(
-        // Optional: Add border for selected items
-        side: _isSelectionMode && isSelected
+        side: _isSelectionMode && isSelectedForDelete
             ? BorderSide(color: Theme.of(context).primaryColor, width: 1.5)
-            : BorderSide.none,
+            : cardBorder, // Apply special border if start/end point
         borderRadius: BorderRadius.circular(8.0),
       ),
-      color: _isSelectionMode && isSelected
-          ? baseColor.withAlpha((selectedOpacity * 255).round())
-          : null, // Keep existing background color logic
+      color: _isSelectionMode && isSelectedForDelete
+          ? baseSelectionColor.withAlpha((selectedOpacity * 255).round())
+          : (isProjectStartPoint || isProjectEndPoint
+                ? cardHighlightColor
+                : null), // Apply special background
       child: ListTile(
         leading: _isSelectionMode
             ? Checkbox(
-                value: isSelected,
+                value: isSelectedForDelete,
                 activeColor: Theme.of(context).primaryColor,
                 onChanged: (bool? value) {
                   if (point.id != null) _togglePointSelection(point.id!);
@@ -396,7 +442,27 @@ class PointsToolViewState extends State<PointsToolView> {
         title: Text(
           'P${point.ordinalNumber}: Lat: ${point.latitude.toStringAsFixed(5)}, Lon: ${point.longitude.toStringAsFixed(5)}',
         ),
-        subtitle: Text(point.note ?? 'No note'),
+        subtitle: Column(
+          // Use Column to add special role text if present
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(point.note ?? 'No note'),
+            if (specialRoleText != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Text(
+                  specialRoleText,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color:
+                        specialRoleColor ??
+                        Theme.of(context).colorScheme.primary,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+          ],
+        ),
         trailing: !_isSelectionMode
             ? IconButton(
                 icon: const Icon(
@@ -407,7 +473,21 @@ class PointsToolViewState extends State<PointsToolView> {
                 onPressed: () {
                   logger.info("Edit tapped for point ID: ${point.id}");
                   // TODO: Implement point editing
+                  _handlePointTap(point);
                 },
+                // onPressed: () async { // Make async if navigating and awaiting result
+                //   logger.info("Edit tapped for point ID: ${point.id}");
+                //   if (!mounted) return;
+                //   final result = await Navigator.push<bool>( // Assuming PointDetailsPage might return bool
+                //     context,
+                //     MaterialPageRoute(builder: (context) => PointDetailsPage(point: point)),
+                //   );
+                //   if (result == true) { // If PointDetailsPage indicates a save
+                //     logger.info("PointDetailsPage returned true, refreshing points.");
+                //     refreshPoints(); // Refresh the list
+                //     widget.onPointsChanged?.call(); // Notify parent page
+                //   }
+                // },
               )
             : null,
         onTap: () => _handlePointTap(point),
@@ -446,7 +526,6 @@ class PointsToolViewState extends State<PointsToolView> {
 
       // Navigate to PointDetailsPage and wait for a result
       final result = await Navigator.push<PointModel?>(
-        // Expect PointModel or null
         context,
         MaterialPageRoute(builder: (context) => PointDetailsPage(point: point)),
       );
