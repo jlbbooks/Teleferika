@@ -84,7 +84,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
 
       // --- Handle Result for Flashing ---
       if (result is Map<String, dynamic> &&
-          result['modified'] == true &&
+          (result['modified'] == true || result['isNew'] == true) &&
           result['id'] != null) {
         _startFlashing(result['id'] as int);
         _refreshProjectsList(); // Refresh list to show updated data

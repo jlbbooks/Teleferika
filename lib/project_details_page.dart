@@ -420,8 +420,9 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
 
             _projectWasSavedThisSession =
                 true; // Mark that a save operation happened
-            _isNewProjectOnLoad =
-                false; // It's no longer "new" in the context of this page load
+            // _isNewProjectOnLoad =
+            //     false; // It's no longer "new" in the context of this page load
+            // FIXME: it actually should stay "new" even after saving
 
             // After saving, the form is now based on the saved data, so reset dirty check
             _setInitialFormValuesAndResetDirtyState();
@@ -939,7 +940,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     };
     logger.info("Popping ProjectDetailsPage with result: $result");
     // FIXME: actually we should return some values, but for now just a bool will do, so the full list is reloaded. Simplify logic to remove _isNewProjectOnLoad, since now we must manually save then pop
-    Navigator.pop(context, true); //result);
+    Navigator.pop(context, result);
     return true; // Allow pop after manually calling Navigator.pop
     // Or `return false` if Navigator.pop already handled it and you don't want
     // WillPopScope to pop again. `true` is usually fine here since we popped.
