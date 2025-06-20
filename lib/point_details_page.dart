@@ -90,12 +90,14 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
     try {
       await _dbHelper.updatePoint(updatedPoint);
       logger.info("Point ID ${widget.point.id} updated successfully.");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Point details saved!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Point details saved!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
       // Pop with a result to indicate success and potentially pass back the updated point
       if (mounted) Navigator.pop(context, updatedPoint);
     } catch (e, stackTrace) {
@@ -104,12 +106,14 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
         e,
         stackTrace,
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error saving point: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving point: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {

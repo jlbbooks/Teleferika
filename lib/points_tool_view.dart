@@ -181,12 +181,14 @@ class PointsToolViewState extends State<PointsToolView> {
         e,
         stackTrace,
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error saving new point order: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving new point order: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
       // If DB update fails, revert the list in UI to previous state (reload from DB)
       // This is important to keep UI consistent with DB
       await _loadPoints();

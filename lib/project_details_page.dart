@@ -126,7 +126,14 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
   }
 
   Future<void> _loadProjectDetails() async {
-    if (_currentProject.id == null) return;
+    if (_currentProject.id == null) {
+      logger.warning(
+        "_loadProjectDetails called with null project ID. This shouldn't happen for existing projects.",
+      );
+      // Optionally, set loading to false and return if this state is unexpected
+      // setStateIfMounted(() => _isLoading = false);
+      return;
+    }
     setStateIfMounted(() => _isLoading = true);
     try {
       final projectDataFromDb = await _dbHelper.getProjectById(
@@ -146,10 +153,42 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
           // After loading data and updating controllers, reset the baseline
           _setInitialFormValuesAndResetDirtyState();
         });
+      } else if (mounted) {
+        // Handle case where project is not found in DB (e.g., deleted elsewhere)
+        logger.warning(
+          "Project with ID ${_currentProject.id} not found in database during load.",
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Error: Project (ID: ${_currentProject.id}) not found. It might have been deleted.',
+            ),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        // Optionally, you might want to pop the page if the project doesn't exist anymore
+        Navigator.of(context).pop();
       }
     } catch (e, stackTrace) {
-      // TODO: errors
-      /* ... error handling ... */
+      logger.severe(
+        "Error loading project details for ID: ${_currentProject.id}",
+        e,
+        stackTrace,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading project data: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+      // You might want to set some state here to indicate an error,
+      // e.g., if you have a specific UI for error states.
+      // setStateIfMounted(() {
+      //   _hasLoadingError = true; // Example state variable
+      // });
     } finally {
       setStateIfMounted(() => _isLoading = false);
     }
@@ -575,14 +614,16 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
       final PointModel? endPoint = await _dbHelper.getPointById(endPointId);
 
       if (startPoint == null || endPoint == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Could not retrieve point data for calculation. Please check points.',
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Could not retrieve point data for calculation. Please check points.',
+              ),
+              backgroundColor: Colors.red,
             ),
-            backgroundColor: Colors.red,
-          ),
-        );
+          );
+        }
         logger.severe(
           "Error calculating azimuth: StartPoint (ID $startPointId) or EndPoint (ID $endPointId) not found.",
         );
@@ -598,25 +639,29 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
         _azimuthController.text = calculatedAzimuth.toStringAsFixed(2);
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Azimuth calculated: ${calculatedAzimuth.toStringAsFixed(2)}°',
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Azimuth calculated: ${calculatedAzimuth.toStringAsFixed(2)}°',
+            ),
+            backgroundColor: Colors.green,
           ),
-          backgroundColor: Colors.green,
-        ),
-      );
+        );
+      }
       logger.info(
         "Azimuth calculated successfully: ${calculatedAzimuth.toStringAsFixed(2)}° from P${startPoint.ordinalNumber} to P${endPoint.ordinalNumber}",
       );
     } catch (e, stackTrace) {
       logger.severe("Error during azimuth calculation: $e", e, stackTrace);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error calculating azimuth: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error calculating azimuth: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -940,7 +985,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     };
     logger.info("Popping ProjectDetailsPage with result: $result");
     // FIXME: actually we should return some values, but for now just a bool will do, so the full list is reloaded. Simplify logic to remove _isNewProjectOnLoad, since now we must manually save then pop
-    Navigator.pop(context, result);
+    if (mounted) Navigator.pop(context, result);
     return true; // Allow pop after manually calling Navigator.pop
     // Or `return false` if Navigator.pop already handled it and you don't want
     // WillPopScope to pop again. `true` is usually fine here since we popped.
