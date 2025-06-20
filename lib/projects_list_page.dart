@@ -10,7 +10,9 @@ import 'logger.dart';
 import 'project_details_page.dart';
 
 class ProjectsListPage extends StatefulWidget {
-  const ProjectsListPage({super.key});
+  final String? appVersion;
+
+  const ProjectsListPage({super.key, this.appVersion});
 
   @override
   State<ProjectsListPage> createState() => _ProjectsListPageState();
@@ -289,6 +291,12 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
 
   @override
   Widget build(BuildContext context) {
+    String titleText = '${AppConfig.appName} Projects';
+    // Append appVersion to title if available, accessed via widget.appVersion
+    if (widget.appVersion != null && widget.appVersion!.isNotEmpty) {
+      titleText += ' [${widget.appVersion}]';
+    }
+
     return Scaffold(
       appBar: _isSelectionMode
           ? AppBar(
@@ -306,7 +314,26 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
               ],
             )
           : AppBar(
-              title: const Text('${AppConfig.appName} Projects'),
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(titleText),
+
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: Text(
+                      widget.appVersion!,
+                      style: TextStyle(
+                        fontSize: 12.0,
+                        color:
+                            Theme.of(context).appBarTheme.titleTextStyle?.color
+                                ?.withOpacity(0.7) ??
+                            Colors.white.withOpacity(0.7),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
               actions: [
                 // IconButton for future settings/search can go here
               ],

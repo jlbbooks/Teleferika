@@ -301,61 +301,31 @@ class PointsToolViewState extends State<PointsToolView> {
   Future<void> _deleteSelectedPoints() async {
     if (_selectedPointIds.isEmpty || widget.project.id == null) return;
 
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Confirm Deletion'),
-          content: Text(
-            'Are you sure you want to delete ${_selectedPointIds.length} selected point(s)? This action cannot be undone.',
+    try {
+      final count = await _dbHelper.deletePointsByIds(
+        _selectedPointIds.toList(),
+      );
+      logger.info('Successfully deleted $count points.');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$count point(s) deleted.'),
+            backgroundColor: Colors.green,
           ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop(false);
-              },
-            ),
-            TextButton(
-              style: TextButton.styleFrom(
-                foregroundColor: Theme.of(context).colorScheme.error,
-              ),
-              child: const Text('Delete'),
-              onPressed: () {
-                Navigator.of(context).pop(true);
-              },
-            ),
-          ],
         );
-      },
-    );
-    if (confirmed == true) {
-      try {
-        final count = await _dbHelper.deletePointsByIds(
-          _selectedPointIds.toList(),
+      }
+      _clearSelection();
+      await _loadPoints(); // Reload points to reflect deletions and re-sequencing
+      widget.onPointsChanged?.call();
+    } catch (error, stackTrace) {
+      logger.severe('Error deleting points', error, stackTrace);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting points: $error'),
+            backgroundColor: Colors.red,
+          ),
         );
-        logger.info('Successfully deleted $count points.');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('$count point(s) deleted.'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-        _clearSelection();
-        await _loadPoints(); // Reload points to reflect deletions and re-sequencing
-        widget.onPointsChanged?.call();
-      } catch (error, stackTrace) {
-        logger.severe('Error deleting points', error, stackTrace);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error deleting points: $error'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
       }
     }
   }

@@ -27,6 +27,7 @@ class MyAppRoot extends StatefulWidget {
 class _MyAppRootState extends State<MyAppRoot> {
   bool _isLoading = true;
   final int _minimumSplashTimeSeconds = 3;
+  String _appVersion = ''; // State variable to hold the app version
 
   @override
   void initState() {
@@ -44,6 +45,9 @@ class _MyAppRootState extends State<MyAppRoot> {
       final dbHelper = DatabaseHelper.instance;
       await dbHelper.database;
       logger.info("Database initialized successfully.");
+
+      _loadVersionInfo();
+      logger.info("Version info loaded successfully.");
 
       // Simulate other checks (e.g., license, remote config)
       await Future.delayed(const Duration(milliseconds: 500));
@@ -82,34 +86,6 @@ class _MyAppRootState extends State<MyAppRoot> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    if (_isLoading) {
-      logger.finest("Building LoadingPage.");
-      return const LoadingPage();
-    } else {
-      logger.finest("Building MyApp (which now loads ProjectsListPage).");
-      return const MyApp();
-    }
-  }
-}
-
-class LoadingPage extends StatefulWidget {
-  const LoadingPage({super.key});
-
-  @override
-  State<LoadingPage> createState() => _LoadingPageState();
-}
-
-class _LoadingPageState extends State<LoadingPage> {
-  String _appVersion = ''; // State variable to hold the app version
-
-  @override
-  void initState() {
-    super.initState();
-    _loadVersionInfo();
-  }
-
   Future<void> _loadVersionInfo() async {
     try {
       final PackageInfo packageInfo = await PackageInfo.fromPlatform();
@@ -129,6 +105,32 @@ class _LoadingPageState extends State<LoadingPage> {
         });
       }
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      logger.finest("Building LoadingPage.");
+      return LoadingPage(appVersion: _appVersion);
+    } else {
+      logger.finest("Building MyApp (which now loads ProjectsListPage).");
+      return MyApp(appVersion: _appVersion);
+    }
+  }
+}
+
+class LoadingPage extends StatefulWidget {
+  final String? appVersion;
+  const LoadingPage({super.key, this.appVersion});
+
+  @override
+  State<LoadingPage> createState() => _LoadingPageState();
+}
+
+class _LoadingPageState extends State<LoadingPage> {
+  @override
+  void initState() {
+    super.initState();
   }
 
   @override
@@ -162,9 +164,12 @@ class _LoadingPageState extends State<LoadingPage> {
                 ),
               ),
               const SizedBox(height: 10), // Add some space
-              if (_appVersion.isNotEmpty) // Only show if version is loaded
+              if (widget.appVersion != null &&
+                  widget
+                      .appVersion!
+                      .isNotEmpty) // Only show if version is loaded
                 Text(
-                  _appVersion,
+                  widget.appVersion!,
                   style: TextStyle(
                     color: Colors.white.withAlpha(
                       (0.7 * 255).round(),
@@ -181,7 +186,8 @@ class _LoadingPageState extends State<LoadingPage> {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final String? appVersion;
+  const MyApp({super.key, this.appVersion});
 
   @override
   Widget build(BuildContext context) {
@@ -195,7 +201,9 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: kDebugMode,
       localizationsDelegates: AppConfig.localizationsDelegates,
       supportedLocales: AppConfig.supportedLocales,
-      home: const ProjectsListPage(), // Set ProjectsListPage as the home screen
+      home: ProjectsListPage(
+        appVersion: appVersion,
+      ), // Set ProjectsListPage as the home screen
     );
   }
 }
