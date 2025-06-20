@@ -16,11 +16,13 @@ class CompassToolView extends StatefulWidget {
   final AddPointFromCompassCallback? onAddPointFromCompass;
   // You can add callbacks, e.g., for when "Add Point" is pressed
   // final Function(double heading, LatLng location)? onAddPoint;
+  final bool isAddingPoint;
 
   const CompassToolView({
     super.key,
     required this.project,
     this.onAddPointFromCompass,
+    this.isAddingPoint = false,
   });
 
   @override
@@ -265,15 +267,24 @@ class _CompassToolViewState extends State<CompassToolView> {
           const SizedBox(height: 30),
 
           // --- Add Point Button ---
-          ElevatedButton.icon(
-            icon: const Icon(Icons.add_location_alt_outlined),
-            label: const Text('Add Point with Current Heading'),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              textStyle: const TextStyle(fontSize: 16),
+          if (widget.isAddingPoint) // Use the passed-in loading state
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 20.0),
+              child: CircularProgressIndicator(),
+            )
+          else
+            ElevatedButton.icon(
+              icon: const Icon(Icons.add_location_alt_outlined),
+              label: const Text('Add Point with Current Heading'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+                textStyle: const TextStyle(fontSize: 16),
+              ),
+              onPressed: _handleAddPointPressed,
             ),
-            onPressed: _handleAddPointPressed,
-          ),
           _buildProjectAzimuthText(),
         ],
       ),

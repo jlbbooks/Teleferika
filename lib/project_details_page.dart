@@ -92,6 +92,9 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
   final GlobalKey<PointsToolViewState> _pointsToolViewKey =
       GlobalKey<PointsToolViewState>();
 
+  // State variable to control CompassToolView's spinner for this action
+  bool _isAddingPointFromCompassInProgress = false;
+
   @override
   void initState() {
     super.initState();
@@ -293,6 +296,13 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
       return;
     }
 
+    // START loading indicator in CompassToolView by setting state
+    if (mounted) {
+      setState(() {
+        _isAddingPointFromCompassInProgress = true;
+      });
+    }
+
     try {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -354,6 +364,13 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
             backgroundColor: Colors.red,
           ),
         );
+      }
+    } finally {
+      // STOP loading indicator in CompassToolView
+      if (mounted) {
+        setState(() {
+          _isAddingPointFromCompassInProgress = false;
+        });
       }
     }
   }
@@ -1073,12 +1090,18 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
   }
 
   Widget _buildActiveToolView() {
+    // FIXME: is this necessary?
+    // if (_activeCardTool == null) {
+    //   return _buildProjectForm();
+    // }
+
     switch (_activeCardTool) {
       case ActiveCardTool.compass:
         return CompassToolView(
           project: _currentProject,
           onAddPointFromCompass:
               _initiateAddPointFromCompass, // Pass the callback
+          isAddingPoint: _isAddingPointFromCompassInProgress,
         );
       case ActiveCardTool.points:
         return PointsToolView(
