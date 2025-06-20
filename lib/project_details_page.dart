@@ -285,14 +285,30 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     return (lastOrdinal ?? -1) + 1; // If no points, next ordinal is 0
   }
 
-  Future<void> _initiateAddPointFromCompass(double heading) async {
+  Future<void> _initiateAddPointFromCompass(
+    double heading, {
+    bool? setAsEndPoint, // Added optional named parameter
+  }) async {
+    final bool addAsEndPoint =
+        setAsEndPoint ?? false; // Default to false if null
+
+    logger.info(
+      "Initiating add point. Heading: $heading, Project ID: ${_currentProject.id}, Explicit End Point: $setAsEndPoint",
+    );
+
     if (_currentProject.id == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please save the project before adding points.'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please save the project before adding points.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      // If we bail early, ensure the spinner is stopped if it was started
+      if (mounted && _isAddingPointFromCompassInProgress) {
+        setState(() => _isAddingPointFromCompassInProgress = false);
+      }
       return;
     }
 
@@ -303,32 +319,92 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
       });
     }
 
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Fetching location...'),
+        duration: Duration(seconds: 2), // Short duration
+      ),
+    );
+
+    PointModel? currentEndPointModel;
+    int? originalEndPointOrdinal;
+    int
+    newPointOrdinal; // This will be the ordinal for the point being added from compass
+
     try {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Fetching location...'),
-          duration: Duration(seconds: 2), // Short duration
-        ),
-      );
-
       final position = await _determinePosition();
-      final nextOrdinal = await _getNextOrdinalNumber(_currentProject.id!);
+      // final nextOrdinal = await _getNextOrdinalNumber(_currentProject.id!);
+      if (!addAsEndPoint && _currentProject.endingPointId != null) {
+        // --- Case 1: NOT setting as new end point, AND an old end point exists ---
+        currentEndPointModel = await _dbHelper.getPointById(
+          _currentProject.endingPointId!,
+        );
 
-      final newPoint = PointModel(
+        if (currentEndPointModel != null) {
+          originalEndPointOrdinal = currentEndPointModel.ordinalNumber;
+          // The new point from compass will take the original end point's ordinal
+          newPointOrdinal =
+              originalEndPointOrdinal ??
+              await _getNextOrdinalNumber(_currentProject.id!);
+
+          // The OLD end point needs a new, higher ordinal
+          final int newOrdinalForOldEndPoint = await _getNextOrdinalNumber(
+            _currentProject.id!,
+          );
+
+          PointModel updatedOldEndPoint = currentEndPointModel.copyWith(
+            ordinalNumber: newOrdinalForOldEndPoint,
+          );
+          await _dbHelper.updatePoint(updatedOldEndPoint);
+          logger.info(
+            "Old end point (ID: ${currentEndPointModel.id})'s ordinal shifted from $originalEndPointOrdinal to $newOrdinalForOldEndPoint.",
+          );
+        } else {
+          // Fallback if currentProject.endingPointId was set but point not found (data integrity issue)
+          logger.warning(
+            "Project's endingPointId ${_currentProject.endingPointId} not found in DB. Proceeding as if no end point.",
+          );
+          newPointOrdinal = await _getNextOrdinalNumber(_currentProject.id!);
+        }
+      } else {
+        // --- Case 2: Setting as new end point OR no existing end point to shuffle ---
+        newPointOrdinal = await _getNextOrdinalNumber(_currentProject.id!);
+      }
+
+      final pointFromCompass = PointModel(
         projectId: _currentProject.id!,
         latitude: position.latitude,
         longitude: position.longitude,
-        ordinalNumber: nextOrdinal,
+        ordinalNumber: newPointOrdinal,
         // You might want a default note or a way to add one later
         note: 'Point from Compass (H: ${heading.toStringAsFixed(1)}°)',
+        // heading: heading, // FIXME: what about the heading????
       );
 
-      final newPointId = await _dbHelper.insertPoint(newPoint);
+      final newPointIdFromCompass = await _dbHelper.insertPoint(
+        pointFromCompass,
+      );
       logger.info(
-        'Point added via Compass: ID $newPointId, Lat: ${position.latitude}, Lon: ${position.longitude}, Heading used for note: $heading, Ordinal: $nextOrdinal',
+        'Point added via Compass: ID $newPointIdFromCompass, Lat: ${position.latitude}, Lon: ${position.longitude}, Heading used for note: $heading, Ordinal: ${pointFromCompass.ordinalNumber}',
       );
 
       // AFTER point is inserted, update the project's start/end points
+      if (addAsEndPoint) {
+        // Update the project's endingPointId with the newPointIdFromCompass
+        // Create a copy of _currentProject to modify its endingPointId
+        ProjectModel projectToUpdate = _currentProject.copyWith(
+          endingPointId: newPointIdFromCompass,
+        );
+        await _dbHelper.updateProject(projectToUpdate);
+        logger.info(
+          "New point ID $newPointIdFromCompass set as the END point for project ${_currentProject.id}.",
+        );
+      }
+      // If !addAsExplicitEndPoint, _currentProject.endingPointId remains unchanged,
+      // pointing to the ID of the original end point (which now has a new ordinal).
+
+      // This method should now correctly identify start and end points based on their IDs
+      // and potentially their ordinals (if it falls back to highest ordinal for end point if not set).
       await _dbHelper.updateProjectStartEndPoints(_currentProject.id!);
       await _loadProjectDetails(); // Reload project to get updated start/end IDs for the UI
 
@@ -339,7 +415,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Point #$nextOrdinal added at Lat: ${position.latitude.toStringAsFixed(4)}, Lon: ${position.longitude.toStringAsFixed(4)}',
+              'Point P${pointFromCompass.ordinalNumber} added. ${addAsEndPoint ? "Set as END point." : (currentEndPointModel != null ? "Inserted before current end point." : "")}',
             ),
             backgroundColor: Colors.green,
           ),
@@ -351,6 +427,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
           ?.refreshPoints(); // Call refreshPoints on PointsToolView
 
       // If the compass tool is active, and you want to switch to points view:
+      // TODO: should we switch views? If not, remove this
       if (_activeCardTool == ActiveCardTool.compass) {
         _toggleActiveCardTool(ActiveCardTool.points);
       }

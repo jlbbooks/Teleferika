@@ -102,4 +102,38 @@ class ProjectModel {
   String toString() {
     return 'ProjectModel{id: $id, name: $name, note: $note, ..., date: $date, lastUpdate: $lastUpdate}';
   }
+
+  // In ProjectModel class, corrected == operator for DateTime:
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is ProjectModel &&
+        other.id == id &&
+        other.name == name &&
+        other.note == note &&
+        other.startingPointId == startingPointId &&
+        other.endingPointId == endingPointId &&
+        other.azimuth == azimuth &&
+        ((other.lastUpdate == null && lastUpdate == null) ||
+            (other.lastUpdate != null &&
+                lastUpdate != null &&
+                other.lastUpdate!.isAtSameMomentAs(lastUpdate!))) &&
+        ((other.date == null && date == null) ||
+            (other.date != null &&
+                date != null &&
+                other.date!.isAtSameMomentAs(date!)));
+  }
+
+  @override
+  int get hashCode {
+    return id.hashCode ^
+        name.hashCode ^
+        note.hashCode ^
+        startingPointId.hashCode ^
+        endingPointId.hashCode ^
+        azimuth.hashCode ^
+        lastUpdate.hashCode ^
+        date.hashCode;
+  }
 }

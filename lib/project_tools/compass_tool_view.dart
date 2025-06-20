@@ -9,7 +9,11 @@ import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/logger.dart';
 
 // Define a typedef for the callback function for clarity
-typedef AddPointFromCompassCallback = void Function(double heading);
+typedef AddPointFromCompassCallback =
+    void Function(
+      double heading, {
+      bool? setAsEndPoint, // Can be null if not specified, or true/false
+    });
 
 class CompassToolView extends StatefulWidget {
   final ProjectModel project;
@@ -33,6 +37,9 @@ class _CompassToolViewState extends State<CompassToolView> {
   double? _heading; // Current heading from the compass
   StreamSubscription<CompassEvent>? _compassSubscription;
   bool _hasPermissions = false;
+
+  // State variable for the checkbox
+  bool _setAsEndPoint = false;
 
   @override
   void initState() {
@@ -86,10 +93,13 @@ class _CompassToolViewState extends State<CompassToolView> {
   void _handleAddPointPressed() {
     if (_heading != null) {
       logger.info(
-        "Add Point button tapped in Compass. Current Heading: ${_heading!.toStringAsFixed(1)}°",
+        "Add Point button tapped. Current Heading: ${_heading!.toStringAsFixed(1)}°, Set as End Point: $_setAsEndPoint. Delegating to parent.",
       );
       // Invoke the callback passed from the parent widget
-      widget.onAddPointFromCompass?.call(_heading!);
+      widget.onAddPointFromCompass?.call(
+        _heading!,
+        setAsEndPoint: _setAsEndPoint,
+      ); // Pass the checkbox value
 
       // Show immediate feedback in CompassToolView
       // Do NOT show ScaffoldMessenger here if ProjectDetailsPage will show one.
@@ -205,88 +215,114 @@ class _CompassToolViewState extends State<CompassToolView> {
     return Container(
       padding: const EdgeInsets.all(16.0),
       alignment: Alignment.center,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          // --- Heading Display ---
-          Text(
-            _heading == null
-                ? '---°'
-                : '${_heading!.toStringAsFixed(1)}° ${getDirectionLetter(_heading!)}',
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.blueAccent,
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // --- Compass Rose and Project Azimuth Arrow ---
-          SizedBox(
-            width: 250, // Adjust size as needed
-            height: 250,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // 1. Compass Rose (Rotates to keep North up)
-                Transform.rotate(
-                  // The compass image itself might be oriented with North (0 degrees) at the top.
-                  // The phone's heading tells you where North is relative to the phone's top.
-                  // So, to make the compass image point North correctly, you rotate it by -_heading.
-                  angle: (_heading != null)
-                      ? (-(_heading!) * (math.pi / 180))
-                      : 0,
-                  child: Image.asset('assets/images/compass_rose.png'),
-                ),
-                // 2. Project Azimuth Arrow (Conditionally displayed and rotated)
-                if (widget.project.azimuth != null)
-                  Transform.rotate(
-                    // The arrow's angle is relative to the phone's top.
-                    // If compass rose image North is at its top, and project azimuth is X,
-                    // and phone's top is currently facing Y (_heading),
-                    // then the arrow on screen should be rotated by (X - Y)
-                    angle:
-                        (projectAzimuthArrowRotationDegrees * (math.pi / 180)),
-                    child: Image.asset(
-                      'assets/images/direction_arrow.png',
-                      width: 180, // Adjust size to be smaller than compass rose
-                      height: 180,
-                      color: Colors.blueGrey.withAlpha(
-                        (0.7 * 255).round(),
-                      ), // Optional: color the arrow
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          // Alternative: CustomPaint for a drawn compass (more complex but flexible)
-          // child: CustomPaint(
-          //   size: const Size(200, 200),
-          //   painter: CompassPainter(heading: _heading ?? 0),
-          // ),
-          const SizedBox(height: 30),
-
-          // --- Add Point Button ---
-          if (widget.isAddingPoint) // Use the passed-in loading state
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 20.0),
-              child: CircularProgressIndicator(),
-            )
-          else
-            ElevatedButton.icon(
-              icon: const Icon(Icons.add_location_alt_outlined),
-              label: const Text('Add Point with Current Heading'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-                textStyle: const TextStyle(fontSize: 16),
+      child: SingleChildScrollView(
+        // Added SingleChildScrollView for smaller screens
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            // --- Heading Display ---
+            Text(
+              _heading == null
+                  ? '---°'
+                  : '${_heading!.toStringAsFixed(1)}° ${getDirectionLetter(_heading!)}',
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.blueAccent,
               ),
-              onPressed: _handleAddPointPressed,
             ),
-          _buildProjectAzimuthText(),
-        ],
+            const SizedBox(height: 20),
+
+            // --- Compass Rose and Project Azimuth Arrow ---
+            SizedBox(
+              width: 250, // Adjust size as needed
+              height: 250,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // 1. Compass Rose (Rotates to keep North up)
+                  Transform.rotate(
+                    // The compass image itself might be oriented with North (0 degrees) at the top.
+                    // The phone's heading tells you where North is relative to the phone's top.
+                    // So, to make the compass image point North correctly, you rotate it by -_heading.
+                    angle: (_heading != null)
+                        ? (-(_heading!) * (math.pi / 180))
+                        : 0,
+                    child: Image.asset('assets/images/compass_rose.png'),
+                  ),
+                  // 2. Project Azimuth Arrow (Conditionally displayed and rotated)
+                  if (widget.project.azimuth != null)
+                    Transform.rotate(
+                      // The arrow's angle is relative to the phone's top.
+                      // If compass rose image North is at its top, and project azimuth is X,
+                      // and phone's top is currently facing Y (_heading),
+                      // then the arrow on screen should be rotated by (X - Y)
+                      angle:
+                          (projectAzimuthArrowRotationDegrees *
+                          (math.pi / 180)),
+                      child: Image.asset(
+                        'assets/images/direction_arrow.png',
+                        width:
+                            180, // Adjust size to be smaller than compass rose
+                        height: 180,
+                        color: Colors.blueGrey.withAlpha(
+                          (0.7 * 255).round(),
+                        ), // Optional: color the arrow
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            // Alternative: CustomPaint for a drawn compass (more complex but flexible)
+            // child: CustomPaint(
+            //   size: const Size(200, 200),
+            //   painter: CompassPainter(heading: _heading ?? 0),
+            // ),
+            const SizedBox(height: 20),
+            // --- "Add as END point" Checkbox ---
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: CheckboxListTile(
+                title: const Text("Add as END point"),
+                value: _setAsEndPoint,
+                onChanged: (bool? value) {
+                  if (mounted) {
+                    setState(() {
+                      _setAsEndPoint = value ?? false;
+                    });
+                  }
+                },
+                controlAffinity:
+                    ListTileControlAffinity.leading, // Checkbox on the left
+                dense: true,
+              ),
+            ),
+            // --- End Checkbox ---
+            const SizedBox(height: 10),
+
+            // --- Add Point Button ---
+            if (widget.isAddingPoint) // Use the passed-in loading state
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 20.0),
+                child: CircularProgressIndicator(),
+              )
+            else
+              ElevatedButton.icon(
+                icon: const Icon(Icons.add_location_alt_outlined),
+                label: const Text('Add Point with Current Heading'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  textStyle: const TextStyle(fontSize: 16),
+                ),
+                onPressed: _handleAddPointPressed,
+              ),
+            _buildProjectAzimuthText(),
+          ],
+        ),
       ),
     );
   }
