@@ -24,6 +24,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
   late TextEditingController _latitudeController;
   late TextEditingController _longitudeController;
   late TextEditingController _noteController;
+  late TextEditingController _headingController;
 
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
   bool _isLoading = false;
@@ -38,6 +39,10 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
       text: widget.point.longitude.toString(),
     );
     _noteController = TextEditingController(text: widget.point.note ?? '');
+    _headingController = TextEditingController(
+      text:
+          widget.point.heading?.toStringAsFixed(2) ?? '', // Handle null heading
+    );
     logger.info(
       "PointDetailsPage initialized for Point ID: ${widget.point.id}, Ordinal: ${widget.point.ordinalNumber}",
     );
@@ -48,6 +53,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
     _latitudeController.dispose();
     _longitudeController.dispose();
     _noteController.dispose();
+    _headingController.dispose();
     super.dispose();
   }
 
@@ -63,6 +69,9 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
 
     final double? latitude = double.tryParse(_latitudeController.text);
     final double? longitude = double.tryParse(_longitudeController.text);
+    final double? headingValue = _headingController.text.isNotEmpty
+        ? double.tryParse(_headingController.text)
+        : null;
 
     if (latitude == null || longitude == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -76,6 +85,20 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
       });
       return;
     }
+    if (_headingController.text.isNotEmpty && headingValue == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Invalid heading format. Please enter a number or leave it empty.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      setState(() {
+        _isLoading = false;
+      });
+      return; // Stop if heading is provided but invalid
+    }
 
     PointModel updatedPoint = PointModel(
       id: widget.point.id, // Keep existing ID
@@ -85,6 +108,8 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
       ordinalNumber:
           widget.point.ordinalNumber, // Ordinal typically not changed here
       note: _noteController.text.isNotEmpty ? _noteController.text : null,
+      heading: headingValue,
+      timestamp: widget.point.timestamp ?? DateTime.now(),
     );
 
     try {
@@ -200,7 +225,32 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
                 },
               ),
               const SizedBox(height: 16.0),
-
+              TextFormField(
+                controller: _headingController,
+                decoration: const InputDecoration(
+                  labelText: 'Heading (degrees)',
+                  hintText: 'e.g. 123.5 (Optional)',
+                  border: OutlineInputBorder(),
+                  icon: Icon(Icons.explore_outlined), // Compass icon
+                ),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return null; // Heading is optional
+                  }
+                  final n = double.tryParse(value);
+                  if (n == null) {
+                    return 'Invalid number format';
+                  }
+                  if (n < 0 || n >= 360) {
+                    return 'Heading must be between 0 and 359.9';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16.0),
               // --- Note ---
               TextFormField(
                 controller: _noteController,

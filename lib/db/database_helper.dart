@@ -10,7 +10,7 @@ import 'models/project_model.dart';
 class DatabaseHelper {
   static const _databaseName = "Photogrammetry.db";
 
-  static const _databaseVersion = 4; // Incremented due to schema change
+  static const _databaseVersion = 5; // Incremented due to schema change
 
   static const tableProjects = 'projects';
   static const tablePoints = 'points';
@@ -29,6 +29,8 @@ class DatabaseHelper {
   static const columnLongitude = 'longitude';
   static const columnOrdinalNumber = 'ordinal_number';
   static const columnNote = 'note';
+  static const columnHeading = 'heading';
+  static const columnTimestamp = 'timestamp';
 
   static const columnPointId = 'point_id';
   static const columnImagePath = 'image_path';
@@ -76,15 +78,17 @@ class DatabaseHelper {
     '''); // TEXT for ISO8601 DateTime string
 
     await db.execute('''
-      CREATE TABLE $tablePoints (
-        $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
-        $columnProjectId INTEGER NOT NULL,
-        $columnLatitude REAL NOT NULL,
-        $columnLongitude REAL NOT NULL,
-        $columnOrdinalNumber INTEGER NOT NULL,
-        $columnNote TEXT,
-        FOREIGN KEY ($columnProjectId) REFERENCES $tableProjects ($columnId) ON DELETE CASCADE
-      )
+    CREATE TABLE $tablePoints (
+      $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
+      $columnProjectId INTEGER NOT NULL,
+      $columnLatitude REAL NOT NULL,
+      $columnLongitude REAL NOT NULL,
+      $columnOrdinalNumber INTEGER NOT NULL,
+      $columnNote TEXT,
+      $columnHeading REAL,         
+      $columnTimestamp TEXT,       
+    FOREIGN KEY ($columnProjectId) REFERENCES $tableProjects ($columnId) ON DELETE CASCADE
+    )
     ''');
 
     await db.execute('''
@@ -127,8 +131,36 @@ class DatabaseHelper {
       await db.execute(
         'ALTER TABLE $tableProjects ADD COLUMN $columnDate TEXT',
       );
-      logger.info("Applied migrations for version 3: Added $columnDate column");
+      logger.info("Applied migrations for version 4: Added $columnDate column");
     }
+    if (oldVersion < 5) {
+      try {
+        await db.execute(
+          'ALTER TABLE $tablePoints ADD COLUMN $columnHeading REAL;',
+        );
+        logger.info(
+          "Applied migration for version 5: Added $columnHeading REAL to $tablePoints",
+        );
+      } catch (e) {
+        // Log error but continue, column might exist if migration was partially run before
+        logger.warning(
+          "Could not add $columnHeading to $tablePoints (may already exist): $e",
+        );
+      }
+      try {
+        await db.execute(
+          'ALTER TABLE $tablePoints ADD COLUMN $columnTimestamp TEXT;',
+        );
+        logger.info(
+          "Applied migration for version 5: Added $columnTimestamp TEXT to $tablePoints",
+        );
+      } catch (e) {
+        logger.warning(
+          "Could not add $columnTimestamp to $tablePoints (may already exist): $e",
+        );
+      }
+    }
+    logger.info("Database upgrade process complete.");
   }
 
   // --- Project Methods ---
@@ -289,9 +321,6 @@ class DatabaseHelper {
   // --- Point Methods ---
   Future<int> insertPoint(PointModel point) async {
     Database db = await instance.database;
-    // The actual updateProjectStartEndPoints will be called from the page state
-    // after successful insertion and ordinal assignment.
-    // However, we still want to update the project's timestamp for any point modification.
     await _updateProjectTimestamp(point.projectId);
     return await db.insert(tablePoints, point.toMap());
   }
@@ -299,8 +328,6 @@ class DatabaseHelper {
   Future<int> updatePoint(PointModel point) async {
     Database db = await instance.database;
     await _updateProjectTimestamp(point.projectId);
-    // TODO: Be careful if updating ordinal_number directly; may require re-sequencing logic
-    // similar to deletion if order changes. For now, assume simple field updates.
     return await db.update(
       tablePoints,
       point.toMap(),
@@ -365,6 +392,20 @@ class DatabaseHelper {
     int id,
   ) async {
     final List<Map<String, dynamic>> maps = await txn.query(
+      tablePoints,
+      where: '$columnId = ?',
+      whereArgs: [id],
+    );
+    if (maps.isNotEmpty) {
+      return PointModel.fromMap(maps.first);
+    }
+    return null;
+  }
+
+  // getPointById without transaction (for external use)
+  Future<PointModel?> getPointById(int id) async {
+    Database db = await instance.database;
+    final List<Map<String, dynamic>> maps = await db.query(
       tablePoints,
       where: '$columnId = ?',
       whereArgs: [id],
@@ -457,20 +498,6 @@ class DatabaseHelper {
     return List.generate(maps.length, (i) {
       return PointModel.fromMap(maps[i]);
     });
-  }
-
-  // getPointById without transaction (for external use)
-  Future<PointModel?> getPointById(int id) async {
-    Database db = await instance.database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      tablePoints,
-      where: '$columnId = ?',
-      whereArgs: [id],
-    );
-    if (maps.isNotEmpty) {
-      return PointModel.fromMap(maps.first);
-    }
-    return null;
   }
 
   /// Deletes multiple points and re-sequences ordinal numbers for each affected project.

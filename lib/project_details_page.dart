@@ -378,7 +378,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
         ordinalNumber: newPointOrdinal,
         // You might want a default note or a way to add one later
         note: 'Point from Compass (H: ${heading.toStringAsFixed(1)}°)',
-        // heading: heading, // FIXME: what about the heading????
+        heading: heading, // FIXME: what about the timestamp????
       );
 
       final newPointIdFromCompass = await _dbHelper.insertPoint(

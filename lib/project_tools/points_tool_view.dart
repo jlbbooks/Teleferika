@@ -368,7 +368,7 @@ class PointsToolViewState extends State<PointsToolView> {
     final Color baseSelectionColor = Theme.of(context).primaryColorLight;
     const double selectedOpacity = 0.3;
 
-    // --- MODIFICATION START: Determine if it's a start or end point ---
+    // --- Determine if it's a start or end point ---
     final bool isProjectStartPoint =
         point.id != null && point.id == widget.project.startingPointId;
     final bool isProjectEndPoint =
@@ -440,7 +440,7 @@ class PointsToolViewState extends State<PointsToolView> {
                 ),
               ),
         title: Text(
-          'P${point.ordinalNumber}: Lat: ${point.latitude.toStringAsFixed(5)}, Lon: ${point.longitude.toStringAsFixed(5)}',
+          'P${point.ordinalNumber}: Lat: ${point.latitude.toStringAsFixed(5)}, Lon: ${point.longitude.toStringAsFixed(5)} | H: ${point.heading?.toStringAsFixed(2) ?? '---'}°',
         ),
         subtitle: Column(
           // Use Column to add special role text if present

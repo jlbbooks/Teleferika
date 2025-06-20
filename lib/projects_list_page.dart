@@ -242,7 +242,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
           ? timeFormat.format(project.lastUpdate!)
           : "-";
       lastUpdateText =
-          'Proj. Date: $formattedProjectDate | Upd: $formattedUpdateTime';
+          'Proj. Date: $formattedProjectDate\nUpd: $formattedUpdateTime';
     } else {
       lastUpdateText = project.lastUpdate != null
           ? 'Last Update: ${lastUpdateDateTimeFormat.format(project.lastUpdate!)}'

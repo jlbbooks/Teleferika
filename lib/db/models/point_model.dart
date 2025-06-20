@@ -6,8 +6,8 @@ class PointModel {
   double longitude;
   int ordinalNumber;
   String? note;
-  // double? heading;
-  // DateTime? timestamp;
+  double? heading;
+  DateTime? timestamp;
 
   PointModel({
     this.id,
@@ -16,8 +16,8 @@ class PointModel {
     required this.longitude,
     required this.ordinalNumber,
     this.note, // TODO: what about the heading?????
-    // this.heading,
-    // this.timestamp,
+    this.heading,
+    this.timestamp,
   });
 
   /// Creates a new [PointModel] instance with optional new values.
@@ -36,8 +36,8 @@ class PointModel {
     int? ordinalNumber,
     String?
     note, // To clear a note, you'd pass an empty string or explicitly null
-    // double? heading,
-    // DateTime? timestamp,
+    double? heading,
+    DateTime? timestamp,
   }) {
     return PointModel(
       id: id ?? this.id, // Keeps old id if not provided
@@ -51,8 +51,8 @@ class PointModel {
       // or accept that passing null to copyWith means "no change".
       // A common pattern is to use a special sentinel like Object() for "set to null".
       // However, for simplicity, this pattern is common: null means "no change".
-      // heading: heading ?? this.heading,
-      // timestamp: timestamp ?? this.timestamp,
+      heading: heading ?? this.heading,
+      timestamp: timestamp ?? this.timestamp,
     );
   }
 
@@ -64,8 +64,8 @@ class PointModel {
       'longitude': longitude,
       'ordinal_number': ordinalNumber,
       'note': note,
-      // 'heading': heading, // Added
-      // 'timestamp': timestamp?.toIso8601String(), // Store as ISO 8601 string
+      'heading': heading, // Added
+      'timestamp': timestamp?.toIso8601String(), // Store as ISO 8601 string
     };
   }
 
@@ -77,14 +77,16 @@ class PointModel {
       longitude: map['longitude'] as double,
       ordinalNumber: map['ordinal_number'] as int,
       note: map['note'] as String?,
-      // heading: map['heading'] as double?, // Added
-      // timestamp: map['timestamp'] != null ? DateTime.tryParse(map['timestamp'] as String) : null, // Parse from string
+      heading: map['heading'] as double?, // Added
+      timestamp: map['timestamp'] != null
+          ? DateTime.tryParse(map['timestamp'] as String)
+          : null, // Parse from string
     );
   }
 
   @override
   String toString() {
-    return 'Point{id: $id, projectId: $projectId, lat: $latitude, lon: $longitude, order: $ordinalNumber, note: $note}'; //, heading: $heading, timestamp: $timestamp}';
+    return 'Point{id: $id, projectId: $projectId, lat: $latitude, lon: $longitude, order: $ordinalNumber, note: $note, heading: $heading, timestamp: $timestamp}';
   }
 
   // --- Potentially useful: Equality and HashCode ---
@@ -100,9 +102,9 @@ class PointModel {
         other.latitude == latitude &&
         other.longitude == longitude &&
         other.ordinalNumber == ordinalNumber &&
-        other.note == note; //&&
-    // other.heading == heading &&
-    // other.timestamp == timestamp;
+        other.note == note &&
+        other.heading == heading &&
+        other.timestamp == timestamp;
   }
 
   @override
@@ -112,8 +114,8 @@ class PointModel {
         latitude.hashCode ^
         longitude.hashCode ^
         ordinalNumber.hashCode ^
-        note.hashCode; //^
-    // heading.hashCode ^
-    // timestamp.hashCode;
+        note.hashCode ^
+        heading.hashCode ^
+        timestamp.hashCode;
   }
 }
