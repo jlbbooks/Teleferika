@@ -90,14 +90,16 @@ class _CompassToolViewState extends State<CompassToolView> {
       widget.onAddPointFromCompass?.call(_heading!);
 
       // Show immediate feedback in CompassToolView
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Add Point signal sent with heading: ${_heading!.toStringAsFixed(1)}°',
-          ),
-          backgroundColor: Colors.blueAccent, // Different color to distinguish
-        ),
-      );
+      // Do NOT show ScaffoldMessenger here if ProjectDetailsPage will show one.
+      // Or, make it clear this is just a local "signal sent" confirmation.
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(
+      //     content: Text(
+      //       'Sending heading: ${_heading!.toStringAsFixed(1)}° to add point...',
+      //     ),
+      //     backgroundColor: Colors.blueAccent,
+      //   ),
+      // );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

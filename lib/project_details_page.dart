@@ -4,14 +4,14 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
-import 'package:teleferika/points_tool_view.dart';
+import 'package:teleferika/project_tools/points_tool_view.dart';
 
-import 'compass_tool_view.dart';
 import 'db/database_helper.dart'; // Ensure correct path
 import 'db/models/point_model.dart';
 import 'db/models/project_model.dart'; // Ensure correct path
 import 'logger.dart';
-import 'map_tool_view.dart';
+import 'project_tools/compass_tool_view.dart';
+import 'project_tools/map_tool_view.dart';
 
 // At the top of project_details_page.dart, or in a separate file
 enum ActiveCardTool { compass, points, map }
@@ -340,7 +340,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
       _pointsToolViewKey.currentState
           ?.refreshPoints(); // Call refreshPoints on PointsToolView
 
-      // Optionally, if the compass tool is active, and you want to switch to points view:
+      // If the compass tool is active, and you want to switch to points view:
       if (_activeCardTool == ActiveCardTool.compass) {
         _toggleActiveCardTool(ActiveCardTool.points);
       }
