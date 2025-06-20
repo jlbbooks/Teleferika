@@ -94,6 +94,8 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
 
   // State variable to control CompassToolView's spinner for this action
   bool _isAddingPointFromCompassInProgress = false;
+  // ID of the most recently added point (for adding NEW icon)
+  int? _newlyAddedPointId;
 
   @override
   void initState() {
@@ -409,6 +411,9 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
       await _loadProjectDetails(); // Reload project to get updated start/end IDs for the UI
 
       if (mounted) {
+        setState(() {
+          _newlyAddedPointId = newPointIdFromCompass;
+        });
         ScaffoldMessenger.of(
           context,
         ).removeCurrentSnackBar(); // Remove "Fetching location..."
@@ -1185,6 +1190,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
           key: _pointsToolViewKey, // Assign the GlobalKey
           project: _currentProject,
           onPointsChanged: _onPointsChanged,
+          newlyAddedPointId: _newlyAddedPointId,
         );
       case ActiveCardTool.map:
         return MapToolView(project: _currentProject);

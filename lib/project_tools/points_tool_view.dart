@@ -9,11 +9,13 @@ import 'package:teleferika/point_details_page.dart';
 class PointsToolView extends StatefulWidget {
   final ProjectModel project;
   final VoidCallback? onPointsChanged; // Callback for when points are modified
+  final int? newlyAddedPointId;
 
   const PointsToolView({
     super.key,
     required this.project,
     this.onPointsChanged, // Add to constructor
+    this.newlyAddedPointId,
   });
 
   @override
@@ -338,6 +340,10 @@ class PointsToolViewState extends State<PointsToolView> {
     final Color baseSelectionColor = Theme.of(context).primaryColorLight;
     const double selectedOpacity = 0.3;
 
+    bool isNewlyAdded =
+        (widget.newlyAddedPointId != null &&
+        widget.newlyAddedPointId == point.id);
+
     // --- Determine if it's a start or end point ---
     final bool isProjectStartPoint =
         point.id != null && point.id == widget.project.startingPointId;
@@ -389,92 +395,117 @@ class PointsToolViewState extends State<PointsToolView> {
           : (isProjectStartPoint || isProjectEndPoint
                 ? cardHighlightColor
                 : null), // Apply special background
-      child: ListTile(
-        leading: _isSelectionMode
-            ? Checkbox(
-                value: isSelectedForDelete,
-                activeColor: Theme.of(context).primaryColor,
-                onChanged: (bool? value) {
-                  if (point.id != null) _togglePointSelection(point.id!);
-                },
-              )
-            : ReorderableDragStartListener(
-                index: index,
-                child: Padding(
-                  // Add some padding around the handle for easier touch
-                  padding: const EdgeInsets.all(8.0),
-                  child: Icon(
-                    Icons.drag_handle,
-                    color: Theme.of(context).hintColor, // Subtle color
+      child: Stack(
+        // Use Stack to overlay the "New" badge
+        children: [
+          ListTile(
+            leading: _isSelectionMode
+                ? Checkbox(
+                    value: isSelectedForDelete,
+                    activeColor: Theme.of(context).primaryColor,
+                    onChanged: (bool? value) {
+                      if (point.id != null) _togglePointSelection(point.id!);
+                    },
+                  )
+                : ReorderableDragStartListener(
+                    index: index,
+                    child: Padding(
+                      // Add some padding around the handle for easier touch
+                      padding: const EdgeInsets.all(8.0),
+                      child: Icon(
+                        Icons.drag_handle,
+                        color: Theme.of(context).hintColor, // Subtle color
+                      ),
+                    ),
                   ),
+            title: Text(
+              'P${point.ordinalNumber}: Lat: ${point.latitude.toStringAsFixed(5)}, Lon: ${point.longitude.toStringAsFixed(5)} | H: ${point.heading?.toStringAsFixed(2) ?? '---'}°',
+            ),
+            subtitle: Column(
+              // Use Column to add special role text if present
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(point.note ?? 'No note'),
+                if (specialRoleText != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4.0),
+                    child: Text(
+                      specialRoleText,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color:
+                            specialRoleColor ??
+                            Theme.of(context).colorScheme.primary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            trailing: !_isSelectionMode
+                ? IconButton(
+                    icon: const Icon(
+                      Icons.edit_note_outlined,
+                      color: Colors.blueGrey,
+                    ),
+                    tooltip: 'Edit Point',
+                    onPressed: () {
+                      logger.info("Edit tapped for point ID: ${point.id}");
+                      // TODO: Implement point editing
+                      _handlePointTap(point);
+                    },
+                    // onPressed: () async { // Make async if navigating and awaiting result
+                    //   logger.info("Edit tapped for point ID: ${point.id}");
+                    //   if (!mounted) return;
+                    //   final result = await Navigator.push<bool>( // Assuming PointDetailsPage might return bool
+                    //     context,
+                    //     MaterialPageRoute(builder: (context) => PointDetailsPage(point: point)),
+                    //   );
+                    //   if (result == true) { // If PointDetailsPage indicates a save
+                    //     logger.info("PointDetailsPage returned true, refreshing points.");
+                    //     refreshPoints(); // Refresh the list
+                    //     widget.onPointsChanged?.call(); // Notify parent page
+                    //   }
+                    // },
+                  )
+                : null,
+            onTap: () => _handlePointTap(point),
+            // ReorderableListView handles long press for drag if not in selection mode.
+            // If you need specific long press logic, it might conflict or need careful handling.
+            // For simplicity, we let ReorderableListView manage the drag on long press
+            // via the ReorderableDragStartListener.
+            onLongPress: _isSelectionMode
+                ? () =>
+                      _handlePointLongPress(
+                        point,
+                      ) // Allow long press toggle within selection mode
+                : () {
+                    // If not in selection mode, long press on ListTile body should enable it
+                    // and select the item. Drag handle is separate.
+                    _handlePointLongPress(point);
+                  },
+          ),
+          if (isNewlyAdded)
+            Positioned(
+              top: 4,
+              right: 4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.green, // "New" badge color
+                  borderRadius: BorderRadius.circular(4),
                 ),
-              ),
-        title: Text(
-          'P${point.ordinalNumber}: Lat: ${point.latitude.toStringAsFixed(5)}, Lon: ${point.longitude.toStringAsFixed(5)} | H: ${point.heading?.toStringAsFixed(2) ?? '---'}°',
-        ),
-        subtitle: Column(
-          // Use Column to add special role text if present
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(point.note ?? 'No note'),
-            if (specialRoleText != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 4.0),
-                child: Text(
-                  specialRoleText,
+                child: const Text(
+                  'NEW',
                   style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color:
-                        specialRoleColor ??
-                        Theme.of(context).colorScheme.primary,
-                    fontSize: 12,
                   ),
                 ),
               ),
-          ],
-        ),
-        trailing: !_isSelectionMode
-            ? IconButton(
-                icon: const Icon(
-                  Icons.edit_note_outlined,
-                  color: Colors.blueGrey,
-                ),
-                tooltip: 'Edit Point',
-                onPressed: () {
-                  logger.info("Edit tapped for point ID: ${point.id}");
-                  // TODO: Implement point editing
-                  _handlePointTap(point);
-                },
-                // onPressed: () async { // Make async if navigating and awaiting result
-                //   logger.info("Edit tapped for point ID: ${point.id}");
-                //   if (!mounted) return;
-                //   final result = await Navigator.push<bool>( // Assuming PointDetailsPage might return bool
-                //     context,
-                //     MaterialPageRoute(builder: (context) => PointDetailsPage(point: point)),
-                //   );
-                //   if (result == true) { // If PointDetailsPage indicates a save
-                //     logger.info("PointDetailsPage returned true, refreshing points.");
-                //     refreshPoints(); // Refresh the list
-                //     widget.onPointsChanged?.call(); // Notify parent page
-                //   }
-                // },
-              )
-            : null,
-        onTap: () => _handlePointTap(point),
-        // ReorderableListView handles long press for drag if not in selection mode.
-        // If you need specific long press logic, it might conflict or need careful handling.
-        // For simplicity, we let ReorderableListView manage the drag on long press
-        // via the ReorderableDragStartListener.
-        onLongPress: _isSelectionMode
-            ? () =>
-                  _handlePointLongPress(
-                    point,
-                  ) // Allow long press toggle within selection mode
-            : () {
-                // If not in selection mode, long press on ListTile body should enable it
-                // and select the item. Drag handle is separate.
-                _handlePointLongPress(point);
-              },
+            ),
+        ],
       ),
     );
   }
