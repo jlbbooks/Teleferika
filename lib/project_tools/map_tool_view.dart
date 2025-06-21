@@ -1,4 +1,5 @@
 // map_tool_view.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -32,7 +33,6 @@ class _MapToolViewState extends State<MapToolView> {
   @override
   void initState() {
     super.initState();
-    // _mapController = MapController();
     _loadProjectPoints();
   }
 
@@ -40,16 +40,7 @@ class _MapToolViewState extends State<MapToolView> {
     setState(() {
       _isLoadingPoints = true;
     });
-    if (widget.project.id == null) {
-      logger.info("MapToolView: Project ID is null, cannot load points.");
-      if (mounted) {
-        setState(() {
-          _isLoadingPoints = false;
-          _projectPoints = [];
-        });
-      }
-      return;
-    }
+
     try {
       final points = await _dbHelper.getPointsForProject(widget.project.id!);
       if (mounted) {
@@ -67,8 +58,7 @@ class _MapToolViewState extends State<MapToolView> {
         setState(() {
           _isLoadingPoints = false;
         });
-      }
-      if (mounted) {
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Error loading points for map: $e")),
         );
@@ -141,17 +131,13 @@ class _MapToolViewState extends State<MapToolView> {
   }
 
   @override
-  void dispose() {
-    // _mapController.dispose(); // MapController is not a ChangeNotifier, no dispose needed from user side
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     if (_isLoadingPoints) {
       // Primary condition: still loading points
       return const Center(
-        child: CircularProgressIndicator(key: ValueKey("loading_points")),
+        child: CircularProgressIndicator(
+          key: ValueKey("loading_points_map_tool"),
+        ),
       );
     }
     // Prepare markers from project points
@@ -161,15 +147,15 @@ class _MapToolViewState extends State<MapToolView> {
         height: 80.0,
         point: LatLng(point.latitude, point.longitude),
         child: Column(
-          // Using child for custom marker
           children: [
             IconButton(
               icon: const Icon(Icons.location_pin),
-              color: Colors.red,
+              color: Colors
+                  .red, // TODO: Consider making this dynamic based on point type/state
               iconSize: 30.0,
               onPressed: () {
                 logger.info(
-                  "Tapped on marker for point: P${point.ordinalNumber}",
+                  "Tapped on marker for point: P${point.ordinalNumber} (ID: ${point.id})",
                 );
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -190,8 +176,15 @@ class _MapToolViewState extends State<MapToolView> {
               // Simple label below icon
               padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
               decoration: BoxDecoration(
-                color: Colors.white.withAlpha(200),
+                color: Colors.white.withAlpha(220),
                 borderRadius: BorderRadius.circular(3),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 2,
+                    offset: Offset(0, 1),
+                  ),
+                ], // Subtle shadow
               ),
               child: Text(
                 "P${point.ordinalNumber}",
@@ -204,7 +197,6 @@ class _MapToolViewState extends State<MapToolView> {
             ),
           ],
         ),
-        // anchorPos: AnchorPos.align(AnchorAlign.top), // If icon's visual center is not its geometric center
       );
     }).toList();
 
@@ -217,82 +209,121 @@ class _MapToolViewState extends State<MapToolView> {
           .toList();
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        // mainAxisAlignment: MainAxisAlignment.center, // TODO: maybe remove
-        mainAxisSize: MainAxisSize
-            .min, // maybe remove? Keep if parent might be scrollable
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Column(
-            children: [
-              if (_projectPoints.isNotEmpty)
-                Text(
-                  'Points: ${_projectPoints.length}',
-                  style: Theme.of(context).textTheme.bodySmall,
-                )
-              else if (!_isLoadingPoints) // Only show if not loading and no points
-                Text(
-                  'No points in this project to display on map.',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-            ],
-          ),
-          Expanded(
-            child: FlutterMap(
-              mapController: _mapController,
-              options: MapOptions(
-                initialCenter: _getInitialCenter(),
-                initialZoom: _getInitialZoom(),
-                // bounds: _projectPoints.isNotEmpty
-                //     ? LatLngBounds.fromPoints(_projectPoints.map((p) => LatLng(p.latitude, p.longitude)).toList())
-                //     : null,
-                // boundsOptions: const FitBoundsOptions(padding: EdgeInsets.all(50.0)),
-                minZoom: 3.0, // Min zoom
-                maxZoom: 18.0, // Max zoom
-                onMapReady: () {
-                  logger.info("MapToolView: Map is ready (onMapReady called).");
-                  if (mounted) {
-                    // Ensure widget is still mounted
-                    setState(() {
-                      _isMapReady = true;
-                    });
-                    // Now that map is ready, try to fit points (they might have loaded already)
-                    _fitMapToPoints();
-                  }
-                },
-                // Add other interactions if needed
-                // onTap: (tapPosition, latlng) {
-                //   // Handle map tap - e.g., add new point
-                // },
-              ),
+    return Scaffold(
+      body: Container(
+        padding: const EdgeInsets.all(16.0),
+        child: Stack(
+          children: [
+            Column(
+              mainAxisSize: MainAxisSize
+                  .min, // maybe remove? Keep if parent might be scrollable
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Use children instead of layers for flutter_map 6.x+
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  subdomains: const ['a', 'b', 'c'],
-                  userAgentPackageName:
-                      'com.jlbbooks.teleferika', // Replace with your app's package name
-                  // Recommended for OSM tile usage policy
-                ),
-                if (polylinePoints.isNotEmpty)
-                  PolylineLayer(
-                    polylines: [
-                      Polyline(
-                        points: polylinePoints,
-                        color: Colors.blue, // Choose your line color
-                        strokeWidth: 3.0, // Choose your line width
-                        pattern: StrokePattern.dotted(),
+                // This Text widget might be redundant if the parent already displays project info
+                // Consider if it adds value or can be removed.
+                if (_projectPoints.isNotEmpty)
+                  Padding(
+                    // Added padding for better spacing
+                    padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                    child: Text(
+                      'Points on map: ${_projectPoints.length}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  )
+                else if (!_isLoadingPoints) // Only show if not loading and no points
+                  Padding(
+                    // Added padding
+                    padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                    child: Text(
+                      'No points in this project to display on map.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                Expanded(
+                  child: FlutterMap(
+                    mapController: _mapController,
+                    options: MapOptions(
+                      initialCenter: _getInitialCenter(),
+                      initialZoom: _getInitialZoom(),
+                      // bounds: _projectPoints.isNotEmpty
+                      //     ? LatLngBounds.fromPoints(_projectPoints.map((p) => LatLng(p.latitude, p.longitude)).toList())
+                      //     : null,
+                      // boundsOptions: const FitBoundsOptions(padding: EdgeInsets.all(50.0)),
+                      minZoom: 3.0, // Min zoom
+                      maxZoom: 18.0, // Max zoom
+                      onMapReady: () {
+                        logger.info(
+                          "MapToolView: Map is ready (onMapReady called).",
+                        );
+                        if (mounted) {
+                          // Ensure widget is still mounted
+                          setState(() {
+                            _isMapReady = true;
+                          });
+                          // Now that map is ready, try to fit points (they might have loaded already)
+                          _fitMapToPoints();
+                        }
+                      },
+                      // Add other interactions if needed
+                      // onTap: (tapPosition, latlng) {
+                      //   // TODO: Handle map tap - e.g., add new point
+                      // },
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        subdomains: const ['a', 'b', 'c'],
+                        userAgentPackageName:
+                            'com.jlbbooks.teleferika', // Replace with your app's package name
+                        // Recommended for OSM tile usage policy
                       ),
+                      if (polylinePoints.isNotEmpty)
+                        PolylineLayer(
+                          polylines: [
+                            Polyline(
+                              points: polylinePoints,
+                              // color: Colors.blue, // Choose your line color
+                              strokeWidth:
+                                  4.0, // Slightly thicker for gradient visibility
+                              gradientColors: [
+                                // Example: From green to red
+                                Colors.green,
+                                Colors.yellow,
+                                Colors.red,
+                              ],
+                              colorsStop: [
+                                // Defines where each color transition happens
+                                0.0, // Start with green
+                                0.5, // Transition to yellow by the midpoint
+                                1.0, // End with red
+                              ],
+                              // If colorsStop is null, the gradient is applied evenly.
+                              // For more complex paths, you might want to calculate stops based on segment lengths.
+                              // pattern: StrokePattern.dotted(),
+                            ),
+                          ],
+                        ),
+                      if (!_isLoadingPoints && markers.isNotEmpty)
+                        MarkerLayer(markers: markers),
                     ],
                   ),
-                if (!_isLoadingPoints && markers.isNotEmpty)
-                  MarkerLayer(markers: markers),
+                ),
               ],
             ),
-          ),
-        ],
+            if (!_isLoadingPoints &&
+                _projectPoints.isNotEmpty) // Show FAB only if map is usable
+              Positioned(
+                bottom: 24,
+                right: 24,
+                child: FloatingActionButton(
+                  onPressed: _fitMapToPoints,
+                  tooltip: 'Center on points',
+                  child: const Icon(Icons.center_focus_strong),
+                ),
+              ),
+          ],
+        ),
       ),
     );
     // --- End Map Widget Replacement ---
