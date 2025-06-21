@@ -25,12 +25,6 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
   bool _isSelectionMode = false;
   final Set<int> _selectedProjectIds = {};
 
-  // --- For Flashing ---
-  int? _flashingProjectId; // ID of the project to flash
-  bool _isFlashing = false; // To control the flash state
-  Timer? _flashTimer; // Timer to reset the flash
-  // --- End Flashing ---
-
   @override
   void initState() {
     super.initState();
@@ -39,7 +33,6 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
 
   @override
   void dispose() {
-    _flashTimer?.cancel(); // Cancel timer if page is disposed
     super.dispose();
   }
 
@@ -83,34 +76,17 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
         context,
         MaterialPageRoute(builder: (_) => ProjectPage(project: project)),
       );
-
-      // --- Handle Result for Flashing ---
       if (result is Map<String, dynamic> &&
-          (result['modified'] == true || result['isNew'] == true) &&
+          (result['action'] == "created" || result['action'] == 'modified') &&
           result['id'] != null) {
-        _startFlashing(result['id'] as int);
         _refreshProjectsList(); // Refresh list to show updated data
-      } else if (result == true) {
-        // Fallback for simple boolean result (e.g. from new project creation)
+      } else if (result is bool && result == true) {
+        _refreshProjectsList();
+      } else {
+        // FIXME: for now we just refresh them all
         _refreshProjectsList();
       }
-      // --- End Handle Result ---
     }
-  }
-
-  void _startFlashing(int projectId) {
-    _flashTimer?.cancel(); // Cancel any existing flash timer
-    setState(() {
-      _flashingProjectId = projectId;
-      _isFlashing = true;
-    });
-    _flashTimer = Timer(const Duration(milliseconds: 700), () {
-      // Duration of the flash
-      setState(() {
-        _isFlashing = false;
-        _flashingProjectId = null; // Clear after flash
-      });
-    });
   }
 
   void _exitSelectionMode() {
@@ -193,22 +169,10 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
       MaterialPageRoute(builder: (context) => ProjectPage(project: newProject)),
     );
 
-    // --- Handle Result for Flashing New Project ---
     if (result is Map<String, dynamic> &&
-        result['modified'] == true &&
-        result['id'] != null &&
-        result['isNew'] == true) {
-      // Check if it's a new project
-      logger.info(
-        "New project created (ID: ${result['id']}). Refreshing and flashing.",
-      );
-      _refreshProjectsList(); // Refresh list to show the new project
-      // Slight delay to ensure the list has rebuilt with the new item before flashing
-      Future.delayed(const Duration(milliseconds: 100), () {
-        _startFlashing(result['id'] as int);
-      });
-    } else if (result == true) {
-      // Fallback for older/other true results, just refresh
+        (result['action'] == "created" && result['id'] != null)) {
+      _refreshProjectsList();
+    } else if (result is bool && result == true) {
       logger.info(
         "Returned from ProjectDetailsPage with a generic true result. Refreshing list.",
       );
@@ -248,17 +212,10 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
           ? 'Last Update: ${lastUpdateDateTimeFormat.format(project.lastUpdate!)}'
           : 'No updates';
     }
-    // --- Flashing Logic ---
-    Color itemColor = Theme.of(context).cardColor; // Default card color
-    if (_flashingProjectId == project.id && _isFlashing) {
-      itemColor = Colors.orange.shade100; // Flash color
-    }
-    // --- End Flashing Logic ---
 
     return Card(
       elevation: 2.0,
       margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-      color: itemColor, // Apply conditional color
       child: ListTile(
         leading: _isSelectionMode
             ? Checkbox(

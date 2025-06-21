@@ -175,7 +175,7 @@ class _ProjectPageState extends State<ProjectPage> {
           ),
         );
         // Optionally, you might want to pop the page if the project doesn't exist anymore
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(false);
       }
     } catch (e, stackTrace) {
       logger.severe(
@@ -551,14 +551,14 @@ class _ProjectPageState extends State<ProjectPage> {
       ProjectModel projectToSave = _currentProject.copyWith(
         name: _nameController.text.trim(),
         date: _projectDate,
-        // Assuming _projectDate is your DateTime object for the UI
         note: _noteController.text.trim(),
-        // Assuming you have _noteController
         lastUpdate: DateTime.now(),
-        // Ensure other fields from _currentProject are preserved or updated if needed
-        // startingPointId: _currentProject.startingPointId, // if not changed by form
-        // endingPointId: _currentProject.endingPointId,   // if not changed by form
-        // azimuth: double.tryParse(_azimuthController.text), // if azimuth is directly editable
+        startingPointId:
+            _currentProject.startingPointId, // if not changed by form
+        endingPointId: _currentProject.endingPointId, // if not changed by form
+        azimuth: double.tryParse(
+          _azimuthController.text,
+        ), // if azimuth is directly editable
       );
 
       try {
@@ -579,7 +579,10 @@ class _ProjectPageState extends State<ProjectPage> {
                   backgroundColor: Colors.green,
                 ),
               );
-              Navigator.of(context).pop(true);
+              Map<String, dynamic> result = {};
+              result["id"] = _currentProject.id!;
+              result["action"] = "created";
+              Navigator.of(context).pop(result);
             }
           } else {
             throw Exception("Failed to create project.");
@@ -602,7 +605,10 @@ class _ProjectPageState extends State<ProjectPage> {
                   backgroundColor: Colors.green,
                 ),
               );
-              Navigator.of(context).pop(true);
+              Map<String, dynamic> result = {};
+              result["id"] = _currentProject.id!;
+              result["action"] = "modified";
+              Navigator.of(context).pop(result);
             }
           } else {
             if (mounted) {
@@ -698,8 +704,11 @@ class _ProjectPageState extends State<ProjectPage> {
                 backgroundColor: Colors.green,
               ),
             );
-            // Navigate back to the previous screen, potentially with a result
-            Navigator.of(context).pop(true); // Pop with true to indicate change
+            // Navigate back to the previous screen, with NEGATIVE id (deleted)
+            Map<String, dynamic> result = {};
+            result["id"] = _currentProject.id!;
+            result["action"] = "deleted";
+            Navigator.of(context).pop(result);
           }
         } else {
           // This case might indicate the project was already deleted or not found
@@ -767,7 +776,7 @@ class _ProjectPageState extends State<ProjectPage> {
             return <Widget>[
               SliverAppBar(
                 title: Text(
-                  _isNewProjectOnLoad ? 'New Project' : 'Project Details',
+                  _isNewProjectOnLoad ? 'New Project' : widget.project.name,
                 ),
                 pinned: true, // Keeps the AppBar visible when scrolling
                 floating:
