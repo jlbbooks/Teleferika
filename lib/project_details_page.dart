@@ -53,16 +53,16 @@ double calculateBearingFromPoints(PointModel startPoint, PointModel endPoint) {
   return (bearingDeg + 360) % 360;
 }
 
-class ProjectDetailsPage extends StatefulWidget {
+class ProjectPage extends StatefulWidget {
   final ProjectModel project;
 
-  const ProjectDetailsPage({super.key, required this.project});
+  const ProjectPage({super.key, required this.project});
 
   @override
-  State<ProjectDetailsPage> createState() => _ProjectDetailsPageState();
+  State<ProjectPage> createState() => _ProjectPageState();
 }
 
-class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
+class _ProjectPageState extends State<ProjectPage> {
   late TextEditingController _nameController;
   late TextEditingController _noteController;
   late TextEditingController _azimuthController;
@@ -72,19 +72,12 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
 
   late ProjectModel _currentProject;
 
-  // Tracks if the form fields have changes not yet saved
-  bool _isFormCurrentlyDirty = false;
   bool _isLoading = false;
 
   // To know if the project was new when the page was opened
   bool _isNewProjectOnLoad = false;
-  // Store initial values to compare against for dirty checking
-  String? _initialName;
-  String? _initialNote;
-  String? _initialAzimuthText;
-  DateTime? _initialProjectDate;
 
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> _projectFormKey = GlobalKey<FormState>();
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
   // GlobalKey to access PointsToolView's state if needed for refresh
@@ -113,13 +106,6 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     _projectDate =
         _currentProject.date ?? (_isNewProjectOnLoad ? DateTime.now() : null);
     _lastUpdateTime = _currentProject.lastUpdate;
-
-    _setInitialFormValuesAndResetDirtyState(); // Set baseline and mark form as not dirty
-
-    // Add listeners
-    _nameController.addListener(_handleFormChange);
-    _noteController.addListener(_handleFormChange);
-    _azimuthController.addListener(_handleFormChange);
 
     if (!_isNewProjectOnLoad) {
       // Only load if it's an existing project
@@ -174,9 +160,6 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
               _currentProject.azimuth?.toStringAsFixed(2) ?? '';
           _projectDate = _currentProject.date;
           _lastUpdateTime = _currentProject.lastUpdate;
-
-          // After loading data and updating controllers, reset the baseline
-          _setInitialFormValuesAndResetDirtyState();
         });
       } else if (mounted) {
         // Handle case where project is not found in DB (e.g., deleted elsewhere)
@@ -221,43 +204,10 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
 
   @override
   void dispose() {
-    _nameController.removeListener(_handleFormChange);
-    _noteController.removeListener(_handleFormChange);
-    _azimuthController.removeListener(_handleFormChange);
     _nameController.dispose();
     _noteController.dispose();
     _azimuthController.dispose();
     super.dispose();
-  }
-
-  void _setInitialFormValuesAndResetDirtyState() {
-    _initialName = _nameController.text;
-    _initialNote = _noteController.text;
-    _initialAzimuthText = _azimuthController.text;
-    _initialProjectDate = _projectDate;
-
-    if (mounted && _isFormCurrentlyDirty) {
-      setState(() {
-        _isFormCurrentlyDirty = false;
-      });
-    } else {
-      _isFormCurrentlyDirty =
-          false; // Directly set if not mounted or no change needed
-    }
-  }
-
-  void _handleFormChange() {
-    final bool changed =
-        _nameController.text != _initialName ||
-        _noteController.text != _initialNote ||
-        _azimuthController.text != _initialAzimuthText ||
-        _projectDate != _initialProjectDate;
-
-    if (changed != _isFormCurrentlyDirty) {
-      setStateIfMounted(() {
-        _isFormCurrentlyDirty = changed;
-      });
-    }
   }
 
   // --- Logic for Adding Point from Compass ---
@@ -480,13 +430,11 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     if (pickedDate != null && pickedDate != _projectDate) {
       setStateIfMounted(() {
         _projectDate = pickedDate;
-        _handleFormChange(); // Call the unified handler
       });
     } else if (pickedDate == null && _projectDate != null && mounted) {
       // Handle clearing date
       setState(() {
         _projectDate = null;
-        _handleFormChange();
       });
     }
   }
@@ -593,10 +541,9 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
   Future<void> _saveProject() async {
     if (_isLoading) return;
 
-    if (_formKey.currentState?.validate() ?? false) {
+    if (_projectFormKey.currentState?.validate() ?? false) {
       setState(() {
         _isLoading = true;
-        _isFormCurrentlyDirty = false;
       });
 
       // Create a new Project instance with the updated values
@@ -677,9 +624,6 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
               backgroundColor: Colors.red,
             ),
           );
-          setState(() {
-            _isFormCurrentlyDirty = true;
-          });
         }
       } finally {
         if (mounted) {
@@ -695,9 +639,6 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
           backgroundColor: Colors.orange,
         ),
       );
-      setState(() {
-        _isFormCurrentlyDirty = true;
-      });
     }
   }
 
@@ -869,15 +810,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
                 // Ensure the form content is scrollable
                 padding: const EdgeInsets.all(16.0),
                 child: Form(
-                  key: _formKey,
-                  onChanged: () {
-                    // Only set dirty if it's not already dirty from a previous save attempt that failed validation
-                    if (!_isFormCurrentlyDirty) {
-                      setState(() {
-                        _isFormCurrentlyDirty = true;
-                      });
-                    }
-                  },
+                  key: _projectFormKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[

@@ -81,7 +81,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
       // The result can be a map like {'modified': true, 'id': projectId}
       final result = await Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => ProjectDetailsPage(project: project)),
+        MaterialPageRoute(builder: (_) => ProjectPage(project: project)),
       );
 
       // --- Handle Result for Flashing ---
@@ -190,9 +190,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
 
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => ProjectDetailsPage(project: newProject),
-      ),
+      MaterialPageRoute(builder: (context) => ProjectPage(project: newProject)),
     );
 
     // --- Handle Result for Flashing New Project ---

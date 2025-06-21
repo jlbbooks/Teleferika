@@ -21,7 +21,7 @@ class PointDetailsPage extends StatefulWidget {
 }
 
 class _PointDetailsPageState extends State<PointDetailsPage> {
-  final _formKey = GlobalKey<FormState>();
+  final _pointFormKey = GlobalKey<FormState>();
   late TextEditingController _latitudeController;
   late TextEditingController _longitudeController;
   late TextEditingController _noteController;
@@ -60,7 +60,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
   }
 
   Future<void> _savePointDetails() async {
-    if (!_formKey.currentState!.validate()) {
+    if (!_pointFormKey.currentState!.validate()) {
       logger.warning("Point details form validation failed.");
       return;
     }
@@ -311,7 +311,8 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
-          key: _formKey,
+          key: _pointFormKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
@@ -392,8 +393,8 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
                   if (n == null) {
                     return 'Invalid number format';
                   }
-                  if (n < 0 || n >= 360) {
-                    return 'Heading must be between 0 and 359.9';
+                  if (n <= -360 || n >= 360) {
+                    return 'Heading must be between -359.9 and 359.9';
                   }
                   return null;
                 },
