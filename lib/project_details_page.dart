@@ -13,8 +13,13 @@ import 'logger.dart';
 import 'project_tools/compass_tool_view.dart';
 import 'project_tools/map_tool_view.dart';
 
-// At the top of project_details_page.dart, or in a separate file
-enum ActiveCardTool { compass, points, map }
+enum ProjectPageTab {
+  details, // 0
+  points, // 1
+  compass, // 2
+  map, // 3
+  // Add more tabs here if needed
+}
 
 // Helper function to convert degrees to radians
 double _degreesToRadians(double degrees) {
@@ -66,8 +71,6 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
   late DateTime? _lastUpdateTime;
 
   late ProjectModel _currentProject;
-
-  ActiveCardTool? _activeCardTool; // To track the currently active Card button
 
   // Tracks if the form fields have changes not yet saved
   bool _isFormCurrentlyDirty = false;
@@ -126,6 +129,32 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     } else {
       logger.info(
         "ProjectDetailsPage initialized for a NEW project. Name: ${_currentProject.name}",
+      );
+    }
+  }
+
+  void _switchToTab(BuildContext descendantContext, ProjectPageTab tab) {
+    // Get the TabController from the DefaultTabController ancestor
+    final TabController? controller = DefaultTabController.of(
+      descendantContext,
+    );
+
+    // Find the index of the desired tab from your enum
+    // It's good practice to have a consistent list of tabs if you are manually
+    // creating TabBar.tabs and TabBarView.children.
+    // If ProjectPageTab.values directly corresponds to your tab order:
+    // final int tabIndex = tab.index; // This works if enum order matches tab order
+
+    // More robust way if you have a defined list for your tabs:
+    final List<ProjectPageTab> orderedTabs =
+        ProjectPageTab.values; // Or your specific order
+    final int tabIndex = orderedTabs.indexOf(tab);
+
+    if (controller != null && tabIndex >= 0 && controller.index != tabIndex) {
+      controller.animateTo(tabIndex);
+    } else if (controller == null) {
+      logger.warning(
+        "Attempted to switch tab, but TabController was null. Ensure DefaultTabController is an ancestor and context is correct.",
       );
     }
   }
@@ -240,17 +269,6 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     }
   }
 
-  void _toggleActiveCardTool(ActiveCardTool? tool) {
-    setState(() {
-      if (_activeCardTool == tool || tool == null) {
-        _activeCardTool = null; // Deactivate if already active
-      } else {
-        _activeCardTool = tool; // Activate the new tool
-      }
-      logger.info("Active Card tool toggled to: $_activeCardTool");
-    });
-  }
-
   // --- Logic for Adding Point from Compass ---
   Future<Position> _determinePosition() async {
     bool serviceEnabled;
@@ -288,6 +306,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
   }
 
   Future<void> _initiateAddPointFromCompass(
+    BuildContext descendantContext,
     double heading, {
     bool? setAsEndPoint, // Added optional named parameter
   }) async {
@@ -431,10 +450,8 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
       _pointsToolViewKey.currentState
           ?.refreshPoints(); // Call refreshPoints on PointsToolView
 
-      // If the compass tool is active, and you want to switch to points view:
-      if (_activeCardTool == ActiveCardTool.compass) {
-        _toggleActiveCardTool(ActiveCardTool.points);
-      }
+      // If the compass tool is active, and you want to switch to points view
+      _switchToTab(descendantContext, ProjectPageTab.points);
     } catch (e, stackTrace) {
       logger.severe("Error adding point from compass", e, stackTrace);
       if (mounted) {
@@ -471,15 +488,15 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     }
 
     // 2. Prevent saving if a card tool is active
-    if (_activeCardTool != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Close the active tool to modify project details.'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
+    // if (_activeCardTool != null) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     const SnackBar(
+    //       content: Text('Close the active tool to modify project details.'),
+    //       backgroundColor: Colors.orange,
+    //     ),
+    //   );
+    //   return;
+    // }
 
     // 3. Validate the form
     if (!_formKey.currentState!.validate()) {
@@ -665,16 +682,6 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     logger.info(
       "Calculate Azimuth button tapped for project: ${_currentProject.name}",
     );
-
-    if (_activeCardTool != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Close the active tool before calculating azimuth.'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
 
     final int? startPointId = _currentProject.startingPointId;
     final int? endPointId = _currentProject.endingPointId;
@@ -1037,12 +1044,10 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
           ).add_Hm().format(_lastUpdateTime!) // Also localize time
         : 'Not yet saved';
 
-    bool isMainFormVisible = _activeCardTool == null;
-
     // For the TabBar, you'll need a TabController.
     // The easiest way is to wrap your Scaffold with DefaultTabController.
     return DefaultTabController(
-      length: 4, // Number of tabs
+      length: ProjectPageTab.values.length, // Number of tabs
       child: Scaffold(
         body: NestedScrollView(
           // controller: _scrollController, // You might need a ScrollController later
@@ -1105,208 +1110,124 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
-                      // --- Card Tool Buttons Area ---
-                      // This section might be better placed within a specific tab
-                      // or handled differently with a TabBar setup.
-                      // For now, keeping it here to show how to integrate.
-                      // Consider if these buttons should control content *within* a tab
-                      // or navigate to different primary tabs.
-
-                      // Card Tool Buttons (conditionally horizontal or vertical)
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          // Decide layout based on available width
-                          bool useVerticalLayoutForButtons =
-                              constraints.maxWidth < 300;
-                          if (useVerticalLayoutForButtons) {
-                            return Column(
-                              children: [
-                                Row(
-                                  children: <Widget>[
-                                    _buildCardToolButton(
-                                      tool: ActiveCardTool.compass,
-                                      icon: Icons.explore_outlined,
-                                      label: "Compass",
-                                      useVerticalLayout: true,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    _buildCardToolButton(
-                                      tool: ActiveCardTool.points,
-                                      icon: Icons.room_outlined,
-                                      label: "Points",
-                                      useVerticalLayout: true,
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: <Widget>[
-                                    _buildCardToolButton(
-                                      tool: ActiveCardTool.map,
-                                      icon: Icons.map_outlined,
-                                      label: "Map",
-                                      useVerticalLayout: true,
-                                    ),
-                                    // Add an empty Expanded widget if you want the map button
-                                    // to not take up the full width when there's an odd number
-                                    if (true) // Placeholder for potential fourth button or symmetry
-                                      Expanded(child: Container()),
-                                  ],
-                                ),
-                              ],
-                            );
-                          } else {
-                            // Horizontal layout for wider screens
-                            return Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: <Widget>[
-                                _buildCardToolButton(
-                                  tool: ActiveCardTool.compass,
-                                  icon: Icons.explore_outlined,
-                                  label: "Compass",
-                                  useVerticalLayout: false,
-                                ),
-                                _buildCardToolButton(
-                                  tool: ActiveCardTool.points,
-                                  icon: Icons.room_outlined,
-                                  label: "Points",
-                                  useVerticalLayout: false,
-                                ),
-                                _buildCardToolButton(
-                                  tool: ActiveCardTool.map,
-                                  icon: Icons.map_outlined,
-                                  label: "Map",
-                                  useVerticalLayout: false,
-                                ),
-                              ],
-                            );
-                          }
-                        },
-                      ),
-
-                      const SizedBox(height: 20),
-
                       // --- Conditional Main Form Area ---
-                      if (isMainFormVisible)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            _buildTextFormField(
-                              controller: _nameController,
-                              label: "Project Name",
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Project name cannot be empty.';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            InputDecorator(
-                              decoration: InputDecoration(
-                                labelText: "Project Date",
-                                border: const OutlineInputBorder(),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12.0,
-                                  vertical: 11.0,
-                                ),
-                              ),
-                              child: ListTile(
-                                title: Text(
-                                  formattedProjectDate,
-                                  style: const TextStyle(fontSize: 18.0),
-                                ),
-                                trailing: const Icon(
-                                  Icons.calendar_month_outlined,
-                                ),
-                                onTap: () => _selectProjectDate(context),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 0,
-                                  vertical: 5.0,
-                                ),
-                                dense: true,
-                                visualDensity: VisualDensity.compact,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildTextFormField(
+                            controller: _nameController,
+                            label: "Project Name",
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Project name cannot be empty.';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          InputDecorator(
+                            decoration: InputDecoration(
+                              labelText: "Project Date",
+                              border: const OutlineInputBorder(),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12.0,
+                                vertical: 11.0,
                               ),
                             ),
-                            const SizedBox(height: 16),
-                            _buildTextField(
-                              _noteController,
-                              "Notes",
-                              maxLines: 4,
+                            child: ListTile(
+                              title: Text(
+                                formattedProjectDate,
+                                style: const TextStyle(fontSize: 18.0),
+                              ),
+                              trailing: const Icon(
+                                Icons.calendar_month_outlined,
+                              ),
+                              onTap: () => _selectProjectDate(context),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 0,
+                                vertical: 5.0,
+                              ),
+                              dense: true,
+                              visualDensity: VisualDensity.compact,
                             ),
-                            const SizedBox(height: 16),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: _buildTextFormField(
-                                    controller: _azimuthController,
-                                    label: "Azimuth (°)",
-                                    keyboardType:
-                                        const TextInputType.numberWithOptions(
-                                          decimal: true,
-                                          signed: true,
-                                        ),
-                                    validator: (value) {
-                                      if (value != null && value.isNotEmpty) {
-                                        if (double.tryParse(value) == null) {
-                                          return 'Invalid number format.';
-                                        }
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 8.0),
-                                  child: ElevatedButton(
-                                    onPressed: _calculateAzimuth,
-                                    style: ElevatedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 12,
+                          ),
+                          const SizedBox(height: 16),
+                          _buildTextField(
+                            _noteController,
+                            "Notes",
+                            maxLines: 4,
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: _buildTextFormField(
+                                  controller: _azimuthController,
+                                  label: "Azimuth (°)",
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                        signed: true,
                                       ),
-                                    ),
-                                    child: const Text("Calculate"),
-                                  ),
+                                  validator: (value) {
+                                    if (value != null && value.isNotEmpty) {
+                                      if (double.tryParse(value) == null) {
+                                        return 'Invalid number format.';
+                                      }
+                                    }
+                                    return null;
+                                  },
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            _buildReadOnlyField(
-                              "Last Updated",
-                              formattedLastUpdate,
-                              textStyle: const TextStyle(
-                                fontSize: 13.0,
-                                color: Colors.grey,
                               ),
-                            ),
-                            const SizedBox(height: 30),
-                            Row(
-                              children: <Widget>[
-                                Expanded(
-                                  child: _majorActionButton(
-                                    Icons.flag_outlined,
-                                    'SET START',
-                                    () => _onSetPoint("Start"),
+                              const SizedBox(width: 10),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: ElevatedButton(
+                                  onPressed: _calculateAzimuth,
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 12,
+                                    ),
                                   ),
+                                  child: const Text("Calculate"),
                                 ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: _majorActionButton(
-                                    Icons.sports_score_outlined,
-                                    'SET END',
-                                    () => _onSetPoint("End"),
-                                  ),
-                                ),
-                              ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          _buildReadOnlyField(
+                            "Last Updated",
+                            formattedLastUpdate,
+                            textStyle: const TextStyle(
+                              fontSize: 13.0,
+                              color: Colors.grey,
                             ),
-                            const SizedBox(height: 20),
-                          ],
-                        )
-                      else // Show placeholder if a card tool is active
-                        _buildActiveToolView(), // Call helper to display the active tool's widget
+                          ),
+                          const SizedBox(height: 30),
+                          Row(
+                            children: <Widget>[
+                              Expanded(
+                                child: _majorActionButton(
+                                  Icons.flag_outlined,
+                                  'SET START',
+                                  () => _onSetPoint("Start"),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _majorActionButton(
+                                  Icons.sports_score_outlined,
+                                  'SET END',
+                                  () => _onSetPoint("End"),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -1344,8 +1265,6 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
             ],
           ),
         ),
-        // Removed the original floatingActionButton and bottomNavigationBar
-        // as save/delete actions are now in SliverAppBar.
         // The _onWillPop needs to be handled by WillPopScope if you want to keep that exact behavior.
         // For simplicity, I'm wrapping the Scaffold with WillPopScope.
         // If you are using a Navigator 2.0 setup (like GoRouter), you'd handle this differently.
@@ -1354,369 +1273,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
       ),
     );
   }
-  // Widget build(BuildContext context) {
-  //   // Determine if vertical layout should be used for card tool buttons
-  //   bool useVerticalLayout = MediaQuery.of(context).size.width < 400;
-  //
-  //   String formattedProjectDate;
-  //   if (_projectDate != null) {
-  //     // Use a common, locale-aware skeleton.
-  //     // yMMMd() is a good general purpose format (e.g., "Sep 10, 2023" or "10 Sep 2023")
-  //     // You can explore other skeletons like:
-  //     // DateFormat.yMd(Localizations.localeOf(context).toString()).format(_projectDate!)
-  //     // DateFormat.yMEd(Localizations.localeOf(context).toString()).format(_projectDate!) // Includes day of week
-  //     // DateFormat.MMMMEEEEd(Localizations.localeOf(context).toString()).format(_projectDate!) // Very verbose
-  //
-  //     // Get the current locale from the context
-  //     final locale = Localizations.localeOf(context).toString();
-  //     formattedProjectDate = DateFormat.yMMMd(locale).format(_projectDate!);
-  //   } else {
-  //     formattedProjectDate = 'Tap to set date';
-  //   }
-  //   String formattedLastUpdate = _lastUpdateTime != null
-  //       ? DateFormat.yMMMd(
-  //           Localizations.localeOf(context).toString(),
-  //         ).add_Hm().format(_lastUpdateTime!) // Also localize time
-  //       : 'Not yet saved';
-  //
-  //   bool isMainFormVisible = _activeCardTool == null;
-  //
-  //   return WillPopScope(
-  //     onWillPop: _onWillPop, // Assign the callback
-  //     child: Scaffold(
-  //       appBar: _appBar(),
-  //       // --- WRAP MAIN CONTENT WITH FORM ---
-  //       body: Form(
-  //         key: _formKey, // Assign the key to the Form
-  //         child: SingleChildScrollView(
-  //           padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
-  //           child: Column(
-  //             crossAxisAlignment: CrossAxisAlignment.stretch,
-  //             children: <Widget>[
-  //               Card(
-  //                 elevation: 2.0,
-  //                 margin: const EdgeInsets.symmetric(vertical: 10.0),
-  //                 child: Padding(
-  //                   padding: const EdgeInsets.all(12.0),
-  //                   child: Column(
-  //                     crossAxisAlignment: CrossAxisAlignment.start,
-  //                     children: [
-  //                       Text(
-  //                         "Project Tools",
-  //                         style: Theme.of(context).textTheme.titleLarge
-  //                             ?.copyWith(fontWeight: FontWeight.bold),
-  //                       ),
-  //                       const SizedBox(height: 12),
-  //                       LayoutBuilder(
-  //                         builder:
-  //                             (
-  //                               BuildContext context,
-  //                               BoxConstraints constraints,
-  //                             ) {
-  //                               // Define a threshold for switching layout
-  //                               // You might need to adjust this value based on testing
-  //                               const double narrowLayoutThreshold =
-  //                                   350.0; // e.g., for total width of 3 buttons
-  //                               const double buttonSpacing =
-  //                                   8.0; // spacing between buttons
-  //
-  //                               bool useVerticalLayout =
-  //                                   constraints.maxWidth <
-  //                                   narrowLayoutThreshold;
-  //
-  //                               return Row(
-  //                                 mainAxisAlignment:
-  //                                     MainAxisAlignment.spaceEvenly,
-  //                                 children: <Widget>[
-  //                                   _buildCardToolButton(
-  //                                     tool: ActiveCardTool.compass,
-  //                                     icon: Icons.explore_outlined,
-  //                                     label: 'Compass',
-  //                                     useVerticalLayout:
-  //                                         useVerticalLayout, // Pass the flag
-  //                                   ),
-  //                                   if (useVerticalLayout)
-  //                                     const SizedBox(width: buttonSpacing),
-  //                                   _buildCardToolButton(
-  //                                     tool: ActiveCardTool.points,
-  //                                     icon: Icons.list_alt_outlined,
-  //                                     label: 'Points',
-  //                                     useVerticalLayout:
-  //                                         useVerticalLayout, // Pass the flag
-  //                                   ),
-  //                                   if (useVerticalLayout)
-  //                                     const SizedBox(width: buttonSpacing),
-  //                                   _buildCardToolButton(
-  //                                     tool: ActiveCardTool.map,
-  //                                     icon: Icons.map_outlined,
-  //                                     label: 'Map',
-  //                                     useVerticalLayout:
-  //                                         useVerticalLayout, // Pass the flag
-  //                                   ),
-  //                                 ],
-  //                               );
-  //                             },
-  //                       ),
-  //                     ],
-  //                   ),
-  //                 ),
-  //               ),
-  //
-  //               const SizedBox(height: 20),
-  //
-  //               // --- Conditional Main Form Area ---
-  //               if (isMainFormVisible)
-  //                 Column(
-  //                   crossAxisAlignment: CrossAxisAlignment.stretch,
-  //                   children: [
-  //                     _buildTextFormField(
-  //                       controller: _nameController,
-  //                       label: "Project Name",
-  //                       validator: (value) {
-  //                         if (value == null || value.trim().isEmpty) {
-  //                           return 'Project name cannot be empty.';
-  //                         }
-  //                         return null;
-  //                       },
-  //                     ),
-  //                     const SizedBox(height: 16),
-  //                     InputDecorator(
-  //                       decoration: InputDecoration(
-  //                         labelText: "Project Date",
-  //                         border: const OutlineInputBorder(),
-  //                         contentPadding: const EdgeInsets.symmetric(
-  //                           horizontal: 12.0,
-  //                           vertical: 11.0,
-  //                         ),
-  //                       ),
-  //                       child: ListTile(
-  //                         title: Text(
-  //                           formattedProjectDate,
-  //                           style: const TextStyle(fontSize: 18.0),
-  //                         ),
-  //                         trailing: const Icon(Icons.calendar_month_outlined),
-  //                         onTap: () => _selectProjectDate(context),
-  //                         contentPadding: const EdgeInsets.symmetric(
-  //                           horizontal: 0,
-  //                           vertical: 5.0,
-  //                         ),
-  //                         dense: true,
-  //                         visualDensity: VisualDensity.compact,
-  //                       ),
-  //                     ),
-  //                     const SizedBox(height: 16),
-  //                     _buildTextField(_noteController, "Notes", maxLines: 4),
-  //                     const SizedBox(height: 16),
-  //                     Row(
-  //                       crossAxisAlignment: CrossAxisAlignment.start,
-  //                       children: [
-  //                         Expanded(
-  //                           child: _buildTextFormField(
-  //                             controller: _azimuthController,
-  //                             label: "Azimuth (°)",
-  //                             keyboardType:
-  //                                 const TextInputType.numberWithOptions(
-  //                                   decimal: true,
-  //                                   signed: true,
-  //                                 ),
-  //                             validator: (value) {
-  //                               if (value != null && value.isNotEmpty) {
-  //                                 if (double.tryParse(value) == null) {
-  //                                   return 'Invalid number format.';
-  //                                 }
-  //                               }
-  //                               return null;
-  //                             },
-  //                           ),
-  //                         ),
-  //                         const SizedBox(width: 10),
-  //                         Padding(
-  //                           padding: const EdgeInsets.only(top: 8.0),
-  //                           child: ElevatedButton(
-  //                             onPressed: _calculateAzimuth,
-  //                             style: ElevatedButton.styleFrom(
-  //                               padding: const EdgeInsets.symmetric(
-  //                                 horizontal: 12,
-  //                                 vertical: 12,
-  //                               ),
-  //                             ),
-  //                             child: const Text("Calculate"),
-  //                           ),
-  //                         ),
-  //                       ],
-  //                     ),
-  //                     const SizedBox(height: 16),
-  //                     _buildReadOnlyField(
-  //                       "Last Updated",
-  //                       formattedLastUpdate,
-  //                       textStyle: const TextStyle(
-  //                         fontSize: 13.0,
-  //                         color: Colors.grey,
-  //                       ),
-  //                     ),
-  //                     const SizedBox(height: 30),
-  //                     Row(
-  //                       children: <Widget>[
-  //                         Expanded(
-  //                           child: _majorActionButton(
-  //                             Icons.flag_outlined,
-  //                             'SET START',
-  //                             () => _onSetPoint("Start"),
-  //                           ),
-  //                         ),
-  //                         const SizedBox(width: 16),
-  //                         Expanded(
-  //                           child: _majorActionButton(
-  //                             Icons.sports_score_outlined,
-  //                             'SET END',
-  //                             () => _onSetPoint("End"),
-  //                           ),
-  //                         ),
-  //                       ],
-  //                     ),
-  //                     const SizedBox(height: 20),
-  //                   ],
-  //                 )
-  //               else // Show placeholder if a card tool is active
-  //                 _buildActiveToolView(), // Call helper to display the active tool's widget
-  //             ],
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
 
-  Future<bool> _onWillPop() async {
-    if (_activeCardTool != null) {
-      // If a tool is active, the first back press should close the tool
-      _toggleActiveCardTool(
-        null,
-      ); // Assuming this method sets _activeCardTool to null and rebuilds
-      return false; // Prevent immediate pop, let the UI update to close the tool
-    }
-
-    if (_isFormCurrentlyDirty) {
-      final bool? discardChanges = await showDialog<bool>(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Unsaved Changes'),
-            content: const Text(
-              'You have unsaved changes. Are you sure you want to discard them and go back?',
-            ),
-            actions: <Widget>[
-              TextButton(
-                child: const Text('Cancel'),
-                onPressed: () => Navigator.of(context).pop(false),
-              ),
-              TextButton(
-                child: const Text('Discard'),
-                onPressed: () => Navigator.of(context).pop(true),
-              ),
-            ],
-          );
-        },
-      );
-      if (discardChanges == null || !discardChanges) {
-        return false; // User cancelled or dialog dismissed, do not pop
-      }
-      // If user chose to discard, proceed to pop but indicate no *new* save happened for this specific pop action
-      // _projectWasSavedThisSession remains as is.
-    }
-
-    // If no tool is active, proceed to pop with results
-    Map<String, dynamic> result = {
-      'modified': _projectWasSavedThisSession,
-      'id': _currentProject
-          .id, // This will be the new ID if it was a new project and saved
-      'isNew':
-          _isNewProjectOnLoad &&
-          _projectWasSavedThisSession &&
-          _currentProject.id != null,
-      // 'isNew': _isNewProjectOnLoad && !_projectWasSavedThisSession, // Logic if it was new AND no save occurred
-      // More accurate 'isNew' for the calling page if it wants to know if THIS project (by id) was just created
-    };
-    logger.info("Popping ProjectDetailsPage with result: $result");
-    // FIXME: actually we should return some values, but for now just a bool will do, so the full list is reloaded. Simplify logic to remove _isNewProjectOnLoad, since now we must manually save then pop
-    if (mounted) Navigator.pop(context, result);
-    return true; // Allow pop after manually calling Navigator.pop
-    // Or `return false` if Navigator.pop already handled it and you don't want
-    // WillPopScope to pop again. `true` is usually fine here since we popped.
-  }
-
-  // --- Helper to build toggleable Card Tool Buttons ---
-  Widget _buildCardToolButton({
-    required ActiveCardTool tool,
-    required IconData icon,
-    required String label,
-    required bool useVerticalLayout, // New parameter
-  }) {
-    bool isActive = _activeCardTool == tool;
-    final Color? activeForegroundColor = isActive
-        ? Theme.of(context).colorScheme.onPrimary
-        : null;
-    final Color? activeBackgroundColor = isActive
-        ? Theme.of(context).colorScheme.primary
-        : null;
-    final ButtonStyle activeStyle = ElevatedButton.styleFrom(
-      foregroundColor: activeForegroundColor,
-      backgroundColor: activeBackgroundColor,
-      padding: useVerticalLayout
-          ? const EdgeInsets.symmetric(
-              vertical: 8.0,
-              horizontal: 4.0,
-            ) // Adjust padding for vertical
-          : const EdgeInsets.symmetric(
-              horizontal: 12.0,
-              vertical: 8.0,
-            ), // Original or adjusted padding
-      textStyle: const TextStyle(
-        fontSize: 12,
-      ), // Potentially smaller text for vertical
-    );
-
-    if (useVerticalLayout) {
-      return Expanded(
-        // Ensure buttons take up available space in the Row
-        child: ElevatedButton(
-          style: activeStyle,
-          onPressed: () => _toggleActiveCardTool(tool),
-          child: Column(
-            mainAxisSize:
-                MainAxisSize.min, // So the column doesn't expand unnecessarily
-            children: <Widget>[
-              Icon(icon, size: 24), // Adjust size as needed
-              const SizedBox(height: 4), // Space between icon and label
-              Text(label, textAlign: TextAlign.center),
-            ],
-          ),
-        ),
-      );
-    } else {
-      // Using Flexible or Expanded so buttons can share space,
-      // but ElevatedButton.icon already handles its sizing well.
-      // If they still overflow, wrap with Expanded.
-      return ElevatedButton.icon(
-        style: activeStyle,
-        icon: Icon(icon, size: 20),
-        label: Text(label),
-        onPressed: () => _toggleActiveCardTool(tool),
-      );
-    }
-  }
-
-  // If PointsToolView handles its own additions/deletions and calls DB directly:
-  // PointsToolView would also need to call _dbHelper.updateProjectStartEndPoints(projectId)
-  // and then notify ProjectDetailsPage to reload project details (e.g., via a callback).
-  // For now, _initiateAddPointFromCompass is the main adder.
-  // Deletions from PointsToolView will trigger the DB helper's updated delete methods.
-  // After deletion in PointsToolView, it calls _loadPoints, which is good.
-  // We also need ProjectDetailsPage to be aware that widget.project start/end might have changed.
-  // This can be done by passing a callback from ProjectDetailsPage to PointsToolView
-  // that PointsToolView calls after a successful deletion, which then calls _loadProjectDetails.
-
-  // Example callback for PointsToolView:
   void _onPointsChanged() async {
     logger.info(
       "ProjectDetailsPage: Points changed, reloading project details.",
@@ -1724,43 +1281,6 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     await _loadProjectDetails(); // Reload project details to get new start/end IDs
     _pointsToolViewKey.currentState
         ?.refreshPoints(); // Ensure PointsToolView itself also refreshes its internal list
-  }
-
-  Widget _buildActiveToolView() {
-    // FIXME: is this necessary?
-    // if (_activeCardTool == null) {
-    //   return _buildProjectForm();
-    // }
-
-    switch (_activeCardTool) {
-      case ActiveCardTool.compass:
-        return Text('old compass');
-      case ActiveCardTool.points:
-        return Text('old points');
-      // return PointsToolView(
-      //   key: _pointsToolViewKey, // Assign the GlobalKey
-      //   project: _currentProject,
-      //   onPointsChanged: _onPointsChanged,
-      //   newlyAddedPointId: _newlyAddedPointId,
-      // );
-      case ActiveCardTool.map:
-        // If the parent of this Column is scrollable, MapToolView needs constraints.
-        // Option A: Give it a fixed height
-        return Text('old map');
-        return SizedBox(
-          height:
-              MediaQuery.of(context).size.height *
-              0.6, // e.g., 60% of screen height
-          child: MapToolView(project: _currentProject),
-        );
-      // Option B: If _buildActiveCardToolView is already in a context that allows expansion
-      // return Expanded(
-      //   // Or Flexible
-      //   child: MapToolView(project: _currentProject),
-      // );
-      default:
-        return const SizedBox.shrink();
-    }
   }
 
   // Original _buildTextField for fields without form validation (like Notes)

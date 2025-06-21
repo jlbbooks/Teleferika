@@ -11,6 +11,7 @@ import 'package:teleferika/logger.dart';
 // Define a typedef for the callback function for clarity
 typedef AddPointFromCompassCallback =
     void Function(
+      BuildContext descendantContext,
       double heading, {
       bool? setAsEndPoint, // Can be null if not specified, or true/false
     });
@@ -97,6 +98,7 @@ class _CompassToolViewState extends State<CompassToolView> {
       );
       // Invoke the callback passed from the parent widget
       widget.onAddPointFromCompass?.call(
+        context,
         _heading!,
         setAsEndPoint: _setAsEndPoint,
       ); // Pass the checkbox value

@@ -578,63 +578,64 @@ class PointsToolViewState extends State<PointsToolView> {
       "PointsToolView build method called. Selection mode: $_isSelectionMode, Points count: ${_points.length}",
     );
     return Column(
-      mainAxisSize: MainAxisSize.min,
+      mainAxisSize: MainAxisSize.max,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildTopBar(context),
-        FutureBuilder<void>(
-          future: _loadPointsFuture, // Use the future for initial load
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting &&
-                _points.isEmpty) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError && _points.isEmpty) {
-              // Error already logged in _loadPoints, SnackBar shown there
-              return Center(
-                child: Text(
-                  'Error loading points. Please try again.\n${snapshot.error.toString()}',
-                ),
-              );
-            }
-
-            if (_points.isEmpty) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24.0),
+        Expanded(
+          child: FutureBuilder<void>(
+            future: _loadPointsFuture, // Use the future for initial load
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting &&
+                  _points.isEmpty) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError && _points.isEmpty) {
+                // Error already logged in _loadPoints, SnackBar shown there
+                return Center(
                   child: Text(
-                    'No points added to this project yet.\nTap "Add Point" to get started!',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 16.0),
+                    'Error loading points. Please try again.\n${snapshot.error.toString()}',
                   ),
-                ),
-              );
-            }
+                );
+              }
 
-            // Once points are loaded (or if already loaded), display ReorderableListView
-            return ReorderableListView.builder(
-              shrinkWrap: true,
-              physics:
-                  const NeverScrollableScrollPhysics(), // If inside another scrollable
-              itemCount: _points.length,
-              itemBuilder: (context, index) {
-                final point = _points[index];
-                // Pass index for ReorderableDragStartListener and Key
-                return _buildPointItem(context, point, index);
-              },
-              // Disable reordering if in selection mode
-              onReorder: _isSelectionMode
-                  ? (int oldI, int newI) {}
-                  : _handleReorder,
-              // Optional: Customize drag feedback
-              // TODO: proxyDecorator: (Widget child, int index, Animation<double> animation) {
-              //   return Material(
-              //     elevation: 4.0,
-              //     color: Colors.transparent, // Or some highlight color
-              //     child: child,
-              //   );
-              // },
-            );
-          },
+              if (_points.isEmpty) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24.0),
+                    child: Text(
+                      'No points added to this project yet.\nTap "Add Point" to get started!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 16.0),
+                    ),
+                  ),
+                );
+              }
+
+              // Once points are loaded (or if already loaded), display ReorderableListView
+              return ReorderableListView.builder(
+                // physics:
+                //     const NeverScrollableScrollPhysics(), // If inside another scrollable
+                itemCount: _points.length,
+                itemBuilder: (context, index) {
+                  final point = _points[index];
+                  // Pass index for ReorderableDragStartListener and Key
+                  return _buildPointItem(context, point, index);
+                },
+                // Disable reordering if in selection mode
+                onReorder: _isSelectionMode
+                    ? (int oldI, int newI) {}
+                    : _handleReorder,
+                // Optional: Customize drag feedback
+                // TODO: proxyDecorator: (Widget child, int index, Animation<double> animation) {
+                //   return Material(
+                //     elevation: 4.0,
+                //     color: Colors.transparent, // Or some highlight color
+                //     child: child,
+                //   );
+                // },
+              );
+            },
+          ),
         ),
       ],
     );
