@@ -12,29 +12,6 @@ class DatabaseHelper {
 
   static const _databaseVersion = 5; // Incremented due to schema change
 
-  static const tableProjects = 'projects';
-  static const tablePoints = 'points';
-  static const tableImages = 'images';
-
-  static const columnId = 'id';
-  static const columnName = 'name';
-  static const columnStartingPointId = 'starting_point_id';
-  static const columnEndingPointId = 'ending_point_id';
-  static const columnAzimuth = 'azimuth';
-  static const columnLastUpdate = 'last_update';
-  static const columnDate = 'date';
-
-  static const columnProjectId = 'project_id';
-  static const columnLatitude = 'latitude';
-  static const columnLongitude = 'longitude';
-  static const columnOrdinalNumber = 'ordinal_number';
-  static const columnNote = 'note';
-  static const columnHeading = 'heading';
-  static const columnTimestamp = 'timestamp';
-
-  static const columnPointId = 'point_id';
-  static const columnImagePath = 'image_path';
-
   DatabaseHelper._privateConstructor();
   static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
   static Database? _database;
@@ -63,41 +40,41 @@ class DatabaseHelper {
   // Called when the database is created for the first time
   Future _onCreate(Database db, int version) async {
     await db.execute('''
-      CREATE TABLE $tableProjects (
-        $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
-        $columnName TEXT NOT NULL,
-        $columnStartingPointId INTEGER,
-        $columnEndingPointId INTEGER,
-        $columnAzimuth REAL,
-        $columnNote TEXT,
-        $columnLastUpdate TEXT,
-        $columnDate TEXT,
-        FOREIGN KEY ($columnStartingPointId) REFERENCES $tablePoints ($columnId) ON DELETE SET NULL,
-        FOREIGN KEY ($columnEndingPointId) REFERENCES $tablePoints ($columnId) ON DELETE SET NULL
+      CREATE TABLE ${ProjectModel.tableName} (
+        ${ProjectModel.columnId} INTEGER PRIMARY KEY AUTOINCREMENT,
+        ${ProjectModel.columnName} TEXT NOT NULL,
+        ${ProjectModel.columnStartingPointId} INTEGER,
+        ${ProjectModel.columnEndingPointId} INTEGER,
+        ${ProjectModel.columnAzimuth} REAL,
+        ${ProjectModel.columnNote} TEXT,
+        ${ProjectModel.columnLastUpdate} TEXT,
+        ${ProjectModel.columnDate} TEXT,
+        FOREIGN KEY (${ProjectModel.columnStartingPointId}) REFERENCES ${PointModel.tableName} (${PointModel.columnId}) ON DELETE SET NULL,
+        FOREIGN KEY (${ProjectModel.columnEndingPointId}) REFERENCES ${PointModel.tableName} (${PointModel.columnId}) ON DELETE SET NULL
       )
     '''); // TEXT for ISO8601 DateTime string
 
     await db.execute('''
-    CREATE TABLE $tablePoints (
-      $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
-      $columnProjectId INTEGER NOT NULL,
-      $columnLatitude REAL NOT NULL,
-      $columnLongitude REAL NOT NULL,
-      $columnOrdinalNumber INTEGER NOT NULL,
-      $columnNote TEXT,
-      $columnHeading REAL,         
-      $columnTimestamp TEXT,       
-    FOREIGN KEY ($columnProjectId) REFERENCES $tableProjects ($columnId) ON DELETE CASCADE
+    CREATE TABLE ${PointModel.tableName} (
+      ${PointModel.columnId} INTEGER PRIMARY KEY AUTOINCREMENT,
+      ${PointModel.columnProjectId} INTEGER NOT NULL,
+      ${PointModel.columnLatitude} REAL NOT NULL,
+      ${PointModel.columnLongitude} REAL NOT NULL,
+      ${PointModel.columnOrdinalNumber} INTEGER NOT NULL,
+      ${PointModel.columnNote} TEXT,
+      ${PointModel.columnHeading} REAL,         
+      ${PointModel.columnTimestamp} TEXT,       
+    FOREIGN KEY (${PointModel.columnProjectId}) REFERENCES ${ProjectModel.tableName} (${ProjectModel.columnId}) ON DELETE CASCADE
     )
     ''');
 
     await db.execute('''
-      CREATE TABLE $tableImages (
-        $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
-        $columnPointId INTEGER NOT NULL,
-        $columnOrdinalNumber INTEGER NOT NULL,
-        $columnImagePath TEXT NOT NULL,
-        FOREIGN KEY ($columnPointId) REFERENCES $tablePoints ($columnId) ON DELETE CASCADE
+      CREATE TABLE ${ImageModel.tableName} (
+        ${ImageModel.columnId} INTEGER PRIMARY KEY AUTOINCREMENT,
+        ${ImageModel.columnPointId} INTEGER NOT NULL,
+        ${ImageModel.columnOrdinalNumber} INTEGER NOT NULL,
+        ${ImageModel.columnImagePath} TEXT NOT NULL,
+        FOREIGN KEY (${ImageModel.columnPointId}) REFERENCES ${PointModel.tableName} (${PointModel.columnId}) ON DELETE CASCADE
       )
     ''');
   }
@@ -107,13 +84,13 @@ class DatabaseHelper {
     if (oldVersion < 2) {
       // Add last_update column to projects table if upgrading from version 1
       await db.execute(
-        'ALTER TABLE $tableProjects ADD COLUMN $columnLastUpdate TEXT',
+        'ALTER TABLE ${ProjectModel.tableName} ADD COLUMN $ProjectModel.columnLastUpdate TEXT',
       );
       // You might want to populate existing rows with a default last_update value here
       // For example, setting it to the current time for existing projects:
       String now = DateTime.now().toIso8601String();
       await db.rawUpdate(
-        'UPDATE $tableProjects SET $columnLastUpdate = ? WHERE $columnLastUpdate IS NULL',
+        'UPDATE ${ProjectModel.tableName} SET $ProjectModel.columnLastUpdate = ? WHERE $ProjectModel.columnLastUpdate IS NULL',
         [now],
       );
       logger.info("Applied migrations for version 2");
@@ -122,41 +99,45 @@ class DatabaseHelper {
     if (oldVersion < 3) {
       // Add note column to projects table if upgrading from version 2
       await db.execute(
-        'ALTER TABLE $tableProjects ADD COLUMN $columnNote TEXT',
+        'ALTER TABLE ${ProjectModel.tableName} ADD COLUMN ${ProjectModel.columnNote} TEXT',
       );
-      logger.info("Applied migrations for version 3: Added $columnNote column");
+      logger.info(
+        "Applied migrations for version 3: Added ${ProjectModel.columnNote} column",
+      );
     }
     if (oldVersion < 4) {
       // Add note column to projects table if upgrading from version 2
       await db.execute(
-        'ALTER TABLE $tableProjects ADD COLUMN $columnDate TEXT',
+        'ALTER TABLE ${ProjectModel.tableName} ADD COLUMN $ProjectModel.columnDate TEXT',
       );
-      logger.info("Applied migrations for version 4: Added $columnDate column");
+      logger.info(
+        "Applied migrations for version 4: Added $ProjectModel.columnDate column",
+      );
     }
     if (oldVersion < 5) {
       try {
         await db.execute(
-          'ALTER TABLE $tablePoints ADD COLUMN $columnHeading REAL;',
+          'ALTER TABLE ${PointModel.tableName} ADD COLUMN ${PointModel.columnHeading} REAL;',
         );
         logger.info(
-          "Applied migration for version 5: Added $columnHeading REAL to $tablePoints",
+          "Applied migration for version 5: Added ${PointModel.columnHeading} REAL to ${PointModel.tableName}",
         );
       } catch (e) {
         // Log error but continue, column might exist if migration was partially run before
         logger.warning(
-          "Could not add $columnHeading to $tablePoints (may already exist): $e",
+          "Could not add ${PointModel.columnHeading} to ${PointModel.tableName} (may already exist): $e",
         );
       }
       try {
         await db.execute(
-          'ALTER TABLE $tablePoints ADD COLUMN $columnTimestamp TEXT;',
+          'ALTER TABLE ${PointModel.tableName} ADD COLUMN ${PointModel.columnTimestamp} TEXT;',
         );
         logger.info(
-          "Applied migration for version 5: Added $columnTimestamp TEXT to $tablePoints",
+          "Applied migration for version 5: Added ${PointModel.columnTimestamp} TEXT to ${PointModel.tableName}",
         );
       } catch (e) {
         logger.warning(
-          "Could not add $columnTimestamp to $tablePoints (may already exist): $e",
+          "Could not add ${PointModel.columnTimestamp} to ${PointModel.tableName} (may already exist): $e",
         );
       }
     }
@@ -168,15 +149,16 @@ class DatabaseHelper {
     Database db = await instance.database;
     // Set lastUpdate to now before inserting
     project.lastUpdate = DateTime.now();
-    return await db.insert(tableProjects, project.toMap());
+    return await db.insert(ProjectModel.tableName, project.toMap());
   }
 
   Future<List<ProjectModel>> getAllProjects() async {
     Database db = await instance.database;
     // Order by last_update DESC
     final List<Map<String, dynamic>> maps = await db.query(
-      tableProjects,
-      orderBy: '$columnLastUpdate DESC', // Sort by last update, newest first
+      ProjectModel.tableName,
+      orderBy:
+          '${ProjectModel.columnLastUpdate} DESC', // Sort by last update, newest first
     );
     return List.generate(maps.length, (i) {
       return ProjectModel.fromMap(maps[i]);
@@ -186,8 +168,8 @@ class DatabaseHelper {
   Future<ProjectModel?> getProjectById(int id) async {
     Database db = await instance.database;
     final List<Map<String, dynamic>> maps = await db.query(
-      tableProjects,
-      where: '$columnId = ?',
+      ProjectModel.tableName,
+      where: '${ProjectModel.columnId} = ?',
       whereArgs: [id],
     );
     if (maps.isNotEmpty) {
@@ -201,9 +183,9 @@ class DatabaseHelper {
     // Update lastUpdate to now before updating
     project.lastUpdate = DateTime.now();
     return await db.update(
-      tableProjects,
+      ProjectModel.tableName,
       project.toMap(),
-      where: '$columnId = ?',
+      where: '${ProjectModel.columnId} = ?',
       whereArgs: [project.id],
     );
   }
@@ -213,9 +195,12 @@ class DatabaseHelper {
     // Also update last_update for the project
     String now = DateTime.now().toIso8601String();
     return await db.update(
-      tableProjects,
-      {columnStartingPointId: pointId, columnLastUpdate: now},
-      where: '$columnId = ?',
+      ProjectModel.tableName,
+      {
+        ProjectModel.columnStartingPointId: pointId,
+        ProjectModel.columnLastUpdate: now,
+      },
+      where: '${ProjectModel.columnId} = ?',
       whereArgs: [projectId],
     );
   }
@@ -231,11 +216,14 @@ class DatabaseHelper {
         txn ?? await instance.database; // Use transaction if provided
 
     final List<Map<String, dynamic>> pointsMaps = await dbOrTxn.query(
-      tablePoints,
-      columns: [columnId, columnOrdinalNumber], // Only need ID and ordinal
-      where: '$columnProjectId = ?',
+      PointModel.tableName,
+      columns: [
+        PointModel.columnId,
+        PointModel.columnOrdinalNumber,
+      ], // Only need ID and ordinal
+      where: '${PointModel.columnProjectId} = ?',
       whereArgs: [projectId],
-      orderBy: '$columnOrdinalNumber ASC',
+      orderBy: '${PointModel.columnOrdinalNumber} ASC',
     );
 
     int? newStartingPointId;
@@ -243,26 +231,31 @@ class DatabaseHelper {
 
     if (pointsMaps.isNotEmpty) {
       newStartingPointId =
-          pointsMaps.first[columnId] as int?; // First point (ordinal 0)
+          pointsMaps.first[PointModel.columnId]
+              as int?; // First point (ordinal 0)
       newEndingPointId =
-          pointsMaps.last[columnId] as int?; // Last point (highest ordinal)
+          pointsMaps.last[PointModel.columnId]
+              as int?; // Last point (highest ordinal)
     }
     // If pointsMaps is empty, both will remain null, effectively clearing them.
 
     // Get current project's start/end to avoid unnecessary updates
     final List<Map<String, dynamic>> currentProjectMaps = await dbOrTxn.query(
-      tableProjects,
-      columns: [columnStartingPointId, columnEndingPointId],
-      where: '$columnId = ?',
+      ProjectModel.tableName,
+      columns: [
+        ProjectModel.columnStartingPointId,
+        ProjectModel.columnEndingPointId,
+      ],
+      where: '${ProjectModel.columnId} = ?',
       whereArgs: [projectId],
     );
 
     bool needsUpdate = false;
     if (currentProjectMaps.isNotEmpty) {
       final currentStartId =
-          currentProjectMaps.first[columnStartingPointId] as int?;
+          currentProjectMaps.first[ProjectModel.columnStartingPointId] as int?;
       final currentEndId =
-          currentProjectMaps.first[columnEndingPointId] as int?;
+          currentProjectMaps.first[ProjectModel.columnEndingPointId] as int?;
       if (currentStartId != newStartingPointId ||
           currentEndId != newEndingPointId) {
         needsUpdate = true;
@@ -280,14 +273,14 @@ class DatabaseHelper {
         "Updating start/end points for project $projectId: StartID: $newStartingPointId, EndID: $newEndingPointId",
       );
       await dbOrTxn.update(
-        tableProjects,
+        ProjectModel.tableName,
         {
-          columnStartingPointId: newStartingPointId,
-          columnEndingPointId: newEndingPointId,
+          ProjectModel.columnStartingPointId: newStartingPointId,
+          ProjectModel.columnEndingPointId: newEndingPointId,
           // Also update the last_update timestamp for the project
-          columnLastUpdate: DateTime.now().toIso8601String(),
+          ProjectModel.columnLastUpdate: DateTime.now().toIso8601String(),
         },
-        where: '$columnId = ?',
+        where: '${ProjectModel.columnId} = ?',
         whereArgs: [projectId],
       );
     } else {
@@ -301,9 +294,12 @@ class DatabaseHelper {
     Database db = await instance.database;
     String now = DateTime.now().toIso8601String();
     return await db.update(
-      tableProjects,
-      {columnEndingPointId: pointId, columnLastUpdate: now},
-      where: '$columnId = ?',
+      ProjectModel.tableName,
+      {
+        ProjectModel.columnEndingPointId: pointId,
+        ProjectModel.columnLastUpdate: now,
+      },
+      where: '${ProjectModel.columnId} = ?',
       whereArgs: [projectId],
     );
   }
@@ -311,8 +307,8 @@ class DatabaseHelper {
   Future<int> deleteProject(int id) async {
     Database db = await instance.database;
     return await db.delete(
-      tableProjects,
-      where: '$columnId = ?',
+      ProjectModel.tableName,
+      where: '${ProjectModel.columnId} = ?',
       whereArgs: [id],
     );
   }
@@ -322,16 +318,16 @@ class DatabaseHelper {
   Future<int> insertPoint(PointModel point) async {
     Database db = await instance.database;
     await _updateProjectTimestamp(point.projectId);
-    return await db.insert(tablePoints, point.toMap());
+    return await db.insert(PointModel.tableName, point.toMap());
   }
 
   Future<int> updatePoint(PointModel point) async {
     Database db = await instance.database;
     await _updateProjectTimestamp(point.projectId);
     return await db.update(
-      tablePoints,
+      PointModel.tableName,
       point.toMap(),
-      where: '$columnId = ?',
+      where: '${PointModel.columnId} = ?',
       whereArgs: [point.id],
     );
   }
@@ -361,8 +357,8 @@ class DatabaseHelper {
 
       // 2. Delete the point
       count = await txn.delete(
-        tablePoints,
-        where: '$columnId = ?',
+        PointModel.tableName,
+        where: '${PointModel.columnId} = ?',
         whereArgs: [pointIdToDelete],
       );
 
@@ -370,9 +366,9 @@ class DatabaseHelper {
         // 3. Decrement ordinal numbers of subsequent points in the same project
         await txn.rawUpdate(
           '''
-        UPDATE $tablePoints
-        SET $columnOrdinalNumber = $columnOrdinalNumber - 1
-        WHERE $columnProjectId = ? AND $columnOrdinalNumber > ?
+        UPDATE ${PointModel.tableName}
+        SET ${PointModel.columnOrdinalNumber} = ${PointModel.columnOrdinalNumber} - 1
+        WHERE ${PointModel.columnProjectId} = ? AND ${PointModel.columnOrdinalNumber} > ?
         ''',
           [projectId, deletedOrdinal],
         );
@@ -392,8 +388,8 @@ class DatabaseHelper {
     int id,
   ) async {
     final List<Map<String, dynamic>> maps = await txn.query(
-      tablePoints,
-      where: '$columnId = ?',
+      PointModel.tableName,
+      where: '${PointModel.columnId} = ?',
       whereArgs: [id],
     );
     if (maps.isNotEmpty) {
@@ -406,8 +402,8 @@ class DatabaseHelper {
   Future<PointModel?> getPointById(int id) async {
     Database db = await instance.database;
     final List<Map<String, dynamic>> maps = await db.query(
-      tablePoints,
-      where: '$columnId = ?',
+      PointModel.tableName,
+      where: '${PointModel.columnId} = ?',
       whereArgs: [id],
     );
     if (maps.isNotEmpty) {
@@ -419,9 +415,11 @@ class DatabaseHelper {
   Future<int?> getLastPointOrdinal(int projectId) async {
     final db = await instance.database;
     final List<Map<String, dynamic>> result = await db.query(
-      tablePoints,
-      columns: ['MAX($columnOrdinalNumber) as max_ordinal'], // Use constant
-      where: '$columnProjectId = ?', // Use constant
+      PointModel.tableName,
+      columns: [
+        'MAX(${PointModel.columnOrdinalNumber}) as max_ordinal',
+      ], // Use constant
+      where: '${PointModel.columnProjectId} = ?', // Use constant
       whereArgs: [projectId],
     );
 
@@ -440,7 +438,7 @@ class DatabaseHelper {
     if (point != null) {
       await _updateProjectTimestamp(point.projectId);
     }
-    return await db.insert(tableImages, image.toMap());
+    return await db.insert(ImageModel.tableName, image.toMap());
   }
 
   Future<int> updateImage(ImageModel image) async {
@@ -450,9 +448,9 @@ class DatabaseHelper {
       await _updateProjectTimestamp(point.projectId);
     }
     return await db.update(
-      tableImages,
+      ImageModel.tableName,
       image.toMap(),
-      where: '$columnId = ?',
+      where: '${ImageModel.columnId} = ?',
       whereArgs: [image.id],
     );
   }
@@ -469,8 +467,8 @@ class DatabaseHelper {
     //   }
     // }
     return await db.delete(
-      tableImages,
-      where: '$columnId = ?',
+      ImageModel.tableName,
+      where: '${ImageModel.columnId} = ?',
       whereArgs: [id],
     );
   }
@@ -480,9 +478,9 @@ class DatabaseHelper {
     Database db = await instance.database;
     String now = DateTime.now().toIso8601String();
     await db.update(
-      tableProjects,
-      {columnLastUpdate: now},
-      where: '$columnId = ?',
+      ProjectModel.tableName,
+      {ProjectModel.columnLastUpdate: now},
+      where: '${ProjectModel.columnId} = ?',
       whereArgs: [projectId],
     );
   }
@@ -490,10 +488,10 @@ class DatabaseHelper {
   Future<List<PointModel>> getPointsForProject(int projectId) async {
     Database db = await instance.database;
     final List<Map<String, dynamic>> maps = await db.query(
-      tablePoints,
-      where: '$columnProjectId = ?',
+      PointModel.tableName,
+      where: '${PointModel.columnProjectId} = ?',
       whereArgs: [projectId],
-      orderBy: '$columnOrdinalNumber ASC',
+      orderBy: '${PointModel.columnOrdinalNumber} ASC',
     );
     return List.generate(maps.length, (i) {
       return PointModel.fromMap(maps[i]);
@@ -530,8 +528,8 @@ class DatabaseHelper {
       // 3. Delete the points
       final String placeholders = ids.map((_) => '?').join(',');
       totalDeletedCount = await txn.delete(
-        tablePoints,
-        where: '$columnId IN ($placeholders)',
+        PointModel.tableName,
+        where: '${PointModel.columnId} IN ($placeholders)',
         whereArgs: ids,
       );
       logger.info(
@@ -543,11 +541,11 @@ class DatabaseHelper {
         for (int projectId in pointsByProject.keys) {
           final List<Map<String, dynamic>>
           remainingPointsMaps = await txn.query(
-            tablePoints,
-            where: '$columnProjectId = ?',
+            PointModel.tableName,
+            where: '${PointModel.columnProjectId} = ?',
             whereArgs: [projectId],
             orderBy:
-                '$columnOrdinalNumber ASC', // Order by current (potentially gappy) ordinal
+                '${PointModel.columnOrdinalNumber} ASC', // Order by current (potentially gappy) ordinal
           );
 
           List<PointModel> remainingPoints = remainingPointsMaps
@@ -559,9 +557,9 @@ class DatabaseHelper {
             if (remainingPoints[i].ordinalNumber != i) {
               // Only update if necessary
               await txn.update(
-                tablePoints,
-                {columnOrdinalNumber: i},
-                where: '$columnId = ?',
+                PointModel.tableName,
+                {PointModel.columnOrdinalNumber: i},
+                where: '${PointModel.columnId} = ?',
                 whereArgs: [remainingPoints[i].id],
               );
             }
@@ -578,10 +576,10 @@ class DatabaseHelper {
   Future<List<ImageModel>> getImagesForPoint(int pointId) async {
     Database db = await instance.database;
     final List<Map<String, dynamic>> maps = await db.query(
-      tableImages,
-      where: '$columnPointId = ?',
+      ImageModel.tableName,
+      where: '${ImageModel.columnPointId} = ?',
       whereArgs: [pointId],
-      orderBy: '$columnOrdinalNumber ASC',
+      orderBy: '${ImageModel.columnOrdinalNumber} ASC',
     );
     return List.generate(maps.length, (i) {
       return ImageModel.fromMap(maps[i]);

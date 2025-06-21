@@ -2,12 +2,12 @@ import 'dart:async'; // For Timer
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:teleferika/project_page.dart';
 
 import 'app_config.dart';
 import 'db/database_helper.dart';
 import 'db/models/project_model.dart';
 import 'logger.dart';
-import 'project_details_page.dart';
 
 class ProjectsListPage extends StatefulWidget {
   final String? appVersion;
@@ -23,12 +23,40 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
   bool _isSelectionMode = false;
-  final Set<int> _selectedProjectIds = {};
+  final Set<int> _selectedProjectIdsForMultiSelect = {};
+  int? _highlightedProjectId;
+
+  // Keep a local copy of projects to manipulate for instant UI updates
+  List<ProjectModel> _currentProjects = [];
 
   @override
   void initState() {
     super.initState();
+    _loadProjects();
+  }
+
+  void _loadProjects() {
     _projectsFuture = _dbHelper.getAllProjects();
+    _projectsFuture
+        .then((projects) {
+          if (mounted) {
+            setState(() {
+              _currentProjects = projects;
+              // Optionally clear highlight when the whole list reloads,
+              // or persist it if needed. For now, let's clear it.
+              // _highlightedProjectId = null;
+            });
+          }
+        })
+        .catchError((error) {
+          // Handle or log error if needed
+          logger.severe("Error in _loadProjects: $error");
+          if (mounted) {
+            setState(() {
+              _currentProjects = []; // Clear current projects on error
+            });
+          }
+        });
   }
 
   @override
@@ -36,21 +64,25 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
     super.dispose();
   }
 
-  void _refreshProjectsList() {
+  // This can be used if you only want to refresh data from DB
+  void _refreshProjectsListFromDb() {
     setState(() {
-      _projectsFuture = _dbHelper.getAllProjects();
+      _highlightedProjectId = null; // Clear highlight on full refresh
+      _loadProjects();
     });
   }
 
   void _toggleSelection(int projectId) {
     setState(() {
-      if (_selectedProjectIds.contains(projectId)) {
-        _selectedProjectIds.remove(projectId);
-        if (_selectedProjectIds.isEmpty) {
+      _highlightedProjectId =
+          null; // Clear highlight when entering multi-selection
+      if (_selectedProjectIdsForMultiSelect.contains(projectId)) {
+        _selectedProjectIdsForMultiSelect.remove(projectId);
+        if (_selectedProjectIdsForMultiSelect.isEmpty) {
           _isSelectionMode = false;
         }
       } else {
-        _selectedProjectIds.add(projectId);
+        _selectedProjectIdsForMultiSelect.add(projectId);
       }
     });
   }
@@ -59,6 +91,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
     if (project.id == null) return;
     setState(() {
       _isSelectionMode = true;
+      _highlightedProjectId = null; // Clear single highlight
       _toggleSelection(project.id!);
     });
   }
@@ -70,34 +103,141 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
       }
     } else {
       logger.info("Navigating to details for project: ${project.name}");
-      // Navigate to ProjectDetailsPage and wait for a result.
-      // The result can be a map like {'modified': true, 'id': projectId}
+      // Clear any previous highlight before navigating
+      setState(() {
+        _highlightedProjectId = null;
+      });
       final result = await Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => ProjectPage(project: project)),
       );
-      if (result is Map<String, dynamic> &&
-          (result['action'] == "created" || result['action'] == 'modified') &&
-          result['id'] != null) {
-        _refreshProjectsList(); // Refresh list to show updated data
-      } else if (result is bool && result == true) {
-        _refreshProjectsList();
-      } else {
-        // FIXME: for now we just refresh them all
-        _refreshProjectsList();
-      }
+      _handleNavigationResult(result);
     }
+  }
+
+  void _handleNavigationResult(dynamic result) {
+    if (result is Map<String, dynamic>) {
+      final String? action = result['action'];
+      final int? id = result['id'];
+
+      if (id == null) {
+        // If ID is null, we probably don't need to do anything specific,
+        // or just refresh if any background state might have changed.
+        // For now, let's assume a full refresh might be safest if something non-specific happened.
+        // _refreshProjectsListFromDb();
+        logger.info("ProjectPage returned with no specific ID or action.");
+        return;
+      }
+
+      if (action == 'saved') {
+        logger.info("ProjectPage returned: project $id was saved.");
+        // Option 1: Full refresh to get the latest data.
+        // _refreshProjectsListFromDb();
+        // setState(() {
+        //   _highlightedProjectId = id;
+        // });
+
+        // Option 2: More targeted update (if you have the updated project data or can fetch it)
+        // For now, let's refresh the list and then highlight.
+        // We need to ensure the list is rebuilt *before* we try to scroll or ensure visibility.
+        _projectsFuture = _dbHelper.getAllProjects();
+        _projectsFuture.then((projects) {
+          if (mounted) {
+            setState(() {
+              _currentProjects = projects;
+              _highlightedProjectId = id; // Set highlight after data is loaded
+            });
+            // TODO: Optionally, scroll to the highlighted item
+          }
+        });
+      } else if (action == 'deleted') {
+        logger.info("ProjectPage returned: project $id was deleted.");
+        setState(() {
+          _currentProjects.removeWhere((p) => p.id == id);
+          _highlightedProjectId = null; // Ensure no highlight on a deleted item
+          // No need to call _dbHelper.getAllProjects() here if we manually update _currentProjects
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Project deleted.'),
+              backgroundColor: Colors.orange, // Or your preferred color
+            ),
+          );
+        }
+      } else if (action == 'navigated_back') {
+        // User just came back, potentially from viewing an existing project. Highlight it.
+        logger.info("ProjectPage returned: navigated back from project $id.");
+        setState(() {
+          _highlightedProjectId = id;
+        });
+      } else if (result['action'] == "created" && result['id'] != null) {
+        // This is your existing logic path from _onItemTap, let's integrate it.
+        logger.info(
+          "ProjectPage returned: project ${result['id']} was created (legacy path).",
+        );
+        _refreshProjectsListFromDb(); // Refresh to get the new item
+        setState(() {
+          _highlightedProjectId = result['id'];
+        });
+      } else {
+        // Fallback for your existing conditions, or new unhandled ones
+        logger.info(
+          "ProjectPage returned with result: $result. Refreshing list.",
+        );
+        _refreshProjectsListFromDb();
+        // If an ID is present in a generic success, highlight it
+        if (result['id'] is int) {
+          setState(() {
+            _highlightedProjectId = result['id'];
+          });
+        }
+      }
+    } else if (result is bool && result == true) {
+      // Generic true, refresh list. Maybe highlight if a context can be inferred.
+      logger.info("ProjectPage returned generic true. Refreshing list.");
+      _refreshProjectsListFromDb();
+    } else if (result == null) {
+      logger.info(
+        "ProjectPage returned null (e.g. back press without action). No specific action taken on list.",
+      );
+      // Optionally clear highlight or leave as is
+      // setState(() {
+      //   _highlightedProjectId = null;
+      // });
+    }
+    // Note: Your original _onItemTap had a FIXME to always refresh.
+    // This new structure provides more granular control.
+  }
+
+  void _navigateToAddProjectPage() async {
+    logger.info("Navigating to ProjectDetailsPage for a new project.");
+    ProjectModel newProject = ProjectModel(name: '');
+
+    // Clear any previous highlight before navigating
+    setState(() {
+      _highlightedProjectId = null;
+    });
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProjectPage(project: newProject),
+      ), // Ensure this is your ProjectDetailsPage
+    );
+
+    _handleNavigationResult(result);
   }
 
   void _exitSelectionMode() {
     setState(() {
       _isSelectionMode = false;
-      _selectedProjectIds.clear();
+      _selectedProjectIdsForMultiSelect.clear();
     });
   }
 
   Future<void> _deleteSelectedProjects() async {
-    if (_selectedProjectIds.isEmpty) return;
+    if (_selectedProjectIdsForMultiSelect.isEmpty) return;
 
     bool confirmDelete =
         await showDialog(
@@ -105,10 +245,10 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
           builder: (BuildContext context) {
             return AlertDialog(
               title: Text(
-                "Delete Project${_selectedProjectIds.length > 1 ? 's' : ''}?",
+                "Delete Project${_selectedProjectIdsForMultiSelect.length > 1 ? 's' : ''}?",
               ),
               content: Text(
-                "Are you sure you want to delete ${_selectedProjectIds.length} selected project${_selectedProjectIds.length > 1 ? 's' : ''}? This action cannot be undone.",
+                "Are you sure you want to delete ${_selectedProjectIdsForMultiSelect.length} selected project${_selectedProjectIdsForMultiSelect.length > 1 ? 's' : ''}? This action cannot be undone.",
               ),
               actions: <Widget>[
                 TextButton(
@@ -130,22 +270,29 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
 
     if (confirmDelete) {
       try {
-        for (int id in _selectedProjectIds) {
+        final List<int> idsToDelete = List.from(
+          _selectedProjectIdsForMultiSelect,
+        );
+        for (int id in idsToDelete) {
           await _dbHelper.deleteProject(id);
         }
-        logger.info("${_selectedProjectIds.length} project(s) deleted.");
+        setState(() {
+          _currentProjects.removeWhere(
+            (project) => idsToDelete.contains(project.id),
+          );
+          _isSelectionMode = false;
+          _selectedProjectIdsForMultiSelect.clear();
+          _highlightedProjectId = null;
+        });
+        logger.info("${idsToDelete.length} project(s) deleted.");
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                '${_selectedProjectIds.length} project(s) deleted.',
-              ),
+              content: Text('${idsToDelete.length} project(s) deleted.'),
               backgroundColor: Colors.green,
             ),
           );
         }
-        _exitSelectionMode();
-        _refreshProjectsList();
       } catch (e, stackTrace) {
         logger.severe("Error deleting projects", e, stackTrace);
         if (mounted) {
@@ -157,30 +304,6 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
           );
         }
       }
-    }
-  }
-
-  void _navigateToAddProjectPage() async {
-    logger.info("Navigating to ProjectDetailsPage for a new project.");
-    ProjectModel newProject = ProjectModel(name: ''); // id will be null
-
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => ProjectPage(project: newProject)),
-    );
-
-    if (result is Map<String, dynamic> &&
-        (result['action'] == "created" && result['id'] != null)) {
-      _refreshProjectsList();
-    } else if (result is bool && result == true) {
-      logger.info(
-        "Returned from ProjectDetailsPage with a generic true result. Refreshing list.",
-      );
-      _refreshProjectsList();
-    } else {
-      logger.info(
-        "Returned from ProjectDetailsPage without saving a new project or result was not as expected.",
-      );
     }
   }
 
@@ -213,13 +336,20 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
           : 'No updates';
     }
 
+    // Determine if the item should be highlighted
+    bool isHighlighted =
+        project.id != null && project.id == _highlightedProjectId;
+
     return Card(
       elevation: 2.0,
       margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      color: isHighlighted
+          ? Theme.of(context).primaryColorLight.withOpacity(0.3)
+          : null, // Highlight color
       child: ListTile(
         leading: _isSelectionMode
             ? Checkbox(
-                value: _selectedProjectIds.contains(project.id),
+                value: _selectedProjectIdsForMultiSelect.contains(project.id),
                 onChanged: (bool? value) {
                   if (project.id != null) {
                     _toggleSelection(project.id!);
@@ -254,7 +384,9 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
     return Scaffold(
       appBar: _isSelectionMode
           ? AppBar(
-              title: Text("${_selectedProjectIds.length} selected"),
+              title: Text(
+                "${_selectedProjectIdsForMultiSelect.length} selected",
+              ),
               leading: IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: _exitSelectionMode,
@@ -287,26 +419,29 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
       body: FutureBuilder<List<ProjectModel>>(
         future: _projectsFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.waiting &&
+              _currentProjects.isEmpty) {
+            // Show loader only if _currentProjects is empty (initial load)
             return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
+          } else if (snapshot.hasError && _currentProjects.isEmpty) {
             logger.severe(
               "Error loading projects",
               snapshot.error,
               snapshot.stackTrace,
             );
             return Center(child: Text("Error: ${snapshot.error}"));
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          } else if (_currentProjects.isEmpty) {
+            // Use _currentProjects to determine if the list is empty
             return const Center(
               child: Text("No projects yet. Tap '+' to add one!"),
             );
           }
 
-          final projects = snapshot.data!;
+          // Use _currentProjects for building the list for instant UI updates
           return ListView.builder(
-            itemCount: projects.length,
+            itemCount: _currentProjects.length,
             itemBuilder: (context, index) {
-              final project = projects[index];
+              final project = _currentProjects[index];
               return _buildProjectItem(project);
             },
           );

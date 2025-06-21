@@ -1,5 +1,15 @@
 // point.dart
 class PointModel {
+  static const tableName = 'points';
+  static const columnId = 'id';
+  static const columnProjectId = 'project_id';
+  static const columnLatitude = 'latitude';
+  static const columnLongitude = 'longitude';
+  static const columnOrdinalNumber = 'ordinal_number';
+  static const columnNote = 'note';
+  static const columnHeading = 'heading';
+  static const columnTimestamp = 'timestamp';
+
   final int? id;
   int projectId;
   double latitude;
@@ -15,7 +25,7 @@ class PointModel {
     required this.latitude,
     required this.longitude,
     required this.ordinalNumber,
-    this.note, // TODO: what about the heading?????
+    this.note,
     this.heading,
     this.timestamp,
   });
@@ -89,7 +99,7 @@ class PointModel {
     return 'Point{id: $id, projectId: $projectId, lat: $latitude, lon: $longitude, order: $ordinalNumber, note: $note, heading: $heading, timestamp: $timestamp}';
   }
 
-  // --- Potentially useful: Equality and HashCode ---
+  // --- Equality and HashCode ---
   // If you plan to store PointModel in Sets or use them as Map keys,
   // or compare instances directly, overriding == and hashCode is crucial.
   @override

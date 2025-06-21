@@ -1,5 +1,11 @@
 // image.dart
 class ImageModel {
+  static const tableName = 'images';
+  static const columnId = 'id';
+  static const columnPointId = 'point_id';
+  static const columnOrdinalNumber = 'ordinal_number';
+  static const columnImagePath = 'image_path';
+
   // Renamed to ImageModel to avoid conflict with dart:ui Image
   final int? id;
   int pointId;

@@ -175,7 +175,7 @@ class _ProjectPageState extends State<ProjectPage> {
           ),
         );
         // Optionally, you might want to pop the page if the project doesn't exist anymore
-        Navigator.of(context).pop(false);
+        Navigator.of(context).pop();
       }
     } catch (e, stackTrace) {
       logger.severe(
@@ -579,10 +579,9 @@ class _ProjectPageState extends State<ProjectPage> {
                   backgroundColor: Colors.green,
                 ),
               );
-              Map<String, dynamic> result = {};
-              result["id"] = _currentProject.id!;
-              result["action"] = "created";
-              Navigator.of(context).pop(result);
+              Navigator.of(
+                context,
+              ).pop({'action': 'saved', 'id': _currentProject.id!});
             }
           } else {
             throw Exception("Failed to create project.");
@@ -605,10 +604,9 @@ class _ProjectPageState extends State<ProjectPage> {
                   backgroundColor: Colors.green,
                 ),
               );
-              Map<String, dynamic> result = {};
-              result["id"] = _currentProject.id!;
-              result["action"] = "modified";
-              Navigator.of(context).pop(result);
+              Navigator.of(
+                context,
+              ).pop({'action': 'saved', 'id': _currentProject.id!});
             }
           } else {
             if (mounted) {
@@ -704,11 +702,9 @@ class _ProjectPageState extends State<ProjectPage> {
                 backgroundColor: Colors.green,
               ),
             );
-            // Navigate back to the previous screen, with NEGATIVE id (deleted)
-            Map<String, dynamic> result = {};
-            result["id"] = _currentProject.id!;
-            result["action"] = "deleted";
-            Navigator.of(context).pop(result);
+            Navigator.of(
+              context,
+            ).pop({'action': 'deleted', 'id': _currentProject.id!});
           }
         } else {
           // This case might indicate the project was already deleted or not found
@@ -811,8 +807,6 @@ class _ProjectPageState extends State<ProjectPage> {
           },
           body: TabBarView(
             // It's common to place the content of each tab in separate widgets
-            // For now, we'll put your existing main content in the first tab
-            // and placeholders for the others.
             children: [
               // Tab 1: Project Details Form (your existing content)
               SingleChildScrollView(
@@ -947,7 +941,6 @@ class _ProjectPageState extends State<ProjectPage> {
               ),
 
               // Tab 2: Points
-              // You might want to move _buildActiveToolView here or parts of it
               Center(
                 child: PointsToolView(
                   key: _pointsToolViewKey, // Assign the GlobalKey

@@ -205,8 +205,9 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
   }
 
   Future<void> _deletePoint() async {
-    if (widget.point.id == null)
+    if (widget.point.id == null) {
       return; // Should be caught by _confirmDeletePoint
+    }
 
     setState(() {
       _isDeleting = true;

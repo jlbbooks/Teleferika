@@ -1,5 +1,15 @@
 // db/models/project_model.dart
 class ProjectModel {
+  static const String tableName = 'projects';
+  static const String columnId = 'id';
+  static const String columnName = 'name';
+  static const String columnNote = 'note';
+  static const String columnStartingPointId = 'starting_point_id';
+  static const String columnEndingPointId = 'ending_point_id';
+  static const String columnAzimuth = 'azimuth';
+  static const String columnLastUpdate = 'last_update';
+  static const String columnDate = 'date';
+
   final int? id;
   String name;
   String? note;
@@ -30,7 +40,6 @@ class ProjectModel {
       'azimuth': azimuth,
       'last_update': lastUpdate?.toIso8601String(),
       'date': date?.toIso8601String(),
-      // Store as ISO8601 string (date part only if desired, but full DateTime is fine)
     };
   }
 
@@ -126,14 +135,14 @@ class ProjectModel {
   }
 
   @override
-  int get hashCode {
-    return id.hashCode ^
-        name.hashCode ^
-        note.hashCode ^
-        startingPointId.hashCode ^
-        endingPointId.hashCode ^
-        azimuth.hashCode ^
-        lastUpdate.hashCode ^
-        date.hashCode;
-  }
+  int get hashCode => Object.hash(
+    id,
+    name,
+    note,
+    startingPointId,
+    endingPointId,
+    azimuth,
+    lastUpdate,
+    date,
+  );
 }

@@ -171,9 +171,9 @@ class PointsToolViewState extends State<PointsToolView> {
       await db.transaction((txn) async {
         for (PointModel pointToUpdate in updatedPointsForDB) {
           await txn.update(
-            DatabaseHelper.tablePoints,
-            {DatabaseHelper.columnOrdinalNumber: pointToUpdate.ordinalNumber},
-            where: '${DatabaseHelper.columnId} = ?',
+            PointModel.tableName,
+            {PointModel.columnOrdinalNumber: pointToUpdate.ordinalNumber},
+            where: '${PointModel.columnId} = ?',
             whereArgs: [pointToUpdate.id],
           );
         }

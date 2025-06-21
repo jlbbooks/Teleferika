@@ -2,12 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:teleferika/db/database_helper.dart'; // Assuming you have this
-import 'package:teleferika/db/models/point_model.dart'; // Assuming you have this
+import 'package:teleferika/db/database_helper.dart';
+import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 
 import '../logger.dart';
-// import relevant map package, e.g., package:flutter_map/flutter_map.dart
 
 class MapToolView extends StatefulWidget {
   final ProjectModel project;
@@ -69,11 +68,11 @@ class _MapToolViewState extends State<MapToolView> {
           _isLoadingPoints = false;
         });
       }
-       if (mounted) {
-         ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error loading points for map: $e")),
-      );
-       }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error loading points for map: $e")),
+        );
+      }
     }
   }
 
