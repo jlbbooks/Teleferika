@@ -1,4 +1,4 @@
-// point.dart
+// point_model.dart
 class PointModel {
   static const tableName = 'points';
   static const columnId = 'id';
@@ -11,13 +11,13 @@ class PointModel {
   static const columnTimestamp = 'timestamp';
 
   final int? id;
-  int projectId;
-  double latitude;
-  double longitude;
-  int ordinalNumber;
-  String? note;
-  double? heading;
-  DateTime? timestamp;
+  final int projectId; // Make final
+  final double latitude; // Make final
+  final double longitude; // Make final
+  final int ordinalNumber; // Make final
+  final String? note; // Make final
+  final double? heading; // Make final
+  final DateTime? timestamp; // Make final
 
   PointModel({
     this.id,
@@ -36,33 +36,31 @@ class PointModel {
   /// [PointModel] instance without altering the original. If a parameter
   /// is not provided, its value is taken from the current instance.
   PointModel copyWith({
-    int?
-    id, // Usually, you don't copy `id` to a new instance unless it's for an update
-    // where the ID must remain the same. If for a new object, ID should be null.
-    // For "update" scenarios, it's fine. For "clone as new", omit it or pass null.
+    int? id,
     int? projectId,
     double? latitude,
     double? longitude,
     int? ordinalNumber,
-    String?
-    note, // To clear a note, you'd pass an empty string or explicitly null
+    String? note,
+    // Add clear flags if explicit nullification is needed often, e.g.:
+    bool clearNote = false,
     double? heading,
+    bool clearHeading = false,
     DateTime? timestamp,
+    bool clearTimestamp = false,
   }) {
     return PointModel(
-      id: id ?? this.id, // Keeps old id if not provided
+      id: id ?? this.id,
       projectId: projectId ?? this.projectId,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       ordinalNumber: ordinalNumber ?? this.ordinalNumber,
-      note:
-          note ?? this.note, // If `note` is null in copyWith, old note is kept.
-      // To explicitly set note to null, you'd need a different mechanism
-      // or accept that passing null to copyWith means "no change".
-      // A common pattern is to use a special sentinel like Object() for "set to null".
-      // However, for simplicity, this pattern is common: null means "no change".
-      heading: heading ?? this.heading,
-      timestamp: timestamp ?? this.timestamp,
+      note: clearNote ? null : (note ?? this.note), // Example with clear flag
+      // note: note ?? this.note, // Current behavior: null in copyWith means "no change"
+      heading: clearHeading ? null : (heading ?? this.heading),
+      // heading: heading ?? this.heading,
+      timestamp: clearTimestamp ? null : (timestamp ?? this.timestamp),
+      // timestamp: timestamp ?? this.timestamp,
     );
   }
 
@@ -74,8 +72,8 @@ class PointModel {
       'longitude': longitude,
       'ordinal_number': ordinalNumber,
       'note': note,
-      'heading': heading, // Added
-      'timestamp': timestamp?.toIso8601String(), // Store as ISO 8601 string
+      'heading': heading,
+      'timestamp': timestamp?.toIso8601String(),
     };
   }
 
@@ -87,21 +85,18 @@ class PointModel {
       longitude: map['longitude'] as double,
       ordinalNumber: map['ordinal_number'] as int,
       note: map['note'] as String?,
-      heading: map['heading'] as double?, // Added
+      heading: map['heading'] as double?,
       timestamp: map['timestamp'] != null
           ? DateTime.tryParse(map['timestamp'] as String)
-          : null, // Parse from string
+          : null,
     );
   }
 
   @override
   String toString() {
-    return 'Point{id: $id, projectId: $projectId, lat: $latitude, lon: $longitude, order: $ordinalNumber, note: $note, heading: $heading, timestamp: $timestamp}';
+    return 'PointModel{id: $id, projectId: $projectId, lat: $latitude, lon: $longitude, order: $ordinalNumber, note: $note, heading: $heading, timestamp: $timestamp}';
   }
 
-  // --- Equality and HashCode ---
-  // If you plan to store PointModel in Sets or use them as Map keys,
-  // or compare instances directly, overriding == and hashCode is crucial.
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -114,18 +109,23 @@ class PointModel {
         other.ordinalNumber == ordinalNumber &&
         other.note == note &&
         other.heading == heading &&
-        other.timestamp == timestamp;
+        ((other.timestamp == null && timestamp == null) ||
+            (other.timestamp != null &&
+                timestamp != null &&
+                other.timestamp!.isAtSameMomentAs(timestamp!)));
   }
 
   @override
   int get hashCode {
-    return id.hashCode ^
-        projectId.hashCode ^
-        latitude.hashCode ^
-        longitude.hashCode ^
-        ordinalNumber.hashCode ^
-        note.hashCode ^
-        heading.hashCode ^
-        timestamp.hashCode;
+    return Object.hash(
+      id,
+      projectId,
+      latitude,
+      longitude,
+      ordinalNumber,
+      note,
+      heading,
+      timestamp,
+    );
   }
 }

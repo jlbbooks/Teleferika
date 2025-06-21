@@ -11,13 +11,13 @@ class ProjectModel {
   static const String columnDate = 'date';
 
   final int? id;
-  String name;
-  String? note;
-  int? startingPointId;
-  int? endingPointId;
-  double? azimuth;
-  DateTime? lastUpdate; // Tracks when the record was last modified in DB
-  DateTime? date; // User-settable date for the project
+  final String name;
+  final String? note;
+  final int? startingPointId;
+  final int? endingPointId;
+  final double? azimuth;
+  final DateTime? lastUpdate; // Tracks when the record was last modified in DB
+  final DateTime? date; // User-settable date for the project
 
   ProjectModel({
     this.id,
@@ -27,7 +27,7 @@ class ProjectModel {
     this.endingPointId,
     this.azimuth,
     this.lastUpdate,
-    this.date, // Add to constructor
+    this.date,
   });
 
   Map<String, dynamic> toMap() {
@@ -41,22 +41,6 @@ class ProjectModel {
       'last_update': lastUpdate?.toIso8601String(),
       'date': date?.toIso8601String(),
     };
-  }
-
-  void updateFromModel(ProjectModel other) {
-    // Note: 'id' is final and set by the constructor.
-    // This method is for updating the *mutable* fields of an existing instance
-    // to match another instance (typically one fetched from the database).
-    // If you need to change the ID, you should create a new ProjectModel instance
-    // (e.g., using a copyWith method if you had one, or by direct instantiation).
-
-    name = other.name;
-    note = other.note;
-    startingPointId = other.startingPointId;
-    endingPointId = other.endingPointId;
-    azimuth = other.azimuth;
-    lastUpdate = other.lastUpdate; // Very important to update this
-    date = other.date;
   }
 
   factory ProjectModel.fromMap(Map<String, dynamic> map) {

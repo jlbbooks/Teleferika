@@ -456,8 +456,13 @@ class _ProjectPageState extends State<ProjectPage> {
           backgroundColor: Colors.orange,
         ),
       );
-      _azimuthController.text = '';
-      _currentProject.azimuth = null;
+      setStateIfMounted(() {
+        _azimuthController.text = '';
+        _currentProject = _currentProject.copyWith(
+          azimuth: null,
+          clearAzimuth: true,
+        );
+      });
       return;
     }
 
@@ -470,8 +475,13 @@ class _ProjectPageState extends State<ProjectPage> {
           backgroundColor: Colors.orange,
         ),
       );
-      _azimuthController.text = '';
-      _currentProject.azimuth = null;
+      setStateIfMounted(() {
+        _azimuthController.text = '';
+        _currentProject = _currentProject.copyWith(
+          azimuth: null,
+          clearAzimuth: true,
+        );
+      });
       return;
     }
 
@@ -501,8 +511,10 @@ class _ProjectPageState extends State<ProjectPage> {
         endPoint,
       );
 
-      setState(() {
+      setStateIfMounted(() {
         _azimuthController.text = calculatedAzimuth.toStringAsFixed(2);
+        // Update the project's azimuth
+        _currentProject = _currentProject.copyWith(azimuth: calculatedAzimuth);
       });
 
       if (mounted) {
@@ -552,7 +564,7 @@ class _ProjectPageState extends State<ProjectPage> {
         name: _nameController.text.trim(),
         date: _projectDate,
         note: _noteController.text.trim(),
-        lastUpdate: DateTime.now(),
+        lastUpdate: DateTime.now(), // No need, the DB does it, but ok
         startingPointId:
             _currentProject.startingPointId, // if not changed by form
         endingPointId: _currentProject.endingPointId, // if not changed by form

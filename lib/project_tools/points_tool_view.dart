@@ -119,57 +119,204 @@ class PointsToolViewState extends State<PointsToolView> {
     });
   }
 
+  // Future<void> _handleReorder(int oldIndex, int newIndex) async {
+  //   if (widget.project.id == null) return;
+  //
+  //   // Adjust newIndex for ReorderableListView's behavior when moving down
+  //   if (newIndex > oldIndex) {
+  //     newIndex -= 1;
+  //   }
+  //
+  //   // Prevent reordering outside bounds or if indexes are the same
+  //   if (newIndex < 0 || newIndex >= _points.length || oldIndex == newIndex) {
+  //     logger.fine(
+  //       "Reorder attempt with invalid indices or no change: old $oldIndex, new $newIndex",
+  //     );
+  //     return;
+  //   }
+  //
+  //   final PointModel itemMoved = _points.removeAt(oldIndex);
+  //   _points.insert(newIndex, itemMoved);
+  //
+  //   // Now, create a new list of points with updated ordinal numbers based on their new positions
+  //   List<PointModel> reorderedPointsWithNewOrdinals = [];
+  //   for (int i = 0; i < _points.length; i++) {
+  //     PointModel currentPoint = _points[i];
+  //     if (currentPoint.ordinalNumber != i) {
+  //       reorderedPointsWithNewOrdinals.add(
+  //         currentPoint.copyWith(ordinalNumber: i),
+  //       );
+  //     } else {
+  //       // If ordinal didn't change, we can add the original instance
+  //       reorderedPointsWithNewOrdinals.add(currentPoint);
+  //     }
+  //   }
+  //
+  //   // Update the state's list of points to reflect these new immutable instances
+  //   // This ensures that if the DB update fails and we revert, we revert to a consistent state.
+  //   // And also that the UI reflects the intended ordinals.
+  //   setState(() {
+  //     _points = List.from(reorderedPointsWithNewOrdinals); // Create a new list
+  //   });
+  //
+  //   logger.info(
+  //     "Reordered point ${itemMoved.id} from index $oldIndex to $newIndex. Updating ordinals.",
+  //   );
+  //
+  //   // --- Database Update ---
+  //   // Create a list of PointModels that actually need their ordinals updated in the DB
+  //   List<PointModel> pointsToUpdateInDB = [];
+  //   for (PointModel point in _points) {
+  //     // Iterate over the newly reordered _points list
+  //     // We need to compare with the DB state.
+  //     // A better way might be to only update ordinals in DB for points whose ordinal *actually* changed.
+  //     // The current loop below implicitly does this by preparing a list.
+  //     // The crucial part is that `point.ordinalNumber` now reflects the NEW desired ordinal.
+  //     pointsToUpdateInDB.add(point); // Add all points in their new order
+  //   }
+  //
+  //   if (pointsToUpdateInDB.isEmpty && _points.isNotEmpty) {
+  //     logger.fine(
+  //       "No ordinal changes detected for DB update, but ensuring start/end points are current.",
+  //     );
+  //   }
+  //   // No, even if no ordinal changes, the start/end might have changed.
+  //   // The previous logic was: `if (_points[i].ordinalNumber != i)`
+  //   // which meant we were comparing the *current* model's ordinal to the *new* index.
+  //   // Now, `_points` contains models whose ordinals *should already reflect the new index* if we updated them correctly in memory.
+  //
+  //   // Let's refine the list of points whose ordinals actually need DB updates
+  //   // This requires comparing the new in-memory ordinal with what *was* in the DB
+  //   // or simply updating all points in the new order.
+  //   // The original logic `if (_points[i].ordinalNumber != i)` in the loop
+  //   // was trying to update the local model.
+  //   //
+  //   // The `pointsToUpdateInDB` will be the points from `_points` list,
+  //   // which now have their `ordinalNumber` field set to the new correct sequence (0, 1, 2...).
+  //
+  //   try {
+  //     // Use a transaction to update all ordinals and then project start/end points
+  //     final db = await _dbHelper.database;
+  //     await db.transaction((txn) async {
+  //       for (PointModel pointToUpdate in _points) {
+  //         // Use the _points list directly
+  //         // as it contains the models with new ordinals
+  //         await txn.update(
+  //           PointModel.tableName,
+  //           {PointModel.columnOrdinalNumber: pointToUpdate.ordinalNumber},
+  //           where: '${PointModel.columnId} = ?',
+  //           whereArgs: [pointToUpdate.id],
+  //         );
+  //       }
+  //       // After updating all point ordinals, update the project's start and end points
+  //       await _dbHelper.updateProjectStartEndPoints(
+  //         widget.project.id!,
+  //         txn: txn,
+  //       );
+  //     });
+  //
+  //     logger.info(
+  //       "Successfully updated ordinals and project start/end points after reorder.",
+  //     );
+  //     widget.onPointsChanged?.call(); // Notify parent
+  //   } catch (e, stackTrace) {
+  //     logger.severe(
+  //       "Error updating database after reorder for project ${widget.project.id}",
+  //       e,
+  //       stackTrace,
+  //     );
+  //     if (mounted) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(
+  //           content: Text('Error saving new point order: ${e.toString()}'),
+  //           backgroundColor: Colors.red,
+  //         ),
+  //       );
+  //     }
+  //     // If DB update fails, revert the list in UI to previous state (reload from DB)
+  //     // This is important to keep UI consistent with DB
+  //     await _loadPoints();
+  //   }
+  // }
+
   Future<void> _handleReorder(int oldIndex, int newIndex) async {
     if (widget.project.id == null) return;
 
-    // Adjust newIndex for ReorderableListView's behavior when moving down
-    if (newIndex > oldIndex) {
-      newIndex -= 1;
-    }
+    // 1. Adjust newIndex based on ReorderableListView behavior
+    final int adjustedNewIndex = (newIndex > oldIndex)
+        ? newIndex - 1
+        : newIndex;
 
-    // Prevent reordering outside bounds or if indexes are the same
-    if (newIndex < 0 || newIndex >= _points.length || oldIndex == newIndex) {
+    // 2. Validate indices
+    if (!_isValidReorder(oldIndex, adjustedNewIndex)) {
       logger.fine(
-        "Reorder attempt with invalid indices or no change: old $oldIndex, new $newIndex",
+        "Reorder attempt with invalid indices or no change: old $oldIndex, new $adjustedNewIndex (adjusted from $newIndex)",
       );
       return;
     }
 
-    final PointModel item = _points.removeAt(oldIndex);
-    _points.insert(newIndex, item);
+    // 3. Update local list and prepare points with new ordinals
+    final List<PointModel> reorderedPointsWithNewOrdinals =
+        _getReorderedPointsWithNewOrdinals(oldIndex, adjustedNewIndex);
 
-    // Update UI immediately
-    setState(() {});
+    // 4. Update UI state
+    setState(() {
+      _points = reorderedPointsWithNewOrdinals;
+    });
 
     logger.info(
-      "Reordered point ${item.id} from index $oldIndex to $newIndex. Updating ordinals.",
+      "Reordered point from index $oldIndex to $adjustedNewIndex. Updating ordinals.",
     );
 
-    // Create a list of PointModels with their new ordinals
-    List<PointModel> updatedPointsForDB = [];
-    for (int i = 0; i < _points.length; i++) {
-      if (_points[i].ordinalNumber != i) {
-        // Check if ordinal actually changed
-        _points[i].ordinalNumber = i; // Update local model's ordinal
-        updatedPointsForDB.add(_points[i]);
+    // 5. Persist changes to the database
+    await _updatePointOrdinalsInDatabase(reorderedPointsWithNewOrdinals);
+  }
+
+  /// Validates if the reorder operation is valid.
+  bool _isValidReorder(int oldIndex, int newIndex) {
+    if (newIndex < 0 || newIndex >= _points.length || oldIndex == newIndex) {
+      return false;
+    }
+    return true;
+  }
+
+  /// Reorders the local `_points` list and returns a new list
+  /// where each `PointModel` has its `ordinalNumber` updated to match its new position.
+  List<PointModel> _getReorderedPointsWithNewOrdinals(
+    int oldIndex,
+    int newIndex,
+  ) {
+    // Create a mutable copy to perform reorder operations
+    List<PointModel> tempList = List.from(_points);
+
+    final PointModel itemMoved = tempList.removeAt(oldIndex);
+    tempList.insert(newIndex, itemMoved);
+
+    // Create the final list with updated ordinals
+    List<PointModel> resultList = [];
+    for (int i = 0; i < tempList.length; i++) {
+      PointModel currentPoint = tempList[i];
+      if (currentPoint.ordinalNumber != i) {
+        resultList.add(currentPoint.copyWith(ordinalNumber: i));
+      } else {
+        resultList.add(currentPoint); // No change needed, use original instance
       }
     }
+    return resultList;
+  }
 
-    if (updatedPointsForDB.isEmpty && _points.isNotEmpty) {
-      // This case can happen if the reorder didn't actually change ordinal sequence
-      // relative to db, e.g. dragging an item and dropping in same effective ordinal slot
-      // or if the list was already out of sync with DB ordinals for some reason.
-      // We might still want to ensure the start/end points are correct.
-      logger.fine(
-        "No ordinal changes detected for DB update, but ensuring start/end points are current.",
-      );
-    }
+  /// Updates the ordinal numbers of the given points in the database
+  /// within a transaction and also updates the project's start/end points.
+  Future<void> _updatePointOrdinalsInDatabase(
+    List<PointModel> pointsToUpdate,
+  ) async {
+    if (widget.project.id == null)
+      return; // Should already be checked, but defensive
 
     try {
-      // Use a transaction to update all ordinals and then project start/end points
       final db = await _dbHelper.database;
       await db.transaction((txn) async {
-        for (PointModel pointToUpdate in updatedPointsForDB) {
+        for (PointModel pointToUpdate in pointsToUpdate) {
           await txn.update(
             PointModel.tableName,
             {PointModel.columnOrdinalNumber: pointToUpdate.ordinalNumber},
@@ -203,7 +350,6 @@ class PointsToolViewState extends State<PointsToolView> {
         );
       }
       // If DB update fails, revert the list in UI to previous state (reload from DB)
-      // This is important to keep UI consistent with DB
       await _loadPoints();
     }
   }

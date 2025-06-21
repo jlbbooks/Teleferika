@@ -52,7 +52,11 @@ class DatabaseHelper {
         FOREIGN KEY (${ProjectModel.columnStartingPointId}) REFERENCES ${PointModel.tableName} (${PointModel.columnId}) ON DELETE SET NULL,
         FOREIGN KEY (${ProjectModel.columnEndingPointId}) REFERENCES ${PointModel.tableName} (${PointModel.columnId}) ON DELETE SET NULL
       )
-    '''); // TEXT for ISO8601 DateTime string
+      '''); // TEXT for ISO8601 DateTime string
+    // Add index for faster querying/sorting by last_update
+    await db.execute(
+      'CREATE INDEX idx_project_last_update ON ${ProjectModel.tableName} (${ProjectModel.columnLastUpdate})',
+    );
 
     await db.execute('''
     CREATE TABLE ${PointModel.tableName} (
@@ -67,6 +71,10 @@ class DatabaseHelper {
     FOREIGN KEY (${PointModel.columnProjectId}) REFERENCES ${ProjectModel.tableName} (${ProjectModel.columnId}) ON DELETE CASCADE
     )
     ''');
+    // Add index for faster querying by project_id and sorting by ordinal_number
+    await db.execute(
+      'CREATE INDEX idx_point_project_ordinal ON ${PointModel.tableName} (${PointModel.columnProjectId}, ${PointModel.columnOrdinalNumber})',
+    );
 
     await db.execute('''
       CREATE TABLE ${ImageModel.tableName} (
@@ -77,6 +85,9 @@ class DatabaseHelper {
         FOREIGN KEY (${ImageModel.columnPointId}) REFERENCES ${PointModel.tableName} (${PointModel.columnId}) ON DELETE CASCADE
       )
     ''');
+    await db.execute(
+      'CREATE INDEX idx_image_point_id ON ${ImageModel.tableName} (${ImageModel.columnPointId})',
+    );
   }
 
   // Called when the database needs to be upgraded
@@ -147,9 +158,8 @@ class DatabaseHelper {
   // --- Project Methods ---
   Future<int> insertProject(ProjectModel project) async {
     Database db = await instance.database;
-    // Set lastUpdate to now before inserting
-    project.lastUpdate = DateTime.now();
-    return await db.insert(ProjectModel.tableName, project.toMap());
+    final projectToInsert = project.copyWith(lastUpdate: DateTime.now());
+    return await db.insert(ProjectModel.tableName, projectToInsert.toMap());
   }
 
   Future<List<ProjectModel>> getAllProjects() async {
@@ -180,13 +190,12 @@ class DatabaseHelper {
 
   Future<int> updateProject(ProjectModel project) async {
     Database db = await instance.database;
-    // Update lastUpdate to now before updating
-    project.lastUpdate = DateTime.now();
+    final projectToUpdate = project.copyWith(lastUpdate: DateTime.now());
     return await db.update(
       ProjectModel.tableName,
-      project.toMap(),
+      projectToUpdate.toMap(),
       where: '${ProjectModel.columnId} = ?',
-      whereArgs: [project.id],
+      whereArgs: [projectToUpdate.id],
     );
   }
 
