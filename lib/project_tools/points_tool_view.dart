@@ -250,8 +250,7 @@ class PointsToolViewState extends State<PointsToolView> {
             ElevatedButton.icon(
               icon: const Icon(Icons.add_location_alt_outlined),
               label: const Text('Add Point'),
-              onPressed:
-                  null, // TODO: Implement point creation dialog/logic: _addNewPoint,
+              onPressed: null, // TODO: _addNewPoint,
             ),
           ],
         ),
@@ -451,22 +450,8 @@ class PointsToolViewState extends State<PointsToolView> {
                     tooltip: 'Edit Point',
                     onPressed: () {
                       logger.info("Edit tapped for point ID: ${point.id}");
-                      // TODO: Implement point editing
                       _handlePointTap(point);
                     },
-                    // onPressed: () async { // Make async if navigating and awaiting result
-                    //   logger.info("Edit tapped for point ID: ${point.id}");
-                    //   if (!mounted) return;
-                    //   final result = await Navigator.push<bool>( // Assuming PointDetailsPage might return bool
-                    //     context,
-                    //     MaterialPageRoute(builder: (context) => PointDetailsPage(point: point)),
-                    //   );
-                    //   if (result == true) { // If PointDetailsPage indicates a save
-                    //     logger.info("PointDetailsPage returned true, refreshing points.");
-                    //     refreshPoints(); // Refresh the list
-                    //     widget.onPointsChanged?.call(); // Notify parent page
-                    //   }
-                    // },
                   )
                 : null,
             onTap: () => _handlePointTap(point),
@@ -526,26 +511,24 @@ class PointsToolViewState extends State<PointsToolView> {
       if (!mounted) return; // Guard against navigation if widget is disposed
 
       // Navigate to PointDetailsPage and wait for a result
-      final result = await Navigator.push<PointModel?>(
+      final result = await Navigator.push<Map<String, dynamic>>(
         context,
         MaterialPageRoute(builder: (context) => PointDetailsPage(point: point)),
       );
 
-      // If the page returned a result (meaning point was updated and saved)
-      if (result != null) {
-        logger.info(
-          "Returned from PointDetailsPage for P${point.ordinalNumber}. Point was updated. Refreshing list.",
-        );
-        // `result` is the updated PointModel
-        // Refresh the list to show any changes
-        await _loadPoints(); // Reloads all points for the project
-
-        // Optionally, if you want to notify the overall project page too:
-        widget.onPointsChanged?.call();
-      } else {
-        logger.info(
-          "Returned from PointDetailsPage for P${point.ordinalNumber}. No update reported.",
-        );
+      if (result != null && mounted) {
+        final String? action = result['action'] as String?;
+        if (action == 'deleted' || action == 'updated') {
+          logger.info(
+            "PointDetailsPage returned action: $action. Refreshing points list.",
+          );
+          // Refresh the points list
+          // You might have a more specific way to update if 'updated' returns the point
+          // For simplicity, just refresh the whole list for now.
+          _loadPoints();
+          // Optionally, if you want to notify the overall project page too:
+          widget.onPointsChanged?.call();
+        }
       }
     }
   }

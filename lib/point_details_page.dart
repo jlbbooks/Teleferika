@@ -6,6 +6,7 @@ import 'package:teleferika/logger.dart';
 
 class PointDetailsPage extends StatefulWidget {
   final PointModel point;
+
   // Optional: Pass projectId if needed for context, or if creating a new point
   // final int projectId;
 
@@ -28,6 +29,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
 
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
   bool _isLoading = false;
+  bool _isDeleting = false; // To handle delete loading state
 
   @override
   void initState() {
@@ -74,39 +76,44 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
         : null;
 
     if (latitude == null || longitude == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invalid latitude or longitude format.'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        // Added mounted check
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Invalid latitude or longitude format.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
       setState(() {
         _isLoading = false;
       });
       return;
     }
     if (_headingController.text.isNotEmpty && headingValue == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Invalid heading format. Please enter a number or leave it empty.',
+      if (mounted) {
+        // Added mounted check
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Invalid heading format. Please enter a number or leave it empty.',
+            ),
+            backgroundColor: Colors.red,
           ),
-          backgroundColor: Colors.red,
-        ),
-      );
+        );
+      }
       setState(() {
         _isLoading = false;
       });
-      return; // Stop if heading is provided but invalid
+      return;
     }
 
     PointModel updatedPoint = PointModel(
-      id: widget.point.id, // Keep existing ID
-      projectId: widget.point.projectId, // Keep existing project ID
+      id: widget.point.id,
+      projectId: widget.point.projectId,
       latitude: latitude,
       longitude: longitude,
-      ordinalNumber:
-          widget.point.ordinalNumber, // Ordinal typically not changed here
+      ordinalNumber: widget.point.ordinalNumber,
       note: _noteController.text.isNotEmpty ? _noteController.text : null,
       heading: headingValue,
       timestamp: widget.point.timestamp ?? DateTime.now(),
@@ -122,9 +129,9 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
             backgroundColor: Colors.green,
           ),
         );
+        // Pop with a result to indicate success and potentially pass back the updated point
+        Navigator.pop(context, {'action': 'updated', 'point': updatedPoint});
       }
-      // Pop with a result to indicate success and potentially pass back the updated point
-      if (mounted) Navigator.pop(context, updatedPoint);
     } catch (e, stackTrace) {
       logger.severe(
         "Error saving point details for point ID ${widget.point.id}",
@@ -148,16 +155,156 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
     }
   }
 
+  // --- NEW: Method to handle point deletion ---
+  Future<void> _confirmDeletePoint() async {
+    if (widget.point.id == null) {
+      logger.warning("Attempted to delete a point with no ID.");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cannot delete unsaved point.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Confirm Deletion'),
+          content: Text(
+            'Are you sure you want to delete point P${widget.point.ordinalNumber}? This action cannot be undone.',
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+            ),
+            TextButton(
+              child: Text(
+                'Delete',
+                style: TextStyle(
+                  color: Theme.of(dialogContext).colorScheme.error,
+                ),
+              ),
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      await _deletePoint();
+    }
+  }
+
+  Future<void> _deletePoint() async {
+    if (widget.point.id == null)
+      return; // Should be caught by _confirmDeletePoint
+
+    setState(() {
+      _isDeleting = true;
+    });
+
+    try {
+      await _dbHelper.deletePoint(widget.point.id!);
+      // You might need to update project's start/end point if this point was one of them
+      // This logic might be complex and could involve checking ProjectModel.startPointId/endPointId
+      // For now, just deleting the point. Consider adding that logic if needed.
+      logger.info("Point ID ${widget.point.id} deleted successfully.");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Point P${widget.point.ordinalNumber} deleted.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        // Pop with a result to indicate success and the action taken
+        Navigator.pop(context, {
+          'action': 'deleted',
+          'pointId': widget.point.id,
+        });
+      }
+    } catch (e, stackTrace) {
+      logger.severe(
+        "Error deleting point ID ${widget.point.id}",
+        e,
+        stackTrace,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting point: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isDeleting = false;
+        });
+      }
+    }
+  }
+
+  // --- END NEW ---
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Point P${widget.point.ordinalNumber} Details'),
+        title: Text(
+          widget.point.id == null
+              ? 'New Point' // Should ideally not happen if coming to details page
+              : 'Point P${widget.point.ordinalNumber} Details',
+        ),
         actions: [
+          // --- NEW: Delete Button ---
+          if (widget.point.id !=
+              null) // Only show delete if the point exists in DB
+            IconButton(
+              icon: _isDeleting
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.0,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Theme.of(
+                            context,
+                          ).colorScheme.onPrimary, // Or any contrasting color
+                        ),
+                      ),
+                    )
+                  : const Icon(Icons.delete_outline),
+              tooltip: 'Delete Point',
+              onPressed: _isLoading || _isDeleting ? null : _confirmDeletePoint,
+            ),
+          // --- END NEW ---
           IconButton(
-            icon: const Icon(Icons.save_outlined),
+            icon: _isLoading
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.0,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Theme.of(
+                          context,
+                        ).colorScheme.onPrimary, // Or any contrasting color
+                      ),
+                    ),
+                  )
+                : const Icon(Icons.save_outlined),
             tooltip: 'Save Changes',
-            onPressed: _isLoading ? null : _savePointDetails,
+            onPressed: _isLoading || _isDeleting ? null : _savePointDetails,
           ),
         ],
       ),
@@ -168,6 +315,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
+              // ... your existing TextFormField widgets for latitude, longitude, heading, note ...
               // --- Latitude ---
               TextFormField(
                 controller: _latitudeController,
@@ -307,7 +455,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
                       )
                     : const Icon(Icons.save_alt_outlined),
                 label: const Text('Save Point Details'),
-                onPressed: _isLoading ? null : _savePointDetails,
+                onPressed: _isLoading || _isDeleting ? null : _savePointDetails,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
                   textStyle: const TextStyle(fontSize: 16.0),
