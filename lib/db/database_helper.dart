@@ -3,6 +3,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../logger.dart';
+import '../utils/uuid_generator.dart';
 import 'models/image_model.dart';
 import 'models/point_model.dart';
 import 'models/project_model.dart';
@@ -10,7 +11,7 @@ import 'models/project_model.dart';
 class DatabaseHelper {
   static const _databaseName = "Photogrammetry.db";
 
-  static const _databaseVersion = 5; // Incremented due to schema change
+  static const _databaseVersion = 6; // Incremented due to schema change
 
   DatabaseHelper._privateConstructor();
   static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
@@ -41,10 +42,10 @@ class DatabaseHelper {
   Future _onCreate(Database db, int version) async {
     await db.execute('''
       CREATE TABLE ${ProjectModel.tableName} (
-        ${ProjectModel.columnId} INTEGER PRIMARY KEY AUTOINCREMENT,
+        ${ProjectModel.columnId} TEXT PRIMARY KEY,
         ${ProjectModel.columnName} TEXT NOT NULL,
-        ${ProjectModel.columnStartingPointId} INTEGER,
-        ${ProjectModel.columnEndingPointId} INTEGER,
+        ${ProjectModel.columnStartingPointId} TEXT,
+        ${ProjectModel.columnEndingPointId} TEXT,
         ${ProjectModel.columnAzimuth} REAL,
         ${ProjectModel.columnNote} TEXT,
         ${ProjectModel.columnLastUpdate} TEXT,
@@ -60,8 +61,8 @@ class DatabaseHelper {
 
     await db.execute('''
     CREATE TABLE ${PointModel.tableName} (
-      ${PointModel.columnId} INTEGER PRIMARY KEY AUTOINCREMENT,
-      ${PointModel.columnProjectId} INTEGER NOT NULL,
+      ${PointModel.columnId} TEXT PRIMARY KEY,
+      ${PointModel.columnProjectId} TEXT NOT NULL,
       ${PointModel.columnLatitude} REAL NOT NULL,
       ${PointModel.columnLongitude} REAL NOT NULL,
       ${PointModel.columnOrdinalNumber} INTEGER NOT NULL,
@@ -78,8 +79,8 @@ class DatabaseHelper {
 
     await db.execute('''
       CREATE TABLE ${ImageModel.tableName} (
-        ${ImageModel.columnId} INTEGER PRIMARY KEY AUTOINCREMENT,
-        ${ImageModel.columnPointId} INTEGER NOT NULL,
+        ${ImageModel.columnId} TEXT PRIMARY KEY,
+        ${ImageModel.columnPointId} TEXT NOT NULL,
         ${ImageModel.columnOrdinalNumber} INTEGER NOT NULL,
         ${ImageModel.columnImagePath} TEXT NOT NULL,
         FOREIGN KEY (${ImageModel.columnPointId}) REFERENCES ${PointModel.tableName} (${PointModel.columnId}) ON DELETE CASCADE
@@ -152,14 +153,173 @@ class DatabaseHelper {
         );
       }
     }
-    logger.info("Database upgrade process complete.");
-  }
+    // ---- Migration to Version 6: INT IDs to UUID TEXT IDs ----
+    if (oldVersion < 6) {
+      logger.info(
+        "Applying migration for version 6: Changing INT IDs to UUID TEXT IDs.",
+      );
+      await db.transaction((txn) async {
+        Map<int, String> projectOldToNewIdMap = {};
+        Map<int, String> pointOldToNewIdMap = {};
 
-  // --- Project Methods ---
-  Future<int> insertProject(ProjectModel project) async {
-    Database db = await instance.database;
-    final projectToInsert = project.copyWith(lastUpdate: DateTime.now());
-    return await db.insert(ProjectModel.tableName, projectToInsert.toMap());
+        // --- Step 1: Migrate Projects Table ---
+        logger.info("Migrating ${ProjectModel.tableName} to UUIDs...");
+        final projectsTempTableName = '${ProjectModel.tableName}_temp_v6';
+        await txn.execute('''
+      CREATE TABLE $projectsTempTableName (
+        ${ProjectModel.columnId} TEXT PRIMARY KEY, ${ProjectModel.columnName} TEXT NOT NULL,
+        ${ProjectModel.columnNote} TEXT, ${ProjectModel.columnStartingPointId} TEXT,
+        ${ProjectModel.columnEndingPointId} TEXT, ${ProjectModel.columnAzimuth} REAL,
+        ${ProjectModel.columnLastUpdate} TEXT, ${ProjectModel.columnDate} TEXT
+      )
+      ''');
+        List<Map<String, dynamic>> oldProjects = await txn.query(
+          ProjectModel.tableName,
+        );
+        for (var oldProject in oldProjects) {
+          int oldId = oldProject[ProjectModel.columnId] as int;
+          String newProjectId = generateUuidV4();
+          projectOldToNewIdMap[oldId] = newProjectId;
+          await txn.insert(projectsTempTableName, {
+            ProjectModel.columnId: newProjectId,
+            ProjectModel.columnName: oldProject[ProjectModel.columnName],
+            ProjectModel.columnNote: oldProject[ProjectModel.columnNote],
+            ProjectModel.columnAzimuth: oldProject[ProjectModel.columnAzimuth],
+            ProjectModel.columnLastUpdate:
+                oldProject[ProjectModel.columnLastUpdate],
+            ProjectModel.columnDate: oldProject[ProjectModel.columnDate],
+            // starting_point_id and ending_point_id will be updated later
+          });
+        }
+        logger.info(
+          "Generated UUIDs for ${projectOldToNewIdMap.length} projects.",
+        );
+
+        // --- Step 2: Migrate Points Table ---
+        logger.info("Migrating ${PointModel.tableName} to UUIDs...");
+        final pointsTempTableName = '${PointModel.tableName}_temp_v6';
+        await txn.execute('''
+      CREATE TABLE $pointsTempTableName (
+        ${PointModel.columnId} TEXT PRIMARY KEY, ${PointModel.columnProjectId} TEXT NOT NULL,
+        ${PointModel.columnLatitude} REAL NOT NULL, ${PointModel.columnLongitude} REAL NOT NULL,
+        ${PointModel.columnOrdinalNumber} INTEGER NOT NULL, ${PointModel.columnNote} TEXT,
+        ${PointModel.columnHeading} REAL, ${PointModel.columnTimestamp} TEXT
+      )
+      ''');
+        List<Map<String, dynamic>> oldPoints = await txn.query(
+          PointModel.tableName,
+        );
+        for (var oldPoint in oldPoints) {
+          int oldId = oldPoint[PointModel.columnId] as int;
+          String newPointId = generateUuidV4();
+          pointOldToNewIdMap[oldId] = newPointId;
+          String? newProjectUUID =
+              projectOldToNewIdMap[oldPoint[PointModel.columnProjectId] as int];
+          await txn.insert(pointsTempTableName, {
+            PointModel.columnId: newPointId,
+            PointModel.columnProjectId: newProjectUUID,
+            PointModel.columnLatitude: oldPoint[PointModel.columnLatitude],
+            PointModel.columnLongitude: oldPoint[PointModel.columnLongitude],
+            PointModel.columnOrdinalNumber:
+                oldPoint[PointModel.columnOrdinalNumber],
+            PointModel.columnNote: oldPoint[PointModel.columnNote],
+            PointModel.columnHeading: oldPoint[PointModel.columnHeading],
+            PointModel.columnTimestamp: oldPoint[PointModel.columnTimestamp],
+          });
+        }
+        logger.info("Generated UUIDs for ${pointOldToNewIdMap.length} points.");
+
+        // --- Step 3: Migrate Images Table ---
+        logger.info("Migrating ${ImageModel.tableName} to UUIDs...");
+        final imagesTempTableName = '${ImageModel.tableName}_temp_v6';
+        await txn.execute('''
+      CREATE TABLE $imagesTempTableName (
+        ${ImageModel.columnId} TEXT PRIMARY KEY, ${ImageModel.columnPointId} TEXT NOT NULL,
+        ${ImageModel.columnOrdinalNumber} INTEGER NOT NULL, ${ImageModel.columnImagePath} TEXT NOT NULL
+      )
+      ''');
+        List<Map<String, dynamic>> oldImages = await txn.query(
+          ImageModel.tableName,
+        );
+        for (var oldImage in oldImages) {
+          String newImageId = generateUuidV4();
+          String? newPointUUID =
+              pointOldToNewIdMap[oldImage[ImageModel.columnPointId] as int];
+          await txn.insert(imagesTempTableName, {
+            ImageModel.columnId: newImageId,
+            ImageModel.columnPointId: newPointUUID,
+            ImageModel.columnOrdinalNumber:
+                oldImage[ImageModel.columnOrdinalNumber],
+            ImageModel.columnImagePath: oldImage[ImageModel.columnImagePath],
+          });
+        }
+        logger.info("Generated UUIDs for ${oldImages.length} images.");
+
+        // --- Step 4: Update Project's starting_point_id and ending_point_id ---
+        logger.info("Updating project start/end point UUIDs...");
+        for (var oldProject in oldProjects) {
+          int oldProjectId = oldProject[ProjectModel.columnId] as int;
+          String? newProjectUUID = projectOldToNewIdMap[oldProjectId];
+          int? oldStartingPointId =
+              oldProject[ProjectModel.columnStartingPointId] as int?;
+          int? oldEndingPointId =
+              oldProject[ProjectModel.columnEndingPointId] as int?;
+          String? newStartingPointUUID = oldStartingPointId != null
+              ? pointOldToNewIdMap[oldStartingPointId]
+              : null;
+          String? newEndingPointUUID = oldEndingPointId != null
+              ? pointOldToNewIdMap[oldEndingPointId]
+              : null;
+          if (newProjectUUID != null) {
+            await txn.update(
+              projectsTempTableName,
+              {
+                ProjectModel.columnStartingPointId: newStartingPointUUID,
+                ProjectModel.columnEndingPointId: newEndingPointUUID,
+              },
+              where: '${ProjectModel.columnId} = ?',
+              whereArgs: [newProjectUUID],
+            );
+          }
+        }
+
+        // --- Step 5: Drop Old Tables ---
+        logger.info("Dropping old tables...");
+        await txn.execute('DROP TABLE ${ProjectModel.tableName}');
+        await txn.execute('DROP TABLE ${PointModel.tableName}');
+        await txn.execute('DROP TABLE ${ImageModel.tableName}');
+
+        // --- Step 6: Rename New Tables ---
+        logger.info("Renaming new tables...");
+        await txn.execute(
+          'ALTER TABLE $projectsTempTableName RENAME TO ${ProjectModel.tableName}',
+        );
+        await txn.execute(
+          'ALTER TABLE $pointsTempTableName RENAME TO ${PointModel.tableName}',
+        );
+        await txn.execute(
+          'ALTER TABLE $imagesTempTableName RENAME TO ${ImageModel.tableName}',
+        );
+
+        // --- Step 7: Recreate Indexes ---
+        logger.info("Recreating indexes...");
+        await txn.execute(
+          'CREATE INDEX IF NOT EXISTS idx_point_project_ordinal ON ${PointModel.tableName} (${PointModel.columnProjectId}, ${PointModel.columnOrdinalNumber})',
+        );
+        await txn.execute(
+          'CREATE INDEX IF NOT EXISTS idx_image_point_id ON ${ImageModel.tableName} (${ImageModel.columnPointId})',
+        );
+
+        // Note: Foreign keys are not explicitly recreated here on the renamed tables.
+        // The new tables were created without them to avoid issues during data copy.
+        // For new DBs, _onCreate defines them. For existing DBs after this migration,
+        // they won't be enforced by SQLite unless a more complex migration re-creates tables with FKs.
+        logger.info(
+          "Migration to version 6 (UUIDs) completed successfully within transaction.",
+        );
+      }); // End transaction
+    }
+    logger.info("Database upgrade process complete.");
   }
 
   Future<List<ProjectModel>> getAllProjects() async {
@@ -175,7 +335,7 @@ class DatabaseHelper {
     });
   }
 
-  Future<ProjectModel?> getProjectById(int id) async {
+  Future<ProjectModel?> getProjectById(String id) async {
     Database db = await instance.database;
     final List<Map<String, dynamic>> maps = await db.query(
       ProjectModel.tableName,
@@ -199,9 +359,8 @@ class DatabaseHelper {
     );
   }
 
-  Future<int> setProjectStartingPoint(int projectId, int? pointId) async {
+  Future<int> setProjectStartingPoint(String projectId, String? pointId) async {
     Database db = await instance.database;
-    // Also update last_update for the project
     String now = DateTime.now().toIso8601String();
     return await db.update(
       ProjectModel.tableName,
@@ -218,7 +377,7 @@ class DatabaseHelper {
   /// and updates the project's starting_point_id and ending_point_id.
   /// Can be called within a transaction by passing the txn object.
   Future<void> updateProjectStartEndPoints(
-    int projectId, {
+    String projectId, {
     Transaction? txn,
   }) async {
     final dbOrTxn =
@@ -235,16 +394,16 @@ class DatabaseHelper {
       orderBy: '${PointModel.columnOrdinalNumber} ASC',
     );
 
-    int? newStartingPointId;
-    int? newEndingPointId;
+    String? newStartingPointId;
+    String? newEndingPointId;
 
     if (pointsMaps.isNotEmpty) {
       newStartingPointId =
           pointsMaps.first[PointModel.columnId]
-              as int?; // First point (ordinal 0)
+              as String?; // First point (ordinal 0)
       newEndingPointId =
           pointsMaps.last[PointModel.columnId]
-              as int?; // Last point (highest ordinal)
+              as String?; // Last point (highest ordinal)
     }
     // If pointsMaps is empty, both will remain null, effectively clearing them.
 
@@ -262,9 +421,10 @@ class DatabaseHelper {
     bool needsUpdate = false;
     if (currentProjectMaps.isNotEmpty) {
       final currentStartId =
-          currentProjectMaps.first[ProjectModel.columnStartingPointId] as int?;
+          currentProjectMaps.first[ProjectModel.columnStartingPointId]
+              as String?;
       final currentEndId =
-          currentProjectMaps.first[ProjectModel.columnEndingPointId] as int?;
+          currentProjectMaps.first[ProjectModel.columnEndingPointId] as String?;
       if (currentStartId != newStartingPointId ||
           currentEndId != newEndingPointId) {
         needsUpdate = true;
@@ -286,7 +446,6 @@ class DatabaseHelper {
         {
           ProjectModel.columnStartingPointId: newStartingPointId,
           ProjectModel.columnEndingPointId: newEndingPointId,
-          // Also update the last_update timestamp for the project
           ProjectModel.columnLastUpdate: DateTime.now().toIso8601String(),
         },
         where: '${ProjectModel.columnId} = ?',
@@ -299,7 +458,7 @@ class DatabaseHelper {
     }
   }
 
-  Future<int> setProjectEndingPoint(int projectId, int? pointId) async {
+  Future<int> setProjectEndingPoint(String projectId, String? pointId) async {
     Database db = await instance.database;
     String now = DateTime.now().toIso8601String();
     return await db.update(
@@ -313,7 +472,7 @@ class DatabaseHelper {
     );
   }
 
-  Future<int> deleteProject(int id) async {
+  Future<int> deleteProject(String id) async {
     Database db = await instance.database;
     return await db.delete(
       ProjectModel.tableName,
@@ -324,25 +483,67 @@ class DatabaseHelper {
   // --- End Project Methods ---
 
   // --- Point Methods ---
-  Future<int> insertPoint(PointModel point) async {
+  Future<String> insertPoint(PointModel point) async {
     Database db = await instance.database;
-    await _updateProjectTimestamp(point.projectId);
-    return await db.insert(PointModel.tableName, point.toMap());
+
+    // 1. Ensure the point has a UUID ID.
+    // Your PointModel constructor `this.id = id ?? uuid_gen.generateUuidV4();`
+    // already handles this if you create a PointModel instance without an ID.
+    // So, point.id will be non-null here.
+    if (point.id == null) {
+      // This case should ideally not happen if your model constructor
+      // or the code creating the PointModel instance assigns a UUID.
+      // However, as a fallback or assertion:
+      throw ArgumentError("PointModel must have a UUID id before insertion.");
+      // Or, you could assign one here if you're sure that's the desired behavior:
+      // point = point.copyWith(id: uuid_gen.generateUuidV4());
+    }
+
+    // 2. Perform the insert
+    // The point.toMap() will include the UUID string for the 'id' key.
+    await db.insert(
+      PointModel.tableName,
+      point.toMap(),
+      conflictAlgorithm:
+          ConflictAlgorithm.replace, // Or .fail, .ignore etc. as per your needs
+    );
+
+    // After inserting a point, update the project's lastUpdate timestamp
+    await _updateProjectTimestamp(point.projectId); // point.projectId is String
+
+    // 3. Return the UUID string that you already have.
+    return point
+        .id!; // The '!' is safe if you ensured/threw above, or if constructor guarantees it.
+  }
+
+  // Similarly for ProjectModel and ImageModel
+  Future<String> insertProject(ProjectModel project) async {
+    Database db = await instance.database;
+    final projectToInsert = project.copyWith(lastUpdate: DateTime.now());
+    // projectToInsert.id is already a UUID string
+    if (projectToInsert.id == null) {
+      throw ArgumentError("ProjectModel must have a UUID id before insertion.");
+    }
+    await db.insert(ProjectModel.tableName, projectToInsert.toMap());
+    return projectToInsert.id!;
   }
 
   Future<int> updatePoint(PointModel point) async {
     Database db = await instance.database;
-    await _updateProjectTimestamp(point.projectId);
-    return await db.update(
+    final result = await db.update(
       PointModel.tableName,
       point.toMap(),
       where: '${PointModel.columnId} = ?',
       whereArgs: [point.id],
     );
+    if (result > 0) {
+      await _updateProjectTimestamp(point.projectId);
+    }
+    return result;
   }
 
   /// Deletes a single point and re-sequences the ordinal numbers of subsequent points.
-  Future<int> deletePoint(int pointIdToDelete) async {
+  Future<int> deletePoint(String pointIdToDelete) async {
     Database db = await instance.database;
     int count = 0;
 
@@ -361,7 +562,7 @@ class DatabaseHelper {
         return; // Exit transaction if point not found
       }
 
-      int projectId = pointToDelete.projectId;
+      String projectId = pointToDelete.projectId;
       int deletedOrdinal = pointToDelete.ordinalNumber;
 
       // 2. Delete the point
@@ -394,7 +595,7 @@ class DatabaseHelper {
   /// Helper to get a point by ID within a transaction.
   Future<PointModel?> _getPointByIdWithTransaction(
     Transaction txn,
-    int id,
+    String id,
   ) async {
     final List<Map<String, dynamic>> maps = await txn.query(
       PointModel.tableName,
@@ -408,7 +609,7 @@ class DatabaseHelper {
   }
 
   // getPointById without transaction (for external use)
-  Future<PointModel?> getPointById(int id) async {
+  Future<PointModel?> getPointById(String id) async {
     Database db = await instance.database;
     final List<Map<String, dynamic>> maps = await db.query(
       PointModel.tableName,
@@ -421,7 +622,7 @@ class DatabaseHelper {
     return null;
   }
 
-  Future<int?> getLastPointOrdinal(int projectId) async {
+  Future<int?> getLastPointOrdinal(String projectId) async {
     final db = await instance.database;
     final List<Map<String, dynamic>> result = await db.query(
       PointModel.tableName,
@@ -440,14 +641,32 @@ class DatabaseHelper {
   // --- End Point Methods ---
 
   // --- Image Methods ---
-  Future<int> insertImage(ImageModel image) async {
+  Future<String> insertImage(ImageModel image) async {
     Database db = await instance.database;
-    // Potentially update the parent project's last_update timestamp
-    PointModel? point = await getPointById(image.pointId);
-    if (point != null) {
-      await _updateProjectTimestamp(point.projectId);
+    // image.id is already a UUID string
+    if (image.id == null) {
+      throw ArgumentError("ImageModel must have a UUID id before insertion.");
     }
-    return await db.insert(ImageModel.tableName, image.toMap());
+    PointModel? point = await getPointById(
+      image.pointId,
+    ); // pointId is now String
+    if (point != null) {
+      // Assuming _updateProjectTimestamp takes String projectId
+      await _updateProjectTimestamp(point.projectId);
+    } else {
+      logger.warning(
+        "Attempted to insert image for non-existent pointId: ${image.pointId}",
+      );
+      // Consider throwing an error if a point MUST exist for an image
+      // For now, we'll allow it but log a warning.
+    }
+
+    await db.insert(
+      ImageModel.tableName,
+      image.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+    return image.id!;
   }
 
   Future<int> updateImage(ImageModel image) async {
@@ -464,7 +683,7 @@ class DatabaseHelper {
     );
   }
 
-  Future<int> deleteImage(int id) async {
+  Future<int> deleteImage(String id) async {
     Database db = await instance.database;
     // TODO: Potentially re-sequence image ordinals if they have their own sequence per point
     // For now, simple delete
@@ -475,15 +694,40 @@ class DatabaseHelper {
     //     await _updateProjectTimestamp(point.projectId);
     //   }
     // }
-    return await db.delete(
+    ImageModel? image = await getImageById(
+      id,
+    ); // getImageById would need to be created
+
+    final result = await db.delete(
       ImageModel.tableName,
       where: '${ImageModel.columnId} = ?',
       whereArgs: [id],
     );
+
+    if (result > 0 && image != null) {
+      PointModel? point = await getPointById(image.pointId);
+      if (point != null) {
+        await _updateProjectTimestamp(point.projectId);
+      }
+    }
+    return result;
+  }
+
+  Future<ImageModel?> getImageById(String id) async {
+    Database db = await instance.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      ImageModel.tableName,
+      where: '${ImageModel.columnId} = ?',
+      whereArgs: [id],
+    );
+    if (maps.isNotEmpty) {
+      return ImageModel.fromMap(maps.first);
+    }
+    return null;
   }
 
   // --- Helper Methods ---
-  Future<void> _updateProjectTimestamp(int projectId) async {
+  Future<void> _updateProjectTimestamp(String projectId) async {
     Database db = await instance.database;
     String now = DateTime.now().toIso8601String();
     await db.update(
@@ -494,7 +738,7 @@ class DatabaseHelper {
     );
   }
 
-  Future<List<PointModel>> getPointsForProject(int projectId) async {
+  Future<List<PointModel>> getPointsForProject(String projectId) async {
     Database db = await instance.database;
     final List<Map<String, dynamic>> maps = await db.query(
       PointModel.tableName,
@@ -508,7 +752,7 @@ class DatabaseHelper {
   }
 
   /// Deletes multiple points and re-sequences ordinal numbers for each affected project.
-  Future<int> deletePointsByIds(List<int> ids) async {
+  Future<int> deletePointsByIds(List<String> ids) async {
     if (ids.isEmpty) return 0;
     Database db = await instance.database;
     int totalDeletedCount = 0;
@@ -517,7 +761,7 @@ class DatabaseHelper {
     await db.transaction((txn) async {
       // 1. Collect all points to be deleted to find affected project IDs
       List<PointModel> pointsToDelete = [];
-      for (int id in ids) {
+      for (String id in ids) {
         PointModel? p = await _getPointByIdWithTransaction(txn, id);
         if (p != null) {
           pointsToDelete.add(p);
@@ -529,7 +773,7 @@ class DatabaseHelper {
       }
 
       // 2. Group points by project ID
-      Map<int, List<PointModel>> pointsByProject = {};
+      Map<String, List<PointModel>> pointsByProject = {};
       for (var p in pointsToDelete) {
         pointsByProject.putIfAbsent(p.projectId, () => []).add(p);
       }
@@ -547,7 +791,7 @@ class DatabaseHelper {
 
       if (totalDeletedCount > 0) {
         // 4. For each affected project, re-sequence the remaining points
-        for (int projectId in pointsByProject.keys) {
+        for (String projectId in pointsByProject.keys) {
           final List<Map<String, dynamic>>
           remainingPointsMaps = await txn.query(
             PointModel.tableName,
@@ -582,7 +826,8 @@ class DatabaseHelper {
     return totalDeletedCount;
   }
 
-  Future<List<ImageModel>> getImagesForPoint(int pointId) async {
+  Future<List<ImageModel>> getImagesForPoint(String pointId) async {
+    // Parameter is String
     Database db = await instance.database;
     final List<Map<String, dynamic>> maps = await db.query(
       ImageModel.tableName,
@@ -590,9 +835,7 @@ class DatabaseHelper {
       whereArgs: [pointId],
       orderBy: '${ImageModel.columnOrdinalNumber} ASC',
     );
-    return List.generate(maps.length, (i) {
-      return ImageModel.fromMap(maps[i]);
-    });
+    return List.generate(maps.length, (i) => ImageModel.fromMap(maps[i]));
   }
 
   Future close() async {

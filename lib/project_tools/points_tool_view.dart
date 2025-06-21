@@ -9,7 +9,7 @@ import 'package:teleferika/point_details_page.dart';
 class PointsToolView extends StatefulWidget {
   final ProjectModel project;
   final VoidCallback? onPointsChanged; // Callback for when points are modified
-  final int? newlyAddedPointId;
+  final String? newlyAddedPointId;
 
   const PointsToolView({
     super.key,
@@ -30,7 +30,7 @@ class PointsToolViewState extends State<PointsToolView> {
 
   // --- State for Selection Mode ---
   bool _isSelectionMode = false;
-  final Set<int> _selectedPointIds = {};
+  final Set<String> _selectedPointIds = {};
   // --- End State for Selection Mode ---
 
   @override
@@ -105,7 +105,7 @@ class PointsToolViewState extends State<PointsToolView> {
     });
   }
 
-  void _togglePointSelection(int pointId) {
+  void _togglePointSelection(String pointId) {
     setState(() {
       if (_selectedPointIds.contains(pointId)) {
         _selectedPointIds.remove(pointId);
@@ -310,8 +310,9 @@ class PointsToolViewState extends State<PointsToolView> {
   Future<void> _updatePointOrdinalsInDatabase(
     List<PointModel> pointsToUpdate,
   ) async {
-    if (widget.project.id == null)
+    if (widget.project.id == null) {
       return; // Should already be checked, but defensive
+    }
 
     try {
       final db = await _dbHelper.database;

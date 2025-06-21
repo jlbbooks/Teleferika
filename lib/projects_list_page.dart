@@ -23,8 +23,8 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
   bool _isSelectionMode = false;
-  final Set<int> _selectedProjectIdsForMultiSelect = {};
-  int? _highlightedProjectId;
+  final Set<String> _selectedProjectIdsForMultiSelect = {};
+  String? _highlightedProjectId;
 
   // Keep a local copy of projects to manipulate for instant UI updates
   List<ProjectModel> _currentProjects = [];
@@ -72,7 +72,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
     });
   }
 
-  void _toggleSelection(int projectId) {
+  void _toggleSelection(String projectId) {
     setState(() {
       _highlightedProjectId =
           null; // Clear highlight when entering multi-selection
@@ -109,7 +109,9 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
       });
       final result = await Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => ProjectPage(project: project)),
+        MaterialPageRoute(
+          builder: (_) => ProjectPage(project: project, isNew: false),
+        ),
       );
       _handleNavigationResult(result);
     }
@@ -118,7 +120,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
   void _handleNavigationResult(dynamic result) {
     if (result is Map<String, dynamic>) {
       final String? action = result['action'];
-      final int? id = result['id'];
+      final String? id = result['id'];
 
       if (id == null) {
         // If ID is null, we probably don't need to do anything specific,
@@ -222,7 +224,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ProjectPage(project: newProject),
+        builder: (context) => ProjectPage(project: newProject, isNew: true),
       ), // Ensure this is your ProjectDetailsPage
     );
 
@@ -270,10 +272,10 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
 
     if (confirmDelete) {
       try {
-        final List<int> idsToDelete = List.from(
+        final List<String> idsToDelete = List.from(
           _selectedProjectIdsForMultiSelect,
         );
-        for (int id in idsToDelete) {
+        for (String id in idsToDelete) {
           await _dbHelper.deleteProject(id);
         }
         setState(() {

@@ -1,4 +1,6 @@
 // db/models/project_model.dart
+import 'package:teleferika/utils/uuid_generator.dart';
+
 class ProjectModel {
   static const String tableName = 'projects';
   static const String columnId = 'id';
@@ -10,17 +12,17 @@ class ProjectModel {
   static const String columnLastUpdate = 'last_update';
   static const String columnDate = 'date';
 
-  final int? id;
+  final String? id;
   final String name;
   final String? note;
-  final int? startingPointId;
-  final int? endingPointId;
+  final String? startingPointId;
+  final String? endingPointId;
   final double? azimuth;
   final DateTime? lastUpdate; // Tracks when the record was last modified in DB
   final DateTime? date; // User-settable date for the project
 
   ProjectModel({
-    this.id,
+    String? id, // Default to generating a UUID if not provided
     required this.name,
     this.note,
     this.startingPointId,
@@ -28,45 +30,45 @@ class ProjectModel {
     this.azimuth,
     this.lastUpdate,
     this.date,
-  });
+  }) : id = id ?? generateUuidV4(); // Generate UUID if id is null
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
-      'name': name,
-      'note': note,
-      'starting_point_id': startingPointId,
-      'ending_point_id': endingPointId,
-      'azimuth': azimuth,
-      'last_update': lastUpdate?.toIso8601String(),
-      'date': date?.toIso8601String(),
+      columnId: id,
+      columnName: name,
+      columnNote: note,
+      columnStartingPointId: startingPointId,
+      columnEndingPointId: endingPointId,
+      columnAzimuth: azimuth,
+      columnLastUpdate: lastUpdate?.toIso8601String(),
+      columnDate: date?.toIso8601String(),
     };
   }
 
   factory ProjectModel.fromMap(Map<String, dynamic> map) {
     return ProjectModel(
-      id: map['id'],
-      name: map['name'],
-      note: map['note'],
-      startingPointId: map['starting_point_id'],
-      endingPointId: map['ending_point_id'],
-      azimuth: map['azimuth'],
-      lastUpdate: map['last_update'] != null
-          ? DateTime.tryParse(map['last_update'])
+      id: map[columnId] as String?,
+      name: map[columnName] as String,
+      note: map[columnNote] as String?,
+      startingPointId: map[columnStartingPointId] as String?,
+      endingPointId: map[columnEndingPointId] as String?,
+      azimuth: map[columnAzimuth] as double?,
+      lastUpdate: map[columnLastUpdate] != null
+          ? DateTime.tryParse(map[columnLastUpdate] as String)
           : null,
-      date: map['date'] != null
-          ? DateTime.tryParse(map['date']) // Parse from ISO8601 string
+      date: map[columnDate] != null
+          ? DateTime.tryParse(map[columnDate] as String)
           : null,
     );
   }
   ProjectModel copyWith({
-    int? id, // Allow id to be explicitly part of copyWith if needed
+    String? id, // Allow id to be explicitly part of copyWith if needed
     String? name,
     String? note,
     bool clearNote = false, // To explicitly set note to null
-    int? startingPointId,
+    String? startingPointId,
     bool clearStartingPointId = false,
-    int? endingPointId,
+    String? endingPointId,
     bool clearEndingPointId = false,
     double? azimuth,
     bool clearAzimuth = false,

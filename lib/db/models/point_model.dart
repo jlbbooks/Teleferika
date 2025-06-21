@@ -1,4 +1,6 @@
 // point_model.dart
+import 'package:teleferika/utils/uuid_generator.dart';
+
 class PointModel {
   static const tableName = 'points';
   static const columnId = 'id';
@@ -10,17 +12,17 @@ class PointModel {
   static const columnHeading = 'heading';
   static const columnTimestamp = 'timestamp';
 
-  final int? id;
-  final int projectId; // Make final
-  final double latitude; // Make final
-  final double longitude; // Make final
-  final int ordinalNumber; // Make final
-  final String? note; // Make final
-  final double? heading; // Make final
-  final DateTime? timestamp; // Make final
+  final String? id; // Changed from int? to String?
+  final String projectId; // Changed from int to String (FK to ProjectModel)
+  final double latitude;
+  final double longitude;
+  final int ordinalNumber;
+  final String? note;
+  final double? heading;
+  final DateTime? timestamp;
 
   PointModel({
-    this.id,
+    String? id, // Parameter for id
     required this.projectId,
     required this.latitude,
     required this.longitude,
@@ -28,22 +30,16 @@ class PointModel {
     this.note,
     this.heading,
     this.timestamp,
-  });
+  }) : id = id ?? generateUuidV4(); // Generate UUID if id is null
 
-  /// Creates a new [PointModel] instance with optional new values.
-  ///
-  /// This method is useful for creating a modified copy of an existing
-  /// [PointModel] instance without altering the original. If a parameter
-  /// is not provided, its value is taken from the current instance.
   PointModel copyWith({
-    int? id,
-    int? projectId,
+    String? id, // Changed
+    String? projectId, // Changed
     double? latitude,
     double? longitude,
     int? ordinalNumber,
     String? note,
-    // Add clear flags if explicit nullification is needed often, e.g.:
-    bool clearNote = false,
+    bool clearNote = false, // Assuming you might want this pattern
     double? heading,
     bool clearHeading = false,
     DateTime? timestamp,
@@ -55,39 +51,36 @@ class PointModel {
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       ordinalNumber: ordinalNumber ?? this.ordinalNumber,
-      note: clearNote ? null : (note ?? this.note), // Example with clear flag
-      // note: note ?? this.note, // Current behavior: null in copyWith means "no change"
+      note: clearNote ? null : (note ?? this.note),
       heading: clearHeading ? null : (heading ?? this.heading),
-      // heading: heading ?? this.heading,
       timestamp: clearTimestamp ? null : (timestamp ?? this.timestamp),
-      // timestamp: timestamp ?? this.timestamp,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
-      'project_id': projectId,
-      'latitude': latitude,
-      'longitude': longitude,
-      'ordinal_number': ordinalNumber,
-      'note': note,
-      'heading': heading,
-      'timestamp': timestamp?.toIso8601String(),
+      columnId: id, // String
+      columnProjectId: projectId, // String
+      columnLatitude: latitude,
+      columnLongitude: longitude,
+      columnOrdinalNumber: ordinalNumber,
+      columnNote: note,
+      columnHeading: heading,
+      columnTimestamp: timestamp?.toIso8601String(),
     };
   }
 
   factory PointModel.fromMap(Map<String, dynamic> map) {
     return PointModel(
-      id: map['id'] as int?,
-      projectId: map['project_id'] as int,
-      latitude: map['latitude'] as double,
-      longitude: map['longitude'] as double,
-      ordinalNumber: map['ordinal_number'] as int,
-      note: map['note'] as String?,
-      heading: map['heading'] as double?,
-      timestamp: map['timestamp'] != null
-          ? DateTime.tryParse(map['timestamp'] as String)
+      id: map[columnId] as String?, // Cast to String
+      projectId: map[columnProjectId] as String, // Cast to String
+      latitude: map[columnLatitude] as double,
+      longitude: map[columnLongitude] as double,
+      ordinalNumber: map[columnOrdinalNumber] as int,
+      note: map[columnNote] as String?,
+      heading: map[columnHeading] as double?,
+      timestamp: map[columnTimestamp] != null
+          ? DateTime.tryParse(map[columnTimestamp] as String)
           : null,
     );
   }
@@ -102,8 +95,8 @@ class PointModel {
     if (identical(this, other)) return true;
 
     return other is PointModel &&
-        other.id == id &&
-        other.projectId == projectId &&
+        other.id == id && // String comparison
+        other.projectId == projectId && // String comparison
         other.latitude == latitude &&
         other.longitude == longitude &&
         other.ordinalNumber == ordinalNumber &&
@@ -118,8 +111,8 @@ class PointModel {
   @override
   int get hashCode {
     return Object.hash(
-      id,
-      projectId,
+      id, // String
+      projectId, // String
       latitude,
       longitude,
       ordinalNumber,
