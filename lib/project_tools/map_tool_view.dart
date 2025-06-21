@@ -69,9 +69,11 @@ class _MapToolViewState extends State<MapToolView> {
           _isLoadingPoints = false;
         });
       }
-      ScaffoldMessenger.of(context).showSnackBar(
+       if (mounted) {
+         ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error loading points for map: $e")),
       );
+       }
     }
   }
 
