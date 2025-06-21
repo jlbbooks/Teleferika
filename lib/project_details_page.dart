@@ -76,9 +76,6 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
   bool _isFormCurrentlyDirty = false;
   bool _isLoading = false;
 
-  // Tracks if a save occurred this session
-  bool _projectWasSavedThisSession = false;
-
   // To know if the project was new when the page was opened
   bool _isNewProjectOnLoad = false;
   // Store initial values to compare against for dirty checking
@@ -94,6 +91,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
   // This is one way to trigger refresh. Another is to manage points list here.
   final GlobalKey<PointsToolViewState> _pointsToolViewKey =
       GlobalKey<PointsToolViewState>();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   // State variable to control CompassToolView's spinner for this action
   bool _isAddingPointFromCompassInProgress = false;
@@ -133,28 +131,21 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     }
   }
 
-  void _switchToTab(BuildContext descendantContext, ProjectPageTab tab) {
-    // Get the TabController from the DefaultTabController ancestor
-    final TabController? controller = DefaultTabController.of(
-      descendantContext,
-    );
+  void _switchToTab(ProjectPageTab tab) {
+    if (!mounted) return;
 
-    // Find the index of the desired tab from your enum
-    // It's good practice to have a consistent list of tabs if you are manually
-    // creating TabBar.tabs and TabBarView.children.
-    // If ProjectPageTab.values directly corresponds to your tab order:
-    // final int tabIndex = tab.index; // This works if enum order matches tab order
+    final BuildContext? scaffoldContext = _scaffoldKey.currentContext;
 
-    // More robust way if you have a defined list for your tabs:
-    final List<ProjectPageTab> orderedTabs =
-        ProjectPageTab.values; // Or your specific order
-    final int tabIndex = orderedTabs.indexOf(tab);
+    if (scaffoldContext != null) {
+      final TabController controller = DefaultTabController.of(scaffoldContext);
+      final int tabIndex = tab.index;
 
-    if (controller != null && tabIndex >= 0 && controller.index != tabIndex) {
-      controller.animateTo(tabIndex);
-    } else if (controller == null) {
+      if (tabIndex >= 0 && controller.index != tabIndex) {
+        controller.animateTo(tabIndex);
+      }
+    } else {
       logger.warning(
-        "Attempted to switch tab, but TabController was null. Ensure DefaultTabController is an ancestor and context is correct.",
+        "Scaffold key context is null, cannot switch tab. Widget might be unmounted or Scaffold not built yet.",
       );
     }
   }
@@ -364,9 +355,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
         if (currentEndPointModel != null) {
           originalEndPointOrdinal = currentEndPointModel.ordinalNumber;
           // The new point from compass will take the original end point's ordinal
-          newPointOrdinal =
-              originalEndPointOrdinal ??
-              await _getNextOrdinalNumber(_currentProject.id!);
+          newPointOrdinal = originalEndPointOrdinal;
 
           // The OLD end point needs a new, higher ordinal
           final int newOrdinalForOldEndPoint = await _getNextOrdinalNumber(
@@ -451,7 +440,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
           ?.refreshPoints(); // Call refreshPoints on PointsToolView
 
       // If the compass tool is active, and you want to switch to points view
-      _switchToTab(descendantContext, ProjectPageTab.points);
+      _switchToTab(ProjectPageTab.points);
     } catch (e, stackTrace) {
       logger.severe("Error adding point from compass", e, stackTrace);
       if (mounted) {
@@ -473,182 +462,6 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     }
   }
   // --- End Logic for Adding Point ---
-
-  Future<void> _saveProjectDetails() async {
-    // 1. Check if there are actual changes to save or if it's a new project
-    //    (New projects can be "saved" even if no fields were touched yet, to create the initial record)
-    if (!_isFormCurrentlyDirty && !_isNewProjectOnLoad) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No changes to save.'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-      return;
-    }
-
-    // 2. Prevent saving if a card tool is active
-    // if (_activeCardTool != null) {
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     const SnackBar(
-    //       content: Text('Close the active tool to modify project details.'),
-    //       backgroundColor: Colors.orange,
-    //     ),
-    //   );
-    //   return;
-    // }
-
-    // 3. Validate the form
-    if (!_formKey.currentState!.validate()) {
-      logger.warning("Form validation failed.");
-      // Optionally, show a SnackBar if you want more explicit feedback than just field errors
-      // ScaffoldMessenger.of(context).showSnackBar(
-      //   const SnackBar(
-      //     content: Text('Please correct the errors in the form.'),
-      //     backgroundColor: Colors.orange,
-      //   ),
-      // );
-      return;
-    }
-
-    // If all checks pass, proceed with saving
-    setStateIfMounted(() => _isLoading = true);
-
-    // Parse Azimuth (validator should have caught errors, but good to be safe)
-    double? azimuthValue;
-    if (_azimuthController.text.isNotEmpty) {
-      azimuthValue = double.tryParse(_azimuthController.text);
-      if (azimuthValue == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Internal error: Invalid Azimuth despite validation.',
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        setStateIfMounted(() => _isLoading = false);
-        return;
-      }
-    }
-
-    // Prepare the project model to save
-    // Note: For a new project, widget.project.id will be null.
-    // startingPointId and endingPointId are preserved from the current widget.project state
-    ProjectModel projectToSave = ProjectModel(
-      id: _currentProject.id,
-      name: _nameController.text.trim(), // Trim whitespace
-      note: _noteController.text.trim().isNotEmpty
-          ? _noteController.text.trim()
-          : null,
-      azimuth: azimuthValue,
-      date: _projectDate,
-      startingPointId: _currentProject.startingPointId,
-      endingPointId: _currentProject.endingPointId,
-      // lastUpdate will be set by the database or on successful save
-    );
-
-    try {
-      String successMessage;
-      if (projectToSave.id == null) {
-        // ---- CREATING A NEW PROJECT ----
-        final newId = await _dbHelper.insertProject(projectToSave);
-        // Fetch the newly saved project to get all DB-generated fields (like lastUpdate and the ID itself)
-        final savedProject = await _dbHelper.getProjectById(newId);
-
-        if (savedProject != null && mounted) {
-          setState(() {
-            // Update the page's main project instance with the saved data
-            _currentProject = savedProject;
-
-            // Update controllers and local state to reflect the fully saved state
-            _nameController.text =
-                _currentProject.name; // Should match, but good practice
-            _noteController.text = _currentProject.note ?? '';
-            _azimuthController.text =
-                _currentProject.azimuth?.toStringAsFixed(2) ?? '';
-            _projectDate = _currentProject.date;
-            _lastUpdateTime = _currentProject.lastUpdate; // Crucial for display
-
-            _projectWasSavedThisSession =
-                true; // Mark that a save operation happened
-            // _isNewProjectOnLoad =
-            //     false; // It's no longer "new" in the context of this page load
-            // FIXME: it actually should stay "new" even after saving
-
-            // After saving, the form is now based on the saved data, so reset dirty check
-            _setInitialFormValuesAndResetDirtyState();
-          });
-          successMessage = 'Project "${_currentProject.name}" created.';
-          logger.info(
-            "New project created and state updated. ID: $newId, Name: ${_currentProject.name}",
-          );
-        } else {
-          throw Exception("Failed to retrieve the newly created project.");
-        }
-      } else {
-        // ---- UPDATING AN EXISTING PROJECT ----
-        await _dbHelper.updateProject(projectToSave);
-        // Fetch the updated project to get new lastUpdate, etc.
-        final updatedProjectFromDb = await _dbHelper.getProjectById(
-          projectToSave.id!,
-        );
-
-        if (updatedProjectFromDb != null && mounted) {
-          setState(() {
-            // Update the page's main project instance
-            _currentProject = updatedProjectFromDb;
-
-            // Update controllers and local state
-            _nameController.text = _currentProject.name;
-            _noteController.text = _currentProject.note ?? '';
-            _azimuthController.text =
-                _currentProject.azimuth?.toStringAsFixed(2) ?? '';
-            _projectDate = _currentProject.date;
-            _lastUpdateTime = _currentProject.lastUpdate;
-
-            _projectWasSavedThisSession =
-                true; // Mark that a save operation happened
-
-            // After saving, the form is now based on the saved data, so reset dirty check
-            _setInitialFormValuesAndResetDirtyState();
-          });
-          successMessage = 'Project "${_currentProject.name}" updated.';
-          logger.info(
-            "Project details updated and state refreshed for ID: ${_currentProject.id}, Name: ${_currentProject.name}",
-          );
-        } else {
-          throw Exception(
-            "Failed to retrieve the updated project (ID: ${projectToSave.id}).",
-          );
-        }
-      }
-
-      // Show success message
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(successMessage),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e, stackTrace) {
-      logger.severe("Error saving project details", e, stackTrace);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error saving project: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      setStateIfMounted(() => _isLoading = false);
-    }
-  }
 
   void setStateIfMounted(VoidCallback fn) {
     if (mounted) {
@@ -776,46 +589,6 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
       SnackBar(content: Text('Set $pointType point to be implemented.')),
     );
   }
-
-  AppBar _appBar() {
-    return AppBar(
-      title: Text(
-        _currentProject.name.isNotEmpty && _nameController.text.isNotEmpty
-            ? _nameController
-                  .text // Use controller text for potentially unsaved name
-            : (_currentProject.name.isNotEmpty
-                  ? _currentProject.name
-                  : "Project Details"),
-      ),
-      actions: [
-        IconButton(
-          icon: Icon(
-            Icons.save_outlined,
-            color: _isFormCurrentlyDirty && !_isLoading
-                ? Colors
-                      .greenAccent
-                      .shade400 // "Glowing" green
-                : null, // Default color
-          ),
-          tooltip: 'Save Project',
-          onPressed:
-              (_isFormCurrentlyDirty || _isNewProjectOnLoad) && !_isLoading
-              ? _saveProjectDetails
-              : null,
-        ),
-      ],
-    );
-  }
-
-  // Presumed state variables (ensure these are defined in your _ProjectDetailsPageState)
-  // late Project _currentProject;
-  // bool _isNewProjectOnLoad = false;
-  // late DBHelper _dbHelper;
-  // bool _isLoading = false;
-  // final _formKey = GlobalKey<FormState>();
-  // TextEditingController _nameController = TextEditingController();
-  // DateTime? _projectDate; // Assuming you have this for the date
-  // TextEditingController _noteController = TextEditingController();
 
   Future<void> _saveProject() async {
     if (_isLoading) return;
@@ -1020,9 +793,6 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Determine if vertical layout should be used for card tool buttons
-    bool useVerticalLayout = MediaQuery.of(context).size.width < 400;
-
     String formattedProjectDate;
     if (_projectDate != null) {
       // Use a common, locale-aware skeleton.
@@ -1049,6 +819,7 @@ class _ProjectDetailsPageState extends State<ProjectDetailsPage> {
     return DefaultTabController(
       length: ProjectPageTab.values.length, // Number of tabs
       child: Scaffold(
+        key: _scaffoldKey,
         body: NestedScrollView(
           // controller: _scrollController, // You might need a ScrollController later
           headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
