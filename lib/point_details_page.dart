@@ -49,9 +49,14 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
       text:
           widget.point.heading?.toStringAsFixed(2) ?? '', // Handle null heading
     );
-    _currentImages = [];
+    // Initialize _currentImages from the point being edited
+    _currentImages = List<ImageModel>.from(
+      widget.point.images,
+    ); // Make a mutable copy
+    _currentImages.sort((a, b) => a.ordinalNumber.compareTo(b.ordinalNumber));
+
     logger.info(
-      "PointDetailsPage initialized for Point ID: ${widget.point.id}, Ordinal: ${widget.point.ordinalNumber}",
+      "PointDetailsPage initialized for Point ID: ${widget.point.id}, Ordinal: ${widget.point.ordinalNumber}, Initial image count: ${_currentImages.length}",
     );
   }
 
@@ -65,8 +70,17 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
   }
 
   Future<void> _savePointDetails() async {
+    logger.info(
+      "Attempting to save point details for point ID: ${widget.point.id}",
+    );
     if (!_pointFormKey.currentState!.validate()) {
       logger.warning("Point details form validation failed.");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please correct the errors in the form.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
       return;
     }
 
@@ -114,23 +128,30 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
     }
 
     PointModel updatedPoint = PointModel(
-      id: widget.point.id,
+      id: widget.point.id, // ID must not be null for an update
       projectId: widget.point.projectId,
       latitude: latitude,
       longitude: longitude,
       ordinalNumber: widget.point.ordinalNumber,
       note: _noteController.text.isNotEmpty ? _noteController.text : null,
       heading: headingValue,
-      timestamp: widget.point.timestamp ?? DateTime.now(),
+      timestamp:
+          widget.point.timestamp ?? DateTime.now(), // Or update timestamp logic
+      images: _currentImages, // *** Include the current list of images ***
+    );
+    logger.info(
+      "Updated PointModel created: $updatedPoint with ${_currentImages.length} images.",
     );
 
     try {
       await _dbHelper.updatePoint(updatedPoint);
-      logger.info("Point ID ${widget.point.id} updated successfully.");
+      logger.info(
+        "Point ID ${widget.point.id} and its images updated successfully. Image count: ${_currentImages.length}",
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Point details saved!'),
+            content: Text('Point details and images saved!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -139,7 +160,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
       }
     } catch (e, stackTrace) {
       logger.severe(
-        "Error saving point details for point ID ${widget.point.id}",
+        "Error saving point details (and images) for point ID ${widget.point.id}",
         e,
         stackTrace,
       );
@@ -160,104 +181,6 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
     }
   }
 
-  // Future<void> _confirmAndDeletePoint() async {
-  //   if (widget.point.id == null) {
-  //     logger.warning("Attempted to delete a point with no ID.");
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(
-  //         content: Text('Cannot delete unsaved point.'),
-  //         backgroundColor: Colors.orange,
-  //       ),
-  //     );
-  //     return;
-  //   }
-  //
-  //   final bool? confirmed = await showDialog<bool>(
-  //     context: context,
-  //     builder: (BuildContext dialogContext) {
-  //       return AlertDialog(
-  //         title: const Text('Confirm Deletion'),
-  //         content: Text(
-  //           'Are you sure you want to delete point P${widget.point.ordinalNumber}? This action cannot be undone.',
-  //         ),
-  //         actions: <Widget>[
-  //           TextButton(
-  //             child: const Text('Cancel'),
-  //             onPressed: () {
-  //               Navigator.of(dialogContext).pop(false);
-  //             },
-  //           ),
-  //           TextButton(
-  //             child: Text(
-  //               'Delete',
-  //               style: TextStyle(
-  //                 color: Theme.of(dialogContext).colorScheme.error,
-  //               ),
-  //             ),
-  //             onPressed: () {
-  //               Navigator.of(dialogContext).pop(true);
-  //             },
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  //
-  //   if (confirmed == true) {
-  //     await _deletePoint();
-  //   }
-  // }
-  //
-  // Future<void> _deletePoint() async {
-  //   if (widget.point.id == null) {
-  //     return; // Should never happen
-  //   }
-  //
-  //   setState(() {
-  //     _isDeleting = true;
-  //   });
-  //
-  //   try {
-  //     await _dbHelper.deletePointById(widget.point.id!);
-  //     // You might need to update project's start/end point if this point was one of them
-  //     // This logic might be complex and could involve checking ProjectModel.startPointId/endPointId
-  //     // For now, just deleting the point. Consider adding that logic if needed.
-  //     logger.info("Point ID ${widget.point.id} deleted successfully.");
-  //     if (mounted) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(
-  //           content: Text('Point P${widget.point.ordinalNumber} deleted.'),
-  //           backgroundColor: Colors.green,
-  //         ),
-  //       );
-  //       // Pop with a result to indicate success and the action taken
-  //       Navigator.pop(context, {
-  //         'action': 'deleted',
-  //         'pointId': widget.point.id,
-  //       });
-  //     }
-  //   } catch (e, stackTrace) {
-  //     logger.severe(
-  //       "Error deleting point ID ${widget.point.id}",
-  //       e,
-  //       stackTrace,
-  //     );
-  //     if (mounted) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(
-  //           content: Text('Error deleting point: ${e.toString()}'),
-  //           backgroundColor: Colors.red,
-  //         ),
-  //       );
-  //     }
-  //   } finally {
-  //     if (mounted) {
-  //       setState(() {
-  //         _isDeleting = false;
-  //       });
-  //     }
-  //   }
-  // }
   Future<void> _deletePoint() async {
     // Show confirmation dialog (this part is UI specific and stays here)
     final bool? confirmed = await showDialog<bool>(
