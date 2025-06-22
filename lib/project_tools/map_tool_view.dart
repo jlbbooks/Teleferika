@@ -29,6 +29,7 @@ class _MapToolViewState extends State<MapToolView> {
   final double _defaultZoom = 6.0;
 
   bool _isMapReady = false;
+  String? _selectedPointId;
 
   @override
   void initState() {
@@ -130,6 +131,177 @@ class _MapToolViewState extends State<MapToolView> {
     // while MapToolView is active.
   }
 
+  Widget _buildStandardMarkerView(BuildContext context, PointModel point) {
+    // This is your current marker + label widget from the file.
+    // Example structure (ADAPT TO YOUR ACTUAL CURRENT STANDARD MARKER):
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          // Tapped on the label
+          _selectedPointId = point.id;
+        });
+      },
+      child: Column(
+        // Assuming label is above icon, and icon is last
+        // mainAxisSize: MainAxisSize.min,
+        // mainAxisAlignment: MainAxisAlignment.end,
+        // Push content to bottom for bottomCenter anchor
+        children: [
+          IconButton(
+            icon: const Icon(Icons.location_pin),
+            color: Colors.red,
+            iconSize: 30.0,
+            onPressed: () {
+              // Tapped on the icon
+              logger.info(
+                "Tapped on marker for point: P${point.ordinalNumber} (ID: ${point.id})",
+              );
+              setState(() {
+                _selectedPointId = point.id;
+              });
+            },
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(220),
+              borderRadius: BorderRadius.circular(3),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 2,
+                  offset: Offset(0, 1),
+                ),
+              ],
+            ),
+            child: Text(
+              "P${point.ordinalNumber}",
+              style: const TextStyle(
+                fontSize: 10,
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSelectedMarkerView(
+    BuildContext context,
+    PointModel point, {
+    required double flyoutWidth,
+    required double flyoutHeight,
+    required double pinIconSize,
+    required double spaceBetweenPinAndFlyout,
+  }) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // 1. The Flyout Card (Positioned at the top)
+        Positioned(
+          top: 0,
+          child: Material(
+            // Use Material for elevation and shape if Card isn't enough
+            elevation: 4.0,
+            borderRadius: BorderRadius.circular(8.0),
+            child: Container(
+              width: flyoutWidth,
+              // height: flyoutHeight, // Or let it be intrinsic based on content
+              padding: const EdgeInsets.all(8.0),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Point P${point.ordinalNumber}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  if (point.note?.isNotEmpty ?? false)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2.0, bottom: 4.0),
+                      child: Text(
+                        point.note!,
+                        style: const TextStyle(fontSize: 11),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  const Divider(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.blue),
+                        iconSize: 20,
+                        tooltip: 'Edit Point',
+                        onPressed: () {
+                          logger.info(
+                            "Edit tapped for point P${point.ordinalNumber} (ID: ${point.id})",
+                          );
+                          // TODO: Implement navigation or dialog for editing
+                          // Example: Navigator.push(...EditPointPage(point: point)...);
+                          setState(() => _selectedPointId = null); // Deselect
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.redAccent),
+                        iconSize: 20,
+                        tooltip: 'Delete Point',
+                        onPressed: () {
+                          // TODO: Implement delete confirmation and logic
+                          // _confirmDeletePoint(point); // From previous examples
+                          logger.info(
+                            "Delete tapped for point P${point.ordinalNumber} (ID: ${point.id})",
+                          );
+                          // Ensure _selectedPointId is nulled after action or in confirmation dialog
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // 2. Optional: Visual Connector (Line/Stem)
+        // This line connects the bottom-center of the flyout to the top-center of the pin.
+        Positioned(
+          top: flyoutHeight - 2,
+          // Start slightly before the bottom of the flyout card
+          bottom: pinIconSize + (spaceBetweenPinAndFlyout - flyoutHeight) + 2,
+          // End slightly before the top of pin
+          // This calculation is a bit tricky, adjust as needed
+          // Or more simply:
+          // top: flyoutHeight, // Start at bottom of card
+          // height: spaceBetweenPinAndFlyout - flyoutHeight - pinIconSize, (this needs to be positive)
+
+          // Simpler line positioning:
+          // top: flyoutHeight, // Start drawing from the bottom edge of the flyout
+          // height: spaceBetweenPinAndFlyout - (flyoutHeight / 2) - (pinIconSize / 2), // Approximate height for the line
+          child: CustomPaint(
+            painter: _FlyoutStemPainter(), // Simple vertical line painter
+            size: Size(
+              2,
+              spaceBetweenPinAndFlyout - flyoutHeight * 0.5 - pinIconSize * 0.5,
+            ), // Adjust line height
+          ),
+        ),
+
+        // 3. The Pin Icon (Positioned at the bottom of the Stack)
+        Positioned(
+          bottom: 0,
+          child: Icon(Icons.location_pin, color: Colors.red, size: pinIconSize),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoadingPoints) {
@@ -142,61 +314,44 @@ class _MapToolViewState extends State<MapToolView> {
     }
     // Prepare markers from project points
     List<Marker> markers = _projectPoints.map((point) {
+      final bool isSelected = point.id == _selectedPointId;
+
+      // --- Define Dimensions ---
+      // Standard (non-selected) marker dimensions
+      const double standardMarkerWidth =
+          80.0; // Or whatever your current standard marker needs
+      const double standardMarkerHeight = 80.0;
+
+      // Selected marker dimensions (needs to be larger to hold the flyout)
+      const double flyoutWidth = 120.0;
+      const double flyoutHeight = 60.0; // Approximate height of the flyout card
+      const double pinIconSize = 30.0;
+      const double spaceBetweenPinAndFlyout = 40.0; // The "distance" you want
+
+      const double selectedMarkerWidth =
+          flyoutWidth; // Marker width is flyout width
+      const double selectedMarkerHeight =
+          flyoutHeight + spaceBetweenPinAndFlyout + pinIconSize;
+
       return Marker(
-        width: 80.0,
-        height: 80.0,
+        width: isSelected ? selectedMarkerWidth : standardMarkerWidth,
+        height: isSelected ? selectedMarkerHeight : standardMarkerHeight,
         point: LatLng(point.latitude, point.longitude),
-        child: Column(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.location_pin),
-              color: Colors
-                  .red, // TODO: Consider making this dynamic based on point type/state
-              iconSize: 30.0,
-              onPressed: () {
-                logger.info(
-                  "Tapped on marker for point: P${point.ordinalNumber} (ID: ${point.id})",
-                );
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Point P${point.ordinalNumber}: ${point.note ?? 'No note'}',
-                    ),
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
-                // Optionally: move map to center on this point and zoom in
-                _mapController.move(
-                  LatLng(point.latitude, point.longitude),
-                  16.0,
-                );
-              },
-            ),
-            Container(
-              // Simple label below icon
-              padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
-              decoration: BoxDecoration(
-                color: Colors.white.withAlpha(220),
-                borderRadius: BorderRadius.circular(3),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 2,
-                    offset: Offset(0, 1),
-                  ),
-                ], // Subtle shadow
-              ),
-              child: Text(
-                "P${point.ordinalNumber}",
-                style: const TextStyle(
-                  fontSize: 10,
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
+        // alignment: Alignment
+        //     .bottomCenter, // <<< CRUCIAL for consistent anchor at pin tip
+        child: isSelected
+            ? _buildSelectedMarkerView(
+                context,
+                point,
+                flyoutWidth: flyoutWidth,
+                flyoutHeight: flyoutHeight,
+                pinIconSize: pinIconSize,
+                spaceBetweenPinAndFlyout: spaceBetweenPinAndFlyout,
+              )
+            : _buildStandardMarkerView(
+                context,
+                point,
+              ), // Your current marker + label widget
       );
     }).toList();
 
@@ -264,10 +419,15 @@ class _MapToolViewState extends State<MapToolView> {
                           _fitMapToPoints();
                         }
                       },
-                      // Add other interactions if needed
-                      // onTap: (tapPosition, latlng) {
-                      //   // TODO: Handle map tap - e.g., add new point
-                      // },
+                      onTap: (tapPosition, latlng) {
+                        if (_selectedPointId != null) {
+                          setState(() {
+                            _selectedPointId =
+                                null; // Deselect if a point was selected
+                          });
+                        }
+                        // else { handle other map tap actions if needed }
+                      },
                     ),
                     children: [
                       TileLayer(
@@ -328,4 +488,22 @@ class _MapToolViewState extends State<MapToolView> {
     );
     // --- End Map Widget Replacement ---
   }
+}
+
+// Painter for the stem (simple vertical line)
+class _FlyoutStemPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.grey.shade700
+      ..strokeWidth = 1.5;
+    canvas.drawLine(
+      Offset(size.width / 2, 0),
+      Offset(size.width / 2, size.height),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
