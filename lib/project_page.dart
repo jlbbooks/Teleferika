@@ -4,14 +4,14 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
+import 'package:teleferika/project_tools/compass_tool_view.dart';
+import 'package:teleferika/project_tools/map_tool_view.dart';
 import 'package:teleferika/project_tools/points_tool_view.dart';
 
 import 'db/database_helper.dart'; // Ensure correct path
 import 'db/models/point_model.dart';
 import 'db/models/project_model.dart'; // Ensure correct path
 import 'logger.dart';
-import 'project_tools/compass_tool_view.dart';
-import 'project_tools/map_tool_view.dart';
 
 enum ProjectPageTab {
   details, // 0
@@ -64,6 +64,9 @@ class ProjectPage extends StatefulWidget {
 }
 
 class _ProjectPageState extends State<ProjectPage> {
+  final GlobalKey<FormState> _projectFormKey = GlobalKey<FormState>();
+  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+
   late TextEditingController _nameController;
   late TextEditingController _noteController;
   late TextEditingController _azimuthController;
@@ -75,9 +78,10 @@ class _ProjectPageState extends State<ProjectPage> {
 
   bool _isLoading = false;
   bool _hasUnsavedChanges = false;
-
-  final GlobalKey<FormState> _projectFormKey = GlobalKey<FormState>();
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  // State variable to manage if this instance is effectively new for saving behavior
+  // This helps when saving a 'new' project and then immediately saving it again
+  // without leaving the page.
+  bool _isEffectivelyNew = true;
 
   // GlobalKey to access PointsToolView's state if needed for refresh
   // This is one way to trigger refresh. Another is to manage points list here.
@@ -93,8 +97,8 @@ class _ProjectPageState extends State<ProjectPage> {
   @override
   void initState() {
     super.initState();
-    _currentProject =
-        widget.project; // Initialize with the project passed to the widget
+    _currentProject = widget.project;
+    _isEffectivelyNew = widget.isNew; // Initialize based on widget property
 
     _nameController = TextEditingController(text: _currentProject.name);
     _noteController = TextEditingController(text: _currentProject.note ?? '');
@@ -121,7 +125,7 @@ class _ProjectPageState extends State<ProjectPage> {
     }
   }
 
-  void _onFieldChanged() {
+  void _onChanged() {
     if (!_hasUnsavedChanges) {
       setState(() {
         _hasUnsavedChanges = true;
@@ -190,9 +194,11 @@ class _ProjectPageState extends State<ProjectPage> {
 
   @override
   void dispose() {
-    _nameController.removeListener(_onFieldChanged);
+    _nameController.removeListener(_onChanged);
+    _noteController.removeListener(_onChanged);
+    _azimuthController.removeListener(_onChanged);
+
     _nameController.dispose();
-    _noteController.removeListener(_onFieldChanged);
     _noteController.dispose();
     _azimuthController.dispose();
     super.dispose();
@@ -538,9 +544,8 @@ class _ProjectPageState extends State<ProjectPage> {
     if (_isLoading) return;
 
     if (_projectFormKey.currentState?.validate() ?? false) {
-      setState(() {
-        _isLoading = true;
-      });
+      _projectFormKey.currentState!.save();
+      setState(() => _isLoading = true);
 
       // Create a new Project instance with the updated values
       ProjectModel projectToSave = _currentProject.copyWith(
@@ -557,36 +562,13 @@ class _ProjectPageState extends State<ProjectPage> {
       );
 
       try {
-        // Use widget.isNew to determine if it's an insert or update.
-        // If you want to track if *this specific page instance* has already saved
-        // (to prevent multiple inserts if the user taps save multiple times before isNew is updated),
-        // you might use another state variable like `_isThisInstanceOfPageNew`.
-        // For simplicity, directly using widget.isNew and then popping is common.
-
-        // However, the `widget.isNew` property won't change after the widget is built.
-        // So, we need a mutable state variable that tracks if this particular entry
-        // has been saved for the first time.
-        // Let's re-introduce a state variable for this, perhaps initialized from widget.isNew.
-
-        // Re-evaluating: The `widget.isNew` provided at construction time is the key.
-        // If it was new, we insert. After a successful insert, this page might pop,
-        // or if it stays, conceptually it's no longer "new" in terms of DB state.
-        // The original code `widget.isNew = false;` is not possible as widget properties are final.
-        // The most common pattern is to pop after a successful first save.
-        // If the page *must* stay and become an "edit" page, you'd need more complex state management
-        // or rebuild the page with `isNew: false`.
-
-        // Let's assume for now the goal is to save and then potentially navigate back,
-        // so the `widget.isNew` correctly distinguishes the DB operation.
-        if (widget.isNew) {
+        if (_isEffectivelyNew) {
           String newId = await _dbHelper.insertProject(projectToSave);
-          // Create a new instance of _currentProject with the new ID
-          // At this point, newId should be == projectToSave.id
           if (mounted) {
             // Update _currentProject to reflect the saved state (especially lastUpdate from DB if different)
             // For now, projectToSave is good enough.
             _currentProject = projectToSave.copyWith(
-              id: newId,
+              id: newId, // FIXME: no need.. id does not change.. remove
             ); // Ensure ID consistency if DB generated it differently (not for UUIDs)
             // For client-generated UUIDs, projectToSave.id is already the ID.
             ScaffoldMessenger.of(context).showSnackBar(
@@ -596,64 +578,22 @@ class _ProjectPageState extends State<ProjectPage> {
               ),
             );
             _hasUnsavedChanges = false;
-            // Typically, after creating a new item, you might pop or navigate.
-            // Navigator.of(context).pop({'action': 'saved', 'id': _currentProject.id!});
-            // If you stay on the page, the "isNew" concept for *this page instance* changes.
-            // The original `widget.isNew` doesn't change. You'd need a separate state variable.
-            // For simplicity, let's assume `widget.isNew` governs the first save action.
-            // If the user saves again without leaving, it would still try to insert if we only check widget.isNew.
-
-            // --> This is where the context `widget.isNew = false;` in your original snippet was trying to solve.
-            //     We can't change widget.isNew. So, the page either pops, or we need internal state.
-
-            // Let's manage an internal state for "has this been inserted yet by this page instance?"
-            // No, the original `widget.isNew = false` was attempting to modify the `isNew` variable of the `ProjectPage` widget itself.
-            // That is not how StatefulWidget's properties work.
-
-            // The correct way if staying on the page:
-            // 1. Have a state variable `bool _thisInstanceIsStillNew = widget.isNew;` in initState.
-            // 2. In _saveProject: use `if (_thisInstanceIsStillNew)`
-            // 3. After successful insert: `setState(() => _thisInstanceIsStillNew = false);`
-
-            // For your specific code:
-            // Since you were trying `widget.isNew = false;` (which is an error),
-            // it implies you want this page instance to transition from "new" to "existing".
-            // Let's use an internal state variable for that.
-
-            // At the top of _ProjectPageState:
-            // bool _isEffectivelyNew = true; // Initialize in initState
-
-            // In initState():
-            // _isEffectivelyNew = widget.isNew;
-
-            // Then in _saveProject():
-            // if (_isEffectivelyNew) {
-            //   ... insert ...
-            //   setState(() {
-            //     _currentProject = projectToSave.copyWith(id: newId); // or just projectToSave if id is client-gen
-            //     _isEffectivelyNew = false; // Now it's an "edit" operation for subsequent saves on THIS page
-            //   });
-            //   ...
-            // } else {
-            //   ... update ...
-            // }
-            // This is the correct pattern for your `widget.isNew = false` intention.
-            // I'll stick to your provided code for now and assume it pops or has other logic.
-            // The `widget.isNew = false` line needs to be removed as it's an error.
-            // The logic should be to pop or update internal state to reflect it's no longer new.
-            Navigator.of(
-              context,
-            ).pop({'action': 'saved', 'id': _currentProject.id!});
+            _isEffectivelyNew =
+                false; // It's no longer 'new' for this page instance
+            // Navigator.of(
+            //   context,
+            // ).pop({'action': 'saved', 'id': _currentProject.id!});
+            // TODO: For now, we stay on the page, and subsequent saves will be updates.
+            setState(
+              () {},
+            ); // To refresh display with new ID/lastUpdate if needed
           }
         } else {
           // For an existing project, update it
           int updatedRows = await _dbHelper.updateProject(projectToSave);
           if (updatedRows > 0) {
-            setState(() {
-              // Add setState here
-              _currentProject =
-                  projectToSave; // Update _currentProject to the saved version
-            });
+            _currentProject = projectToSave;
+            _lastUpdateTime = _currentProject.lastUpdate;
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -661,9 +601,12 @@ class _ProjectPageState extends State<ProjectPage> {
                   backgroundColor: Colors.green,
                 ),
               );
-              Navigator.of(
-                context,
-              ).pop({'action': 'saved', 'id': _currentProject.id!});
+              _hasUnsavedChanges = false;
+              setState(() {}); // To refresh display of lastUpdate
+              // TODO: or should we pop?
+              // Navigator.of(
+              //   context,
+              // ).pop({'action': 'saved', 'id': _currentProject.id!});
             }
           } else {
             if (mounted) {
@@ -704,7 +647,7 @@ class _ProjectPageState extends State<ProjectPage> {
   }
 
   Future<void> _confirmDeleteProject() async {
-    if (widget.isNew || _currentProject.id == null) {
+    if (_isEffectivelyNew || _currentProject.id == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Cannot delete a project that has not been saved yet.'),
@@ -823,214 +766,395 @@ class _ProjectPageState extends State<ProjectPage> {
       length: ProjectPageTab.values.length, // Number of tabs
       child: Scaffold(
         key: _scaffoldKey,
-        body: NestedScrollView(
-          // controller: _scrollController, // You might need a ScrollController later
-          headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
-            return <Widget>[
-              SliverAppBar(
-                title: Text(widget.isNew ? 'New Project' : widget.project.name),
-                pinned: true, // Keeps the AppBar visible when scrolling
-                floating:
-                    true, // AppBar becomes visible as soon as you scroll up
-                bottom: const TabBar(
-                  tabs: [
-                    Tab(icon: Icon(Icons.info_outline), text: "Details"),
-                    Tab(
-                      icon: Icon(Icons.compass_calibration_outlined),
-                      text: "Points",
+        appBar: AppBar(
+          title: Text(_isEffectivelyNew ? 'New Project' : _currentProject.name),
+          actions: [
+            if (!_isEffectivelyNew) // Show delete only for existing projects
+              IconButton(
+                icon: const Icon(Icons.delete_outline),
+                onPressed: _isLoading ? null : _confirmDeleteProject,
+                tooltip: 'Delete Project',
+              ),
+            IconButton(
+              icon: Icon(_hasUnsavedChanges ? Icons.save : Icons.save_outlined),
+              onPressed: _isLoading ? null : _saveProject,
+              tooltip: 'Save Project',
+              color: _hasUnsavedChanges
+                  ? Theme.of(context).colorScheme.primary
+                  : null,
+            ),
+          ],
+          bottom: const TabBar(
+            isScrollable:
+                false, // Set to true if you have many tabs that don't fit
+            tabs: [
+              Tab(icon: Icon(Icons.info_outline), text: "Details"),
+              Tab(
+                icon: Icon(Icons.list_alt_outlined),
+                text: "Points",
+              ), // Changed icon for variety
+              Tab(icon: Icon(Icons.explore_outlined), text: "Compass"),
+              Tab(icon: Icon(Icons.map_outlined), text: "Map"),
+            ],
+          ),
+        ),
+        body: PopScope(
+          // Use PopScope for "are you sure you want to leave" dialog
+          canPop: !_hasUnsavedChanges,
+          onPopInvoked: (bool didPop) async {
+            if (didPop) {
+              return;
+            }
+            if (_hasUnsavedChanges) {
+              final bool? shouldPop = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Unsaved Changes'),
+                  content: const Text(
+                    'You have unsaved changes. Do you want to discard them and leave?',
+                  ),
+                  actions: [
+                    TextButton(
+                      child: const Text('Cancel'),
+                      onPressed: () => Navigator.of(context).pop(false),
                     ),
-                    Tab(icon: Icon(Icons.explore_outlined), text: "Compass"),
-                    Tab(icon: Icon(Icons.map_outlined), text: "Map"),
+                    TextButton(
+                      child: const Text('Discard'),
+                      onPressed: () => Navigator.of(context).pop(true),
+                    ),
                   ],
                 ),
-                actions: [
-                  // Keep existing actions if any, or add new ones
-                  if (!widget.isNew)
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      onPressed: _isLoading ? null : _confirmDeleteProject,
-                      tooltip: 'Delete Project',
-                    ),
-                  IconButton(
-                    icon: const Icon(Icons.save_outlined),
-                    onPressed: _isLoading ? null : _saveProject,
-                    tooltip: 'Save Project',
-                  ),
-                ],
-              ),
-            ];
+              );
+              if (shouldPop ?? false) {
+                if (mounted) Navigator.of(context).pop();
+              }
+            }
           },
-          body: TabBarView(
-            // It's common to place the content of each tab in separate widgets
+          child: TabBarView(
             children: [
-              // Tab 1: Project Details Form (your existing content)
+              // Tab 1: Project Details Form
               SingleChildScrollView(
-                // Ensure the form content is scrollable
                 padding: const EdgeInsets.all(16.0),
                 child: Form(
                   key: _projectFormKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
-                      // --- Conditional Main Form Area ---
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                      _buildTextFormField(
+                        controller: _nameController,
+                        label: 'Project Name',
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Project name cannot be empty.';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      InkWell(
+                        onTap: () => _selectProjectDate(context),
+                        child: InputDecorator(
+                          decoration: const InputDecoration(
+                            labelText: 'Project Date',
+                            border: OutlineInputBorder(),
+                          ),
+                          child: Text(formattedProjectDate),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildTextFormField(
+                        controller: _noteController,
+                        label: 'Notes',
+                        maxLines: 3,
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildTextFormField(
-                            controller: _nameController,
-                            label: "Project Name",
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Project name cannot be empty.';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          InputDecorator(
-                            decoration: InputDecoration(
-                              labelText: "Project Date",
-                              border: const OutlineInputBorder(),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12.0,
-                                vertical: 11.0,
-                              ),
-                            ),
-                            child: ListTile(
-                              title: Text(
-                                formattedProjectDate,
-                                style: const TextStyle(fontSize: 18.0),
-                              ),
-                              trailing: const Icon(
-                                Icons.calendar_month_outlined,
-                              ),
-                              onTap: () => _selectProjectDate(context),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 0,
-                                vertical: 5.0,
-                              ),
-                              dense: true,
-                              visualDensity: VisualDensity.compact,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          _buildTextField(
-                            _noteController,
-                            "Notes",
-                            maxLines: 4,
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: _buildTextFormField(
-                                  controller: _azimuthController,
-                                  label: "Azimuth (°)",
-                                  keyboardType:
-                                      const TextInputType.numberWithOptions(
-                                        decimal: true,
-                                        signed: true,
-                                      ),
-                                  validator: (value) {
-                                    if (value != null && value.isNotEmpty) {
-                                      if (double.tryParse(value) == null) {
-                                        return 'Invalid number format.';
-                                      }
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0),
-                                child: ElevatedButton(
-                                  onPressed: _calculateAzimuth,
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 12,
-                                    ),
+                          Expanded(
+                            child: _buildTextFormField(
+                              controller: _azimuthController,
+                              label: 'Reference Azimuth (°)',
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                    signed: true,
                                   ),
-                                  child: const Text("Calculate"),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          _buildReadOnlyField(
-                            "Last Updated",
-                            formattedLastUpdate,
-                            textStyle: const TextStyle(
-                              fontSize: 13.0,
-                              color: Colors.grey,
+                              validator: (value) {
+                                if (value != null && value.trim().isNotEmpty) {
+                                  final num = double.tryParse(value.trim());
+                                  if (num == null) return 'Invalid number.';
+                                  if (num <= -360 || num >= 360)
+                                    return 'Must be +/-359.99';
+                                }
+                                return null;
+                              },
                             ),
                           ),
-                          const SizedBox(height: 30),
-                          Row(
-                            children: <Widget>[
-                              Expanded(
-                                child: _majorActionButton(
-                                  Icons.flag_outlined,
-                                  'SET START',
-                                  () => _onSetPoint("Start"),
+                          const SizedBox(width: 10),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: ElevatedButton(
+                              onPressed: _calculateAzimuth,
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 12,
                                 ),
                               ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: _majorActionButton(
-                                  Icons.sports_score_outlined,
-                                  'SET END',
-                                  () => _onSetPoint("End"),
-                                ),
-                              ),
-                            ],
+                              child: const Text("Calculate"),
+                            ),
                           ),
-                          const SizedBox(height: 20),
                         ],
                       ),
+                      const SizedBox(height: 16),
+                      if (!_isEffectivelyNew && _lastUpdateTime != null)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Text(
+                            'Last updated: $formattedLastUpdate',
+                            style: Theme.of(context).textTheme.bodySmall,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      // Add other relevant UI elements from your original design
                     ],
                   ),
                 ),
               ),
-
               // Tab 2: Points
-              Center(
-                child: PointsToolView(
-                  key: _pointsToolViewKey, // Assign the GlobalKey
-                  project: _currentProject,
-                  onPointsChanged: _onPointsChanged,
-                  newlyAddedPointId: _newlyAddedPointId,
-                ),
+              PointsToolView(
+                key: _pointsToolViewKey, // Assign the GlobalKey
+                project: _currentProject,
+                onPointsChanged: _onPointsChanged,
+                newlyAddedPointId: _newlyAddedPointId,
               ),
 
               // Tab 3: Compass
-              Center(
-                child: CompassToolView(
-                  project: _currentProject,
-                  onAddPointFromCompass:
-                      _initiateAddPointFromCompass, // Pass the callback
-                  isAddingPoint: _isAddingPointFromCompassInProgress,
-                ),
+              // You might need to pass project data or specific settings
+              CompassToolView(
+                project: _currentProject,
+                onAddPointFromCompass:
+                    _initiateAddPointFromCompass, // Pass the callback
+                isAddingPoint: _isAddingPointFromCompassInProgress,
               ),
+
               // Tab 4: Map
+              // Pass the current project. MapToolView will handle loading its points.
               Center(
                 child: SizedBox(
                   height:
                       MediaQuery.of(context).size.height *
-                      0.6, // e.g., 60% of screen height
+                      0.7, // e.g., 60% of screen height
                   child: MapToolView(project: _currentProject),
                 ),
               ),
             ],
           ),
         ),
-        // The _onWillPop needs to be handled by WillPopScope if you want to keep that exact behavior.
-        // For simplicity, I'm wrapping the Scaffold with WillPopScope.
-        // If you are using a Navigator 2.0 setup (like GoRouter), you'd handle this differently.
-        // The DefaultTabController might interfere with WillPopScope if not handled carefully.
-        // A common approach is to have WillPopScope outside DefaultTabController.
+        // body: NestedScrollView(
+        //   // controller: _scrollController, // You might need a ScrollController later
+        //   headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+        //     return <Widget>[
+        //       SliverAppBar(
+        //         title: Text(widget.isNew ? 'New Project' : widget.project.name),
+        //         pinned: true, // Keeps the AppBar visible when scrolling
+        //         floating:
+        //             true, // AppBar becomes visible as soon as you scroll up
+        //         bottom: const TabBar(
+        //           tabs: [
+        //             Tab(icon: Icon(Icons.info_outline), text: "Details"),
+        //             Tab(
+        //               icon: Icon(Icons.compass_calibration_outlined),
+        //               text: "Points",
+        //             ),
+        //             Tab(icon: Icon(Icons.explore_outlined), text: "Compass"),
+        //             Tab(icon: Icon(Icons.map_outlined), text: "Map"),
+        //           ],
+        //         ),
+        //         actions: [
+        //           // Keep existing actions if any, or add new ones
+        //           if (!widget.isNew)
+        //             IconButton(
+        //               icon: const Icon(Icons.delete_outline),
+        //               onPressed: _isLoading ? null : _confirmDeleteProject,
+        //               tooltip: 'Delete Project',
+        //             ),
+        //           IconButton(
+        //             icon: const Icon(Icons.save_outlined),
+        //             onPressed: _isLoading ? null : _saveProject,
+        //             tooltip: 'Save Project',
+        //           ),
+        //         ],
+        //       ),
+        //     ];
+        //   },
+        //   body: TabBarView(
+        //     // It's common to place the content of each tab in separate widgets
+        //     children: [
+        //       // Tab 1: Project Details Form (your existing content)
+        //       SingleChildScrollView(
+        //         // Ensure the form content is scrollable
+        //         padding: const EdgeInsets.all(16.0),
+        //         child: Form(
+        //           key: _projectFormKey,
+        //           child: Column(
+        //             crossAxisAlignment: CrossAxisAlignment.stretch,
+        //             children: <Widget>[
+        //               // --- Conditional Main Form Area ---
+        //               Column(
+        //                 crossAxisAlignment: CrossAxisAlignment.stretch,
+        //                 children: [
+        //                   _buildTextFormField(
+        //                     controller: _nameController,
+        //                     label: "Project Name",
+        //                     validator: (value) {
+        //                       if (value == null || value.trim().isEmpty) {
+        //                         return 'Project name cannot be empty.';
+        //                       }
+        //                       return null;
+        //                     },
+        //                   ),
+        //                   const SizedBox(height: 16),
+        //                   InputDecorator(
+        //                     decoration: InputDecoration(
+        //                       labelText: "Project Date",
+        //                       border: const OutlineInputBorder(),
+        //                       contentPadding: const EdgeInsets.symmetric(
+        //                         horizontal: 12.0,
+        //                         vertical: 11.0,
+        //                       ),
+        //                     ),
+        //                     child: ListTile(
+        //                       title: Text(
+        //                         formattedProjectDate,
+        //                         style: const TextStyle(fontSize: 18.0),
+        //                       ),
+        //                       trailing: const Icon(
+        //                         Icons.calendar_month_outlined,
+        //                       ),
+        //                       onTap: () => _selectProjectDate(context),
+        //                       contentPadding: const EdgeInsets.symmetric(
+        //                         horizontal: 0,
+        //                         vertical: 5.0,
+        //                       ),
+        //                       dense: true,
+        //                       visualDensity: VisualDensity.compact,
+        //                     ),
+        //                   ),
+        //                   const SizedBox(height: 16),
+        //                   _buildTextField(
+        //                     _noteController,
+        //                     "Notes",
+        //                     maxLines: 4,
+        //                   ),
+        //                   const SizedBox(height: 16),
+        //                   Row(
+        //                     crossAxisAlignment: CrossAxisAlignment.start,
+        //                     children: [
+        //                       Expanded(
+        //                         child: _buildTextFormField(
+        //                           controller: _azimuthController,
+        //                           label: "Azimuth (°)",
+        //                           keyboardType:
+        //                               const TextInputType.numberWithOptions(
+        //                                 decimal: true,
+        //                                 signed: true,
+        //                               ),
+        //                           validator: (value) {
+        //                             if (value != null && value.isNotEmpty) {
+        //                               if (double.tryParse(value) == null) {
+        //                                 return 'Invalid number format.';
+        //                               }
+        //                             }
+        //                             return null;
+        //                           },
+        //                         ),
+        //                       ),
+        //                       const SizedBox(width: 10),
+        //                       Padding(
+        //                         padding: const EdgeInsets.only(top: 8.0),
+        //                         child: ElevatedButton(
+        //                           onPressed: _calculateAzimuth,
+        //                           style: ElevatedButton.styleFrom(
+        //                             padding: const EdgeInsets.symmetric(
+        //                               horizontal: 12,
+        //                               vertical: 12,
+        //                             ),
+        //                           ),
+        //                           child: const Text("Calculate"),
+        //                         ),
+        //                       ),
+        //                     ],
+        //                   ),
+        //                   const SizedBox(height: 16),
+        //                   _buildReadOnlyField(
+        //                     "Last Updated",
+        //                     formattedLastUpdate,
+        //                     textStyle: const TextStyle(
+        //                       fontSize: 13.0,
+        //                       color: Colors.grey,
+        //                     ),
+        //                   ),
+        //                   const SizedBox(height: 30),
+        //                   Row(
+        //                     children: <Widget>[
+        //                       Expanded(
+        //                         child: _majorActionButton(
+        //                           Icons.flag_outlined,
+        //                           'SET START',
+        //                           () => _onSetPoint("Start"),
+        //                         ),
+        //                       ),
+        //                       const SizedBox(width: 16),
+        //                       Expanded(
+        //                         child: _majorActionButton(
+        //                           Icons.sports_score_outlined,
+        //                           'SET END',
+        //                           () => _onSetPoint("End"),
+        //                         ),
+        //                       ),
+        //                     ],
+        //                   ),
+        //                   const SizedBox(height: 20),
+        //                 ],
+        //               ),
+        //             ],
+        //           ),
+        //         ),
+        //       ),
+        //
+        //       // Tab 2: Points
+        //       Center(
+        //         child: PointsToolView(
+        //           key: _pointsToolViewKey, // Assign the GlobalKey
+        //           project: _currentProject,
+        //           onPointsChanged: _onPointsChanged,
+        //           newlyAddedPointId: _newlyAddedPointId,
+        //         ),
+        //       ),
+        //
+        //       // Tab 3: Compass
+        //       Center(
+        //         child: CompassToolView(
+        //           project: _currentProject,
+        //           onAddPointFromCompass:
+        //               _initiateAddPointFromCompass, // Pass the callback
+        //           isAddingPoint: _isAddingPointFromCompassInProgress,
+        //         ),
+        //       ),
+        //       // Tab 4: Map
+        //       Center(
+        //         child: SizedBox(
+        //           height:
+        //               MediaQuery.of(context).size.height *
+        //               0.7, // e.g., 60% of screen height
+        //           child: MapToolView(project: _currentProject),
+        //         ),
+        //       ),
+        //     ],
+        //   ),
+        // ),
       ),
     );
   }
@@ -1075,22 +1199,31 @@ class _ProjectPageState extends State<ProjectPage> {
     TextInputType? keyboardType,
     String? Function(String?)? validator,
     AutovalidateMode autovalidateMode = AutovalidateMode.onUserInteraction,
+    bool readOnly = false,
+    Widget? suffixIcon,
+    VoidCallback? onTap,
   }) {
-    return TextFormField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 14.0,
-          vertical: 18.0,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+          suffixIcon: suffixIcon,
+          // contentPadding: const EdgeInsets.symmetric(
+          //   horizontal: 14.0,
+          //   vertical: 18.0,
+          // ),
         ),
+        style: const TextStyle(fontSize: 18.0),
+        maxLines: maxLines,
+        keyboardType: keyboardType,
+        validator: validator,
+        autovalidateMode: autovalidateMode,
+        readOnly: readOnly,
+        onTap: onTap,
       ),
-      style: const TextStyle(fontSize: 18.0),
-      maxLines: maxLines,
-      keyboardType: keyboardType,
-      validator: validator,
-      autovalidateMode: autovalidateMode, // Show errors as user interacts
     );
   }
 
