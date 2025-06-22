@@ -10,6 +10,7 @@ import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 
 import '../logger.dart';
+import '../point_details_page.dart';
 
 class MapToolView extends StatefulWidget {
   final ProjectModel project;
@@ -366,104 +367,73 @@ class _MapToolViewState extends State<MapToolView> {
     return Scaffold(
       body: Stack(
         children: [
-          Column(
-            // mainAxisSize: MainAxisSize
-            //     .min, // maybe remove? Keep if parent might be scrollable
-            crossAxisAlignment: CrossAxisAlignment.center,
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: _getInitialCenter(),
+              initialZoom: _getInitialZoom(),
+              // bounds: _projectPoints.isNotEmpty
+              //     ? LatLngBounds.fromPoints(_projectPoints.map((p) => LatLng(p.latitude, p.longitude)).toList())
+              //     : null,
+              // boundsOptions: const FitBoundsOptions(padding: EdgeInsets.all(50.0)),
+              minZoom: 3.0, // Min zoom
+              maxZoom: 18.0, // Max zoom
+              onMapReady: () {
+                logger.info("MapToolView: Map is ready (onMapReady called).");
+                if (mounted) {
+                  // Ensure widget is still mounted
+                  setState(() {
+                    _isMapReady = true;
+                  });
+                  // Now that map is ready, try to fit points (they might have loaded already)
+                  _fitMapToPoints();
+                }
+              },
+              onTap: (tapPosition, latlng) {
+                if (_selectedPointId != null) {
+                  setState(() {
+                    _selectedPointId = null; // Deselect if a point was selected
+                  });
+                }
+                // else { handle other map tap actions if needed }
+              },
+            ),
             children: [
-              if (_projectPoints.isNotEmpty)
-                Padding(
-                  // Added padding for better spacing
-                  padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-                  child: Text(
-                    'Points on map: ${_projectPoints.length}',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                )
-              else if (!_isLoadingPoints) // Only show if not loading and no points
-                Padding(
-                  // Added padding
-                  padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-                  child: Text(
-                    'No points in this project to display on map.',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ),
-              Expanded(
-                child: FlutterMap(
-                  mapController: _mapController,
-                  options: MapOptions(
-                    initialCenter: _getInitialCenter(),
-                    initialZoom: _getInitialZoom(),
-                    // bounds: _projectPoints.isNotEmpty
-                    //     ? LatLngBounds.fromPoints(_projectPoints.map((p) => LatLng(p.latitude, p.longitude)).toList())
-                    //     : null,
-                    // boundsOptions: const FitBoundsOptions(padding: EdgeInsets.all(50.0)),
-                    minZoom: 3.0, // Min zoom
-                    maxZoom: 18.0, // Max zoom
-                    onMapReady: () {
-                      logger.info(
-                        "MapToolView: Map is ready (onMapReady called).",
-                      );
-                      if (mounted) {
-                        // Ensure widget is still mounted
-                        setState(() {
-                          _isMapReady = true;
-                        });
-                        // Now that map is ready, try to fit points (they might have loaded already)
-                        _fitMapToPoints();
-                      }
-                    },
-                    onTap: (tapPosition, latlng) {
-                      if (_selectedPointId != null) {
-                        setState(() {
-                          _selectedPointId =
-                              null; // Deselect if a point was selected
-                        });
-                      }
-                      // else { handle other map tap actions if needed }
-                    },
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      subdomains: const ['a', 'b', 'c'],
-                      userAgentPackageName:
-                          'com.jlbbooks.teleferika', // Replace with your app's package name
-                      // Recommended for OSM tile usage policy
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                subdomains: const ['a', 'b', 'c'],
+                userAgentPackageName:
+                    'com.jlbbooks.teleferika', // Replace with your app's package name
+                // Recommended for OSM tile usage policy
+              ),
+              if (!_isLoadingPoints && polylinePoints.isNotEmpty)
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: polylinePoints,
+                      // color: Colors.blue, // Choose your line color
+                      strokeWidth:
+                          4.0, // Slightly thicker for gradient visibility
+                      gradientColors: [
+                        // Example: From green to red
+                        Colors.green,
+                        Colors.yellow,
+                        Colors.red,
+                      ],
+                      colorsStop: [
+                        // Defines where each color transition happens
+                        0.0, // Start with green
+                        0.5, // Transition to yellow by the midpoint
+                        1.0, // End with red
+                      ],
+                      // If colorsStop is null, the gradient is applied evenly.
+                      // For more complex paths, you might want to calculate stops based on segment lengths.
+                      // pattern: StrokePattern.dotted(),
                     ),
-                    if (!_isLoadingPoints && polylinePoints.isNotEmpty)
-                      PolylineLayer(
-                        polylines: [
-                          Polyline(
-                            points: polylinePoints,
-                            // color: Colors.blue, // Choose your line color
-                            strokeWidth:
-                                4.0, // Slightly thicker for gradient visibility
-                            gradientColors: [
-                              // Example: From green to red
-                              Colors.green,
-                              Colors.yellow,
-                              Colors.red,
-                            ],
-                            colorsStop: [
-                              // Defines where each color transition happens
-                              0.0, // Start with green
-                              0.5, // Transition to yellow by the midpoint
-                              1.0, // End with red
-                            ],
-                            // If colorsStop is null, the gradient is applied evenly.
-                            // For more complex paths, you might want to calculate stops based on segment lengths.
-                            // pattern: StrokePattern.dotted(),
-                          ),
-                        ],
-                      ),
-                    if (!_isLoadingPoints && markers.isNotEmpty)
-                      MarkerLayer(markers: markers),
                   ],
                 ),
-              ),
+              if (!_isLoadingPoints && markers.isNotEmpty)
+                MarkerLayer(markers: markers),
             ],
           ),
           // Layer 2: Side Panel for Actions (only when a point is selected)
@@ -510,17 +480,98 @@ class _MapToolViewState extends State<MapToolView> {
                           TextButton.icon(
                             icon: const Icon(Icons.edit, color: Colors.blue),
                             label: const Text('Edit'),
-                            onPressed: () {
+                            onPressed: () async {
+                              if (selectedPointInstance == null)
+                                return; // Guard against null
+
                               logger.info(
-                                "Edit tapped for point P${selectedPointInstance!.ordinalNumber}",
+                                "Navigating to edit point P${selectedPointInstance!.ordinalNumber}",
                               );
-                              // TODO: Navigate to Edit Page or show Edit Dialog
-                              throw UnimplementedError(
-                                "Edit tapped for point P${selectedPointInstance!.ordinalNumber}",
-                              );
-                              // Example: Navigator.push(...EditPointPage(point: selectedPointInstance)...);
-                              // Deselect after initiating action, or let the edit page handle it.
-                              // setState(() => _selectedPointId = null);
+                              // Navigate to PointDetailsPage and wait for a result
+                              final result =
+                                  await Navigator.push<Map<String, dynamic>>(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => PointDetailsPage(
+                                        point: selectedPointInstance!,
+                                      ),
+                                    ),
+                                  );
+                              // Process the result when PointDetailsPage is popped
+                              if (result != null) {
+                                final String? action =
+                                    result['action'] as String?;
+                                logger.info(
+                                  "Returned from PointDetailsPage with action: $action",
+                                );
+
+                                if (action == 'updated') {
+                                  final PointModel? updatedPoint =
+                                      result['point'] as PointModel?;
+                                  if (updatedPoint != null) {
+                                    setState(() {
+                                      final index = _projectPoints.indexWhere(
+                                        (p) => p.id == updatedPoint.id,
+                                      );
+                                      if (index != -1) {
+                                        _projectPoints[index] = updatedPoint;
+                                        logger.info(
+                                          "Point P${updatedPoint.ordinalNumber} updated in MapToolView.",
+                                        );
+                                        // If the updated point was the selected one, the side panel
+                                        // will automatically reflect changes in the next build because
+                                        // selectedPointInstance is re-derived from _projectPoints.
+                                      }
+                                    });
+                                    ScaffoldMessenger.of(context)
+                                      ..hideCurrentSnackBar()
+                                      ..showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Point P${updatedPoint.ordinalNumber} details updated!',
+                                          ),
+                                          backgroundColor: Colors.green,
+                                        ),
+                                      );
+                                  }
+                                } else if (action == 'deleted') {
+                                  final String? deletedPointId =
+                                      result['pointId'] as String?;
+                                  // final int? ordinalNumber = result['ordinalNumber'] as int?; // For messages
+                                  if (deletedPointId != null) {
+                                    setState(() {
+                                      _projectPoints.removeWhere(
+                                        (p) => p.id == deletedPointId,
+                                      );
+                                      logger.info(
+                                        "Point ID $deletedPointId removed from MapToolView.",
+                                      );
+                                      // If the deleted point was selected, deselect it
+                                      if (_selectedPointId == deletedPointId) {
+                                        _selectedPointId = null;
+                                      }
+                                    });
+                                    ScaffoldMessenger.of(context)
+                                      ..hideCurrentSnackBar()
+                                      ..showSnackBar(
+                                        const SnackBar(
+                                          // You can use ordinalNumber here if you pass it back
+                                          content: Text('Point deleted.'),
+                                          backgroundColor:
+                                              Colors.orange, // Or green
+                                        ),
+                                      );
+                                  }
+                                }
+                              } else {
+                                logger.info(
+                                  "PointDetailsPage popped without a result (e.g., back button pressed).",
+                                );
+                              }
+                              // Optionally, you might want to always deselect or refresh the selectedPointInstance
+                              // if the side panel relies on a copy that isn't directly from _projectPoints.
+                              // However, your current structure of deriving selectedPointInstance at the start
+                              // of the build method from _projectPoints should handle this.
                             },
                           ),
                           TextButton.icon(
@@ -543,15 +594,15 @@ class _MapToolViewState extends State<MapToolView> {
                           ),
                         ],
                       ),
-                      SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          child: Text("Close"),
-                          onPressed: () =>
-                              setState(() => _selectedPointId = null),
-                        ),
-                      ),
+                      // SizedBox(height: 8),
+                      // Align(
+                      //   alignment: Alignment.centerRight,
+                      //   child: TextButton(
+                      //     child: Text("Close"),
+                      //     onPressed: () =>
+                      //         setState(() => _selectedPointId = null),
+                      //   ),
+                      // ),
                     ],
                   ),
                 ),
