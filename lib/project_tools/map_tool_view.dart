@@ -433,7 +433,7 @@ class _MapToolViewState extends State<MapToolView> {
       return Marker(
         // The Marker's bounding box changes, but the content alignment should keep the pin fixed.
         width: 60,
-        height: 60,
+        height: 58,
         point: LatLng(point.latitude, point.longitude),
 
         // CRUCIAL: This alignment refers to the anchor point within the *overall marker dimensions*.
@@ -452,25 +452,53 @@ class _MapToolViewState extends State<MapToolView> {
       final midLat = (firstP.latitude + lastP.latitude) / 2;
       final midLon = (firstP.longitude + lastP.longitude) / 2;
 
+      // Calculate angle for rotation (optional)
+      // This is the same bearing calculation, but we might want to adjust it for label orientation
+      // atan2 gives angle from positive X-axis. Map display might need adjustment.
+      // For simplicity, let's assume _headingFromFirstToLast is suitable for a simple rotation.
+      // Note: True map label rotation aligning with lines can be tricky due to map projection
+      // and marker anchor points. This is a simplified rotation of the widget itself.
+      final angleForRotation = _degreesToRadians(_headingFromFirstToLast!);
+
       allMarkers.add(
         Marker(
           point: LatLng(midLat, midLon),
           width: 100, // Adjust size
           height: 30, // Adjust size
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.6),
-              borderRadius: BorderRadius.circular(4),
+          child: Transform.rotate(
+            // Optional: Rotate the label
+            // angle: angleForRotation, // Angle in radians. May need adjustment.
+            // For example, if heading 0° is North, and you want text horizontal by default:
+            // angle: angleForRotation - math.pi / 2, // if 0 rad is East for Transform.rotate
+            // THIS REQUIRES EXPERIMENTATION to get the visual orientation correct
+            angle: angleForRotation - math.pi / 2, // Set to 0 if not rotating
+            child: Card(
+              // Use a Card for a nicer look
+              elevation: 2.0,
+              color: Colors.white.withOpacity(0.9),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6.0),
+                side: BorderSide(
+                  color: Colors.purple.withOpacity(0.7),
+                  width: 1,
+                ),
+              ),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(3, 1, 3, 0),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  'Heading: ${_headingFromFirstToLast!.toStringAsFixed(1)}°',
+                  style: const TextStyle(color: Colors.black, fontSize: 12),
+                  textAlign: TextAlign.center,
+                ),
+              ),
             ),
-            child: Text(
-              'Heading: ${_headingFromFirstToLast!.toStringAsFixed(1)}°',
-              style: const TextStyle(color: Colors.white, fontSize: 10),
-              textAlign: TextAlign.center,
-            ),
+            // Optional: alignment to better position relative to midpoint
+            alignment: Alignment.center,
           ),
-          // Optional: alignment to better position relative to midpoint
-          alignment: Alignment.center,
         ),
       );
     }
