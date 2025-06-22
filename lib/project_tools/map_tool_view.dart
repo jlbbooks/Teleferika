@@ -1,5 +1,7 @@
 // map_tool_view.dart
 
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -131,41 +133,44 @@ class _MapToolViewState extends State<MapToolView> {
     // while MapToolView is active.
   }
 
-  Widget _buildStandardMarkerView(BuildContext context, PointModel point) {
-    // This is your current marker + label widget from the file.
-    // Example structure (ADAPT TO YOUR ACTUAL CURRENT STANDARD MARKER):
+  Widget _buildStandardMarkerView(
+    BuildContext context,
+    PointModel point, {
+    required bool isSelected,
+  }) {
+    // Your current perfect standard marker widget
+    // (icon above label, pin tip is the anchor)
     return GestureDetector(
       onTap: () {
         setState(() {
-          // Tapped on the label
-          _selectedPointId = point.id;
+          if (_selectedPointId == point.id) {
+            _selectedPointId = null; // Tap again to deselect
+          } else {
+            _selectedPointId = point.id; // Select this point
+          }
         });
       },
       child: Column(
-        // Assuming label is above icon, and icon is last
-        // mainAxisSize: MainAxisSize.min,
-        // mainAxisAlignment: MainAxisAlignment.end,
-        // Push content to bottom for bottomCenter anchor
         children: [
-          IconButton(
-            icon: const Icon(Icons.location_pin),
-            color: Colors.red,
-            iconSize: 30.0,
-            onPressed: () {
-              // Tapped on the icon
-              logger.info(
-                "Tapped on marker for point: P${point.ordinalNumber} (ID: ${point.id})",
-              );
-              setState(() {
-                _selectedPointId = point.id;
-              });
-            },
-          ),
+          Icon(
+            Icons.location_pin,
+            color: isSelected
+                ? Colors.blueAccent
+                : Colors.red, // Change icon color
+            size: isSelected ? 30.0 : 30.0, // Optionally change size
+          ), // ICON
+          const SizedBox(height: 4),
           Container(
+            // LABEL
             padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
             decoration: BoxDecoration(
-              color: Colors.white.withAlpha(220),
+              color: isSelected
+                  ? Colors.blue.withOpacity(0.8)
+                  : Colors.white.withAlpha(220), // Change label background
               borderRadius: BorderRadius.circular(3),
+              border: isSelected
+                  ? Border.all(color: Colors.blueAccent, width: 1.5)
+                  : null,
               boxShadow: const [
                 BoxShadow(
                   color: Colors.black26,
@@ -176,9 +181,11 @@ class _MapToolViewState extends State<MapToolView> {
             ),
             child: Text(
               "P${point.ordinalNumber}",
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 10,
-                color: Colors.black,
+                color: isSelected
+                    ? Colors.white
+                    : Colors.black, // Change label text color
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -191,30 +198,76 @@ class _MapToolViewState extends State<MapToolView> {
   Widget _buildSelectedMarkerView(
     BuildContext context,
     PointModel point, {
-    required double flyoutWidth,
-    required double flyoutHeight,
-    required double pinIconSize,
-    required double spaceBetweenPinAndFlyout,
+    required Widget Function() standardMarkerBuilder,
+    required double flyoutCardWidth,
+    required double flyoutCardHeight,
+    required double
+    flyoutOffsetY, // Vertical distance from *top of standard marker* to *bottom of flyout*
+    required double connectorLineHeight,
+    required double totalWidth, // Total width of the marker for centering
   }) {
+    // Constants for standard marker height used in _buildSelectedMarkerView
+    const double standardMarkerActualHeight =
+        60.0; // MUST MATCH what standard marker occupies
+
     return Stack(
-      alignment: Alignment.center,
+      alignment: Alignment.bottomCenter,
+      // Aligns children towards the bottom center of the Stack
       children: [
-        // 1. The Flyout Card (Positioned at the top)
+        // Layer 1: The standard marker (pin and label)
+        // This will be at the bottom of the Stack due to alignment.
+        standardMarkerBuilder(),
+
+        // Layer 2: The Flyout Card and Connector, positioned above the standard marker
+        // We need to position these from the top of the *Stack's allocated space*.
+        // The Stack's height is selectedMarkerTotalHeight.
+        // The standard marker takes up standardMarkerActualHeight at the bottom.
+        // The space above the standard marker is where the flyout and connector go.
+
+        // Connector Line
         Positioned(
-          top: 0,
+          // Position it to span the vertical gap (flyoutOffsetY)
+          // It should be centered horizontally over the standard marker.
+          // The bottom of the line should be just above the (conceptual) top of the standard marker.
+          // The top of the line should be just below the (conceptual) bottom of the flyout.
+          bottom:
+              standardMarkerActualHeight +
+              (flyoutOffsetY - connectorLineHeight) / 2 -
+              2,
+          // Centering the line in the offset space
+          height: connectorLineHeight,
+          left: (totalWidth - 2) / 2,
+          // Center the line horizontally
+          width: 2,
+          child: CustomPaint(painter: _FlyoutStemPainter()),
+        ),
+
+        // Flyout Card
+        Positioned(
+          // The card's bottom should be 'flyoutOffsetY' above the standard marker's top.
+          // Since Stack positions from top, calculate 'top' position.
+          // top: 0, // This would put it at the very top of the (tall) marker widget.
+          // Let's position its *bottom* relative to the standard marker's *top*.
+          // The standard marker is at the bottom of the Stack.
+          // Its height is standardMarkerActualHeight.
+          // So its top is at StackHeight - standardMarkerActualHeight from the Stack's top.
+          // The flyout's bottom should be flyoutOffsetY above this.
+          bottom: standardMarkerActualHeight + flyoutOffsetY,
+          // Center the card horizontally within the totalWidth
+          left: (totalWidth - flyoutCardWidth) / 2,
           child: Material(
-            // Use Material for elevation and shape if Card isn't enough
             elevation: 4.0,
             borderRadius: BorderRadius.circular(8.0),
             child: Container(
-              width: flyoutWidth,
-              // height: flyoutHeight, // Or let it be intrinsic based on content
+              width: flyoutCardWidth,
+              // height: flyoutCardHeight, // Can be intrinsic
               padding: const EdgeInsets.all(8.0),
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(8.0),
               ),
               child: Column(
+                /* ... flyout content as before ... */
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
@@ -238,27 +291,16 @@ class _MapToolViewState extends State<MapToolView> {
                       IconButton(
                         icon: const Icon(Icons.edit, color: Colors.blue),
                         iconSize: 20,
-                        tooltip: 'Edit Point',
                         onPressed: () {
-                          logger.info(
-                            "Edit tapped for point P${point.ordinalNumber} (ID: ${point.id})",
-                          );
-                          // TODO: Implement navigation or dialog for editing
-                          // Example: Navigator.push(...EditPointPage(point: point)...);
-                          setState(() => _selectedPointId = null); // Deselect
+                          /* Edit */
+                          setState(() => _selectedPointId = null);
                         },
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.redAccent),
                         iconSize: 20,
-                        tooltip: 'Delete Point',
                         onPressed: () {
-                          // TODO: Implement delete confirmation and logic
-                          // _confirmDeletePoint(point); // From previous examples
-                          logger.info(
-                            "Delete tapped for point P${point.ordinalNumber} (ID: ${point.id})",
-                          );
-                          // Ensure _selectedPointId is nulled after action or in confirmation dialog
+                          /* Delete */ /* setState(() => _selectedPointId = null);*/
                         },
                       ),
                     ],
@@ -267,36 +309,6 @@ class _MapToolViewState extends State<MapToolView> {
               ),
             ),
           ),
-        ),
-
-        // 2. Optional: Visual Connector (Line/Stem)
-        // This line connects the bottom-center of the flyout to the top-center of the pin.
-        Positioned(
-          top: flyoutHeight - 2,
-          // Start slightly before the bottom of the flyout card
-          bottom: pinIconSize + (spaceBetweenPinAndFlyout - flyoutHeight) + 2,
-          // End slightly before the top of pin
-          // This calculation is a bit tricky, adjust as needed
-          // Or more simply:
-          // top: flyoutHeight, // Start at bottom of card
-          // height: spaceBetweenPinAndFlyout - flyoutHeight - pinIconSize, (this needs to be positive)
-
-          // Simpler line positioning:
-          // top: flyoutHeight, // Start drawing from the bottom edge of the flyout
-          // height: spaceBetweenPinAndFlyout - (flyoutHeight / 2) - (pinIconSize / 2), // Approximate height for the line
-          child: CustomPaint(
-            painter: _FlyoutStemPainter(), // Simple vertical line painter
-            size: Size(
-              2,
-              spaceBetweenPinAndFlyout - flyoutHeight * 0.5 - pinIconSize * 0.5,
-            ), // Adjust line height
-          ),
-        ),
-
-        // 3. The Pin Icon (Positioned at the bottom of the Stack)
-        Positioned(
-          bottom: 0,
-          child: Icon(Icons.location_pin, color: Colors.red, size: pinIconSize),
         ),
       ],
     );
@@ -316,42 +328,18 @@ class _MapToolViewState extends State<MapToolView> {
     List<Marker> markers = _projectPoints.map((point) {
       final bool isSelected = point.id == _selectedPointId;
 
-      // --- Define Dimensions ---
-      // Standard (non-selected) marker dimensions
-      const double standardMarkerWidth =
-          80.0; // Or whatever your current standard marker needs
-      const double standardMarkerHeight = 80.0;
-
-      // Selected marker dimensions (needs to be larger to hold the flyout)
-      const double flyoutWidth = 120.0;
-      const double flyoutHeight = 60.0; // Approximate height of the flyout card
-      const double pinIconSize = 30.0;
-      const double spaceBetweenPinAndFlyout = 40.0; // The "distance" you want
-
-      const double selectedMarkerWidth =
-          flyoutWidth; // Marker width is flyout width
-      const double selectedMarkerHeight =
-          flyoutHeight + spaceBetweenPinAndFlyout + pinIconSize;
-
       return Marker(
-        width: isSelected ? selectedMarkerWidth : standardMarkerWidth,
-        height: isSelected ? selectedMarkerHeight : standardMarkerHeight,
+        // The Marker's bounding box changes, but the content alignment should keep the pin fixed.
+        width: 60,
+        height: 60,
         point: LatLng(point.latitude, point.longitude),
-        // alignment: Alignment
-        //     .bottomCenter, // <<< CRUCIAL for consistent anchor at pin tip
-        child: isSelected
-            ? _buildSelectedMarkerView(
-                context,
-                point,
-                flyoutWidth: flyoutWidth,
-                flyoutHeight: flyoutHeight,
-                pinIconSize: pinIconSize,
-                spaceBetweenPinAndFlyout: spaceBetweenPinAndFlyout,
-              )
-            : _buildStandardMarkerView(
-                context,
-                point,
-              ), // Your current marker + label widget
+
+        // CRUCIAL: This alignment refers to the anchor point within the *overall marker dimensions*.
+        // If your _buildStandardMarkerView's pin tip is at its bottom-center,
+        // and _buildSelectedMarkerView also positions its standard marker part at the bottom-center
+        // of the enlarged space, this should work.
+        // alignment: Alignment.bottomCenter,
+        child: _buildStandardMarkerView(context, point, isSelected: isSelected),
       );
     }).toList();
 
@@ -490,11 +478,11 @@ class _MapToolViewState extends State<MapToolView> {
   }
 }
 
-// Painter for the stem (simple vertical line)
+// _FlyoutStemPainter remains the same
 class _FlyoutStemPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
+    final paint = ui.Paint()
       ..color = Colors.grey.shade700
       ..strokeWidth = 1.5;
     canvas.drawLine(
