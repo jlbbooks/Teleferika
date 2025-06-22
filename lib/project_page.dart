@@ -1,4 +1,6 @@
 // project_details_page.dart
+// ignore_for_file: curly_braces_in_flow_control_structures
+
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -534,13 +536,6 @@ class _ProjectPageState extends State<ProjectPage> {
     }
   }
 
-  void _onSetPoint(String pointType) {
-    logger.info("Set $pointType Point button tapped.");
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Set $pointType point to be implemented.')),
-    );
-  }
-
   Future<void> _saveProject() async {
     if (_isLoading) return;
 
@@ -805,7 +800,7 @@ class _ProjectPageState extends State<ProjectPage> {
         body: PopScope(
           // Use PopScope for "are you sure you want to leave" dialog
           canPop: false,
-          onPopInvoked: (bool didPop) async {
+          onPopInvokedWithResult: (bool didPop, Object? result) async {
             if (didPop) {
               return;
             }
@@ -829,7 +824,8 @@ class _ProjectPageState extends State<ProjectPage> {
                   ],
                 ),
               );
-              if (shouldPop ?? false) {
+              if (shouldPop == true) {
+                // ignore: use_build_context_synchronously
                 if (mounted) Navigator.of(context).pop();
               }
             } else {
@@ -837,7 +833,7 @@ class _ProjectPageState extends State<ProjectPage> {
               // Now check if a save occurred at any point.
               if (mounted) {
                 if (_projectWasSuccessfullySaved) {
-                  Navigator.of(context).pop({
+                  Navigator.of(context).pop<Map<String, dynamic>>({
                     'action': 'saved', // Or 'saved_and_exited'
                     'id': _currentProject.id, // Pass the latest saved state
                   });
@@ -1017,40 +1013,6 @@ class _ProjectPageState extends State<ProjectPage> {
         readOnly: readOnly,
         onTap: onTap,
       ),
-    );
-  }
-
-  Widget _buildReadOnlyField(
-    String label,
-    String value, {
-    TextStyle? textStyle,
-    EdgeInsetsGeometry? contentPadding,
-  }) {
-    return InputDecorator(
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-        contentPadding:
-            contentPadding ??
-            const EdgeInsets.symmetric(horizontal: 14.0, vertical: 18.0),
-      ),
-      child: Text(value, style: textStyle ?? const TextStyle(fontSize: 18.0)),
-    );
-  }
-
-  Widget _majorActionButton(
-    IconData icon,
-    String label,
-    VoidCallback onPressed,
-  ) {
-    return ElevatedButton.icon(
-      icon: Icon(icon),
-      label: Text(label),
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 16.0),
-        textStyle: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
-      ),
-      onPressed: onPressed,
     );
   }
 }

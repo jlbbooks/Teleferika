@@ -1,7 +1,8 @@
 // map_tool_view.dart
 
+// ignore_for_file: curly_braces_in_flow_control_structures
+
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -297,7 +298,9 @@ class _MapToolViewState extends State<MapToolView> {
             padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
             decoration: BoxDecoration(
               color: isSelected
-                  ? Colors.blue.withOpacity(0.8)
+                  ? Colors.blue.withAlpha(
+                      (0.8 * 255).round(),
+                    ) //withOpacity(0.8)
                   : Colors.white.withAlpha(220), // Change label background
               borderRadius: BorderRadius.circular(3),
               border: isSelected
@@ -472,21 +475,23 @@ class _MapToolViewState extends State<MapToolView> {
             // angle: angleForRotation - math.pi / 2, // if 0 rad is East for Transform.rotate
             // THIS REQUIRES EXPERIMENTATION to get the visual orientation correct
             angle: angleForRotation - math.pi / 2, // Set to 0 if not rotating
+            // Optional: alignment to better position relative to midpoint
+            alignment: Alignment.center,
             child: Card(
               // Use a Card for a nicer look
               elevation: 2.0,
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withAlpha((0.9 * 255).round()),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(6.0),
                 side: BorderSide(
-                  color: Colors.purple.withOpacity(0.7),
+                  color: Colors.purple.withAlpha((0.7 * 255).round()),
                   width: 1,
                 ),
               ),
               child: Container(
                 padding: const EdgeInsets.fromLTRB(3, 1, 3, 0),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.2),
+                  color: Colors.black.withAlpha((0.2 * 255).round()),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -496,8 +501,6 @@ class _MapToolViewState extends State<MapToolView> {
                 ),
               ),
             ),
-            // Optional: alignment to better position relative to midpoint
-            alignment: Alignment.center,
           ),
         ),
       );
@@ -632,7 +635,7 @@ class _MapToolViewState extends State<MapToolView> {
                           _projectPoints.last.longitude,
                         ),
                       ],
-                      color: Colors.purple.withOpacity(0.7),
+                      color: Colors.purple.withAlpha((0.7 * 255).round()),
                       // Choose a distinct color
                       strokeWidth: 3.0,
                       pattern: StrokePattern.dotted(),
@@ -730,7 +733,7 @@ class _MapToolViewState extends State<MapToolView> {
                                         return; // Guard against null
 
                                       logger.info(
-                                        "Navigating to edit point P${selectedPointInstance!.ordinalNumber}",
+                                        "Navigating to edit point P${selectedPointInstance.ordinalNumber}",
                                       );
                                       // Navigate to PointDetailsPage and wait for a result
                                       final result =
@@ -775,16 +778,19 @@ class _MapToolViewState extends State<MapToolView> {
                                                 // selectedPointInstance is re-derived from _projectPoints.
                                               }
                                             });
-                                            ScaffoldMessenger.of(context)
-                                              ..hideCurrentSnackBar()
-                                              ..showSnackBar(
-                                                SnackBar(
-                                                  content: Text(
-                                                    'Point P${updatedPoint.ordinalNumber} details updated!',
+                                            // ignore: use_build_context_synchronously
+                                            if (mounted)
+                                              ScaffoldMessenger.of(context)
+                                                ..hideCurrentSnackBar()
+                                                ..showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      'Point P${updatedPoint.ordinalNumber} details updated!',
+                                                    ),
+                                                    backgroundColor:
+                                                        Colors.green,
                                                   ),
-                                                  backgroundColor: Colors.green,
-                                                ),
-                                              );
+                                                );
                                           }
                                         } else if (action == 'deleted') {
                                           final String? deletedPointId =
@@ -804,18 +810,20 @@ class _MapToolViewState extends State<MapToolView> {
                                                 _selectedPointId = null;
                                               }
                                             });
-                                            ScaffoldMessenger.of(context)
-                                              ..hideCurrentSnackBar()
-                                              ..showSnackBar(
-                                                const SnackBar(
-                                                  // You can use ordinalNumber here if you pass it back
-                                                  content: Text(
-                                                    'Point deleted.',
+                                            // ignore: use_build_context_synchronously
+                                            if (mounted)
+                                              ScaffoldMessenger.of(context)
+                                                ..hideCurrentSnackBar()
+                                                ..showSnackBar(
+                                                  const SnackBar(
+                                                    // You can use ordinalNumber here if you pass it back
+                                                    content: Text(
+                                                      'Point deleted.',
+                                                    ),
+                                                    backgroundColor: Colors
+                                                        .orange, // Or green
                                                   ),
-                                                  backgroundColor:
-                                                      Colors.orange, // Or green
-                                                ),
-                                              );
+                                                );
                                           }
                                         }
                                       } else {
@@ -939,22 +947,4 @@ class _MapToolViewState extends State<MapToolView> {
       _headingFromFirstToLast = null;
     }
   }
-}
-
-// _FlyoutStemPainter remains the same
-class _FlyoutStemPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = ui.Paint()
-      ..color = Colors.grey.shade700
-      ..strokeWidth = 1.5;
-    canvas.drawLine(
-      Offset(size.width / 2, 0),
-      Offset(size.width / 2, size.height),
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
