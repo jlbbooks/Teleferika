@@ -189,7 +189,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
         );
         _refreshProjectsListFromDb();
         // If an ID is present in a generic success, highlight it
-        if (result['id'] is int) {
+        if (result['id'] is String) {
           setState(() {
             _highlightedProjectId = result['id'];
           });
@@ -346,7 +346,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
       elevation: 2.0,
       margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
       color: isHighlighted
-          ? Theme.of(context).primaryColorLight.withOpacity(0.3)
+          ? Theme.of(context).primaryColorLight.withAlpha(200)
           : null, // Highlight color
       child: ListTile(
         leading: _isSelectionMode
