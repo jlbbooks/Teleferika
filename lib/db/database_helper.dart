@@ -178,7 +178,7 @@ class DatabaseHelper {
         );
         for (var oldProject in oldProjects) {
           int oldId = oldProject[ProjectModel.columnId] as int;
-          String newProjectId = generateUuidV4();
+          String newProjectId = generateUuid();
           projectOldToNewIdMap[oldId] = newProjectId;
           await txn.insert(projectsTempTableName, {
             ProjectModel.columnId: newProjectId,
@@ -211,7 +211,7 @@ class DatabaseHelper {
         );
         for (var oldPoint in oldPoints) {
           int oldId = oldPoint[PointModel.columnId] as int;
-          String newPointId = generateUuidV4();
+          String newPointId = generateUuid();
           pointOldToNewIdMap[oldId] = newPointId;
           String? newProjectUUID =
               projectOldToNewIdMap[oldPoint[PointModel.columnProjectId] as int];
@@ -242,7 +242,7 @@ class DatabaseHelper {
           ImageModel.tableName,
         );
         for (var oldImage in oldImages) {
-          String newImageId = generateUuidV4();
+          String newImageId = generateUuid();
           String? newPointUUID =
               pointOldToNewIdMap[oldImage[ImageModel.columnPointId] as int];
           await txn.insert(imagesTempTableName, {

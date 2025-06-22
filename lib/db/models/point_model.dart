@@ -30,7 +30,7 @@ class PointModel {
     this.note,
     this.heading,
     this.timestamp,
-  }) : id = id ?? generateUuidV4(); // Generate UUID if id is null
+  }) : id = id ?? generateUuid(); // Generate UUID if id is null
 
   PointModel copyWith({
     String? id, // Changed

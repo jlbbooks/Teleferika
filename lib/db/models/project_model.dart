@@ -30,7 +30,7 @@ class ProjectModel {
     this.azimuth,
     this.lastUpdate,
     this.date,
-  }) : id = id ?? generateUuidV4(); // Generate UUID if id is null
+  }) : id = id ?? generateUuid(); // Generate UUID if id is null
 
   Map<String, dynamic> toMap() {
     return {
