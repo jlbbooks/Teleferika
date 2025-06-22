@@ -33,6 +33,9 @@ class _MapToolViewState extends State<MapToolView> {
 
   bool _isMapReady = false;
   String? _selectedPointId;
+  bool _isMovePointMode = false; // For activating point move mode
+  bool _isMovingPointLoading =
+      false; // Optional: For loading state during DB update
 
   @override
   void initState() {
@@ -66,6 +69,101 @@ class _MapToolViewState extends State<MapToolView> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Error loading points for map: $e")),
         );
+      }
+    }
+  }
+
+  Future<void> _relocatePoint(
+    PointModel pointToMove,
+    LatLng newPosition,
+  ) async {
+    if (_isMovingPointLoading) return;
+
+    setState(() {
+      _isMovingPointLoading = true;
+      // Optional: Provide immediate visual feedback by updating local list first
+      // This can make the UI feel snappier, but handle potential DB errors.
+      // final index = _projectPoints.indexWhere((p) => p.id == pointToMove.id);
+      // if (index != -1) {
+      //   _projectPoints[index] = pointToMove.copyWith(
+      //     latitude: newPosition.latitude,
+      //     longitude: newPosition.longitude,
+      //     // lastUpdated: DateTime.now(), // Consider if your PointModel tracks this
+      //   );
+      // }
+    });
+
+    try {
+      // Create the updated point model for the database
+      final updatedPoint = pointToMove.copyWith(
+        latitude: newPosition.latitude,
+        longitude: newPosition.longitude,
+        // lastUpdated: DateTime.now(), // If your model has this
+      );
+
+      // Assuming you have a method in DatabaseHelper like:
+      // Future<int> updatePoint(PointModel point)
+      // Or more specific: updatePointCoordinates(String id, double lat, double lon)
+      int result = await _dbHelper.updatePoint(
+        updatedPoint,
+      ); // Or your specific update method
+
+      if (!mounted) return;
+
+      if (result > 0) {
+        // Successfully updated in DB, now update the main list for sure
+        setState(() {
+          final index = _projectPoints.indexWhere(
+            (p) => p.id == updatedPoint.id,
+          );
+          if (index != -1) {
+            _projectPoints[index] = updatedPoint;
+          }
+          _isMovePointMode = false; // Exit move mode
+          // _selectedPointId remains the same, panel will update with new coords if shown
+        });
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                'Point P${updatedPoint.ordinalNumber} moved successfully!',
+              ),
+              backgroundColor: Colors.green,
+            ),
+          );
+      } else {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                'Error: Could not move point P${pointToMove.ordinalNumber}. Point not found or not updated.',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        // Optional: Revert optimistic UI update if you did one
+      }
+    } catch (e) {
+      logger.severe('Failed to move point P${pointToMove.ordinalNumber}: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(
+              'Error moving point P${pointToMove.ordinalNumber}: ${e.toString()}',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      // Optional: Revert optimistic UI update
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isMovingPointLoading = false;
+        });
       }
     }
   }
@@ -193,125 +291,6 @@ class _MapToolViewState extends State<MapToolView> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildSelectedMarkerView(
-    BuildContext context,
-    PointModel point, {
-    required Widget Function() standardMarkerBuilder,
-    required double flyoutCardWidth,
-    required double flyoutCardHeight,
-    required double
-    flyoutOffsetY, // Vertical distance from *top of standard marker* to *bottom of flyout*
-    required double connectorLineHeight,
-    required double totalWidth, // Total width of the marker for centering
-  }) {
-    // Constants for standard marker height used in _buildSelectedMarkerView
-    const double standardMarkerActualHeight =
-        60.0; // MUST MATCH what standard marker occupies
-
-    return Stack(
-      alignment: Alignment.bottomCenter,
-      // Aligns children towards the bottom center of the Stack
-      children: [
-        // Layer 1: The standard marker (pin and label)
-        // This will be at the bottom of the Stack due to alignment.
-        standardMarkerBuilder(),
-
-        // Layer 2: The Flyout Card and Connector, positioned above the standard marker
-        // We need to position these from the top of the *Stack's allocated space*.
-        // The Stack's height is selectedMarkerTotalHeight.
-        // The standard marker takes up standardMarkerActualHeight at the bottom.
-        // The space above the standard marker is where the flyout and connector go.
-
-        // Connector Line
-        Positioned(
-          // Position it to span the vertical gap (flyoutOffsetY)
-          // It should be centered horizontally over the standard marker.
-          // The bottom of the line should be just above the (conceptual) top of the standard marker.
-          // The top of the line should be just below the (conceptual) bottom of the flyout.
-          bottom:
-              standardMarkerActualHeight +
-              (flyoutOffsetY - connectorLineHeight) / 2 -
-              2,
-          // Centering the line in the offset space
-          height: connectorLineHeight,
-          left: (totalWidth - 2) / 2,
-          // Center the line horizontally
-          width: 2,
-          child: CustomPaint(painter: _FlyoutStemPainter()),
-        ),
-
-        // Flyout Card
-        Positioned(
-          // The card's bottom should be 'flyoutOffsetY' above the standard marker's top.
-          // Since Stack positions from top, calculate 'top' position.
-          // top: 0, // This would put it at the very top of the (tall) marker widget.
-          // Let's position its *bottom* relative to the standard marker's *top*.
-          // The standard marker is at the bottom of the Stack.
-          // Its height is standardMarkerActualHeight.
-          // So its top is at StackHeight - standardMarkerActualHeight from the Stack's top.
-          // The flyout's bottom should be flyoutOffsetY above this.
-          bottom: standardMarkerActualHeight + flyoutOffsetY,
-          // Center the card horizontally within the totalWidth
-          left: (totalWidth - flyoutCardWidth) / 2,
-          child: Material(
-            elevation: 4.0,
-            borderRadius: BorderRadius.circular(8.0),
-            child: Container(
-              width: flyoutCardWidth,
-              // height: flyoutCardHeight, // Can be intrinsic
-              padding: const EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-              child: Column(
-                /* ... flyout content as before ... */
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Point P${point.ordinalNumber}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  if (point.note?.isNotEmpty ?? false)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2.0, bottom: 4.0),
-                      child: Text(
-                        point.note!,
-                        style: const TextStyle(fontSize: 11),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  const Divider(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                        iconSize: 20,
-                        onPressed: () {
-                          /* Edit */
-                          setState(() => _selectedPointId = null);
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.redAccent),
-                        iconSize: 20,
-                        onPressed: () {
-                          /* Delete */ /* setState(() => _selectedPointId = null);*/
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 
@@ -479,11 +458,38 @@ class _MapToolViewState extends State<MapToolView> {
                 }
               },
               onTap: (tapPosition, latlng) {
-                if (_selectedPointId != null) {
+                if (_isMovePointMode && _selectedPointId != null) {
+                  PointModel? pointToMove;
+                  try {
+                    pointToMove = _projectPoints.firstWhere(
+                      (p) => p.id == _selectedPointId,
+                    );
+                  } catch (e) {
+                    // Point not found, should not happen if selectedPointId is valid
+                    logger.warning(
+                      "Selected point for move not found in _projectPoints.",
+                    );
+                    setState(() {
+                      _isMovePointMode = false; // Exit move mode
+                    });
+                    return;
+                  }
+                  // Call the relocate method
+                  _relocatePoint(pointToMove, latlng);
+                } else if (!_isMovePointMode && _selectedPointId != null) {
+                  // Default behavior: Deselect if a point was selected and not in move mode
                   setState(() {
-                    _selectedPointId = null; // Deselect if a point was selected
+                    _selectedPointId = null;
                   });
                 }
+                // If _isMovePointMode is true but _selectedPointId is null (shouldn't happen if UI is right),
+                // you might want to reset _isMovePointMode or handle it.
+                // TODO: check this
+                // if (_selectedPointId != null) {
+                //   setState(() {
+                //     _selectedPointId = null; // Deselect if a point was selected
+                //   });
+                // }
                 // else { handle other map tap actions if needed }
               },
             ),
@@ -536,160 +542,259 @@ class _MapToolViewState extends State<MapToolView> {
                 borderRadius: BorderRadius.circular(8.0),
                 child: Container(
                   padding: const EdgeInsets.all(12.0),
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 0.5,
-                  ), // Max width for panel
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(8.0),
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Selected: P${selectedPointInstance.ordinalNumber}',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      if (selectedPointInstance.note?.isNotEmpty ?? false)
+                  child: IntrinsicWidth(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Selected: P${selectedPointInstance.ordinalNumber}',
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.start,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        // const SizedBox(height: 4.0),
+                        if (selectedPointInstance.note?.isNotEmpty ?? false)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4.0),
+                            child: Container(
+                              constraints: const BoxConstraints(
+                                maxWidth: 250, // Adjust as needed
+                              ),
+                              child: Text(
+                                selectedPointInstance.note!,
+                                // "test",
+                                style: Theme.of(context).textTheme.bodySmall,
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.start,
+                              ),
+                            ),
+                          ),
                         Padding(
-                          padding: const EdgeInsets.only(top: 4.0, bottom: 8.0),
+                          // Coordinates
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
                           child: Text(
-                            selectedPointInstance.note!,
+                            'Lat: ${selectedPointInstance.latitude.toStringAsFixed(6)}, Lon: ${selectedPointInstance.longitude.toStringAsFixed(6)}',
                             style: Theme.of(context).textTheme.bodySmall,
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.start,
                           ),
                         ),
-                      const Divider(),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          TextButton.icon(
-                            icon: const Icon(Icons.edit, color: Colors.blue),
-                            label: const Text('Edit'),
-                            onPressed: () async {
-                              if (selectedPointInstance == null)
-                                return; // Guard against null
-
-                              logger.info(
-                                "Navigating to edit point P${selectedPointInstance!.ordinalNumber}",
-                              );
-                              // Navigate to PointDetailsPage and wait for a result
-                              final result =
-                                  await Navigator.push<Map<String, dynamic>>(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => PointDetailsPage(
-                                        point: selectedPointInstance!,
-                                      ),
-                                    ),
-                                  );
-                              // Process the result when PointDetailsPage is popped
-                              if (result != null) {
-                                final String? action =
-                                    result['action'] as String?;
-                                logger.info(
-                                  "Returned from PointDetailsPage with action: $action",
-                                );
-
-                                if (action == 'updated') {
-                                  final PointModel? updatedPoint =
-                                      result['point'] as PointModel?;
-                                  if (updatedPoint != null) {
-                                    setState(() {
-                                      final index = _projectPoints.indexWhere(
-                                        (p) => p.id == updatedPoint.id,
-                                      );
-                                      if (index != -1) {
-                                        _projectPoints[index] = updatedPoint;
-                                        logger.info(
-                                          "Point P${updatedPoint.ordinalNumber} updated in MapToolView.",
-                                        );
-                                        // If the updated point was the selected one, the side panel
-                                        // will automatically reflect changes in the next build because
-                                        // selectedPointInstance is re-derived from _projectPoints.
-                                      }
-                                    });
-                                    ScaffoldMessenger.of(context)
-                                      ..hideCurrentSnackBar()
-                                      ..showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Point P${updatedPoint.ordinalNumber} details updated!',
-                                          ),
-                                          backgroundColor: Colors.green,
-                                        ),
-                                      );
-                                  }
-                                } else if (action == 'deleted') {
-                                  final String? deletedPointId =
-                                      result['pointId'] as String?;
-                                  // final int? ordinalNumber = result['ordinalNumber'] as int?; // For messages
-                                  if (deletedPointId != null) {
-                                    setState(() {
-                                      _projectPoints.removeWhere(
-                                        (p) => p.id == deletedPointId,
-                                      );
-                                      logger.info(
-                                        "Point ID $deletedPointId removed from MapToolView.",
-                                      );
-                                      // If the deleted point was selected, deselect it
-                                      if (_selectedPointId == deletedPointId) {
-                                        _selectedPointId = null;
-                                      }
-                                    });
-                                    ScaffoldMessenger.of(context)
-                                      ..hideCurrentSnackBar()
-                                      ..showSnackBar(
-                                        const SnackBar(
-                                          // You can use ordinalNumber here if you pass it back
-                                          content: Text('Point deleted.'),
-                                          backgroundColor:
-                                              Colors.orange, // Or green
-                                        ),
-                                      );
-                                  }
-                                }
-                              } else {
-                                logger.info(
-                                  "PointDetailsPage popped without a result (e.g., back button pressed).",
-                                );
-                              }
-                              // Optionally, you might want to always deselect or refresh the selectedPointInstance
-                              // if the side panel relies on a copy that isn't directly from _projectPoints.
-                              // However, your current structure of deriving selectedPointInstance at the start
-                              // of the build method from _projectPoints should handle this.
-                            },
-                          ),
-                          TextButton.icon(
-                            icon: const Icon(
-                              Icons.delete,
-                              color: Colors.redAccent,
+                        if (_isMovePointMode &&
+                            selectedPointInstance.id == _selectedPointId)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Text(
+                              'Tap on the map to set new location.',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontStyle: FontStyle.italic,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
-                            label: const Text('Delete'),
-                            onPressed: () {
-                              logger.info(
-                                "Delete tapped for point P${selectedPointInstance!.ordinalNumber}",
-                              );
-                              _handleDeletePointFromPanel(
-                                selectedPointInstance,
-                              );
-                            },
                           ),
-                        ],
-                      ),
-                      // SizedBox(height: 8),
-                      // Align(
-                      //   alignment: Alignment.centerRight,
-                      //   child: TextButton(
-                      //     child: Text("Close"),
-                      //     onPressed: () =>
-                      //         setState(() => _selectedPointId = null),
-                      //   ),
-                      // ),
-                    ],
+                        const Divider(height: 16),
+                        Row(
+                          mainAxisSize: MainAxisSize
+                              .min, // Crucial for this Row to report its minimum required width
+                          // This width is what IntrinsicWidth will likely use if it's the dominant one.
+                          mainAxisAlignment: MainAxisAlignment
+                              .start, // Use this with SizedBox for defined spacing
+                          // Or MainAxisAlignment.spaceBetween if you want them to spread within the min width
+                          children: [
+                            TextButton.icon(
+                              icon: const Icon(Icons.edit, color: Colors.blue),
+                              label: const Text('Edit'),
+                              onPressed: _isMovePointMode
+                                  ? null // Disable if in move mode
+                                  : () async {
+                                      if (selectedPointInstance == null)
+                                        return; // Guard against null
+
+                                      logger.info(
+                                        "Navigating to edit point P${selectedPointInstance!.ordinalNumber}",
+                                      );
+                                      // Navigate to PointDetailsPage and wait for a result
+                                      final result =
+                                          await Navigator.push<
+                                            Map<String, dynamic>
+                                          >(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  PointDetailsPage(
+                                                    point:
+                                                        selectedPointInstance!,
+                                                  ),
+                                            ),
+                                          );
+                                      // Process the result when PointDetailsPage is popped
+                                      if (result != null) {
+                                        final String? action =
+                                            result['action'] as String?;
+                                        logger.info(
+                                          "Returned from PointDetailsPage with action: $action",
+                                        );
+
+                                        if (action == 'updated') {
+                                          final PointModel? updatedPoint =
+                                              result['point'] as PointModel?;
+                                          if (updatedPoint != null) {
+                                            setState(() {
+                                              final index = _projectPoints
+                                                  .indexWhere(
+                                                    (p) =>
+                                                        p.id == updatedPoint.id,
+                                                  );
+                                              if (index != -1) {
+                                                _projectPoints[index] =
+                                                    updatedPoint;
+                                                logger.info(
+                                                  "Point P${updatedPoint.ordinalNumber} updated in MapToolView.",
+                                                );
+                                                // If the updated point was the selected one, the side panel
+                                                // will automatically reflect changes in the next build because
+                                                // selectedPointInstance is re-derived from _projectPoints.
+                                              }
+                                            });
+                                            ScaffoldMessenger.of(context)
+                                              ..hideCurrentSnackBar()
+                                              ..showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                    'Point P${updatedPoint.ordinalNumber} details updated!',
+                                                  ),
+                                                  backgroundColor: Colors.green,
+                                                ),
+                                              );
+                                          }
+                                        } else if (action == 'deleted') {
+                                          final String? deletedPointId =
+                                              result['pointId'] as String?;
+                                          // final int? ordinalNumber = result['ordinalNumber'] as int?; // For messages
+                                          if (deletedPointId != null) {
+                                            setState(() {
+                                              _projectPoints.removeWhere(
+                                                (p) => p.id == deletedPointId,
+                                              );
+                                              logger.info(
+                                                "Point ID $deletedPointId removed from MapToolView.",
+                                              );
+                                              // If the deleted point was selected, deselect it
+                                              if (_selectedPointId ==
+                                                  deletedPointId) {
+                                                _selectedPointId = null;
+                                              }
+                                            });
+                                            ScaffoldMessenger.of(context)
+                                              ..hideCurrentSnackBar()
+                                              ..showSnackBar(
+                                                const SnackBar(
+                                                  // You can use ordinalNumber here if you pass it back
+                                                  content: Text(
+                                                    'Point deleted.',
+                                                  ),
+                                                  backgroundColor:
+                                                      Colors.orange, // Or green
+                                                ),
+                                              );
+                                          }
+                                        }
+                                      } else {
+                                        logger.info(
+                                          "PointDetailsPage popped without a result (e.g., back button pressed).",
+                                        );
+                                      }
+                                      // Optionally, you might want to always deselect or refresh the selectedPointInstance
+                                      // if the side panel relies on a copy that isn't directly from _projectPoints.
+                                      // However, your current structure of deriving selectedPointInstance at the start
+                                      // of the build method from _projectPoints should handle this.
+                                    },
+                            ),
+                            TextButton.icon(
+                              icon: Icon(
+                                _isMovePointMode &&
+                                        selectedPointInstance.id ==
+                                            _selectedPointId
+                                    ? Icons
+                                          .cancel_outlined // Show cancel if this point is being moved
+                                    : Icons.open_with, // Standard move icon
+                                color:
+                                    _isMovePointMode &&
+                                        selectedPointInstance.id ==
+                                            _selectedPointId
+                                    ? Colors.orangeAccent
+                                    : Colors.teal,
+                              ),
+                              label: Text(
+                                _isMovePointMode &&
+                                        selectedPointInstance.id ==
+                                            _selectedPointId
+                                    ? 'Cancel'
+                                    : 'Move',
+                              ),
+                              onPressed: _isMovingPointLoading
+                                  ? null
+                                  : () {
+                                      // Disable if a move is processing
+                                      if (_isMovePointMode &&
+                                          selectedPointInstance?.id ==
+                                              _selectedPointId) {
+                                        // Cancel move mode
+                                        setState(() {
+                                          _isMovePointMode = false;
+                                        });
+                                      } else if (!_isMovePointMode) {
+                                        // Activate move mode for this point
+                                        setState(() {
+                                          _isMovePointMode = true;
+                                          // _selectedPointId is already set for the panel to show
+                                        });
+                                        ScaffoldMessenger.of(context)
+                                          ..hideCurrentSnackBar()
+                                          ..showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Move mode activated. Tap map to relocate point.',
+                                              ),
+                                              backgroundColor: Colors.blueGrey,
+                                            ),
+                                          );
+                                      }
+                                    },
+                            ),
+                            TextButton.icon(
+                              icon: const Icon(
+                                Icons.delete,
+                                color: Colors.redAccent,
+                              ),
+                              label: const Text('Delete'),
+                              onPressed:
+                                  (_isMovePointMode || _isMovingPointLoading)
+                                  ? null
+                                  : () {
+                                      logger.info(
+                                        "Delete tapped for point P${selectedPointInstance!.ordinalNumber}",
+                                      );
+                                      _handleDeletePointFromPanel(
+                                        selectedPointInstance,
+                                      );
+                                    },
+                            ),
+                          ],
+                        ),
+                        if (_isMovingPointLoading)
+                          const Padding(
+                            padding: EdgeInsets.only(top: 8.0),
+                            child: Center(child: LinearProgressIndicator()),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),
