@@ -351,127 +351,224 @@ class _MapToolViewState extends State<MapToolView> {
           .map((p) => LatLng(p.latitude, p.longitude))
           .toList();
     }
+    PointModel? selectedPointInstance;
+    if (_selectedPointId != null) {
+      try {
+        selectedPointInstance = _projectPoints.firstWhere(
+          (p) => p.id == _selectedPointId,
+        );
+      } catch (e) {
+        // Point might have been deleted or list changed, deselect
+        Future.microtask(() => setState(() => _selectedPointId = null));
+      }
+    }
 
     return Scaffold(
-      body: Container(
-        padding: const EdgeInsets.all(16.0),
-        child: Stack(
-          children: [
-            Column(
-              mainAxisSize: MainAxisSize
-                  .min, // maybe remove? Keep if parent might be scrollable
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // This Text widget might be redundant if the parent already displays project info
-                // Consider if it adds value or can be removed.
-                if (_projectPoints.isNotEmpty)
-                  Padding(
-                    // Added padding for better spacing
-                    padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-                    child: Text(
-                      'Points on map: ${_projectPoints.length}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  )
-                else if (!_isLoadingPoints) // Only show if not loading and no points
-                  Padding(
-                    // Added padding
-                    padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-                    child: Text(
-                      'No points in this project to display on map.',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+      body: Stack(
+        children: [
+          Column(
+            // mainAxisSize: MainAxisSize
+            //     .min, // maybe remove? Keep if parent might be scrollable
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              if (_projectPoints.isNotEmpty)
+                Padding(
+                  // Added padding for better spacing
+                  padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                  child: Text(
+                    'Points on map: ${_projectPoints.length}',
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
-                Expanded(
-                  child: FlutterMap(
-                    mapController: _mapController,
-                    options: MapOptions(
-                      initialCenter: _getInitialCenter(),
-                      initialZoom: _getInitialZoom(),
-                      // bounds: _projectPoints.isNotEmpty
-                      //     ? LatLngBounds.fromPoints(_projectPoints.map((p) => LatLng(p.latitude, p.longitude)).toList())
-                      //     : null,
-                      // boundsOptions: const FitBoundsOptions(padding: EdgeInsets.all(50.0)),
-                      minZoom: 3.0, // Min zoom
-                      maxZoom: 18.0, // Max zoom
-                      onMapReady: () {
-                        logger.info(
-                          "MapToolView: Map is ready (onMapReady called).",
-                        );
-                        if (mounted) {
-                          // Ensure widget is still mounted
-                          setState(() {
-                            _isMapReady = true;
-                          });
-                          // Now that map is ready, try to fit points (they might have loaded already)
-                          _fitMapToPoints();
-                        }
-                      },
-                      onTap: (tapPosition, latlng) {
-                        if (_selectedPointId != null) {
-                          setState(() {
-                            _selectedPointId =
-                                null; // Deselect if a point was selected
-                          });
-                        }
-                        // else { handle other map tap actions if needed }
-                      },
+                )
+              else if (!_isLoadingPoints) // Only show if not loading and no points
+                Padding(
+                  // Added padding
+                  padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                  child: Text(
+                    'No points in this project to display on map.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+              Expanded(
+                child: FlutterMap(
+                  mapController: _mapController,
+                  options: MapOptions(
+                    initialCenter: _getInitialCenter(),
+                    initialZoom: _getInitialZoom(),
+                    // bounds: _projectPoints.isNotEmpty
+                    //     ? LatLngBounds.fromPoints(_projectPoints.map((p) => LatLng(p.latitude, p.longitude)).toList())
+                    //     : null,
+                    // boundsOptions: const FitBoundsOptions(padding: EdgeInsets.all(50.0)),
+                    minZoom: 3.0, // Min zoom
+                    maxZoom: 18.0, // Max zoom
+                    onMapReady: () {
+                      logger.info(
+                        "MapToolView: Map is ready (onMapReady called).",
+                      );
+                      if (mounted) {
+                        // Ensure widget is still mounted
+                        setState(() {
+                          _isMapReady = true;
+                        });
+                        // Now that map is ready, try to fit points (they might have loaded already)
+                        _fitMapToPoints();
+                      }
+                    },
+                    onTap: (tapPosition, latlng) {
+                      if (_selectedPointId != null) {
+                        setState(() {
+                          _selectedPointId =
+                              null; // Deselect if a point was selected
+                        });
+                      }
+                      // else { handle other map tap actions if needed }
+                    },
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      subdomains: const ['a', 'b', 'c'],
+                      userAgentPackageName:
+                          'com.jlbbooks.teleferika', // Replace with your app's package name
+                      // Recommended for OSM tile usage policy
                     ),
-                    children: [
-                      TileLayer(
-                        urlTemplate:
-                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        subdomains: const ['a', 'b', 'c'],
-                        userAgentPackageName:
-                            'com.jlbbooks.teleferika', // Replace with your app's package name
-                        // Recommended for OSM tile usage policy
+                    if (!_isLoadingPoints && polylinePoints.isNotEmpty)
+                      PolylineLayer(
+                        polylines: [
+                          Polyline(
+                            points: polylinePoints,
+                            // color: Colors.blue, // Choose your line color
+                            strokeWidth:
+                                4.0, // Slightly thicker for gradient visibility
+                            gradientColors: [
+                              // Example: From green to red
+                              Colors.green,
+                              Colors.yellow,
+                              Colors.red,
+                            ],
+                            colorsStop: [
+                              // Defines where each color transition happens
+                              0.0, // Start with green
+                              0.5, // Transition to yellow by the midpoint
+                              1.0, // End with red
+                            ],
+                            // If colorsStop is null, the gradient is applied evenly.
+                            // For more complex paths, you might want to calculate stops based on segment lengths.
+                            // pattern: StrokePattern.dotted(),
+                          ),
+                        ],
                       ),
-                      if (polylinePoints.isNotEmpty)
-                        PolylineLayer(
-                          polylines: [
-                            Polyline(
-                              points: polylinePoints,
-                              // color: Colors.blue, // Choose your line color
-                              strokeWidth:
-                                  4.0, // Slightly thicker for gradient visibility
-                              gradientColors: [
-                                // Example: From green to red
-                                Colors.green,
-                                Colors.yellow,
-                                Colors.red,
-                              ],
-                              colorsStop: [
-                                // Defines where each color transition happens
-                                0.0, // Start with green
-                                0.5, // Transition to yellow by the midpoint
-                                1.0, // End with red
-                              ],
-                              // If colorsStop is null, the gradient is applied evenly.
-                              // For more complex paths, you might want to calculate stops based on segment lengths.
-                              // pattern: StrokePattern.dotted(),
-                            ),
-                          ],
+                    if (!_isLoadingPoints && markers.isNotEmpty)
+                      MarkerLayer(markers: markers),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          // Layer 2: Side Panel for Actions (only when a point is selected)
+          if (selectedPointInstance != null)
+            Positioned(
+              top:
+                  10, // Adjust as needed (e.g., MediaQuery.of(context).padding.top + 10)
+              right: 10,
+              child: Material(
+                elevation: 4.0,
+                borderRadius: BorderRadius.circular(8.0),
+                child: Container(
+                  padding: const EdgeInsets.all(12.0),
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.5,
+                  ), // Max width for panel
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).cardColor,
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Selected: P${selectedPointInstance.ordinalNumber}',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      if (selectedPointInstance.note?.isNotEmpty ?? false)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4.0, bottom: 8.0),
+                          child: Text(
+                            selectedPointInstance.note!,
+                            style: Theme.of(context).textTheme.bodySmall,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      if (!_isLoadingPoints && markers.isNotEmpty)
-                        MarkerLayer(markers: markers),
+                      const Divider(),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          TextButton.icon(
+                            icon: const Icon(Icons.edit, color: Colors.blue),
+                            label: const Text('Edit'),
+                            onPressed: () {
+                              logger.info(
+                                "Edit tapped for point P${selectedPointInstance!.ordinalNumber}",
+                              );
+                              // TODO: Navigate to Edit Page or show Edit Dialog
+                              throw UnimplementedError(
+                                "Edit tapped for point P${selectedPointInstance!.ordinalNumber}",
+                              );
+                              // Example: Navigator.push(...EditPointPage(point: selectedPointInstance)...);
+                              // Deselect after initiating action, or let the edit page handle it.
+                              // setState(() => _selectedPointId = null);
+                            },
+                          ),
+                          TextButton.icon(
+                            icon: const Icon(
+                              Icons.delete,
+                              color: Colors.redAccent,
+                            ),
+                            label: const Text('Delete'),
+                            onPressed: () {
+                              logger.info(
+                                "Delete tapped for point P${selectedPointInstance!.ordinalNumber}",
+                              );
+                              throw UnimplementedError(
+                                "Delete tapped for point P${selectedPointInstance!.ordinalNumber}",
+                              );
+                              //TODO: _confirmDeletePoint(
+                              //   selectedPointInstance!,
+                              // ); // Assuming you have this method
+                            },
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          child: Text("Close"),
+                          onPressed: () =>
+                              setState(() => _selectedPointId = null),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              ],
-            ),
-            if (!_isLoadingPoints &&
-                _projectPoints.isNotEmpty) // Show FAB only if map is usable
-              Positioned(
-                bottom: 24,
-                right: 24,
-                child: FloatingActionButton(
-                  onPressed: _fitMapToPoints,
-                  tooltip: 'Center on points',
-                  child: const Icon(Icons.center_focus_strong),
-                ),
               ),
-          ],
-        ),
+            ),
+          if (!_isLoadingPoints &&
+              _projectPoints.isNotEmpty) // Show FAB only if map is usable
+            Positioned(
+              bottom: 24,
+              right: 24,
+              child: FloatingActionButton(
+                onPressed: _fitMapToPoints,
+                tooltip: 'Center on points',
+                child: const Icon(Icons.center_focus_strong),
+              ),
+            ),
+        ],
       ),
     );
     // --- End Map Widget Replacement ---
