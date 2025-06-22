@@ -775,7 +775,7 @@ class _ProjectPageState extends State<ProjectPage> {
           actions: [
             if (!_isEffectivelyNew) // Show delete only for existing projects
               IconButton(
-                icon: const Icon(Icons.delete_outline),
+                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                 onPressed: _isLoading ? null : _confirmDeleteProject,
                 tooltip: 'Delete Project',
               ),

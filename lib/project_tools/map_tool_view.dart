@@ -1,5 +1,6 @@
 // map_tool_view.dart
 
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -36,11 +37,43 @@ class _MapToolViewState extends State<MapToolView> {
   bool _isMovePointMode = false; // For activating point move mode
   bool _isMovingPointLoading =
       false; // Optional: For loading state during DB update
+  double? _headingFromFirstToLast;
 
   @override
   void initState() {
     super.initState();
     _loadProjectPoints();
+  }
+
+  // Helper function to convert degrees to radians
+  double _degreesToRadians(double degrees) {
+    return degrees * math.pi / 180.0;
+  }
+
+  // Helper function to convert radians to degrees
+  double _radiansToDegrees(double radians) {
+    return radians * 180.0 / math.pi;
+  }
+
+  // Function to calculate initial bearing from point1 to point2
+  double calculateBearing(LatLng point1, LatLng point2) {
+    final lat1 = _degreesToRadians(point1.latitude);
+    final lon1 = _degreesToRadians(point1.longitude);
+    final lat2 = _degreesToRadians(point2.latitude);
+    final lon2 = _degreesToRadians(point2.longitude);
+
+    final dLon = lon2 - lon1;
+
+    final y = math.sin(dLon) * math.cos(lat2);
+    final x =
+        math.cos(lat1) * math.sin(lat2) -
+        math.sin(lat1) * math.cos(lat2) * math.cos(dLon);
+
+    var initialBearingRadians = math.atan2(y, x);
+    var initialBearingDegrees = _radiansToDegrees(initialBearingRadians);
+
+    // Normalize to 0-360 degrees
+    return (initialBearingDegrees + 360) % 360;
   }
 
   Future<void> _loadProjectPoints() async {
@@ -50,10 +83,12 @@ class _MapToolViewState extends State<MapToolView> {
 
     try {
       final points = await _dbHelper.getPointsForProject(widget.project.id!);
+
       if (mounted) {
         setState(() {
           _projectPoints = points;
           _isLoadingPoints = false;
+          _recalculateHeadingLine();
         });
       }
       if (_isMapReady) {
@@ -83,14 +118,14 @@ class _MapToolViewState extends State<MapToolView> {
       _isMovingPointLoading = true;
       // Optional: Provide immediate visual feedback by updating local list first
       // This can make the UI feel snappier, but handle potential DB errors.
-      // final index = _projectPoints.indexWhere((p) => p.id == pointToMove.id);
-      // if (index != -1) {
-      //   _projectPoints[index] = pointToMove.copyWith(
-      //     latitude: newPosition.latitude,
-      //     longitude: newPosition.longitude,
-      //     // lastUpdated: DateTime.now(), // Consider if your PointModel tracks this
-      //   );
-      // }
+      final index = _projectPoints.indexWhere((p) => p.id == pointToMove.id);
+      if (index != -1) {
+        _projectPoints[index] = pointToMove.copyWith(
+          latitude: newPosition.latitude,
+          longitude: newPosition.longitude,
+          // lastUpdated: DateTime.now(), // Consider if your PointModel tracks this
+        );
+      }
     });
 
     try {
@@ -101,12 +136,8 @@ class _MapToolViewState extends State<MapToolView> {
         // lastUpdated: DateTime.now(), // If your model has this
       );
 
-      // Assuming you have a method in DatabaseHelper like:
-      // Future<int> updatePoint(PointModel point)
       // Or more specific: updatePointCoordinates(String id, double lat, double lon)
-      int result = await _dbHelper.updatePoint(
-        updatedPoint,
-      ); // Or your specific update method
+      int result = await _dbHelper.updatePoint(updatedPoint);
 
       if (!mounted) return;
 
@@ -121,6 +152,8 @@ class _MapToolViewState extends State<MapToolView> {
           }
           _isMovePointMode = false; // Exit move mode
           // _selectedPointId remains the same, panel will update with new coords if shown
+          // recalculate heading line
+          _recalculateHeadingLine();
         });
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
@@ -394,7 +427,7 @@ class _MapToolViewState extends State<MapToolView> {
       );
     }
     // Prepare markers from project points
-    List<Marker> markers = _projectPoints.map((point) {
+    List<Marker> allMarkers = _projectPoints.map((point) {
       final bool isSelected = point.id == _selectedPointId;
 
       return Marker(
@@ -411,6 +444,36 @@ class _MapToolViewState extends State<MapToolView> {
         child: _buildStandardMarkerView(context, point, isSelected: isSelected),
       );
     }).toList();
+    // show heading degrees on the heading line
+    if (_headingFromFirstToLast != null && _projectPoints.length >= 2) {
+      final firstP = _projectPoints.first;
+      final lastP = _projectPoints.last;
+      // Calculate midpoint (simple average, not geodesically perfect but okay for label placement)
+      final midLat = (firstP.latitude + lastP.latitude) / 2;
+      final midLon = (firstP.longitude + lastP.longitude) / 2;
+
+      allMarkers.add(
+        Marker(
+          point: LatLng(midLat, midLon),
+          width: 100, // Adjust size
+          height: 30, // Adjust size
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.6),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              'Heading: ${_headingFromFirstToLast!.toStringAsFixed(1)}°',
+              style: const TextStyle(color: Colors.white, fontSize: 10),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          // Optional: alignment to better position relative to midpoint
+          alignment: Alignment.center,
+        ),
+      );
+    }
 
     // Create a list of LatLng for the Polyline
     // Only create if there are at least 2 points
@@ -527,8 +590,30 @@ class _MapToolViewState extends State<MapToolView> {
                     ),
                   ],
                 ),
-              if (!_isLoadingPoints && markers.isNotEmpty)
-                MarkerLayer(markers: markers),
+              if (!_isLoadingPoints && _projectPoints.length >= 2)
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: [
+                        LatLng(
+                          _projectPoints.first.latitude,
+                          _projectPoints.first.longitude,
+                        ),
+                        LatLng(
+                          _projectPoints.last.latitude,
+                          _projectPoints.last.longitude,
+                        ),
+                      ],
+                      color: Colors.purple.withOpacity(0.7),
+                      // Choose a distinct color
+                      strokeWidth: 3.0,
+                      pattern: StrokePattern.dotted(),
+                      // For dashed: pattern: StrokePattern.dashed,
+                    ),
+                  ],
+                ),
+              if (!_isLoadingPoints && allMarkers.isNotEmpty)
+                MarkerLayer(markers: allMarkers),
             ],
           ),
           // Layer 2: Side Panel for Actions (only when a point is selected)
@@ -814,6 +899,17 @@ class _MapToolViewState extends State<MapToolView> {
       ),
     );
     // --- End Map Widget Replacement ---
+  }
+
+  void _recalculateHeadingLine() {
+    if (_projectPoints.length >= 2) {
+      _headingFromFirstToLast = calculateBearing(
+        LatLng(_projectPoints.first.latitude, _projectPoints.first.longitude),
+        LatLng(_projectPoints.last.latitude, _projectPoints.last.longitude),
+      );
+    } else {
+      _headingFromFirstToLast = null;
+    }
   }
 }
 
