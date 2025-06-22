@@ -315,6 +315,95 @@ class _MapToolViewState extends State<MapToolView> {
     );
   }
 
+  // Method to handle deletion triggered from the side panel
+  Future<void> _handleDeletePointFromPanel(PointModel pointToDelete) async {
+    // Show confirmation dialog (UI specific, can be a shared dialog widget too)
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Deletion'),
+          content: Text(
+            'Are you sure you want to delete point P${pointToDelete.ordinalNumber}?',
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(false),
+            ),
+            TextButton(
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+              onPressed: () => Navigator.of(context).pop(true),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      // You might want a loading indicator for the panel
+      // setState(() { _isDeletingFromPanel = true; }); // If you have such a flag
+
+      try {
+        final int count = await _dbHelper.deletePointById(
+          pointToDelete.id!,
+        ); // USE THE SHARED METHOD
+
+        if (!mounted) return;
+
+        if (count > 0) {
+          setState(() {
+            _projectPoints.removeWhere((p) => p.id == pointToDelete.id);
+            logger.info(
+              "Point P${pointToDelete.ordinalNumber} (ID: ${pointToDelete.id}) removed from MapToolView after panel delete.",
+            );
+            if (_selectedPointId == pointToDelete.id) {
+              _selectedPointId = null; // Deselect and hide panel
+            }
+          });
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text('Point P${pointToDelete.ordinalNumber} deleted.'),
+                backgroundColor: Colors.green,
+              ),
+            );
+        } else {
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Error: Point P${pointToDelete.ordinalNumber} could not be found or deleted from map view.',
+                ),
+                backgroundColor: Colors.red,
+              ),
+            );
+        }
+      } catch (e) {
+        if (!mounted) return;
+        logger.severe(
+          'Failed to delete point P${pointToDelete.ordinalNumber} from panel: $e',
+        );
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                'Error deleting point P${pointToDelete.ordinalNumber}: ${e.toString()}',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+      } finally {
+        // if (mounted) {
+        //   setState(() { _isDeletingFromPanel = false; });
+        // }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoadingPoints) {
@@ -584,12 +673,9 @@ class _MapToolViewState extends State<MapToolView> {
                               logger.info(
                                 "Delete tapped for point P${selectedPointInstance!.ordinalNumber}",
                               );
-                              throw UnimplementedError(
-                                "Delete tapped for point P${selectedPointInstance!.ordinalNumber}",
+                              _handleDeletePointFromPanel(
+                                selectedPointInstance,
                               );
-                              //TODO: _confirmDeletePoint(
-                              //   selectedPointInstance!,
-                              // ); // Assuming you have this method
                             },
                           ),
                         ],

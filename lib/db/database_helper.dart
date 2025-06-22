@@ -543,7 +543,7 @@ class DatabaseHelper {
   }
 
   /// Deletes a single point and re-sequences the ordinal numbers of subsequent points.
-  Future<int> deletePoint(String pointIdToDelete) async {
+  Future<int> deletePointById(String pointIdToDelete) async {
     Database db = await instance.database;
     int count = 0;
 
