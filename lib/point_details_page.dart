@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/logger.dart';
+import 'package:teleferika/photo_manager_widget.dart';
+
+import 'db/models/image_model.dart';
 
 class PointDetailsPage extends StatefulWidget {
   final PointModel point;
@@ -30,6 +33,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
   bool _isLoading = false;
   bool _isDeleting = false; // To handle delete loading state
+  List<ImageModel> _currentImages = []; // Placeholder for photos>
 
   @override
   void initState() {
@@ -45,6 +49,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
       text:
           widget.point.heading?.toStringAsFixed(2) ?? '', // Handle null heading
     );
+    _currentImages = [];
     logger.info(
       "PointDetailsPage initialized for Point ID: ${widget.point.id}, Ordinal: ${widget.point.ordinalNumber}",
     );
@@ -498,54 +503,20 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
               ),
               const SizedBox(height: 24.0),
 
-              // --- Placeholder for Photos Section ---
+              // --- Photos Section ---
               const Divider(thickness: 1, height: 32),
-              Text('Photos', style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 8.0),
-              Container(
-                padding: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                child: const Center(
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.photo_library_outlined,
-                        size: 48,
-                        color: Colors.grey,
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'Photo management will be here.',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                ),
+              PhotoManagerWidget(
+                pointId: widget.point.id!,
+                // Make sure widget.point.id is not null
+                initialImages: _currentImages,
+                onImageListChanged: (updatedImageList) {
+                  setState(() {
+                    _currentImages = updatedImageList;
+                    // _hasUnsavedChanges = true; // If you have such a flag
+                  });
+                },
               ),
-              const SizedBox(height: 24.0),
-
-              ElevatedButton.icon(
-                icon: _isLoading
-                    ? Container(
-                        width: 24,
-                        height: 24,
-                        padding: const EdgeInsets.all(2.0),
-                        child: const CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 3,
-                        ),
-                      )
-                    : const Icon(Icons.save_alt_outlined),
-                label: const Text('Save Point Details'),
-                onPressed: _isLoading || _isDeleting ? null : _savePointDetails,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  textStyle: const TextStyle(fontSize: 16.0),
-                ),
-              ),
+              // ...
             ],
           ),
         ),

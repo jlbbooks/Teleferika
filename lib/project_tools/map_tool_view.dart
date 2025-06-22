@@ -779,18 +779,16 @@ class _MapToolViewState extends State<MapToolView> {
                                               }
                                             });
                                             // ignore: use_build_context_synchronously
-                                            if (mounted)
-                                              ScaffoldMessenger.of(context)
-                                                ..hideCurrentSnackBar()
-                                                ..showSnackBar(
-                                                  SnackBar(
-                                                    content: Text(
-                                                      'Point P${updatedPoint.ordinalNumber} details updated!',
-                                                    ),
-                                                    backgroundColor:
-                                                        Colors.green,
+                                            ScaffoldMessenger.of(context)
+                                              ..hideCurrentSnackBar()
+                                              ..showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                    'Point P${updatedPoint.ordinalNumber} details updated!',
                                                   ),
-                                                );
+                                                  backgroundColor: Colors.green,
+                                                ),
+                                              );
                                           }
                                         } else if (action == 'deleted') {
                                           final String? deletedPointId =
@@ -811,19 +809,18 @@ class _MapToolViewState extends State<MapToolView> {
                                               }
                                             });
                                             // ignore: use_build_context_synchronously
-                                            if (mounted)
-                                              ScaffoldMessenger.of(context)
-                                                ..hideCurrentSnackBar()
-                                                ..showSnackBar(
-                                                  const SnackBar(
-                                                    // You can use ordinalNumber here if you pass it back
-                                                    content: Text(
-                                                      'Point deleted.',
-                                                    ),
-                                                    backgroundColor: Colors
-                                                        .orange, // Or green
+                                            ScaffoldMessenger.of(context)
+                                              ..hideCurrentSnackBar()
+                                              ..showSnackBar(
+                                                const SnackBar(
+                                                  // You can use ordinalNumber here if you pass it back
+                                                  content: Text(
+                                                    'Point deleted.',
                                                   ),
-                                                );
+                                                  backgroundColor:
+                                                      Colors.orange, // Or green
+                                                ),
+                                              );
                                           }
                                         }
                                       } else {

@@ -1,5 +1,8 @@
 // database_helper.dart
+import 'dart:io';
+
 import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../logger.dart';
@@ -483,39 +486,50 @@ class DatabaseHelper {
   // --- End Project Methods ---
 
   // --- Point Methods ---
+
   Future<String> insertPoint(PointModel point) async {
-    Database db = await instance.database;
+    final db = await database;
+    String pointId;
 
-    // 1. Ensure the point has a UUID ID.
-    // Your PointModel constructor `this.id = id ?? uuid_gen.generateUuidV4();`
-    // already handles this if you create a PointModel instance without an ID.
-    // So, point.id will be non-null here.
-    if (point.id == null) {
-      // This case should ideally not happen if your model constructor
-      // or the code creating the PointModel instance assigns a UUID.
-      // However, as a fallback or assertion:
-      throw ArgumentError("PointModel must have a UUID id before insertion.");
-      // Or, you could assign one here if you're sure that's the desired behavior:
-      // point = point.copyWith(id: uuid_gen.generateUuidV4());
-    }
+    await db.transaction((txn) async {
+      // 1. Insert the PointModel (point.toMap() does not include images)
+      // Ensure point.id is generated if not provided, or handle it as your model does.
+      // If PointModel constructor already assigns a UUID, point.id will be non-null.
+      if (point.id == null) {
+        // This should not happen if your PointModel constructor handles ID generation
+        throw ArgumentError(
+          "PointModel must have an ID before insertion with images.",
+        );
+      }
+      pointId = point.id!;
 
-    // 2. Perform the insert
-    // The point.toMap() will include the UUID string for the 'id' key.
-    await db.insert(
-      PointModel.tableName,
-      point.toMap(),
-      conflictAlgorithm:
-          ConflictAlgorithm.replace, // Or .fail, .ignore etc. as per your needs
-    );
+      await txn.insert(
+        PointModel.tableName,
+        point.toMap(), // This map is for the 'points' table
+        conflictAlgorithm: ConflictAlgorithm.replace, // Or as per your needs
+      );
 
-    // After inserting a point, update the project's lastUpdate timestamp
-    await _updateProjectTimestamp(point.projectId); // point.projectId is String
-
-    // 3. Return the UUID string that you already have.
-    return point
-        .id!; // The '!' is safe if you ensured/threw above, or if constructor guarantees it.
+      // 2. Insert associated images
+      for (final image in point.images) {
+        // Ensure image.pointId matches the point.id if it wasn't already set
+        // (though it should be if created correctly in PhotoManagerWidget)
+        final imageToInsert = image.pointId == pointId
+            ? image
+            : image.copyWith(pointId: pointId);
+        await txn.insert(
+          ImageModel.tableName,
+          imageToInsert.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace,
+        );
+      }
+    });
+    // After inserting, update the project's lastUpdate timestamp
+    await _updateProjectTimestamp(point.projectId);
+    return point.id!; // Return the generated or existing point ID
   }
 
+  // You might deprecate or rename the old insertPoint if all new points should handle images.
+  // Future<String> insertPoint(PointModel point) async { ... OLD ... }
   // Similarly for ProjectModel and ImageModel
   Future<String> insertProject(ProjectModel project) async {
     Database db = await instance.database;
@@ -529,16 +543,35 @@ class DatabaseHelper {
   }
 
   Future<int> updatePoint(PointModel point) async {
-    Database db = await instance.database;
-    final result = await db.update(
-      PointModel.tableName,
-      point.toMap(),
-      where: '${PointModel.columnId} = ?',
-      whereArgs: [point.id],
-    );
+    final db = await database;
+    int result = 0;
+    final a = await db.transaction((txn) async {
+      // 1. Update the PointModel itself
+      result = await txn.update(
+        PointModel.tableName,
+        point.toMap(),
+        where: '${PointModel.columnId} = ?',
+        whereArgs: [point.id],
+      );
+
+      // 2. Delete existing images for this point
+      await txn.delete(
+        ImageModel.tableName,
+        where: '${ImageModel.columnPointId} = ?',
+        whereArgs: [point.id],
+      );
+
+      // 3. Insert new/updated list of images
+      for (final image in point.images) {
+        // Ensure the image.pointId is correctly set if it wasn't before
+        // ImageModel currentImage = image.pointId == point.id ? image : image.copyWith(pointId: point.id);
+        await txn.insert(ImageModel.tableName, image.toMap());
+      }
+    });
     if (result > 0) {
       await _updateProjectTimestamp(point.projectId);
     }
+    logger.info("Updated $result points. (a=$a)");
     return result;
   }
 
@@ -617,7 +650,9 @@ class DatabaseHelper {
       whereArgs: [id],
     );
     if (maps.isNotEmpty) {
-      return PointModel.fromMap(maps.first);
+      // Fetch associated images
+      final List<ImageModel> images = await getImagesForPoint(id);
+      return PointModel.fromMap(maps.first, images: images);
     }
     return null;
   }
@@ -740,15 +775,21 @@ class DatabaseHelper {
 
   Future<List<PointModel>> getPointsForProject(String projectId) async {
     Database db = await instance.database;
-    final List<Map<String, dynamic>> maps = await db.query(
+    final List<Map<String, dynamic>> pointMaps = await db.query(
       PointModel.tableName,
       where: '${PointModel.columnProjectId} = ?',
       whereArgs: [projectId],
       orderBy: '${PointModel.columnOrdinalNumber} ASC',
     );
-    return List.generate(maps.length, (i) {
-      return PointModel.fromMap(maps[i]);
-    });
+    // In DatabaseHelper
+
+    List<PointModel> points = [];
+    for (var pMap in pointMaps) {
+      final String pointId = pMap[PointModel.columnId] as String;
+      final List<ImageModel> images = await getImagesForPoint(pointId);
+      points.add(PointModel.fromMap(pMap, images: images));
+    }
+    return points;
   }
 
   /// Deletes multiple points and re-sequences ordinal numbers for each affected project.
@@ -827,8 +868,7 @@ class DatabaseHelper {
   }
 
   Future<List<ImageModel>> getImagesForPoint(String pointId) async {
-    // Parameter is String
-    Database db = await instance.database;
+    final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       ImageModel.tableName,
       where: '${ImageModel.columnPointId} = ?',
@@ -836,6 +876,37 @@ class DatabaseHelper {
       orderBy: '${ImageModel.columnOrdinalNumber} ASC',
     );
     return List.generate(maps.length, (i) => ImageModel.fromMap(maps[i]));
+  }
+
+  // When deleting a point, also delete its images and the photo directory
+  Future<void> deletePointAndAssociatedData(String pointId) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete(
+        ImageModel.tableName,
+        where: '${ImageModel.columnPointId} = ?',
+        whereArgs: [pointId],
+      );
+      await txn.delete(
+        PointModel.tableName,
+        where: '${PointModel.columnId} = ?',
+        whereArgs: [pointId],
+      );
+    });
+
+    // Also delete the physical photo directory
+    try {
+      final appDocDir = await getApplicationDocumentsDirectory();
+      final pointPhotosDir = Directory(
+        join(appDocDir.path, 'point_photos', pointId),
+      );
+      if (await pointPhotosDir.exists()) {
+        await pointPhotosDir.delete(recursive: true);
+        logger.fine('Deleted photo directory for point $pointId');
+      }
+    } catch (e) {
+      logger.severe('Error deleting photo directory for point $pointId: $e');
+    }
   }
 
   Future close() async {
