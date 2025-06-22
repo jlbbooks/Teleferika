@@ -10,14 +10,7 @@ import 'db/models/image_model.dart';
 class PointDetailsPage extends StatefulWidget {
   final PointModel point;
 
-  // Optional: Pass projectId if needed for context, or if creating a new point
-  // final int projectId;
-
-  const PointDetailsPage({
-    super.key,
-    required this.point,
-    // required this.projectId,
-  });
+  const PointDetailsPage({super.key, required this.point});
 
   @override
   State<PointDetailsPage> createState() => _PointDetailsPageState();
@@ -33,7 +26,10 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
   bool _isLoading = false;
   bool _isDeleting = false; // To handle delete loading state
-  List<ImageModel> _currentImages = []; // Placeholder for photos>
+  List<ImageModel> _currentImages = []; // Placeholder for photos
+  bool _hasUnsavedTextChanges = false; // Tracks changes in text fields
+  bool _photosChangedAndSaved =
+      false; // Tracks if PhotoManagerWidget auto-saved
 
   @override
   void initState() {
@@ -55,13 +51,35 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
     ); // Make a mutable copy
     _currentImages.sort((a, b) => a.ordinalNumber.compareTo(b.ordinalNumber));
 
+    // Add listeners to text controllers
+    _latitudeController.addListener(_markUnsavedTextChanges);
+    _longitudeController.addListener(_markUnsavedTextChanges);
+    _noteController.addListener(_markUnsavedTextChanges);
+    _headingController.addListener(_markUnsavedTextChanges);
+
     logger.info(
-      "PointDetailsPage initialized for Point ID: ${widget.point.id}, Ordinal: ${widget.point.ordinalNumber}, Initial image count: ${_currentImages.length}",
+      "PointDetailsPage initialized for Point ID: ${widget.point.id}, Initial image count: ${_currentImages.length}",
     );
+  }
+
+  void _markUnsavedTextChanges() {
+    if (!_hasUnsavedTextChanges) {
+      // Check against initial values if you want to be more precise
+      // For simplicity, any change marks it.
+      setState(() {
+        _hasUnsavedTextChanges = true;
+      });
+      logger.info("Unsaved textual changes marked.");
+    }
   }
 
   @override
   void dispose() {
+    _latitudeController.removeListener(_markUnsavedTextChanges);
+    _longitudeController.removeListener(_markUnsavedTextChanges);
+    _noteController.removeListener(_markUnsavedTextChanges);
+    _headingController.removeListener(_markUnsavedTextChanges);
+
     _latitudeController.dispose();
     _longitudeController.dispose();
     _noteController.dispose();
@@ -69,19 +87,20 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
     super.dispose();
   }
 
-  Future<void> _savePointDetails() async {
+  Future<void> _savePointDetails({bool calledFromWillPop = false}) async {
     logger.info(
-      "Attempting to save point details for point ID: ${widget.point.id}",
+      "Attempting to save point details for point ID: ${widget.point.id}. Called from WillPop: $calledFromWillPop",
     );
     if (!_pointFormKey.currentState!.validate()) {
       logger.warning("Point details form validation failed.");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please correct the errors in the form.'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please correct the errors in the form.'),
+          ),
+        );
+      }
+      return; // Indicate failure if called from WillPop
     }
 
     setState(() {
@@ -127,49 +146,51 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
       return;
     }
 
-    PointModel updatedPoint = PointModel(
-      id: widget.point.id, // ID must not be null for an update
-      projectId: widget.point.projectId,
+    PointModel pointToSave = widget.point.copyWith(
       latitude: latitude,
       longitude: longitude,
-      ordinalNumber: widget.point.ordinalNumber,
       note: _noteController.text.isNotEmpty ? _noteController.text : null,
       heading: headingValue,
-      timestamp:
-          widget.point.timestamp ?? DateTime.now(), // Or update timestamp logic
+      timestamp: DateTime.now(), // Or update timestamp logic
       images: _currentImages, // *** Include the current list of images ***
-    );
-    logger.info(
-      "Updated PointModel created: $updatedPoint with ${_currentImages.length} images.",
     );
 
     try {
-      await _dbHelper.updatePoint(updatedPoint);
+      await _dbHelper.updatePoint(pointToSave);
       logger.info(
         "Point ID ${widget.point.id} and its images updated successfully. Image count: ${_currentImages.length}",
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Point details and images saved!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        // Pop with a result to indicate success and potentially pass back the updated point
-        Navigator.pop(context, {'action': 'updated', 'point': updatedPoint});
+        setState(() {
+          _hasUnsavedTextChanges = false;
+          _photosChangedAndSaved = false; // Reset both flags
+          // If you were editing widget.point directly, you'd update it here.
+          // Since widget.point is final, this updatedPoint is what gets passed back.
+        });
+        if (!calledFromWillPop) {
+          // Don't show SnackBar if called from WillPop save action
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Point details saved!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+        // Pop with a result to indicate success
+        // This will be called by the main save button, or by the "Save & Exit" in WillPop
+        if (Navigator.canPop(context)) {
+          Navigator.pop(context, {'action': 'updated', 'point': pointToSave});
+        }
       }
     } catch (e, stackTrace) {
       logger.severe(
-        "Error saving point details (and images) for point ID ${widget.point.id}",
+        "Error saving point details for point ID ${widget.point.id}",
         e,
         stackTrace,
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error saving point: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Error saving point: ${e.toString()}')),
         );
       }
     } finally {
@@ -179,6 +200,71 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
         });
       }
     }
+  }
+
+  Future<bool> _onWillPop() async {
+    // If there are unsaved text changes, always prompt.
+    if (_hasUnsavedTextChanges) {
+      final result = await showDialog<String>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: const Text('Unsaved Changes'),
+          content: const Text(
+            'You have unsaved changes to point details. Save them?',
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Discard Text Changes'),
+              onPressed: () => Navigator.of(context).pop('discard_text'),
+            ),
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop('cancel'),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).primaryColor,
+              ),
+              child: const Text('Save All & Exit'),
+              onPressed: () => Navigator.of(context).pop('save_all_and_exit'),
+            ),
+          ],
+        ),
+      );
+
+      if (result == 'save_all_and_exit') {
+        await _savePointDetails(calledFromWillPop: true);
+        // _savePointDetails will pop if successful. If it's still here, save failed or page didn't pop.
+        return false; // Prevent default pop; _savePointDetails handles successful pop.
+      } else if (result == 'discard_text') {
+        // Text changes are discarded. If photos were changed and auto-saved, pop with 'updated'.
+        if (_photosChangedAndSaved) {
+          if (Navigator.canPop(context)) {
+            Navigator.pop(context, {'action': 'updated'});
+            return false; // We handled the pop.
+          }
+        }
+        return true; // Allow pop, text changes discarded.
+      } else {
+        // 'cancel' or dialog dismissed
+        return false; // Don't pop.
+      }
+    }
+    // No unsaved text changes.
+    // Check if only photos were changed and auto-saved.
+    else if (_photosChangedAndSaved) {
+      // Photos changed and were auto-saved. Pop with 'updated'.
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context, {'action': 'updated'});
+        return false; // We handled the pop.
+      }
+      // Fallback if somehow cannot pop (should not happen if page is valid)
+      return true; // Or false if you want to be stricter
+    }
+
+    // No unsaved text changes, and no auto-saved photo changes to report.
+    return true; // Allow normal pop.
   }
 
   Future<void> _deletePoint() async {
@@ -270,177 +356,200 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.point.id == null
-              ? 'New Point' // Should ideally not happen if coming to details page
-              : 'Point P${widget.point.ordinalNumber} Details',
-        ),
-        actions: [
-          // --- NEW: Delete Button ---
-          if (widget.point.id !=
-              null) // Only show delete if the point exists in DB
-            IconButton(
-              icon: _isDeleting
-                  ? SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.0,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Theme.of(
-                            context,
-                          ).colorScheme.onPrimary, // Or any contrasting color
-                        ),
-                      ),
-                    )
-                  : const Icon(Icons.delete_outline),
-              tooltip: 'Delete Point',
-              onPressed: _isLoading || _isDeleting ? null : _deletePoint,
-            ),
-          // --- END NEW ---
-          IconButton(
-            icon: _isLoading
-                ? SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.0,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Theme.of(
-                          context,
-                        ).colorScheme.onPrimary, // Or any contrasting color
-                      ),
-                    ),
-                  )
-                : const Icon(Icons.save_outlined),
-            tooltip: 'Save Changes',
-            onPressed: _isLoading || _isDeleting ? null : _savePointDetails,
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            widget.point.id == null
+                ? 'Add New Point'
+                : 'Edit Point (P${widget.point.ordinalNumber})',
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _pointFormKey,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              // ... your existing TextFormField widgets for latitude, longitude, heading, note ...
-              // --- Latitude ---
-              TextFormField(
-                controller: _latitudeController,
-                decoration: const InputDecoration(
-                  labelText: 'Latitude',
-                  hintText: 'e.g. 45.12345',
-                  border: OutlineInputBorder(),
-                  icon: Icon(Icons.pin_drop_outlined),
-                ),
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                  signed: true,
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Latitude cannot be empty';
-                  }
-                  final n = double.tryParse(value);
-                  if (n == null) {
-                    return 'Invalid number format';
-                  }
-                  if (n < -90 || n > 90) {
-                    return 'Latitude must be between -90 and 90';
-                  }
-                  return null;
-                },
+          leading: IconButton(
+            // Custom back button to ensure _onWillPop is always triggered
+            icon: Icon(Icons.arrow_back),
+            onPressed: () async {
+              if (await _onWillPop()) {
+                // Check if we are allowed to pop
+                if (Navigator.canPop(context)) {
+                  Navigator.of(context).pop();
+                }
+              }
+            },
+          ),
+          actions: [
+            // --- Delete Button ---
+            if (widget.point.id !=
+                null) // Only show delete if the point exists in DB
+              IconButton(
+                icon: _isDeleting
+                    ? SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.0,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Theme.of(
+                              context,
+                            ).colorScheme.onPrimary, // Or any contrasting color
+                          ),
+                        ),
+                      )
+                    : const Icon(Icons.delete_outline),
+                tooltip: 'Delete Point',
+                onPressed: _isLoading || _isDeleting ? null : _deletePoint,
               ),
-              const SizedBox(height: 16.0),
+            IconButton(
+              icon: const Icon(Icons.save),
+              tooltip: 'Save Point Details',
+              onPressed: _isLoading
+                  ? null
+                  : () => _savePointDetails(calledFromWillPop: false),
+            ),
+          ],
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _pointFormKey,
+            autovalidateMode:
+                _hasUnsavedTextChanges // Or _formInteracted
+                ? AutovalidateMode.onUserInteraction
+                : AutovalidateMode.disabled,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                // ... your existing TextFormField widgets for latitude, longitude, heading, note ...
+                // --- Latitude ---
+                TextFormField(
+                  controller: _latitudeController,
+                  decoration: const InputDecoration(
+                    labelText: 'Latitude',
+                    hintText: 'e.g. 45.12345',
+                    border: OutlineInputBorder(),
+                    icon: Icon(Icons.pin_drop_outlined),
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                    signed: true,
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Latitude cannot be empty';
+                    }
+                    final n = double.tryParse(value);
+                    if (n == null) {
+                      return 'Invalid number format';
+                    }
+                    if (n < -90 || n > 90) {
+                      return 'Latitude must be between -90 and 90';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16.0),
 
-              // --- Longitude ---
-              TextFormField(
-                controller: _longitudeController,
-                decoration: const InputDecoration(
-                  labelText: 'Longitude',
-                  hintText: 'e.g. -12.54321',
-                  border: OutlineInputBorder(),
-                  icon: Icon(Icons.pin_drop_outlined),
+                // --- Longitude ---
+                TextFormField(
+                  controller: _longitudeController,
+                  decoration: const InputDecoration(
+                    labelText: 'Longitude',
+                    hintText: 'e.g. -12.54321',
+                    border: OutlineInputBorder(),
+                    icon: Icon(Icons.pin_drop_outlined),
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                    signed: true,
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Longitude cannot be empty';
+                    }
+                    final n = double.tryParse(value);
+                    if (n == null) {
+                      return 'Invalid number format';
+                    }
+                    if (n < -180 || n > 180) {
+                      return 'Longitude must be between -180 and 180';
+                    }
+                    return null;
+                  },
                 ),
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                  signed: true,
+                const SizedBox(height: 16.0),
+                TextFormField(
+                  controller: _headingController,
+                  decoration: const InputDecoration(
+                    labelText: 'Heading (degrees)',
+                    hintText: 'e.g. 123.5 (Optional)',
+                    border: OutlineInputBorder(),
+                    icon: Icon(Icons.explore_outlined), // Compass icon
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return null; // Heading is optional
+                    }
+                    final n = double.tryParse(value);
+                    if (n == null) {
+                      return 'Invalid number format';
+                    }
+                    if (n <= -360 || n >= 360) {
+                      return 'Heading must be between -359.9 and 359.9';
+                    }
+                    return null;
+                  },
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Longitude cannot be empty';
-                  }
-                  final n = double.tryParse(value);
-                  if (n == null) {
-                    return 'Invalid number format';
-                  }
-                  if (n < -180 || n > 180) {
-                    return 'Longitude must be between -180 and 180';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16.0),
-              TextFormField(
-                controller: _headingController,
-                decoration: const InputDecoration(
-                  labelText: 'Heading (degrees)',
-                  hintText: 'e.g. 123.5 (Optional)',
-                  border: OutlineInputBorder(),
-                  icon: Icon(Icons.explore_outlined), // Compass icon
+                const SizedBox(height: 16.0),
+                // --- Note ---
+                TextFormField(
+                  controller: _noteController,
+                  decoration: const InputDecoration(
+                    labelText: 'Note (Optional)',
+                    hintText: 'Any observations or details...',
+                    border: OutlineInputBorder(),
+                    icon: Icon(Icons.notes_outlined),
+                  ),
+                  maxLines: 3,
+                  textInputAction: TextInputAction.done,
                 ),
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return null; // Heading is optional
-                  }
-                  final n = double.tryParse(value);
-                  if (n == null) {
-                    return 'Invalid number format';
-                  }
-                  if (n <= -360 || n >= 360) {
-                    return 'Heading must be between -359.9 and 359.9';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16.0),
-              // --- Note ---
-              TextFormField(
-                controller: _noteController,
-                decoration: const InputDecoration(
-                  labelText: 'Note (Optional)',
-                  hintText: 'Any observations or details...',
-                  border: OutlineInputBorder(),
-                  icon: Icon(Icons.notes_outlined),
-                ),
-                maxLines: 3,
-                textInputAction: TextInputAction.done,
-              ),
-              const SizedBox(height: 24.0),
+                const SizedBox(height: 24.0),
 
-              // --- Photos Section ---
-              const Divider(thickness: 1, height: 32),
-              PhotoManagerWidget(
-                pointId: widget.point.id!,
-                // Make sure widget.point.id is not null
-                initialImages: _currentImages,
-                onImageListChanged: (updatedImageList) {
-                  setState(() {
-                    _currentImages = updatedImageList;
-                    // _hasUnsavedChanges = true; // If you have such a flag
-                  });
-                },
-              ),
-              // ...
-            ],
+                // --- Photos Section ---
+                const Divider(thickness: 1, height: 32),
+                PhotoManagerWidget(
+                  // Pass a point model that reflects the current state of _currentImages
+                  // but for other fields, it uses the original widget.point data
+                  // This is important because PhotoManagerWidget's _savePointWithCurrentImages
+                  // will use widget.point.copyWith()
+                  point: widget.point.copyWith(images: _currentImages),
+                  onImageListChangedForUI: (updatedImageList) {
+                    if (!mounted) return;
+                    setState(() {
+                      _currentImages = updatedImageList;
+                      // Don't mark _hasUnsavedTextChanges here, only _photosChangedAndSaved
+                    });
+                    logger.info(
+                      "PointDetailsPage: UI updated with new image list. Count: ${updatedImageList.length}",
+                    );
+                  },
+                  onPhotosSavedSuccessfully: () {
+                    // <--- THIS IS THE CRUCIAL PART
+                    if (!mounted) return;
+                    setState(() {
+                      _photosChangedAndSaved =
+                          true; // <--- ENSURE THIS LINE IS PRESENT AND CORRECT
+                    });
+                    logger.info(
+                      "PointDetailsPage: Notified that photos were successfully auto-saved. _photosChangedAndSaved = true",
+                    );
+                  },
+                ),
+                // ...
+              ],
+            ),
           ),
         ),
       ),

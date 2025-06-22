@@ -672,6 +672,7 @@ class PointsToolViewState extends State<PointsToolView> {
           // Refresh the points list
           // You might have a more specific way to update if 'updated' returns the point
           // For simplicity, just refresh the whole list for now.
+          // TODO: only act on the updated point
           _loadPoints();
           // Optionally, if you want to notify the overall project page too:
           widget.onPointsChanged?.call();

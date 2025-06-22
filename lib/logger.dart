@@ -1,7 +1,7 @@
 import 'package:logging/logging.dart'; // Import the logging package
 
 // Create a logger instance. It's common to use the library or class name.
-final Logger logger = Logger('AppInitializer');
+final Logger logger = Logger('teleferiKa');
 
 void setupLogging() {
   Logger.root.level = Level.ALL; // Log all levels by default

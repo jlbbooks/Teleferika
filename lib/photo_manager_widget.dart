@@ -2,28 +2,28 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:logging/logging.dart'; // Import the logging package
 import 'package:path/path.dart' as p; // For p.basename, p.join
 import 'package:path_provider/path_provider.dart';
 import 'package:teleferika/utils/uuid_generator.dart';
 
+import 'db/database_helper.dart';
 import 'db/models/image_model.dart';
+import 'db/models/point_model.dart';
+import 'logger.dart';
 
 // import 'package:teleferika/utils/uuid_generator.dart'; // Assuming ImageModel handles this
 
-// Initialize logger for this widget
-final _logger = Logger('PhotoManagerWidget');
-
 class PhotoManagerWidget extends StatefulWidget {
-  final List<ImageModel> initialImages;
-  final Function(List<ImageModel> updatedImages) onImageListChanged;
-  final String pointId; // Crucial: This is the FK for ImageModel
+  final Function(List<ImageModel> updatedImages) onImageListChangedForUI;
+  final VoidCallback?
+  onPhotosSavedSuccessfully; // Callback when photos are auto-saved
+  final PointModel point;
 
   const PhotoManagerWidget({
     super.key,
-    required this.initialImages,
-    required this.onImageListChanged,
-    required this.pointId,
+    required this.point,
+    required this.onImageListChangedForUI,
+    this.onPhotosSavedSuccessfully,
   });
 
   @override
@@ -33,34 +33,96 @@ class PhotoManagerWidget extends StatefulWidget {
 class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
   late List<ImageModel> _images;
   final ImagePicker _picker = ImagePicker();
+  bool _isSavingPhotos = false;
+  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
   @override
   void initState() {
     super.initState();
-    _logger.info(
-      'initState called. Point ID: ${widget.pointId}, Initial images count: ${widget.initialImages.length}',
+    logger.info(
+      'PhotoManagerWidget initState called. Point ID: ${widget.point.id}, Initial images from point.images count: ${widget.point.images.length}',
     );
-    // Sort initial images by ordinalNumber and copy to a mutable list
-    _images = List<ImageModel>.from(widget.initialImages);
+    // Create a mutable copy from widget.point.images
+    _images = List<ImageModel>.from(widget.point.images);
     _images.sort((a, b) => a.ordinalNumber.compareTo(b.ordinalNumber));
-    _logger.finer('Initial images sorted: $_images');
+    logger.finer('Initial images sorted: $_images');
+  }
+
+  // This method will now handle the saving of the point with its current images
+  Future<void> _savePointWithCurrentImages() async {
+    if (_isSavingPhotos) return; // Prevent concurrent saves
+
+    setState(() {
+      _isSavingPhotos = true;
+    });
+    logger.info('Auto-saving image changes for point ID: ${widget.point.id}');
+
+    try {
+      // Create an updated PointModel with the current list of images
+      // We use the existing widget.point data for other fields
+      PointModel pointToSave = widget.point.copyWith(
+        images: List<ImageModel>.from(
+          _images,
+        ), // Pass a copy of the current images
+        // Optionally update a 'lastModified' timestamp on the point itself here if desired
+        timestamp: DateTime.now(),
+      );
+      await _dbHelper.updatePoint(pointToSave);
+
+      logger.info(
+        'Successfully auto-saved image changes for point ID: ${widget.point.id}. Image count: ${_images.length}',
+      );
+      // Notify parent for UI update (e.g., image count)
+      widget.onImageListChangedForUI(List<ImageModel>.from(_images));
+      logger.finer('Calling onPhotosSavedSuccessfully callback.');
+      widget.onPhotosSavedSuccessfully?.call();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Photo changes saved automatically.'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e, stackTrace) {
+      logger.severe(
+        'Error auto-saving image changes for point ID: ${widget.point.id}',
+        e,
+        stackTrace,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving photo changes: ${e.toString()}'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSavingPhotos = false;
+        });
+      }
+    }
   }
 
   Future<Directory> _getPointPhotosDirectory() async {
-    _logger.info(
-      '_getPointPhotosDirectory called for point ID: ${widget.pointId}',
+    logger.info(
+      '_getPointPhotosDirectory called for point ID: ${widget.point.id}',
     );
     final appDocDir = await getApplicationDocumentsDirectory();
     final pointPhotosDir = Directory(
-      p.join(appDocDir.path, 'point_photos', widget.pointId),
+      p.join(appDocDir.path, 'point_photos', widget.point.id),
     );
     if (!await pointPhotosDir.exists()) {
-      _logger.info(
+      logger.info(
         'Point photos directory does not exist, creating: ${pointPhotosDir.path}',
       );
       await pointPhotosDir.create(recursive: true);
     } else {
-      _logger.info(
+      logger.info(
         'Point photos directory already exists: ${pointPhotosDir.path}',
       );
     }
@@ -68,7 +130,7 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
   }
 
   Future<String?> _saveImageFileToAppStorage(XFile imageFile) async {
-    _logger.info(
+    logger.info(
       '_saveImageFileToAppStorage called for XFile: ${imageFile.path}',
     );
     try {
@@ -76,12 +138,12 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
       // Use a UUID for the filename to ensure uniqueness
       final uniqueFileName = '${generateUuid()}${p.extension(imageFile.path)}';
       final newPath = p.join(pointPhotosDir.path, uniqueFileName);
-      _logger.info('Attempting to save image to: $newPath');
+      logger.info('Attempting to save image to: $newPath');
       final savedFile = await File(imageFile.path).copy(newPath);
-      _logger.info('Image successfully saved to: ${savedFile.path}');
+      logger.info('Image successfully saved to: ${savedFile.path}');
       return savedFile.path;
     } catch (e, stackTrace) {
-      _logger.severe('Error saving image to app storage: $e', e, stackTrace);
+      logger.severe('Error saving image to app storage: $e', e, stackTrace);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error saving image: ${e.toString()}')),
@@ -92,7 +154,7 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    _logger.info('_pickImage called with source: $source');
+    logger.info('_pickImage called with source: $source');
     try {
       final XFile? pickedFile = await _picker.pickImage(
         source: source,
@@ -100,7 +162,7 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
       );
 
       if (pickedFile != null) {
-        _logger.info('Image picked: ${pickedFile.path}');
+        logger.info('Image picked: ${pickedFile.path}');
         final savedPath = await _saveImageFileToAppStorage(pickedFile);
         if (savedPath != null) {
           final nextOrdinal = _images.isNotEmpty
@@ -110,29 +172,30 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
                     1)
               : 0;
           final newImage = ImageModel(
-            pointId: widget.pointId,
+            pointId: widget.point.id!,
             ordinalNumber: nextOrdinal,
             imagePath: savedPath,
           );
-          _logger.info('New ImageModel created: $newImage');
+          logger.info('New ImageModel created: $newImage');
           setState(() {
             _images.add(newImage);
-            _logger.finer(
+            logger.finer(
               'Image list updated with new image. New count: ${_images.length}',
             );
           });
-          widget.onImageListChanged(List<ImageModel>.from(_images));
-          _logger.info(
+          await _savePointWithCurrentImages();
+          // widget.onImageListChanged(List<ImageModel>.from(_images));
+          logger.info(
             'onImageListChanged callback invoked with ${_images.length} images.',
           );
         } else {
-          _logger.warning('Image picked, but failed to save to app storage.');
+          logger.warning('Image picked, but failed to save to app storage.');
         }
       } else {
-        _logger.info('Image picking cancelled by user.');
+        logger.info('Image picking cancelled by user.');
       }
     } catch (e, stackTrace) {
-      _logger.severe('Error picking image: $e', e, stackTrace);
+      logger.severe('Error picking image: $e', e, stackTrace);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error picking image: ${e.toString()}')),
@@ -142,16 +205,25 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
   }
 
   void _deletePhoto(int index) async {
-    _logger.info('_deletePhoto called for index: $index');
+    logger.info('_deletePhoto called for index: $index');
+    if (_isSavingPhotos) {
+      logger.warning(
+        "Attempted to delete image while auto-save is in progress. Aborting.",
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please wait, photos are being saved...')),
+      );
+      return;
+    }
     if (index < 0 || index >= _images.length) {
-      _logger.warning(
+      logger.warning(
         'Delete photo called with invalid index: $index. Image count: ${_images.length}',
       );
       return;
     }
 
     final ImageModel imageToDelete = _images[index];
-    _logger.info('Attempting to delete image: $imageToDelete');
+    logger.info('Attempting to delete image: $imageToDelete');
 
     final bool? confirmed = await showDialog<bool>(
       context: context,
@@ -165,7 +237,7 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
             TextButton(
               child: const Text('Cancel'),
               onPressed: () {
-                _logger.info('Photo deletion cancelled by user.');
+                logger.info('Photo deletion cancelled by user.');
                 Navigator.of(dialogContext).pop(false);
               },
             ),
@@ -175,7 +247,7 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
               onPressed: () {
-                _logger.info('Photo deletion confirmed by user.');
+                logger.info('Photo deletion confirmed by user.');
                 Navigator.of(dialogContext).pop(true);
               },
             ),
@@ -188,25 +260,27 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
       try {
         final fileToDelete = File(imageToDelete.imagePath);
         if (await fileToDelete.exists()) {
-          _logger.info(
+          logger.info(
             'Physical file exists, deleting: ${imageToDelete.imagePath}',
           );
           await fileToDelete.delete();
-          _logger.info('Physical file deleted.');
+          logger.info('Physical file deleted.');
         } else {
-          _logger.warning(
+          logger.warning(
             'Physical file not found for deletion: ${imageToDelete.imagePath}',
           );
         }
         setState(() {
           _images.removeAt(index);
-          _logger.finer(
+          logger.finer(
             'Image removed from list. Current count: ${_images.length}',
           );
           _updateOrdinalNumbers();
         });
-        widget.onImageListChanged(List<ImageModel>.from(_images));
-        _logger.info(
+        // Instead of just widget.onImageListChanged, now call the save method
+        await _savePointWithCurrentImages();
+        // widget.onImageListChanged(List<ImageModel>.from(_images));
+        logger.info(
           'onImageListChanged callback invoked after deletion. Image count: ${_images.length}',
         );
         if (mounted) {
@@ -218,7 +292,7 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
           );
         }
       } catch (e, stackTrace) {
-        _logger.severe('Error deleting photo file: $e', e, stackTrace);
+        logger.severe('Error deleting photo file: $e', e, stackTrace);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Error deleting photo: ${e.toString()}')),
@@ -226,18 +300,18 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
         }
       }
     } else {
-      _logger.info('Photo deletion was not confirmed.');
+      logger.info('Photo deletion was not confirmed.');
     }
   }
 
   void _updateOrdinalNumbers() {
-    _logger.info(
+    logger.info(
       '_updateOrdinalNumbers called. Current image count: ${_images.length}',
     );
     bool changed = false;
     for (int i = 0; i < _images.length; i++) {
       if (_images[i].ordinalNumber != i) {
-        _logger.finer(
+        logger.finer(
           'Updating ordinal for image ID ${_images[i].id} from ${_images[i].ordinalNumber} to $i',
         );
         _images[i] = _images[i].copyWith(ordinalNumber: i);
@@ -245,16 +319,25 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
       }
     }
     if (changed) {
-      _logger.info(
+      logger.info(
         'Ordinal numbers updated. New sequence: ${_images.map((img) => img.ordinalNumber).toList()}',
       );
     } else {
-      _logger.info('No ordinal numbers needed updating.');
+      logger.info('No ordinal numbers needed updating.');
     }
   }
 
   void _showAddPhotoOptions() {
-    _logger.info('_showAddPhotoOptions called.');
+    logger.info('_showAddPhotoOptions called.');
+    if (_isSavingPhotos) {
+      logger.warning(
+        "Attempted to show add photo options while auto-save is in progress. Aborting.",
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please wait, photos are being saved...')),
+      );
+      return;
+    }
     showModalBottomSheet(
       context: context,
       builder: (BuildContext bc) {
@@ -265,7 +348,7 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
                 leading: const Icon(Icons.photo_library),
                 title: const Text('Gallery'),
                 onTap: () {
-                  _logger.info('Gallery option selected.');
+                  logger.info('Gallery option selected.');
                   Navigator.of(context).pop();
                   _pickImage(ImageSource.gallery);
                 },
@@ -274,7 +357,7 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
                 leading: const Icon(Icons.photo_camera),
                 title: const Text('Camera'),
                 onTap: () {
-                  _logger.info('Camera option selected.');
+                  logger.info('Camera option selected.');
                   Navigator.of(context).pop();
                   _pickImage(ImageSource.camera);
                 },
@@ -288,16 +371,17 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
 
   @override
   void dispose() {
-    _logger.info(
-      'dispose called for PhotoManagerWidget with point ID: ${widget.pointId}',
+    logger.info(
+      'dispose called for PhotoManagerWidget with point ID: ${widget.point.id}',
     );
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    _logger.finest('build called. Image count: ${_images.length}');
-    // ... rest of your build method ...
+    logger.finest(
+      'PhotoManagerWidget build called. Image count: ${_images.length}, isSaving: $_isSavingPhotos',
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -308,11 +392,20 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
               'Photos (${_images.length})',
               style: Theme.of(context).textTheme.titleMedium,
             ),
-            IconButton(
-              icon: const Icon(Icons.add_a_photo_outlined),
-              tooltip: 'Add Photo',
-              onPressed: _showAddPhotoOptions,
-            ),
+            _isSavingPhotos
+                ? const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2.0),
+                    ),
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.add_a_photo_outlined),
+                    tooltip: 'Add Photo',
+                    onPressed: _showAddPhotoOptions,
+                  ),
           ],
         ),
         const SizedBox(height: 8),
@@ -348,7 +441,7 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
                   itemCount: _images.length,
                   itemBuilder: (context, index) {
                     final imageModel = _images[index];
-                    _logger.finest(
+                    logger.finest(
                       'Building item for ReorderableListView at index $index, image ID: ${imageModel.id}',
                     );
                     return Card(
@@ -373,7 +466,7 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
                               height: 100,
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) {
-                                _logger.warning(
+                                logger.warning(
                                   'Error building image for path: ${imageModel.imagePath}',
                                   error,
                                   stackTrace,
@@ -418,7 +511,9 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
                                 borderRadius: BorderRadius.circular(
                                   12,
                                 ), // Match shape
-                                onTap: () => _deletePhoto(index),
+                                onTap: _isSavingPhotos
+                                    ? null
+                                    : () => _deletePhoto(index),
                                 child: const Padding(
                                   padding: EdgeInsets.all(
                                     2.0,
@@ -436,8 +531,8 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
                       ),
                     );
                   },
-                  onReorder: (int oldIndex, int newIndex) {
-                    _logger.info(
+                  onReorder: (int oldIndex, int newIndex) async {
+                    logger.info(
                       'onReorder called. Old index: $oldIndex, New index: $newIndex',
                     );
                     setState(() {
@@ -446,11 +541,12 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
                       }
                       final ImageModel item = _images.removeAt(oldIndex);
                       _images.insert(newIndex, item);
-                      _logger.finer('Image reordered. Image ID: ${item.id}');
+                      logger.finer('Image reordered. Image ID: ${item.id}');
                       _updateOrdinalNumbers();
                     });
-                    widget.onImageListChanged(List<ImageModel>.from(_images));
-                    _logger.info(
+                    await _savePointWithCurrentImages();
+                    // widget.onImageListChanged(List<ImageModel>.from(_images));
+                    logger.info(
                       'onImageListChanged callback invoked after reorder. Image count: ${_images.length}',
                     );
                   },
