@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>This app needs access to location when open to show your current location on the map and for compass functionality.</string>
+    <string>This app needs access to your location to determine your current position for adding points and improving compass accuracy.</string>
     <key>NSMotionUsageDescription</key>
-    <string>This app needs access to motion sensors for compass functionality.</string>
+    <string>This app uses motion data to provide compass functionality and determine device orientation.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
