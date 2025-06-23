@@ -1,21 +1,134 @@
 {
   "@@locale": "en",
-  "appName": "TeleferiKa",
-  "loadingAppName": "Loading {appName}...",
-  "@loadingAppName": {
-    "description": "The text shown during loading, with a placeholder for the app's name.",
+  "appTitle": "TeleferiKa",
+  "@appTitle": {
+    "description": "The official title of the application. This is a brand name and should not be translated unless specified."
+  },
+  "loadingScreenMessage": "Loading {appName}...",
+  "@loadingScreenMessage": {
+    "description": "The text displayed on the loading screen, with a placeholder for the application's name.",
     "placeholders": {
       "appName": {
         "type": "String",
-        "example": "My Awesome App"
+        "example": "TeleferiKa"
       }
     }
   },
-  "projectsListTitle": "Projects",
-  "versionInfo": "Version: {versionNumber}",
-  "@versionInfo": {
+  "projectPageTitle": "Project Details",
+  "@projectPageTitle": {
+    "description": "App bar title for the project details page"
+  },
+  "tabDetails": "Details",
+  "tabPoints": "Points",
+  "tabCompass": "Compass",
+  "tabMap": "Map",
+  "formFieldNameLabel": "Project Name",
+  "formFieldNoteLabel": "Note",
+  "formFieldAzimuthLabel": "Azimuth (°)",
+  "formFieldProjectDateLabel": "Project Date",
+  "formFieldLastUpdatedLabel": "Last Updated",
+  "buttonSave": "Save",
+  "buttonCalculateAzimuth": "Calculate Azimuth",
+  "buttonCalculate": "Calculate",
+  "buttonSelectDate": "Select Date",
+  "compassAddPointButton": "Add Point",
+  "compassAddAsEndPointButton": "Add as End Point",
+  "pointsSetAsStartButton": "Set as Start",
+  "pointsSetAsEndButton": "Set as End",
+  "pointsDeleteButton": "Delete",
+  "errorSaveProjectBeforeAddingPoints": "Please save the project before adding points.",
+  "infoFetchingLocation": "Fetching location...",
+  "pointAddedSnackbar": "Point P{ordinalNumber} added.",
+  "@pointAddedSnackbar": {
+    "description": "Snackbar message when a point is successfully added. The ordinalNumber is the point's number.",
     "placeholders": {
-      "versionNumber": {
+      "ordinalNumber": {
+        "type": "String",
+        "example": "1"
+      }
+    }
+  },
+  "pointAddedSetAsEndSnackbarSuffix": "Set as END point.",
+  "pointAddedInsertedBeforeEndSnackbarSuffix": "Inserted before current end point.",
+  "pointFromCompassDefaultNote": "Point from Compass (H: {heading}°)",
+  "@pointFromCompassDefaultNote": {
+    "description": "Default note for a point added using the compass tool, showing the heading.",
+    "placeholders": {
+      "heading": {
+        "type": "String",
+        "example": "45.2"
+      }
+    }
+  },
+  "errorAddingPoint": "Error adding point: {errorMessage}",
+  "@errorAddingPoint": {
+    "placeholders": {
+      "errorMessage": {
+        "type": "String"
+      }
+    }
+  },
+  "errorLoadingProjectDetails": "Error loading project details: {errorMessage}",
+  "@errorLoadingProjectDetails": {
+    "placeholders": {
+      "errorMessage": {
+        "type": "String"
+      }
+    }
+  },
+  "errorAzimuthPointsNotSet": "Starting and/or ending point not set. Cannot calculate azimuth.",
+  "errorAzimuthPointsSame": "Starting and ending points are the same. Azimuth is undefined or 0.",
+  "errorAzimuthCouldNotRetrievePoints": "Could not retrieve point data for calculation. Please check points.",
+  "errorCalculatingAzimuth": "Error calculating azimuth: {errorMessage}",
+  "@errorCalculatingAzimuth": {
+    "placeholders": {
+      "errorMessage": {
+        "type": "String"
+      }
+    }
+  },
+  "azimuthCalculatedSnackbar": "Azimuth calculated: {azimuthValue}°",
+  "@azimuthCalculatedSnackbar": {
+    "placeholders": {
+      "azimuthValue": {
+        "type": "String",
+        "example": "123.45"
+      }
+    }
+  },
+  "projectNameCannotBeEmptyValidator": "Project name cannot be empty.",
+  "projectSavedSuccessfully": "Project saved successfully.",
+  "dialogTitleConfirmDelete": "Confirm Delete",
+  "dialogContentConfirmDeletePoint": "Are you sure you want to delete point P{pointOrdinal}? This action cannot be undone.",
+  "@dialogContentConfirmDeletePoint": {
+    "placeholders": {
+      "pointOrdinal": {
+        "type": "String"
+      }
+    }
+  },
+  "buttonCancel": "Cancel",
+  "buttonDelete": "Delete",
+  "pointDeletedSnackbar": "Point P{pointOrdinal} deleted.",
+  "@pointDeletedSnackbar": {
+    "placeholders": {
+      "pointOrdinal": {
+        "type": "String"
+      }
+    }
+  },
+  "pointSetAsStartSnackbar": "Point P{pointOrdinal} set as start.",
+  "@pointSetAsStartSnackbar": {
+    "placeholders": {
+      "pointOrdinal": {
+        "type": "String"
+      }
+    }
+  },
+  "pointSetAsEndSnackbar": "Point P{pointOrdinal} set as end.",
+  "@pointSetAsEndSnackbar": {
+    "placeholders": {
+      "pointOrdinal": {
         "type": "String"
       }
     }

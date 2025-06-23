@@ -32,12 +32,9 @@ class _LoadingPageState extends State<LoadingPage> {
       home: Builder(
         // Use a Builder to get a context from WITHIN this MaterialApp
         builder: (BuildContext innerContext) {
-          // THIS 'innerContext' is from WITHIN LoadingPage's MaterialApp.
-          // AppLocalizations.of(innerContext) here should now work.
-          final localizations = S.of(innerContext);
           String loadingText =
-              localizations?.loadingAppName(AppConfig.appName) ??
-              'XXX ${AppConfig.appName}...';
+              S.of(innerContext)?.loadingScreenMessage(AppConfig.appName) ??
+              '${AppConfig.appName}...';
 
           return Scaffold(
             backgroundColor:

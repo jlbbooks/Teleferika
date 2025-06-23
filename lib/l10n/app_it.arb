@@ -1,21 +1,134 @@
 {
   "@@locale": "it",
-  "appName": "TeleferiKa",
-  "loadingAppName": "Loading {appName}...",
-  "@loadingAppName": {
-    "description": "The text shown during loading, with a placeholder for the app's name.",
+  "appTitle": "TeleferiKa",
+  "@appTitle": {
+    "description": "Il titolo ufficiale dell'applicazione. Questo è un nome di marca e non dovrebbe essere tradotto se non specificato."
+  },
+  "loadingScreenMessage": "Caricamento {appName}...",
+  "@loadingScreenMessage": {
+    "description": "Il testo visualizzato nella schermata di caricamento, con un segnaposto per il nome dell'applicazione.",
     "placeholders": {
       "appName": {
         "type": "String",
-        "example": "My Awesome App"
+        "example": "TeleferiKa"
       }
     }
   },
-  "projectsListTitle": "Projects",
-  "versionInfo": "Version: {versionNumber}",
-  "@versionInfo": {
+  "projectPageTitle": "Dettagli Progetto",
+  "@projectPageTitle": {
+    "description": "Titolo della barra dell'app per la pagina dei dettagli del progetto"
+  },
+  "tabDetails": "Dettagli",
+  "tabPoints": "Punti",
+  "tabCompass": "Bussola",
+  "tabMap": "Mappa",
+  "formFieldNameLabel": "Nome Progetto",
+  "formFieldNoteLabel": "Note",
+  "formFieldAzimuthLabel": "Azimut (°)",
+  "formFieldProjectDateLabel": "Data Progetto",
+  "formFieldLastUpdatedLabel": "Ultimo Aggiornamento",
+  "buttonSave": "Salva",
+  "buttonCalculateAzimuth": "Calcola Azimut",
+  "buttonCalculate": "Calcola",
+  "buttonSelectDate": "Seleziona Data",
+  "compassAddPointButton": "Aggiungi Punto",
+  "compassAddAsEndPointButton": "Aggiungi come Fine",
+  "pointsSetAsStartButton": "Imposta come Inizio",
+  "pointsSetAsEndButton": "Imposta come Fine",
+  "pointsDeleteButton": "Elimina",
+  "errorSaveProjectBeforeAddingPoints": "Salvare il progetto prima di aggiungere punti.",
+  "infoFetchingLocation": "Recupero posizione...",
+  "pointAddedSnackbar": "Punto P{ordinalNumber} aggiunto.",
+  "@pointAddedSnackbar": {
+    "description": "Messaggio Snackbar quando un punto viene aggiunto con successo. ordinalNumber è il numero del punto.",
     "placeholders": {
-      "versionNumber": {
+      "ordinalNumber": {
+        "type": "String",
+        "example": "1"
+      }
+    }
+  },
+  "pointAddedSetAsEndSnackbarSuffix": "Impostato come punto FINALE.",
+  "pointAddedInsertedBeforeEndSnackbarSuffix": "Inserito prima del punto finale corrente.",
+  "pointFromCompassDefaultNote": "Punto da Bussola (A: {heading}°)",
+  "@pointFromCompassDefaultNote": {
+    "description": "Nota predefinita per un punto aggiunto tramite lo strumento bussola, che mostra la direzione.",
+    "placeholders": {
+      "heading": {
+        "type": "String",
+        "example": "45.2"
+      }
+    }
+  },
+  "errorAddingPoint": "Errore durante l'aggiunta del punto: {errorMessage}",
+  "@errorAddingPoint": {
+    "placeholders": {
+      "errorMessage": {
+        "type": "String"
+      }
+    }
+  },
+  "errorLoadingProjectDetails": "Errore durante il caricamento dei dettagli del progetto: {errorMessage}",
+  "@errorLoadingProjectDetails": {
+    "placeholders": {
+      "errorMessage": {
+        "type": "String"
+      }
+    }
+  },
+  "errorAzimuthPointsNotSet": "Punto iniziale e/o finale non impostato. Impossibile calcolare l'azimut.",
+  "errorAzimuthPointsSame": "I punti iniziale e finale sono uguali. L'azimut è indefinito o 0.",
+  "errorAzimuthCouldNotRetrievePoints": "Impossibile recuperare i dati dei punti per il calcolo. Controllare i punti.",
+  "errorCalculatingAzimuth": "Errore durante il calcolo dell'azimut: {errorMessage}",
+  "@errorCalculatingAzimuth": {
+    "placeholders": {
+      "errorMessage": {
+        "type": "String"
+      }
+    }
+  },
+  "azimuthCalculatedSnackbar": "Azimut calcolato: {azimuthValue}°",
+  "@azimuthCalculatedSnackbar": {
+    "placeholders": {
+      "azimuthValue": {
+        "type": "String",
+        "example": "123.45"
+      }
+    }
+  },
+  "projectNameCannotBeEmptyValidator": "Il nome del progetto non può essere vuoto.",
+  "projectSavedSuccessfully": "Progetto salvato con successo.",
+  "dialogTitleConfirmDelete": "Conferma Eliminazione",
+  "dialogContentConfirmDeletePoint": "Sei sicuro di voler eliminare il punto P{pointOrdinal}? Questa azione non può essere annullata.",
+  "@dialogContentConfirmDeletePoint": {
+    "placeholders": {
+      "pointOrdinal": {
+        "type": "String"
+      }
+    }
+  },
+  "buttonCancel": "Annulla",
+  "buttonDelete": "Elimina",
+  "pointDeletedSnackbar": "Punto P{pointOrdinal} eliminato.",
+  "@pointDeletedSnackbar": {
+    "placeholders": {
+      "pointOrdinal": {
+        "type": "String"
+      }
+    }
+  },
+  "pointSetAsStartSnackbar": "Punto P{pointOrdinal} impostato come inizio.",
+  "@pointSetAsStartSnackbar": {
+    "placeholders": {
+      "pointOrdinal": {
+        "type": "String"
+      }
+    }
+  },
+  "pointSetAsEndSnackbar": "Punto P{pointOrdinal} impostato come fine.",
+  "@pointSetAsEndSnackbar": {
+    "placeholders": {
+      "pointOrdinal": {
         "type": "String"
       }
     }

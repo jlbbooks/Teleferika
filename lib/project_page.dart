@@ -13,6 +13,7 @@ import 'package:teleferika/project_tools/points_tool_view.dart';
 import 'db/database_helper.dart'; // Ensure correct path
 import 'db/models/point_model.dart';
 import 'db/models/project_model.dart'; // Ensure correct path
+import 'l10n/app_localizations.dart';
 import 'logger.dart';
 
 enum ProjectPageTab {
@@ -185,7 +186,9 @@ class _ProjectPageState extends State<ProjectPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error loading project details: ${e.toString()}'),
+            content: Text(
+              S.of(context)!.errorLoadingProjectDetails(e.toString()),
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -258,8 +261,8 @@ class _ProjectPageState extends State<ProjectPage> {
     if (_currentProject.id == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please save the project before adding points.'),
+          SnackBar(
+            content: Text(S.of(context)!.errorSaveProjectBeforeAddingPoints),
             backgroundColor: Colors.orange,
           ),
         );
@@ -279,9 +282,9 @@ class _ProjectPageState extends State<ProjectPage> {
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Fetching location...'),
-        duration: Duration(seconds: 2), // Short duration
+      SnackBar(
+        content: Text(S.of(context)!.infoFetchingLocation),
+        duration: const Duration(seconds: 2), // Short duration
       ),
     );
 
@@ -334,7 +337,9 @@ class _ProjectPageState extends State<ProjectPage> {
         longitude: position.longitude,
         ordinalNumber: newPointOrdinal,
         // You might want a default note or a way to add one later
-        note: 'Point from Compass (H: ${heading.toStringAsFixed(1)}°)',
+        note: S
+            .of(context)!
+            .pointFromCompassDefaultNote(heading.toStringAsFixed(1)),
         heading: heading, // FIXME: what about the timestamp????
       );
 
@@ -342,7 +347,7 @@ class _ProjectPageState extends State<ProjectPage> {
         pointFromCompass,
       );
       logger.info(
-        'Point added via Compass: ID $newPointIdFromCompass, Lat: ${position.latitude}, Lon: ${position.longitude}, Heading used for note: $heading, Ordinal: ${pointFromCompass.ordinalNumber}',
+        'Point added via Compass: ID $newPointIdFromCompass, Lat: ${position.longitude}, Lon: ${position.longitude}, Heading used for note: $heading, Ordinal: ${pointFromCompass.ordinalNumber}',
       );
 
       // AFTER point is inserted, update the project's start/end points
@@ -372,11 +377,20 @@ class _ProjectPageState extends State<ProjectPage> {
         ScaffoldMessenger.of(
           context,
         ).removeCurrentSnackBar(); // Remove "Fetching location..."
+        String baseMessage = S
+            .of(context)!
+            .pointAddedSnackbar(pointFromCompass.ordinalNumber.toString());
+        String suffix = "";
+        if (addAsEndPoint == true) {
+          // Explicitly check for true if addAsEndPoint is bool?
+          suffix = " ${S.of(context)!.pointAddedSetAsEndSnackbarSuffix}";
+        } else if (currentEndPointModel != null) {
+          suffix =
+              " ${S.of(context)!.pointAddedInsertedBeforeEndSnackbarSuffix}";
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'Point P${pointFromCompass.ordinalNumber} added. ${addAsEndPoint ? "Set as END point." : (currentEndPointModel != null ? "Inserted before current end point." : "")}',
-            ),
+            content: Text(baseMessage + suffix),
             backgroundColor: Colors.green,
           ),
         );
@@ -394,7 +408,7 @@ class _ProjectPageState extends State<ProjectPage> {
         ScaffoldMessenger.of(context).removeCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error adding point: ${e.toString()}'),
+            content: Text(S.of(context)!.errorAddingPoint(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -442,10 +456,8 @@ class _ProjectPageState extends State<ProjectPage> {
 
     if (startPointId == null || endPointId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Starting and/or ending point not set. Cannot calculate azimuth.',
-          ),
+        SnackBar(
+          content: Text(S.of(context)!.errorAzimuthPointsNotSet),
           backgroundColor: Colors.orange,
         ),
       );
@@ -461,10 +473,8 @@ class _ProjectPageState extends State<ProjectPage> {
 
     if (startPointId == endPointId) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Starting and ending points are the same. Azimuth is undefined or 0.',
-          ),
+        SnackBar(
+          content: Text(S.of(context)!.errorAzimuthPointsSame),
           backgroundColor: Colors.orange,
         ),
       );
@@ -485,10 +495,8 @@ class _ProjectPageState extends State<ProjectPage> {
       if (startPoint == null || endPoint == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Could not retrieve point data for calculation. Please check points.',
-              ),
+            SnackBar(
+              content: Text(S.of(context)!.errorAzimuthCouldNotRetrievePoints),
               backgroundColor: Colors.red,
             ),
           );
@@ -514,7 +522,11 @@ class _ProjectPageState extends State<ProjectPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Azimuth calculated: ${calculatedAzimuth.toStringAsFixed(2)}°',
+              S
+                  .of(context)!
+                  .azimuthCalculatedSnackbar(
+                    calculatedAzimuth.toStringAsFixed(2),
+                  ),
             ),
             backgroundColor: Colors.green,
           ),
@@ -528,7 +540,7 @@ class _ProjectPageState extends State<ProjectPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error calculating azimuth: ${e.toString()}'),
+            content: Text(S.of(context)!.errorCalculatingAzimuth(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -861,7 +873,9 @@ class _ProjectPageState extends State<ProjectPage> {
                         label: 'Project Name',
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Project name cannot be empty.';
+                            return S
+                                .of(context)!
+                                .projectNameCannotBeEmptyValidator;
                           }
                           return null;
                         },
@@ -870,9 +884,9 @@ class _ProjectPageState extends State<ProjectPage> {
                       InkWell(
                         onTap: () => _selectProjectDate(context),
                         child: InputDecorator(
-                          decoration: const InputDecoration(
-                            labelText: 'Project Date',
-                            border: OutlineInputBorder(),
+                          decoration: InputDecoration(
+                            labelText: S.of(context)!.formFieldProjectDateLabel,
+                            border: const OutlineInputBorder(),
                           ),
                           child: Text(formattedProjectDate),
                         ),
@@ -880,7 +894,7 @@ class _ProjectPageState extends State<ProjectPage> {
                       const SizedBox(height: 8),
                       _buildTextFormField(
                         controller: _noteController,
-                        label: 'Notes',
+                        label: S.of(context)!.formFieldNoteLabel,
                         maxLines: 3,
                       ),
                       const SizedBox(height: 8),
@@ -890,7 +904,7 @@ class _ProjectPageState extends State<ProjectPage> {
                           Expanded(
                             child: _buildTextFormField(
                               controller: _azimuthController,
-                              label: 'Reference Azimuth (°)',
+                              label: S.of(context)!.formFieldAzimuthLabel,
                               keyboardType:
                                   const TextInputType.numberWithOptions(
                                     decimal: true,
@@ -918,7 +932,7 @@ class _ProjectPageState extends State<ProjectPage> {
                                   vertical: 12,
                                 ),
                               ),
-                              child: const Text("Calculate"),
+                              child: Text(S.of(context)!.buttonCalculate),
                             ),
                           ),
                         ],
