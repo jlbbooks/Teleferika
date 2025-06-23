@@ -1,56 +1,77 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
+# General
+*.DS_Store
+*.orig
 *.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
-# Windows specific
-Thumbs.db
-ehthumbs.db
-Desktop.ini
+*~
+*.bak
 
-# IntelliJ related
+# IntelliJ / Android Studio specific
+.idea/
 *.iml
 *.ipr
 *.iws
-.idea/
+modules.xml
+#workspace.xml # Obsolete, use .idea/workspace.xml instead
+tasks.xml # User-specific tasks
+shelf/ # Android Studio's "shelf" feature for stashing changes locally
+#libraries/ # Older IntelliJ/AS configuration, usually covered by .idea/
+.settings/ # Eclipse specific, sometimes seen if projects are imported
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# Build-related
+build/
+.gradle/ # Gradle wrapper files and local cache
+captures/ # Flutter screenshot captures
 
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
+# Flutter/Dart specific
 .dart_tool/
+.packages # Old package configuration file, replaced by .dart_tool/package_config.json
 .flutter-plugins
 .flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
+#pubspec.lock # Some teams commit this, others generate it. Standard practice is to COMMIT it.
+             # However, if a team explicitly decides not to, it might be here.
+             # FOR MOST FLUTTER PROJECTS, DO NOT ADD pubspec.lock TO .gitignore
 
-# Symbolication related
-app.*.symbols
+# Pub related (global cache is usually outside project, but good to be safe)
+# .pub-cache/ # Usually not needed if using global pub cache, but won't hurt.
 
-# Obfuscation related
-app.*.map.json
+# FVM (Flutter Version Management) specific
+.fvm/flutter_sdk/ # Exclude the symlinked SDK itself
+# Note: You SHOULD commit .fvm/fvm_config.json or .fvm_version (whichever your FVM setup uses)
+# So, a more specific rule for FVM might be:
+# .fvm/*
+# !.fvm/fvm_config.json
+# or just ensure you don't commit the flutter_sdk symlink if .fvm/ itself is not ignored.
+# Safest is often to ignore the whole .fvm directory and explicitly add the config file if necessary,
+# but the standard `.fvm/` entry is common if you manually manage the config file commit.
+# A common FVM setup recommends adding `.fvm/flutter_sdk` specifically if you commit the rest of `.fvm`.
+# If you ignore the whole `.fvm/` directory, you don't need the specific `flutter_sdk` line.
 
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+# Local settings & Environment specific (examples)
+*.local
+local.properties # Android specific local properties (e.g., SDK path)
+secrets.json # If you store secrets locally and not in version control
 
-#dati sensibili
-/keys/
-/android/build/reports/problems/problems-report.html
+# Test related (some generated files)
+coverage/ # Dart test coverage reports
 
-# FVM Version Cache
+# Windows specific thumbnails cache
+Thumbs.db
+ehthumbs.db
+ehthumbs_vista.db
+
+# macOS specific
+.Spotlight-V100
+.Trashes
+
+# VS Code specific (if also used)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# FVM
 .fvm/
+
+keys/
