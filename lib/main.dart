@@ -7,6 +7,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 
 import 'app_config.dart';
 import 'db/database_helper.dart';
+import 'loading_page.dart';
 import 'logger.dart'; // Assuming logger.dart is in the same directory (lib)
 import 'projects_list_page.dart'; // Import your ProjectsListPage
 
@@ -114,85 +115,20 @@ class _MyAppRootState extends State<MyAppRoot> {
       return LoadingPage(appVersion: _appVersion);
     } else {
       logger.finest("Building MyApp (which now loads ProjectsListPage).");
-      return MyApp(appVersion: _appVersion);
+      return TeleferiKa(appVersion: _appVersion);
     }
   }
 }
 
-class LoadingPage extends StatefulWidget {
+class TeleferiKa extends StatelessWidget {
   final String? appVersion;
-  const LoadingPage({super.key, this.appVersion});
-
-  @override
-  State<LoadingPage> createState() => _LoadingPageState();
-}
-
-class _LoadingPageState extends State<LoadingPage> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: kDebugMode,
-      localizationsDelegates: AppConfig.localizationsDelegates,
-      supportedLocales: AppConfig.supportedLocales,
-      // --- Dynamic Theme Settings ---
-      theme: AppConfig.lightTheme, // Your defined light theme
-      darkTheme: AppConfig.darkTheme, // Your defined dark theme
-      themeMode: ThemeMode.system, // Auto-switch light/dark theme!
-      // --- End Dynamic Theme Settings ---
-      home: Scaffold(
-        backgroundColor:
-            Colors.blueAccent, // TODO: Or your app's splash background
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Loading ${AppConfig.appName}...',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18.0,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 10), // Add some space
-              if (widget.appVersion != null &&
-                  widget
-                      .appVersion!
-                      .isNotEmpty) // Only show if version is loaded
-                Text(
-                  widget.appVersion!,
-                  style: TextStyle(
-                    color: Colors.white.withAlpha(
-                      (0.7 * 255).round(),
-                    ), // Slightly dimmer
-                    fontSize: 12.0,
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class MyApp extends StatelessWidget {
-  final String? appVersion;
-  const MyApp({super.key, this.appVersion});
+  const TeleferiKa({super.key, this.appVersion});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: AppConfig.appName,
+
       // --- Dynamic Theme Settings ---
       theme: AppConfig.lightTheme, // Your defined light theme
       darkTheme: AppConfig.darkTheme, // Your defined dark theme

@@ -1,0 +1,23 @@
+{
+  "@@locale": "it",
+  "appName": "TeleferiKa",
+  "loadingAppName": "Loading {appName}...",
+  "@loadingAppName": {
+    "description": "The text shown during loading, with a placeholder for the app's name.",
+    "placeholders": {
+      "appName": {
+        "type": "String",
+        "example": "My Awesome App"
+      }
+    }
+  },
+  "projectsListTitle": "Projects",
+  "versionInfo": "Version: {versionNumber}",
+  "@versionInfo": {
+    "placeholders": {
+      "versionNumber": {
+        "type": "String"
+      }
+    }
+  }
+}

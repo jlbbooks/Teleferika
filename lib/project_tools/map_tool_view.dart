@@ -466,7 +466,7 @@ class _MapToolViewState extends State<MapToolView> {
       allMarkers.add(
         Marker(
           point: LatLng(midLat, midLon),
-          width: 100, // Adjust size
+          width: 120, // Adjust size
           height: 30, // Adjust size
           child: Transform.rotate(
             // Optional: Rotate the label

@@ -3,6 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'l10n/app_localizations.dart';
+
 class AppConfig {
   static const String appName = 'TeleferiKa';
   static final ThemeData lightTheme = ThemeData(
@@ -29,10 +31,10 @@ class AppConfig {
   static const List<Locale> supportedLocales = [
     Locale('en'),
     Locale('it'),
-    Locale('de'),
     // ...
   ];
   static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = [
+    S.delegate,
     GlobalMaterialLocalizations.delegate,
     GlobalWidgetsLocalizations.delegate,
     GlobalCupertinoLocalizations.delegate,
