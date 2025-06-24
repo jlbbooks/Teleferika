@@ -1,3 +1,7 @@
+# This is the file build_configs/pubspec.full.yaml
+# Changes should go to that file, not the main pubspec.yaml.
+# Project setup will copy the correct file to pubspec.yaml
+
 name: teleferika
 description: "TeleferiKa app."
 # The following line prevents the package from being accidentally published to

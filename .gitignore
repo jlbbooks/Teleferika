@@ -37,8 +37,8 @@ captures/ # Flutter screenshot captures
 .flutter-plugins
 .flutter-plugins-dependencies
 #pubspec.lock # Some teams commit this, others generate it. Standard practice is to COMMIT it.
-             # However, if a team explicitly decides not to, it might be here.
-             # FOR MOST FLUTTER PROJECTS, DO NOT ADD pubspec.lock TO .gitignore
+#              However, if a team explicitly decides not to, it might be here.
+#              FOR MOST FLUTTER PROJECTS, DO NOT ADD pubspec.lock TO .gitignore
 
 # Pub related (global cache is usually outside project, but good to be safe)
 # .pub-cache/ # Usually not needed if using global pub cache, but won't hurt.
@@ -47,8 +47,8 @@ captures/ # Flutter screenshot captures
 #.fvm/flutter_sdk/ # Exclude the symlinked SDK itself
 # Note: You SHOULD commit .fvm/fvm_config.json or .fvm_version (whichever your FVM setup uses)
 # So, a more specific rule for FVM might be:
- .fvm/*
- !.fvm/fvm_config.json
+.fvm/*
+!.fvm/fvm_config.json
 # or just ensure you don't commit the flutter_sdk symlink if .fvm/ itself is not ignored.
 # Safest is often to ignore the whole .fvm directory and explicitly add the config file if necessary,
 # but the standard `.fvm/` entry is common if you manually manage the config file commit.
@@ -80,7 +80,5 @@ ehthumbs_vista.db
 !.vscode/extensions.json
 *.code-workspace
 
-# FVM
-.fvm/
 
 keys/

@@ -360,22 +360,6 @@ class _ProjectPageState extends State<ProjectPage> {
       "Initiating add point. Heading: $heading, Project ID: ${_currentProject.id}, Explicit End Point: $setAsEndPoint",
     );
 
-    if (_currentProject.id == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(S.of(context)!.errorSaveProjectBeforeAddingPoints),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
-      // If we bail early, ensure the spinner is stopped if it was started
-      if (mounted && _isAddingPointFromCompassInProgress) {
-        setState(() => _isAddingPointFromCompassInProgress = false);
-      }
-      return;
-    }
-
     // START loading indicator in CompassToolView by setting state
     if (mounted) {
       setState(() {
@@ -411,7 +395,7 @@ class _ProjectPageState extends State<ProjectPage> {
 
           // The OLD end point needs a new, higher ordinal
           final int newOrdinalForOldEndPoint = await _getNextOrdinalNumber(
-            _currentProject.id!,
+            _currentProject.id,
           );
 
           PointModel updatedOldEndPoint = currentEndPointModel.copyWith(
@@ -426,15 +410,15 @@ class _ProjectPageState extends State<ProjectPage> {
           logger.warning(
             "Project's endingPointId ${_currentProject.endingPointId} not found in DB. Proceeding as if no end point.",
           );
-          newPointOrdinal = await _getNextOrdinalNumber(_currentProject.id!);
+          newPointOrdinal = await _getNextOrdinalNumber(_currentProject.id);
         }
       } else {
         // --- Case 2: Setting as new end point OR no existing end point to shuffle ---
-        newPointOrdinal = await _getNextOrdinalNumber(_currentProject.id!);
+        newPointOrdinal = await _getNextOrdinalNumber(_currentProject.id);
       }
 
       final pointFromCompass = PointModel(
-        projectId: _currentProject.id!,
+        projectId: _currentProject.id,
         latitude: position.latitude,
         longitude: position.longitude,
         ordinalNumber: newPointOrdinal,

@@ -14,7 +14,7 @@
    ```bash
    chmod +x scripts/*.sh
    ```
-5. Run setup script: `./scripts/setup-opensource.sh`
+5. Run setup script: `./scripts/setup-opensource.sh` or use Android Studio run configuration or VS Code run configuration to set up the project
 
 ### Daily Development Workflow
 
