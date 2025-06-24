@@ -38,9 +38,10 @@ dependencies:
 
      # Licensed features package
   teleferika_licensed_features:
-    git:
-      url: git@github.com:jlbbooks/teleferika_licenced_packages.git
-      ref: main
+    path: ./licensed_features_package
+#    git:
+#      url: git@github.com:jlbbooks/teleferika_licenced_packages.git
+#      ref: main
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -68,6 +69,10 @@ dependencies:
   share_plus: ^11.0.0
   device_info_plus: ^11.5.0
   shared_preferences: ^2.5.3
+
+#dependency_overrides:
+#  teleferika:
+#    path: .
 
 dev_dependencies:
   flutter_test:
