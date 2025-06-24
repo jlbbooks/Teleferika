@@ -297,7 +297,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
 
       try {
         final int count = await _dbHelper.deletePointById(
-          widget.point.id!,
+          widget.point.id,
         ); // USE THE SHARED METHOD
 
         if (!mounted) return;
@@ -360,11 +360,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
       onWillPop: _onWillPop,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(
-            widget.point.id == null
-                ? 'Add New Point'
-                : 'Edit Point (P${widget.point.ordinalNumber})',
-          ),
+          title: Text('Edit Point (P${widget.point.ordinalNumber})'),
           leading: IconButton(
             // Custom back button to ensure _onWillPop is always triggered
             icon: Icon(Icons.arrow_back),
@@ -379,26 +375,24 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
           ),
           actions: [
             // --- Delete Button ---
-            if (widget.point.id !=
-                null) // Only show delete if the point exists in DB
-              IconButton(
-                icon: _isDeleting
-                    ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2.0,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Theme.of(
-                              context,
-                            ).colorScheme.onPrimary, // Or any contrasting color
-                          ),
+            IconButton(
+              icon: _isDeleting
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.0,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Theme.of(
+                            context,
+                          ).colorScheme.onPrimary, // Or any contrasting color
                         ),
-                      )
-                    : const Icon(Icons.delete_outline),
-                tooltip: 'Delete Point',
-                onPressed: _isLoading || _isDeleting ? null : _deletePoint,
-              ),
+                      ),
+                    )
+                  : const Icon(Icons.delete_outline),
+              tooltip: 'Delete Point',
+              onPressed: _isLoading || _isDeleting ? null : _deletePoint,
+            ),
             IconButton(
               icon: const Icon(Icons.save),
               tooltip: 'Save Point Details',

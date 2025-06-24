@@ -172,7 +172,7 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
                     1)
               : 0;
           final newImage = ImageModel(
-            pointId: widget.point.id!,
+            pointId: widget.point.id,
             ordinalNumber: nextOrdinal,
             imagePath: savedPath,
           );

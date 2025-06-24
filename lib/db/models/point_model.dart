@@ -1,49 +1,57 @@
 // point_model.dart
+// ... other imports
 import 'package:teleferika/utils/uuid_generator.dart';
 
-import 'image_model.dart';
+import 'image_model.dart'; // Ensure ImageModel is imported if not already
 
 class PointModel {
-  static const tableName = 'points';
-  static const columnId = 'id';
-  static const columnProjectId = 'project_id';
-  static const columnLatitude = 'latitude';
-  static const columnLongitude = 'longitude';
-  static const columnOrdinalNumber = 'ordinal_number';
-  static const columnNote = 'note';
-  static const columnHeading = 'heading';
-  static const columnTimestamp = 'timestamp';
+  String id;
+  String projectId;
+  double latitude;
+  double longitude;
+  double? altitude; // New optional altitude field
+  int ordinalNumber;
+  String? note;
+  double? heading;
+  DateTime? timestamp;
+  List<ImageModel> images;
 
-  final String? id;
-  final String projectId;
-  final double latitude;
-  final double longitude;
-  final int ordinalNumber;
-  final String? note;
-  final double? heading;
-  final DateTime? timestamp;
-  final List<ImageModel> images;
+  // Database table and column names
+  static const String tableName = 'points';
+  static const String columnId = 'id';
+  static const String columnProjectId = 'project_id';
+  static const String columnLatitude = 'latitude';
+  static const String columnLongitude = 'longitude';
+  static const String columnAltitude = 'altitude'; // New column name
+  static const String columnOrdinalNumber = 'ordinal_number';
+  static const String columnNote = 'note';
+  static const String columnHeading = 'heading';
+  static const String columnTimestamp = 'timestamp';
 
   PointModel({
-    String? id, // Parameter for id
+    String? id,
     required this.projectId,
     required this.latitude,
     required this.longitude,
+    this.altitude, // Add to constructor
     required this.ordinalNumber,
     this.note,
     this.heading,
     this.timestamp,
-    this.images = const [],
-  }) : id = id ?? generateUuid(); // Generate UUID if id is null
+    List<ImageModel>? images,
+  }) : this.id = id ?? generateUuid(),
+       this.images = images ?? [];
 
   PointModel copyWith({
-    String? id, // Changed
-    String? projectId, // Changed
+    String? id,
+    String? projectId,
     double? latitude,
     double? longitude,
+    double? altitude, // Add to copyWith
+    bool clearAltitude = false, // Option to clear altitude
     int? ordinalNumber,
     String? note,
-    bool clearNote = false, // Assuming you might want this pattern
+    bool clearNote = false,
     double? heading,
     bool clearHeading = false,
     DateTime? timestamp,
@@ -55,20 +63,24 @@ class PointModel {
       projectId: projectId ?? this.projectId,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
+      altitude: clearAltitude
+          ? null
+          : altitude ?? this.altitude, // Handle clearAltitude
       ordinalNumber: ordinalNumber ?? this.ordinalNumber,
-      note: clearNote ? null : (note ?? this.note),
-      heading: clearHeading ? null : (heading ?? this.heading),
-      timestamp: clearTimestamp ? null : (timestamp ?? this.timestamp),
+      note: clearNote ? null : note ?? this.note,
+      heading: clearHeading ? null : heading ?? this.heading,
+      timestamp: clearTimestamp ? null : timestamp ?? this.timestamp,
       images: images ?? this.images,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      columnId: id, // String
-      columnProjectId: projectId, // String
+      columnId: id,
+      columnProjectId: projectId,
       columnLatitude: latitude,
       columnLongitude: longitude,
+      columnAltitude: altitude, // Add to toMap
       columnOrdinalNumber: ordinalNumber,
       columnNote: note,
       columnHeading: heading,
@@ -78,77 +90,61 @@ class PointModel {
 
   factory PointModel.fromMap(
     Map<String, dynamic> map, {
-    List<ImageModel> images = const [],
+    List<ImageModel>? images,
   }) {
     return PointModel(
-      id: map[columnId] as String?, // Cast to String
-      projectId: map[columnProjectId] as String, // Cast to String
+      id: map[columnId] as String,
+      projectId: map[columnProjectId] as String,
       latitude: map[columnLatitude] as double,
       longitude: map[columnLongitude] as double,
+      altitude: map[columnAltitude] as double?, // Add to fromMap
       ordinalNumber: map[columnOrdinalNumber] as int,
       note: map[columnNote] as String?,
       heading: map[columnHeading] as double?,
       timestamp: map[columnTimestamp] != null
           ? DateTime.tryParse(map[columnTimestamp] as String)
           : null,
-      images: images,
+      images: images ?? [],
     );
   }
 
   @override
   String toString() {
-    return 'PointModel{id: $id, projectId: $projectId, lat: $latitude, lon: $longitude, order: $ordinalNumber, note: $note, heading: $heading, timestamp: $timestamp, images: ${images.length}}';
+    return 'PointModel(id: $id, projectId: $projectId, latitude: $latitude, longitude: $longitude, altitude: $altitude, ordinalNumber: $ordinalNumber, note: $note, heading: $heading, timestamp: $timestamp, images: ${images.length})';
   }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    // For list comparison, you might need a deep equality check if order and content matter.
-    // Flutter's foundation.listEquals can be used.
-    // For simplicity here, I'm checking instance equality of the list reference and length,
-    // but for true value equality of lists of complex objects, more is needed.
-    // However, usually for == on entities, primary fields are sufficient.
-    // The list of images often changes independently and might not be part of the core equality.
-    // Let's include basic list equality for now.
-    // Consider if you need a more robust list comparison (e.g., listEquals from package:collection/collection.dart)
 
-    // For a simple check, we can compare the string representations of the image lists
-    // or rely on the fact that if all other fields are the same, and if images are
-    // loaded and managed consistently, they *should* be the same if the point is the same.
-    // A robust list equality is tricky here without external packages or more code.
-    // Let's stick to comparing core fields for now, as image lists might be dynamically loaded.
-    // You can add a listEquals check if it's crucial for your use case of ==.
-    // Example: import 'package:collection/collection.dart'; // and then listEquals(other.images, images)
-    // For now, keeping it simpler:
     return other is PointModel &&
         other.id == id &&
         other.projectId == projectId &&
         other.latitude == latitude &&
         other.longitude == longitude &&
+        other.altitude == altitude && // Add to equality check
         other.ordinalNumber == ordinalNumber &&
         other.note == note &&
         other.heading == heading &&
-        ((other.timestamp == null && timestamp == null) ||
-            (other.timestamp != null &&
-                timestamp != null &&
-                other.timestamp!.isAtSameMomentAs(timestamp!))) &&
-        // Basic check for images; for deep equality, use collection.listEquals
-        other.images.length == images.length; // Simple length check for now
-    // If deep equality needed: listEquals(other.images, images) (requires import)
+        other.timestamp == timestamp &&
+        images.length ==
+            other.images.length; // Simplified images check for brevity
+    // For deep list equality, consider using listEquals from package:collection
   }
 
   @override
   int get hashCode {
     return Object.hash(
-      id, // String
-      projectId, // String
+      id,
+      projectId,
       latitude,
       longitude,
+      altitude, // Add to hashCode
       ordinalNumber,
       note,
       heading,
       timestamp,
-      images.length,
+      images.length, // Simplified images hash for brevity
     );
   }
 }

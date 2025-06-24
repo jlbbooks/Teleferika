@@ -354,6 +354,126 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Point P{pointOrdinal} set as end.'**
   String pointSetAsEndSnackbar(String pointOrdinal);
+
+  /// Title for the export data page/dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Project Data'**
+  String get export_project_data_title;
+
+  /// Label showing the name of the project being exported.
+  ///
+  /// In en, this message translates to:
+  /// **'Project: {projectName}'**
+  String export_page_project_name_label(String projectName);
+
+  /// Label showing the number of points that will be exported.
+  ///
+  /// In en, this message translates to:
+  /// **'{count,plural, =0{No points found for export.} =1{{count} point found.} other{{count} points found.}}'**
+  String export_page_points_count_label(int count);
+
+  /// Label for the format selection dropdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Export Format:'**
+  String get export_page_select_format_label;
+
+  /// Label for the export format dropdown itself.
+  ///
+  /// In en, this message translates to:
+  /// **'Format'**
+  String get export_format_dropdown_label;
+
+  /// Text for the button that initiates sharing the exported file.
+  ///
+  /// In en, this message translates to:
+  /// **'Share File'**
+  String get export_page_share_button;
+
+  /// Text for the button that initiates saving the exported file to local device storage.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Locally'**
+  String get export_page_save_locally_button;
+
+  /// Error message shown when the export process encounters an issue.
+  ///
+  /// In en, this message translates to:
+  /// **'Export failed. Please try again.'**
+  String get export_failed;
+
+  /// Success message shown after the file is ready for sharing via the share dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'File prepared for sharing.'**
+  String get file_shared_successfully;
+
+  /// No description provided for @file_saved_successfully.
+  ///
+  /// In en, this message translates to:
+  /// **'File saved successfully'**
+  String get file_saved_successfully;
+
+  /// Message shown if the user cancels the save dialog or if saving fails for other reasons.
+  ///
+  /// In en, this message translates to:
+  /// **'File save was cancelled or failed.'**
+  String get file_save_cancelled_or_failed;
+
+  /// Tooltip for the export button/icon in the project page app bar.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Project Data'**
+  String get export_project_data_tooltip;
+
+  /// Title for the dialog warning about unsaved changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsaved Changes'**
+  String get unsaved_changes_title;
+
+  /// Message in the dialog prompting the user to save before exporting due to unsaved changes.
+  ///
+  /// In en, this message translates to:
+  /// **'You have unsaved changes. Please save the project before exporting to ensure all data is included.'**
+  String get unsaved_changes_export_message;
+
+  /// Generic label for a save button, used in the unsaved changes dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save_button_label;
+
+  /// Generic label for a cancel button in dialogs.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get dialog_cancel;
+
+  /// Error message if export is attempted but the project data isn't available.
+  ///
+  /// In en, this message translates to:
+  /// **'Project not loaded. Cannot export data.'**
+  String get project_not_loaded_cannot_export;
+
+  /// Error message if points associated with the project cannot be fetched for export.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading points for export. Please try again.'**
+  String get error_loading_points;
+
+  /// Informational note at the bottom of the export page.
+  ///
+  /// In en, this message translates to:
+  /// **'Note: Ensure you have granted necessary storage permissions if saving locally on mobile devices. Some export formats may not include all data types (e.g., images).'**
+  String get export_page_note_text;
+
+  /// Message shown when trying to export a brand new, never-saved project.
+  ///
+  /// In en, this message translates to:
+  /// **'Please save the new project first to enable export.'**
+  String get please_save_project_first_to_export;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

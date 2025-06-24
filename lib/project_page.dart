@@ -13,6 +13,7 @@ import 'package:teleferika/project_tools/points_tool_view.dart';
 import 'db/database_helper.dart'; // Ensure correct path
 import 'db/models/point_model.dart';
 import 'db/models/project_model.dart'; // Ensure correct path
+import 'export/export_page.dart';
 import 'l10n/app_localizations.dart';
 import 'logger.dart';
 
@@ -160,7 +161,7 @@ class _ProjectPageState extends State<ProjectPage> {
     setStateIfMounted(() => _isLoading = true);
     try {
       final projectDataFromDb = await _dbHelper.getProjectById(
-        _currentProject.id!,
+        _currentProject.id,
       );
       if (projectDataFromDb != null && mounted) {
         setState(() {
@@ -548,8 +549,8 @@ class _ProjectPageState extends State<ProjectPage> {
     }
   }
 
-  Future<void> _saveProject() async {
-    if (_isLoading) return;
+  Future<bool?> _saveProject() async {
+    if (_isLoading) return null;
 
     if (_projectFormKey.currentState?.validate() ?? false) {
       _projectFormKey.currentState!.save();
@@ -655,6 +656,7 @@ class _ProjectPageState extends State<ProjectPage> {
         ),
       );
     }
+    return _projectWasSuccessfullySaved;
   }
 
   Future<void> _confirmDeleteProject() async {
@@ -748,8 +750,106 @@ class _ProjectPageState extends State<ProjectPage> {
     }
   }
 
+  void _navigateToExportPage() {
+    // Get the S instance for localization
+    final s = S.of(context);
+    if (s == null) {
+      // This should ideally not happen if localizations are set up correctly.
+      // Fallback or log an error.
+      logger.warning(
+        "S.of(context) is null in _navigateToExportPage. Using default strings.",
+      );
+      // As a minimal fallback, you might proceed without localized strings,
+      // or show an error and prevent navigation.
+      // For this example, we'll use hardcoded defaults if 's' is null,
+      // but in a real app, you'd want a more robust fallback.
+    }
+
+    if (_currentProject != null) {
+      if (_hasUnsavedChanges && !_isEffectivelyNew) {
+        showDialog(
+          context: context,
+          builder: (BuildContext dialogContext) {
+            // Use dialogContext
+            final dialogS = S.of(
+              dialogContext,
+            ); // Get S instance for dialog's context
+
+            return AlertDialog(
+              title: Text(dialogS?.unsaved_changes_title ?? 'Unsaved Changes'),
+              content: Text(
+                dialogS?.unsaved_changes_export_message ??
+                    'You have unsaved changes. Please save the project before exporting to ensure all data is included.',
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: Text(dialogS?.dialog_cancel ?? 'Cancel'),
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                  },
+                ),
+                TextButton(
+                  child: Text(dialogS?.save_button_label ?? 'Save'),
+                  onPressed: () async {
+                    Navigator.of(dialogContext).pop(); // Close the dialog first
+                    bool saved = await _saveProject() ?? false;
+                    if (saved && mounted) {
+                      // Check 'mounted' again after async operation
+                      Navigator.push(
+                        context, // Use the original page context for navigation
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              ExportPage(project: _currentProject),
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      } else if (_currentProject!.id.isEmpty && _isEffectivelyNew) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              s?.please_save_project_first_to_export ??
+                  'Please save the new project first to enable export.',
+            ),
+          ),
+        );
+      } else {
+        // Proceed to export page if no unsaved changes for an existing project,
+        // or if it's a new project that's already been saved (has an ID).
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ExportPage(project: _currentProject!),
+          ),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            s?.project_not_loaded_cannot_export ??
+                'Project not loaded. Cannot export data.',
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final s = S.of(context); // Get S instance for localizations
+    if (s == null) {
+      logger.warning(
+        "S.of(context) is null in ProjectPage build. UI may not be localized.",
+      );
+      // Handle fallback if necessary, or proceed with default strings in tooltips/text
+    }
+
     String formattedProjectDate;
     if (_projectDate != null) {
       // Use a common, locale-aware skeleton.
@@ -771,6 +871,18 @@ class _ProjectPageState extends State<ProjectPage> {
           ).add_Hm().format(_lastUpdateTime!) // Also localize time
         : 'Not yet saved';
 
+    // Determine the title based on whether it's a new project or editing an existing one
+    String appBarTitle;
+    if (_isEffectivelyNew) {
+      appBarTitle = 'New Project';
+    } else {
+      // Assuming 'edit_project_title' is a key in your ARB file.
+      // You might want a different key if the project name is part of the title.
+      // For example: "edit_project_title_named": "Edit: {projectName}"
+      // Then: s.edit_project_title_named(_currentProject?.name ?? '')
+      appBarTitle = _currentProject.name;
+    }
+
     // For the TabBar, you'll need a TabController.
     // The easiest way is to wrap your Scaffold with DefaultTabController.
     return DefaultTabController(
@@ -778,13 +890,25 @@ class _ProjectPageState extends State<ProjectPage> {
       child: Scaffold(
         key: _scaffoldKey,
         appBar: AppBar(
-          title: Text(_isEffectivelyNew ? 'New Project' : _currentProject.name),
+          title: Text(appBarTitle),
           actions: [
             if (!_isEffectivelyNew) // Show delete only for existing projects
               IconButton(
                 icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                 onPressed: _isLoading ? null : _confirmDeleteProject,
                 tooltip: 'Delete Project',
+              ),
+            if (!_isEffectivelyNew)
+              IconButton(
+                icon: const Icon(
+                  Icons.output,
+                ), // Or Icons.ios_share, Icons.file_upload
+                // Using the localized string for the tooltip
+                tooltip:
+                    s?.export_project_data_tooltip ?? 'Export Project Data',
+                onPressed: (_isEffectivelyNew || _isLoading)
+                    ? null // Disable if project is new and never saved, or if loading
+                    : _navigateToExportPage,
               ),
             IconButton(
               icon: Icon(_hasUnsavedChanges ? Icons.save : Icons.save_outlined),

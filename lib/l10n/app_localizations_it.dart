@@ -164,4 +164,86 @@ class SIt extends S {
   String pointSetAsEndSnackbar(String pointOrdinal) {
     return 'Punto P$pointOrdinal impostato come fine.';
   }
+
+  @override
+  String get export_project_data_title => 'Export Project Data';
+
+  @override
+  String export_page_project_name_label(String projectName) {
+    return 'Project: $projectName';
+  }
+
+  @override
+  String export_page_points_count_label(int count) {
+    final intl.NumberFormat countNumberFormat = intl.NumberFormat.compact(
+      locale: localeName,
+    );
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString points found.',
+      one: '$countString point found.',
+      zero: 'No points found for export.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get export_page_select_format_label => 'Select Export Format:';
+
+  @override
+  String get export_format_dropdown_label => 'Format';
+
+  @override
+  String get export_page_share_button => 'Share File';
+
+  @override
+  String get export_page_save_locally_button => 'Save Locally';
+
+  @override
+  String get export_failed => 'Export failed. Please try again.';
+
+  @override
+  String get file_shared_successfully => 'File prepared for sharing.';
+
+  @override
+  String get file_saved_successfully => 'File saved successfully';
+
+  @override
+  String get file_save_cancelled_or_failed =>
+      'File save was cancelled or failed.';
+
+  @override
+  String get export_project_data_tooltip => 'Export Project Data';
+
+  @override
+  String get unsaved_changes_title => 'Unsaved Changes';
+
+  @override
+  String get unsaved_changes_export_message =>
+      'You have unsaved changes. Please save the project before exporting to ensure all data is included.';
+
+  @override
+  String get save_button_label => 'Save';
+
+  @override
+  String get dialog_cancel => 'Cancel';
+
+  @override
+  String get project_not_loaded_cannot_export =>
+      'Project not loaded. Cannot export data.';
+
+  @override
+  String get error_loading_points =>
+      'Error loading points for export. Please try again.';
+
+  @override
+  String get export_page_note_text =>
+      'Note: Ensure you have granted necessary storage permissions if saving locally on mobile devices. Some export formats may not include all data types (e.g., images).';
+
+  @override
+  String get please_save_project_first_to_export =>
+      'Please save the new project first to enable export.';
 }

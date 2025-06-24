@@ -12,7 +12,7 @@ class ProjectModel {
   static const String columnLastUpdate = 'last_update';
   static const String columnDate = 'date';
 
-  final String? id;
+  final String id;
   final String name;
   final String? note;
   final String? startingPointId;

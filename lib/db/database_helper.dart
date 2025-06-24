@@ -14,7 +14,7 @@ import 'models/project_model.dart';
 class DatabaseHelper {
   static const _databaseName = "Photogrammetry.db";
 
-  static const _databaseVersion = 6; // Incremented due to schema change
+  static const _databaseVersion = 7; // Incremented due to schema change
 
   DatabaseHelper._privateConstructor();
   static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
@@ -68,11 +68,12 @@ class DatabaseHelper {
       ${PointModel.columnProjectId} TEXT NOT NULL,
       ${PointModel.columnLatitude} REAL NOT NULL,
       ${PointModel.columnLongitude} REAL NOT NULL,
+      ${PointModel.columnAltitude} REAL, -- Added new altitude column (nullable REAL)
       ${PointModel.columnOrdinalNumber} INTEGER NOT NULL,
       ${PointModel.columnNote} TEXT,
-      ${PointModel.columnHeading} REAL,         
-      ${PointModel.columnTimestamp} TEXT,       
-    FOREIGN KEY (${PointModel.columnProjectId}) REFERENCES ${ProjectModel.tableName} (${ProjectModel.columnId}) ON DELETE CASCADE
+      ${PointModel.columnHeading} REAL,
+      ${PointModel.columnTimestamp} TEXT,
+      FOREIGN KEY (${PointModel.columnProjectId}) REFERENCES ${ProjectModel.tableName} (${ProjectModel.columnId}) ON DELETE CASCADE
     )
     ''');
     // Add index for faster querying by project_id and sorting by ordinal_number
@@ -322,6 +323,27 @@ class DatabaseHelper {
         );
       }); // End transaction
     }
+    // ---- Migration to Version 7: Add altitude to points table ----
+    if (oldVersion < 7) {
+      logger.info(
+        "Applying migration for version 7: Adding ${PointModel.columnAltitude} to ${PointModel.tableName}",
+      );
+      try {
+        await db.execute(
+          'ALTER TABLE ${PointModel.tableName} ADD COLUMN ${PointModel.columnAltitude} REAL',
+        );
+        logger.info(
+          "Successfully added ${PointModel.columnAltitude} column to ${PointModel.tableName}.",
+        );
+      } catch (e) {
+        logger.severe(
+          "Error adding ${PointModel.columnAltitude} column to ${PointModel.tableName}. "
+          "This might happen if the column already exists due to a partial previous migration. Error: $e",
+        );
+        // Depending on your error handling strategy, you might re-throw or just log.
+        // If the column already exists, this is often not a critical failure for this specific migration.
+      }
+    }
     logger.info("Database upgrade process complete.");
   }
 
@@ -489,19 +511,10 @@ class DatabaseHelper {
 
   Future<String> insertPoint(PointModel point) async {
     final db = await database;
-    String pointId;
 
     await db.transaction((txn) async {
       // 1. Insert the PointModel (point.toMap() does not include images)
-      // Ensure point.id is generated if not provided, or handle it as your model does.
-      // If PointModel constructor already assigns a UUID, point.id will be non-null.
-      if (point.id == null) {
-        // This should not happen if your PointModel constructor handles ID generation
-        throw ArgumentError(
-          "PointModel must have an ID before insertion with images.",
-        );
-      }
-      pointId = point.id!;
+      point.id = point.id;
 
       await txn.insert(
         PointModel.tableName,
@@ -513,9 +526,9 @@ class DatabaseHelper {
       for (final image in point.images) {
         // Ensure image.pointId matches the point.id if it wasn't already set
         // (though it should be if created correctly in PhotoManagerWidget)
-        final imageToInsert = image.pointId == pointId
+        final imageToInsert = image.pointId == point.id
             ? image
-            : image.copyWith(pointId: pointId);
+            : image.copyWith(pointId: point.id);
         await txn.insert(
           ImageModel.tableName,
           imageToInsert.toMap(),
@@ -525,7 +538,7 @@ class DatabaseHelper {
     });
     // After inserting, update the project's lastUpdate timestamp
     await _updateProjectTimestamp(point.projectId);
-    return point.id!; // Return the generated or existing point ID
+    return point.id; // Return the generated or existing point ID
   }
 
   // You might deprecate or rename the old insertPoint if all new points should handle images.
@@ -535,11 +548,8 @@ class DatabaseHelper {
     Database db = await instance.database;
     final projectToInsert = project.copyWith(lastUpdate: DateTime.now());
     // projectToInsert.id is already a UUID string
-    if (projectToInsert.id == null) {
-      throw ArgumentError("ProjectModel must have a UUID id before insertion.");
-    }
     await db.insert(ProjectModel.tableName, projectToInsert.toMap());
-    return projectToInsert.id!;
+    return projectToInsert.id;
   }
 
   Future<int> updatePoint(PointModel point) async {

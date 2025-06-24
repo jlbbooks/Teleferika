@@ -132,5 +132,94 @@
         "type": "String"
       }
     }
+  },
+  "export_project_data_title": "Export Project Data",
+  "@export_project_data_title": {
+    "description": "Title for the export data page/dialog."
+  },
+  "export_page_project_name_label": "Project: {projectName}",
+  "@export_page_project_name_label": {
+    "description": "Label showing the name of the project being exported.",
+    "placeholders": {
+      "projectName": {
+        "type": "String",
+        "example": "My Awesome Project"
+      }
+    }
+  },
+  "export_page_points_count_label": "{count,plural, =0{No points found for export.} =1{{count} point found.} other{{count} points found.}}",
+  "@export_page_points_count_label": {
+    "description": "Label showing the number of points that will be exported.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "compact"
+      }
+    }
+  },
+  "export_page_select_format_label": "Select Export Format:",
+  "@export_page_select_format_label": {
+    "description": "Label for the format selection dropdown."
+  },
+  "export_format_dropdown_label": "Format",
+  "@export_format_dropdown_label": {
+    "description": "Label for the export format dropdown itself."
+  },
+  "export_page_share_button": "Share File",
+  "@export_page_share_button": {
+    "description": "Text for the button that initiates sharing the exported file."
+  },
+  "export_page_save_locally_button": "Save Locally",
+  "@export_page_save_locally_button": {
+    "description": "Text for the button that initiates saving the exported file to local device storage."
+  },
+  "export_failed": "Export failed. Please try again.",
+  "@export_failed": {
+    "description": "Error message shown when the export process encounters an issue."
+  },
+  "file_shared_successfully": "File prepared for sharing.",
+  "@file_shared_successfully": {
+    "description": "Success message shown after the file is ready for sharing via the share dialog."
+  },
+  "file_saved_successfully": "File saved successfully",
+  "file_save_cancelled_or_failed": "File save was cancelled or failed.",
+  "@file_save_cancelled_or_failed": {
+    "description": "Message shown if the user cancels the save dialog or if saving fails for other reasons."
+  },
+  "export_project_data_tooltip": "Export Project Data",
+  "@export_project_data_tooltip": {
+    "description": "Tooltip for the export button/icon in the project page app bar."
+  },
+  "unsaved_changes_title": "Unsaved Changes",
+  "@unsaved_changes_title": {
+    "description": "Title for the dialog warning about unsaved changes."
+  },
+  "unsaved_changes_export_message": "You have unsaved changes. Please save the project before exporting to ensure all data is included.",
+  "@unsaved_changes_export_message": {
+    "description": "Message in the dialog prompting the user to save before exporting due to unsaved changes."
+  },
+  "save_button_label": "Save",
+  "@save_button_label": {
+    "description": "Generic label for a save button, used in the unsaved changes dialog."
+  },
+  "dialog_cancel": "Cancel",
+  "@dialog_cancel": {
+    "description": "Generic label for a cancel button in dialogs."
+  },
+  "project_not_loaded_cannot_export": "Project not loaded. Cannot export data.",
+  "@project_not_loaded_cannot_export": {
+    "description": "Error message if export is attempted but the project data isn't available."
+  },
+  "error_loading_points": "Error loading points for export. Please try again.",
+  "@error_loading_points": {
+    "description": "Error message if points associated with the project cannot be fetched for export."
+  },
+  "export_page_note_text": "Note: Ensure you have granted necessary storage permissions if saving locally on mobile devices. Some export formats may not include all data types (e.g., images).",
+  "@export_page_note_text": {
+    "description": "Informational note at the bottom of the export page."
+  },
+  "please_save_project_first_to_export": "Please save the new project first to enable export.",
+  "@please_save_project_first_to_export": {
+    "description": "Message shown when trying to export a brand new, never-saved project."
   }
 }
