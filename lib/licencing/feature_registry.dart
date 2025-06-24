@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:teleferika_licensed_features/licensed_features.dart';
 
-// abstract class FeaturePlugin {
-//   String get name;
-//   void initialize();
-//   Widget? buildWidget(String widgetType);
-// }
+abstract class FeaturePlugin {
+  String get name;
+  void initialize();
+  Widget? buildWidget(String widgetType);
+}
 
 class FeatureRegistry {
   static final List<FeaturePlugin> _plugins = [];
@@ -91,7 +90,7 @@ class CoreFeaturesPlugin extends FeaturePlugin {
   @override
   Widget? buildWidget(String widgetType) {
     switch (widgetType) {
-      case 'free_banner':
+      case 'Opensource_banner':
         return Container(
           padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -99,7 +98,7 @@ class CoreFeaturesPlugin extends FeaturePlugin {
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
-            '💡 Free Version - Upgrade for Premium Features!',
+            '💡 Opensource Version - Upgrade for Premium Features!',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
         );

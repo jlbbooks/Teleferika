@@ -1,6 +1,11 @@
 # Teleferika
 
-## Note per gli sviluppatori
+## 🚀 Contributors
+
+Please refer to our [Contribution Guidelines](./CONTRIBUTING.md)
+   
+
+## Note per gli sviluppatori JLB
 
 * Per la chiave di firma Android, creare una cartella `keys` e inserire il file delle chiavi `jlb-keystore.jks` e un file `keystore.properties` nella cartella.
 

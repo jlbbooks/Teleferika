@@ -1,0 +1,12 @@
+# Default ignored files
+/shelf/
+/libraries/
+/workspace.xml
+*.xml
+!runConfigurations/*
+!tools/*
+!vcs.xml
+!codeStyles/*
+
+# IntelliJ / Android Studio
+.idea/*

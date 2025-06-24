@@ -1,0 +1,10 @@
+{
+  "dart.flutterRunAdditionalArgs": [],
+  "dart.debugExtensionVersion": "3.50.0",
+  "files.watcherExclude": {
+    "**/build/**": true,
+    "**/.dart_tool/**": true
+  },
+  "dart.showDartDeveloperLogs": false,
+  "dart.openDevTools": "flutter"
+}

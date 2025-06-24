@@ -1,0 +1,29 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Flutter (Open Source)",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "setup-opensource",
+      "program": "lib/main.dart",
+      "args": ["--dart-define=FLAVOR=opensource"],
+      "console": "debugConsole"
+    },
+    {
+      "name": "Flutter (Full Version)",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "setup-full",
+      "program": "lib/main.dart",
+      "args": ["--dart-define=FLAVOR=full"],
+      "console": "debugConsole"
+    },
+    {
+      "name": "Flutter (Current Config)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart"
+    }
+  ]
+}

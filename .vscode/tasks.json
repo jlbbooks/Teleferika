@@ -1,0 +1,79 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "setup-opensource",
+      "type": "shell",
+      "command": "./scripts/setup-flavor.sh",
+      "args": ["opensource"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "windows": {
+        "command": "scripts\\setup-flavor.bat"
+      }
+    },
+    {
+      "label": "setup-full",
+      "type": "shell",
+      "command": "./scripts/setup-flavor.sh",
+      "args": ["full"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "showReuseMessage": true,
+        "clear": false
+      },
+      "problemMatcher": [],
+      "windows": {
+        "command": "scripts\\setup-flavor.bat"
+      }
+    },
+    {
+      "label": "clean-setup-opensource",
+      "type": "shell",
+      "command": "./scripts/setup-flavor.sh",
+      "args": ["opensource", "true"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "windows": {
+        "command": "scripts\\setup-flavor.bat"
+      }
+    },
+    {
+      "label": "clean-setup-full",
+      "type": "shell",
+      "command": "./scripts/setup-flavor.sh",
+      "args": ["full", "true"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": [],
+      "windows": {
+        "command": "scripts\\setup-flavor.bat"
+      }
+    }
+  ]
+}
+
+
