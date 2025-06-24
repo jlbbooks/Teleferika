@@ -43,13 +43,17 @@ case $PLATFORM in
         echo "Building APK..."
         flutter build apk --release
         ;;
+    "appbundle")
+        echo "Building appbundle..."
+        flutter build appbundle --release
+        ;;
     "ios")
         echo "Building iOS..."
         flutter build ios --release
         ;;
     *)
         echo "Unknown platform: $PLATFORM"
-        echo "Supported platforms: apk, ios"
+        echo "Supported platforms: apk, bundle, ios"
         exit 1
         ;;
 esac
