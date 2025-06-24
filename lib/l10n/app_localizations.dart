@@ -474,6 +474,24 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Please save the new project first to enable export.'**
   String get please_save_project_first_to_export;
+
+  /// No description provided for @export_requires_licence_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Licence Required for Export'**
+  String get export_requires_licence_title;
+
+  /// No description provided for @export_requires_licence_message.
+  ///
+  /// In en, this message translates to:
+  /// **'This feature requires an active licence. Please import a valid licence file to proceed.'**
+  String get export_requires_licence_message;
+
+  /// No description provided for @action_import_licence.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Licence'**
+  String get action_import_licence;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

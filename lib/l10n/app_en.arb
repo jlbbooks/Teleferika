@@ -221,5 +221,8 @@
   "please_save_project_first_to_export": "Please save the new project first to enable export.",
   "@please_save_project_first_to_export": {
     "description": "Message shown when trying to export a brand new, never-saved project."
-  }
+  },
+  "export_requires_licence_title": "Licence Required for Export",
+   "export_requires_licence_message": "This feature requires an active licence. Please import a valid licence file to proceed.",
+   "action_import_licence": "Import Licence"
 }

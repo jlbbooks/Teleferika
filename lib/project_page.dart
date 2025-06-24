@@ -6,6 +6,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
+import 'package:teleferika/licencing/licence_service.dart';
 import 'package:teleferika/project_tools/compass_tool_view.dart';
 import 'package:teleferika/project_tools/map_tool_view.dart';
 import 'package:teleferika/project_tools/points_tool_view.dart';
@@ -99,6 +100,9 @@ class _ProjectPageState extends State<ProjectPage> {
   String? _newlyAddedPointId;
   bool _projectWasSuccessfullySaved = false;
 
+  final LicenceService _licenceService =
+      LicenceService.instance; // Get instance
+
   @override
   void initState() {
     super.initState();
@@ -136,6 +140,103 @@ class _ProjectPageState extends State<ProjectPage> {
         _hasUnsavedChanges = true;
       });
     }
+  }
+
+  Future<void> _checkLicenceAndProceedToExport() async {
+    final s = S.of(context);
+    bool licenceIsValid = await _licenceService.isLicenceValid();
+
+    if (!licenceIsValid) {
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (BuildContext dialogContext) {
+            final dialogS = S.of(
+              dialogContext,
+            ); // Get S instance for dialog's context
+            return AlertDialog(
+              title: Text(
+                dialogS?.export_requires_licence_title ?? "Licence Required",
+              ),
+              content: Text(
+                dialogS?.export_requires_licence_message ??
+                    "Exporting project data requires an active licence. Please import a valid licence.",
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: Text(dialogS?.dialog_cancel ?? 'Cancel'),
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                  },
+                ),
+                TextButton(
+                  child: Text(
+                    dialogS?.action_import_licence ?? 'Import Licence',
+                  ),
+                  onPressed: () async {
+                    Navigator.of(dialogContext).pop(); // Close current dialog
+                    // You might want to navigate to a dedicated licence page or trigger the import flow from here
+                    // For simplicity, let's assume we can trigger the import flow similarly to ProjectsListPage
+                    // This might involve passing a callback or navigating back to ProjectsListPage to handle it
+                    // Or, call _licenceService.importLicenceFromFile() directly if UI context is suitable
+                    // For now, let's just log and inform the user to do it from the main page
+                    try {
+                      final importedLicence = await _licenceService
+                          .importLicenceFromFile();
+                      if (mounted) {
+                        if (importedLicence != null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Licence for ${importedLicence.email} imported! Try exporting again.',
+                              ),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Licence import cancelled or failed.',
+                              ),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                        }
+                      }
+                    } on FormatException catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(e.message),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Error importing licence: $e. Please try from the main page.',
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      }
+      return; // Stop export if licence is not valid
+    }
+
+    // If licence is valid, proceed to the actual export navigation
+    _navigateToExportPage(); // Your existing method
   }
 
   void _switchToTab(ProjectPageTab tab) {
@@ -908,7 +1009,7 @@ class _ProjectPageState extends State<ProjectPage> {
                     s?.export_project_data_tooltip ?? 'Export Project Data',
                 onPressed: (_isEffectivelyNew || _isLoading)
                     ? null // Disable if project is new and never saved, or if loading
-                    : _navigateToExportPage,
+                    : _checkLicenceAndProceedToExport,
               ),
             IconButton(
               icon: Icon(_hasUnsavedChanges ? Icons.save : Icons.save_outlined),

@@ -246,4 +246,14 @@ class SEn extends S {
   @override
   String get please_save_project_first_to_export =>
       'Please save the new project first to enable export.';
+
+  @override
+  String get export_requires_licence_title => 'Licence Required for Export';
+
+  @override
+  String get export_requires_licence_message =>
+      'This feature requires an active licence. Please import a valid licence file to proceed.';
+
+  @override
+  String get action_import_licence => 'Import Licence';
 }

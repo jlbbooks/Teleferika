@@ -2,6 +2,8 @@ import 'dart:async'; // For Timer
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:teleferika/licencing/licence_model.dart';
+import 'package:teleferika/licencing/licence_service.dart';
 import 'package:teleferika/project_page.dart';
 
 import 'app_config.dart';
@@ -29,10 +31,137 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
   // Keep a local copy of projects to manipulate for instant UI updates
   List<ProjectModel> _currentProjects = [];
 
+  final LicenceService _licenceService =
+      LicenceService.instance; // Get LicenceService instance
+  Licence? _activeLicence; // To hold the loaded licence status
+
   @override
   void initState() {
     super.initState();
     _loadProjects();
+    _loadActiveLicence();
+  }
+
+  Future<void> _loadActiveLicence() async {
+    _activeLicence = await _licenceService.loadLicence();
+    if (mounted) {
+      setState(() {
+        // TODO: Trigger a rebuild if you want to display licence info or change UI based on it
+      });
+    }
+  }
+
+  void _showLicenceInfoDialog() {
+    // Reload to ensure we have the latest
+    _licenceService.currentLicence.then((licence) {
+      if (!mounted) return;
+      setState(() {
+        _activeLicence = licence;
+      });
+
+      String title = "Licence Information";
+      String contentText;
+      List<Widget> actions = [
+        TextButton(
+          child: const Text("Close"),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ];
+
+      if (_activeLicence != null && _activeLicence!.isValid) {
+        contentText =
+            "Licensed to: ${_activeLicence!.email}\n"
+            "Status: Active\n"
+            "Valid Until: ${DateFormat.yMMMd().add_Hm().format(_activeLicence!.validUntil.toLocal())}";
+      } else if (_activeLicence != null && !_activeLicence!.isValid) {
+        contentText =
+            "Licensed to: ${_activeLicence!.email}\n"
+            "Status: Expired\n"
+            "Valid Until: ${DateFormat.yMMMd().add_Hm().format(_activeLicence!.validUntil.toLocal())}\n\n"
+            "Please import a valid licence.";
+        actions.insert(
+          0,
+          TextButton(
+            child: const Text("Import New Licence"),
+            onPressed: () {
+              Navigator.of(context).pop(); // Close current dialog
+              _handleImportLicence();
+            },
+          ),
+        );
+      } else {
+        contentText =
+            "No active licence found. Please import a licence file to unlock premium features.";
+        actions.insert(
+          0,
+          TextButton(
+            child: const Text("Import Licence"),
+            onPressed: () {
+              Navigator.of(context).pop(); // Close current dialog
+              _handleImportLicence();
+            },
+          ),
+        );
+      }
+
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(title),
+            content: Text(contentText),
+            actions: actions,
+          );
+        },
+      );
+    });
+  }
+
+  Future<void> _handleImportLicence() async {
+    try {
+      final importedLicence = await _licenceService.importLicenceFromFile();
+      if (mounted) {
+        if (importedLicence != null) {
+          setState(() {
+            _activeLicence = importedLicence; // Update local state
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Licence for ${importedLicence.email} imported successfully!',
+              ),
+              backgroundColor: Colors.green,
+            ),
+          );
+          _showLicenceInfoDialog(); // Show updated info
+        } else {
+          // User cancelled or import failed without throwing a specific format exception handled below
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Licence import cancelled or failed.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } on FormatException catch (e) {
+      // Catch specific format exception
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message), backgroundColor: Colors.red),
+        );
+      }
+    } catch (e) {
+      // Catch general exceptions from importLicenceFromFile
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error importing licence: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _loadProjects() {
@@ -412,6 +541,20 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
                       padding: const EdgeInsets.only(right: 8.0),
                       child: Text(version, style: TextStyle(fontSize: 10.0)),
                     ),
+                  IconButton(
+                    icon: Icon(
+                      _activeLicence != null && _activeLicence!.isValid
+                          ? Icons.verified_user
+                          : Icons.security,
+                      color: _activeLicence != null && _activeLicence!.isValid
+                          ? Colors.green
+                          : (_activeLicence != null && !_activeLicence!.isValid
+                                ? Colors.red
+                                : null),
+                    ),
+                    tooltip: "Licence Status / Import",
+                    onPressed: _showLicenceInfoDialog,
+                  ),
                 ],
               ),
               actions: [
