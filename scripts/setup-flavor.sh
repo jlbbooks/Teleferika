@@ -37,10 +37,17 @@ if ! command -v flutter &> /dev/null; then
     exit 1
 fi
 
+# Check if Git is installed (new check)
+if ! command -v git &> /dev/null; then
+    print_error "Git is not installed or not in PATH."
+    print_status "Please install Git: https://git-scm.com/downloads"
+    exit 1
+fi
+
 # Navigate to project root
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-cd "$PROJECT_ROOT"
+cd "$PROJECT_ROOT" || exit
 
 print_status "Project root: $PROJECT_ROOT"
 
@@ -50,6 +57,8 @@ if [ "$CLEAN" = "true" ]; then
     flutter clean
     rm -rf .dart_tool/
     rm -rf build/
+    # Optionally remove the licensed package directory if you want a fresh clone every time with clean
+    # rm -rf licensed_features_package/
 fi
 
 # Backup current pubspec if it exists
@@ -80,7 +89,8 @@ case $FLAVOR in
             cat > lib/licensing/licensed_features_loader.dart << 'EOF'
 class LicensedFeaturesLoader {
   static Future<void> registerLicensedFeatures() async {
-    print('Licensed features not available in this build');
+    // Stub implementation
+    print('Licensed features not available in this build (stub loader)');
   }
 }
 EOF
@@ -91,21 +101,62 @@ EOF
 
     "full"|"premium"|"licensed")
         FLAVOR="full"
+        LICENSED_REPO_URL="git@github.com:jlbbooks/teleferika_licenced_packages.git"
+        LICENSED_PACKAGE_DIR="licensed_features_package" # Directory to clone into
+
         print_status "⭐ Configuring for Full version with licensed features..."
+
+        # Clone or update the licensed features repository
+        if [ -d "$LICENSED_PACKAGE_DIR/.git" ]; then
+            print_status "Licensed features repository already exists. Attempting to pull latest changes..."
+            cd "$LICENSED_PACKAGE_DIR" || exit
+            git pull
+            if [ $? -ne 0 ]; then
+                print_warning "Failed to pull latest changes for licensed features. Using existing version."
+            else
+                print_success "Pulled latest changes for licensed features."
+            fi
+            cd "$PROJECT_ROOT" || exit # Go back to project root
+        elif [ -d "$LICENSED_PACKAGE_DIR" ]; then
+             print_warning "Directory '$LICENSED_PACKAGE_DIR' exists but is not a git repository. Please remove it or ensure it's the correct repository."
+             # Optionally, you could add 'rm -rf $LICENSED_PACKAGE_DIR' here to force a re-clone,
+             # but be careful with automatic deletion.
+        else
+            print_status "Cloning licensed features from $LICENSED_REPO_URL into $LICENSED_PACKAGE_DIR..."
+            git clone "$LICENSED_REPO_URL" "$LICENSED_PACKAGE_DIR"
+            if [ $? -ne 0 ]; then
+                print_error "Failed to clone licensed features repository from $LICENSED_REPO_URL."
+                print_error "Please ensure you have access to the repository and SSH keys are set up if needed."
+                exit 1
+            else
+                print_success "Cloned licensed features repository successfully."
+            fi
+        fi
 
         if [ ! -f "build_configs/pubspec.full.yaml" ]; then
             print_error "build_configs/pubspec.full.yaml not found!"
+            # Optionally, restore backup pubspec before exiting
+            # if [ -f "pubspec.yaml.backup" ]; then
+            #     cp pubspec.yaml.backup pubspec.yaml
+            # fi
             exit 1
         fi
 
         cp build_configs/pubspec.full.yaml pubspec.yaml
 
-        # Set up full loader
-        if [ -f "lib/licensing/licensed_features_loader_full.dart" ]; then
-            cp licensed_features_package/lib/licensed_features_loader_full.dart lib/licensing/licensed_features_loader.dart
+        # Set up full loader - path relative to project root
+        FULL_LOADER_SOURCE_PATH="$LICENSED_PACKAGE_DIR/lib/licensed_features_loader_full.dart" # Adjust if path in repo is different
+        FULL_LOADER_DEST_PATH="lib/licensing/licensed_features_loader.dart"
+
+        if [ -f "$FULL_LOADER_SOURCE_PATH" ]; then
+            mkdir -p "$(dirname "$FULL_LOADER_DEST_PATH")" # Ensure destination directory exists
+            cp "$FULL_LOADER_SOURCE_PATH" "$FULL_LOADER_DEST_PATH"
+            print_status "Copied full loader from $FULL_LOADER_SOURCE_PATH"
         else
-            print_error "Full loader not found at lib/licensing/licensed_features_loader_full.dart"
-            print_error "Licensed features may not work properly"
+            print_error "Full loader not found at $FULL_LOADER_SOURCE_PATH"
+            print_error "Licensed features may not work properly. Ensure the repository was cloned correctly and the file path is accurate."
+            # Optionally, exit here if this file is critical
+            exit 1
         fi
 
         print_success "✅ Full version configuration applied"
@@ -126,6 +177,10 @@ if [ $? -eq 0 ]; then
     print_success "✅ Dependencies installed successfully"
 else
     print_error "Failed to get dependencies"
+    # Optionally, restore backup pubspec before exiting
+    # if [ -f "pubspec.yaml.backup" ]; then
+    #     cp pubspec.yaml.backup pubspec.yaml
+    # fi
     exit 1
 fi
 
@@ -133,24 +188,40 @@ fi
 print_status "Generating code if needed..."
 if grep -q "build_runner" pubspec.yaml; then
     flutter packages pub run build_runner build --delete-conflicting-outputs
+    if [ $? -ne 0 ]; then
+        print_error "Build runner failed."
+        # Optionally, restore backup pubspec
+        exit 1
+    fi
 fi
 
 # Verify setup
 print_status "Verifying setup..."
-flutter doctor > /dev/null 2>&1
+flutter doctor > /dev/null 2>&1 # Suppress output unless there's an error in flutter doctor itself
 
 # Show current configuration
 print_success "🎉 Setup complete!"
 echo ""
 echo "Current Configuration:"
 echo "  Flavor: $FLAVOR"
-echo "  Dependencies: $(grep -c "dependencies:" pubspec.yaml 2>/dev/null || echo "Unknown") packages"
+# A more robust way to count dependencies if pubspec.yaml format varies
+# For example, count non-commented lines under 'dependencies:'
+DEP_COUNT=$(awk '/^dependencies:/{flag=1;next}/^[a-zA-Z0-9_]+:/{flag=0}flag && !/^ *#/ {print}' pubspec.yaml | wc -l | tr -d ' ')
+echo "  Dependencies: $DEP_COUNT packages (approx)"
 echo ""
 echo "Next steps:"
-echo "  1. Open your IDE (Android Studio, VS Code, etc.)"
+echo "  1. Open/Restart your IDE (Android Studio, VS Code, etc.)"
 echo "  2. Run the app normally (F5 in VS Code, or Run button in Android Studio)"
 echo "  3. The app will launch with $FLAVOR features"
 echo ""
 echo "To switch flavors, run:"
-echo "  ./scripts/setup-flavor.sh opensource"
-echo "  ./scripts/setup-flavor.sh full"
+echo "  $0 opensource"
+echo "  $0 full"
+echo "  $0 full true  (to also clean before setup)"
+
+
+# Clean up backup pubspec
+if [ -f "pubspec.yaml.backup" ]; then
+    # rm pubspec.yaml.backup # Uncomment if you want to automatically remove it
+    print_status "Backup pubspec.yaml.backup is available."
+fi
