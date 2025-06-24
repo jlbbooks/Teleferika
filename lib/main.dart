@@ -4,6 +4,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:teleferika/licencing/feature_registry.dart';
+import 'package:teleferika/licencing/licensed_features_loader.dart';
 
 import 'app_config.dart';
 import 'db/database_helper.dart';
@@ -11,11 +13,27 @@ import 'loading_page.dart';
 import 'logger.dart'; // Assuming logger.dart is in the same directory (lib)
 import 'projects_list_page.dart'; // Import your ProjectsListPage
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Call the setupLogging function from logger.dart
   setupLogging();
+
+  // Initialize feature registry
+  await initializeFeatures();
+
   runApp(const MyAppRoot());
+}
+
+Future<void> initializeFeatures() async {
+  try {
+    // Try to register licensed features
+    await LicensedFeaturesLoader.registerLicensedFeatures();
+  } catch (e) {
+    print('Could not load licensed features: $e');
+  }
+
+  // Initialize the feature registry
+  await FeatureRegistry.initialize();
 }
 
 class MyAppRoot extends StatefulWidget {
@@ -110,6 +128,8 @@ class _MyAppRootState extends State<MyAppRoot> {
 
   @override
   Widget build(BuildContext context) {
+    final hasLicensedFeatures = FeatureRegistry.hasPlugin('licensed_features');
+
     if (_isLoading) {
       logger.finest("Building LoadingPage.");
       return LoadingPage(appVersion: _appVersion);

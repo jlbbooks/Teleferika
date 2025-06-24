@@ -1,4 +1,4 @@
-name: "teleferika"
+name: teleferika
 description: "TeleferiKa app."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -31,12 +31,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
-     # Licensed features package
-  teleferika_licensed_features:
-    git:
-      url: git@github.com:jlbbooks/teleferika_licenced_packages.git
-      ref: main
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

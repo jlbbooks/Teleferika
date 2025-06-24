@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
+import 'package:teleferika/licencing/feature_registry.dart';
 
 import 'app_config.dart';
 
@@ -20,6 +21,8 @@ class _LoadingPageState extends State<LoadingPage> {
 
   @override
   Widget build(BuildContext context) {
+    final hasLicensedFeatures = FeatureRegistry.hasPlugin('licensed_features');
+
     return MaterialApp(
       debugShowCheckedModeBanner: kDebugMode,
       localizationsDelegates: AppConfig.localizationsDelegates,
@@ -69,6 +72,15 @@ class _LoadingPageState extends State<LoadingPage> {
                         fontSize: 12.0,
                       ),
                     ),
+                  if (hasLicensedFeatures) Divider(),
+                  if (hasLicensedFeatures)
+                    Text('Licenced version!!!')
+                  else
+                    Text('Free version!!!'),
+                  // if (hasLicensedFeatures)
+                  //   FeatureRegistry.buildWidget('licensed_features', 'premium_banner') ?? Container()
+                  // else
+                  //   FeatureRegistry.buildWidget('core_features', 'free_banner') ?? Container(),
                 ],
               ),
             ),
