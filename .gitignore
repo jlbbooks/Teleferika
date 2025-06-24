@@ -1,11 +1,9 @@
 # Dynamic loader file (gets overwritten by build script)
-lib/licencing/licensed_features_loader.dart
+lib/licensing/licensed_features_loader.dart
 # Backup files
 *.backup
 pubspec.yaml.backup
 pubspec.yaml
-
-
 
 # General
 *.DS_Store

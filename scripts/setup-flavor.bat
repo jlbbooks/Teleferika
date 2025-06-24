@@ -64,11 +64,11 @@ if not exist "build_configs\pubspec.opensource.yaml" (
 
 copy "build_configs\pubspec.opensource.yaml" pubspec.yaml >nul
 
-if exist "lib\licencing\licensed_features_loader_stub.dart" (
-    copy "lib\licencing\licensed_features_loader_stub.dart" "lib\licencing\licensed_features_loader.dart" >nul
+if exist "lib\licensing\licensed_features_loader_stub.dart" (
+    copy "lib\licensing\licensed_features_loader_stub.dart" "lib\licensing\licensed_features_loader.dart" >nul
 ) else (
     echo %WARNING% Stub loader not found, creating basic one...
-    if not exist "lib\licencing" mkdir "lib\licencing"
+    if not exist "lib\licensing" mkdir "lib\licensing"
     (
         echo import 'feature_registry.dart';
         echo.
@@ -77,7 +77,7 @@ if exist "lib\licencing\licensed_features_loader_stub.dart" (
         echo     print^('Licensed features not available in this build'^);
         echo   }
         echo }
-    ) > "lib\licencing\licensed_features_loader.dart"
+    ) > "lib\licensing\licensed_features_loader.dart"
 )
 
 echo %SUCCESS% ✅ Open Source configuration applied
@@ -94,10 +94,10 @@ if not exist "build_configs\pubspec.full.yaml" (
 
 copy "build_configs\pubspec.full.yaml" pubspec.yaml >nul
 
-if exist "lib\licencing\licensed_features_loader_full.dart" (
-    copy "lib\licencing\licensed_features_loader_full.dart" "lib\licencing\licensed_features_loader.dart" >nul
+if exist "lib\licensing\licensed_features_loader_full.dart" (
+    copy "lib\licensing\licensed_features_loader_full.dart" "lib\licensing\licensed_features_loader.dart" >nul
 ) else (
-    echo %ERROR% Full loader not found at lib\licencing\licensed_features_loader_full.dart
+    echo %ERROR% Full loader not found at lib\licensing\licensed_features_loader_full.dart
     echo %ERROR% Licensed features may not work properly
 )
 

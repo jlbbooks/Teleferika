@@ -72,12 +72,12 @@ case $FLAVOR in
         cp build_configs/pubspec.opensource.yaml pubspec.yaml
 
         # Set up stub loader
-        if [ -f "lib/licencing/licensed_features_loader_stub.dart" ]; then
-            cp lib/licencing/licensed_features_loader_stub.dart lib/licencing/licensed_features_loader.dart
+        if [ -f "lib/licensing/licensed_features_loader_stub.dart" ]; then
+            cp lib/licensing/licensed_features_loader_stub.dart lib/licensing/licensed_features_loader.dart
         else
             print_warning "Stub loader not found, creating basic one..."
-            mkdir -p lib/licencing
-            cat > lib/licencing/licensed_features_loader.dart << 'EOF'
+            mkdir -p lib/licensing
+            cat > lib/licensing/licensed_features_loader.dart << 'EOF'
 class LicensedFeaturesLoader {
   static Future<void> registerLicensedFeatures() async {
     print('Licensed features not available in this build');
@@ -101,10 +101,10 @@ EOF
         cp build_configs/pubspec.full.yaml pubspec.yaml
 
         # Set up full loader
-        if [ -f "lib/licencing/licensed_features_loader_full.dart" ]; then
-            cp licensed_features_package/lib/licensed_features_loader_full.dart lib/licencing/licensed_features_loader.dart
+        if [ -f "lib/licensing/licensed_features_loader_full.dart" ]; then
+            cp licensed_features_package/lib/licensed_features_loader_full.dart lib/licensing/licensed_features_loader.dart
         else
-            print_error "Full loader not found at lib/licencing/licensed_features_loader_full.dart"
+            print_error "Full loader not found at lib/licensing/licensed_features_loader_full.dart"
             print_error "Licensed features may not work properly"
         fi
 

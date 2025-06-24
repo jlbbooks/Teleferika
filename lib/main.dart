@@ -4,8 +4,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:teleferika/licencing/feature_registry.dart';
-import 'package:teleferika/licencing/licensed_features_loader.dart';
+import 'package:teleferika/licensing/feature_registry.dart';
+import 'package:teleferika/licensing/licensed_features_loader.dart';
 
 import 'app_config.dart';
 import 'db/database_helper.dart';

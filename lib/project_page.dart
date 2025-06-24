@@ -6,7 +6,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
-import 'package:teleferika/licencing/licence_service.dart';
+import 'package:teleferika/licensing/licence_service.dart';
 import 'package:teleferika/project_tools/compass_tool_view.dart';
 import 'package:teleferika/project_tools/map_tool_view.dart';
 import 'package:teleferika/project_tools/points_tool_view.dart';

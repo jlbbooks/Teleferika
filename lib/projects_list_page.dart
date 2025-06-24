@@ -2,8 +2,8 @@ import 'dart:async'; // For Timer
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:teleferika/licencing/licence_model.dart';
-import 'package:teleferika/licencing/licence_service.dart';
+import 'package:teleferika/licensing/licence_model.dart';
+import 'package:teleferika/licensing/licence_service.dart';
 import 'package:teleferika/project_page.dart';
 
 import 'app_config.dart';
