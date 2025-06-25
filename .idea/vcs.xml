@@ -5,6 +5,6 @@
     <mapping directory="$PROJECT_DIR$/licensed_features_package" vcs="Git" />
   </component>
   <component name="VcsProjectSettings">
-    <option name="detectVcsMappingsAutomatically" value="true" />
+    <option name="detectVcsMappingsAutomatically" value="false" />
   </component>
 </project>

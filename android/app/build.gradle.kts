@@ -56,28 +56,15 @@ android {
         // }
     }
 
-    // Define product flavors if you use them. Example:
-//    flavorDimensions += "environment" // Or any dimension you use
-//    productFlavors {
-//        create("development") {
-//            dimension = "environment"
-//            applicationIdSuffix = ".dev"
-//            versionNameSuffix = "-dev"
-//            // You can also add resValue or buildConfigField for flavor-specific settings
-//        }
-//        create("production") {
-//            dimension = "environment"
-//            // No suffix for production, or define as needed
-//        }
-//    }
+
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+        jvmTarget = JavaVersion.VERSION_21.toString()
     }
 
     defaultConfig {
@@ -91,7 +78,7 @@ android {
     }
 
     buildTypes {
-        release {
+        getByName("release") {
             signingConfig = signingConfigs.getByName("release")
             // Other release build type configurations like ProGuard, R8, etc.
             // e.g., isMinifyEnabled = true
@@ -100,42 +87,28 @@ android {
         }
         // You might have a debug build type as well, typically it doesn't need explicit signing here
         // as it uses the debug keystore by default.
-        debug {
+        getByName("debug") {
             // ...
         }
     }
 
-    // THIS IS THE KEY PART FOR CUSTOMIZING APK FILENAME
-    applicationVariants.all {
-        val variant = this // 'this' is the variant
-        variant.outputs.all {
-            val output = this // 'this' is the output (e.g., APK)
-            // Ensure we are dealing with an APK output
-            if (output is com.android.build.gradle.internal.api.ApkVariantOutputImpl) {
-                // Get the base name from the applicationId
-                // The variant.applicationId will include any applicationIdSuffix from flavors
-                val baseApplicationId = defaultConfig.applicationId
-                val appNameFromId =
-                    baseApplicationId?.substringAfterLast('.', baseApplicationId) ?: "app"
-
-                val flavorName = variant.flavorName.takeIf { it.isNotEmpty() } ?: ""
-                val buildTypeName = variant.buildType.name
-                val versionName = variant.versionName
-                val versionCode = variant.versionCode
-
-                // Construct the desired file name
-                // Example: app-production-release-1.0.0-1.apk
-                // Example: app-development-debug-1.0.1-dev-2.apk
-                var newApkName = appNameFromId
-                if (flavorName.isNotEmpty()) {
-                    newApkName += "-$flavorName"
-                }
-                newApkName += "-$buildTypeName"
-                newApkName += "-v$versionName"
-                newApkName += "-vc$versionCode.apk"
-
-                output.outputFileName = newApkName
-            }
+    // Define product flavors
+    flavorDimensions += "version"
+    productFlavors {
+        create("opensource") {
+            dimension = "version"
+            applicationIdSuffix = ".opensource"
+            versionNameSuffix = "-opensource"
+            // You can also add resValue or buildConfigField for flavor-specific settings
+            resValue("string", "app_name", "TeleferiKa Open")
+        }
+        create("full") {
+            dimension = "version"
+            // No suffix for production, or define as needed
+            applicationIdSuffix = ".full"
+            versionNameSuffix = "-full"
+            // You can also add resValue or buildConfigField for flavor-specific settings
+            resValue("string", "app_name", "TeleferiKa")
         }
     }
 }
