@@ -166,11 +166,11 @@ class SIt extends S {
   }
 
   @override
-  String get export_project_data_title => 'Export Project Data';
+  String get export_project_data_title => 'Esporta dati progetto';
 
   @override
   String export_page_project_name_label(String projectName) {
-    return 'Project: $projectName';
+    return 'Progetto: $projectName';
   }
 
   @override
@@ -183,77 +183,204 @@ class SIt extends S {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$countString points found.',
-      one: '$countString point found.',
-      zero: 'No points found for export.',
+      other: '$countString punti trovati.',
+      one: '$countString punto trovato.',
+      zero: 'Nessun punto trovato per l\'esportazione.',
     );
     return '$_temp0';
   }
 
   @override
-  String get export_page_select_format_label => 'Select Export Format:';
+  String get export_page_select_format_label =>
+      'Seleziona formato di esportazione:';
 
   @override
-  String get export_format_dropdown_label => 'Format';
+  String get export_format_dropdown_label => 'Formato';
 
   @override
-  String get export_page_share_button => 'Share File';
+  String get export_page_share_button => 'Condividi file';
 
   @override
-  String get export_page_save_locally_button => 'Save Locally';
+  String get export_page_save_locally_button => 'Salva localmente';
 
   @override
-  String get export_failed => 'Export failed. Please try again.';
+  String get export_failed => 'Esportazione fallita. Riprova.';
 
   @override
-  String get file_shared_successfully => 'File prepared for sharing.';
+  String get file_shared_successfully => 'File pronto per la condivisione.';
 
   @override
-  String get file_saved_successfully => 'File saved successfully';
+  String get file_saved_successfully => 'File salvato con successo';
 
   @override
   String get file_save_cancelled_or_failed =>
-      'File save was cancelled or failed.';
+      'Salvataggio file annullato o fallito.';
 
   @override
-  String get export_project_data_tooltip => 'Export Project Data';
+  String get export_project_data_tooltip => 'Esporta dati progetto';
 
   @override
-  String get unsaved_changes_title => 'Unsaved Changes';
+  String get unsaved_changes_title => 'Modifiche non salvate';
 
   @override
   String get unsaved_changes_export_message =>
-      'You have unsaved changes. Please save the project before exporting to ensure all data is included.';
+      'Hai modifiche non salvate. Salva il progetto prima di esportare per assicurarti che tutti i dati siano inclusi.';
 
   @override
-  String get save_button_label => 'Save';
+  String get save_button_label => 'Salva';
 
   @override
-  String get dialog_cancel => 'Cancel';
+  String get dialog_cancel => 'Annulla';
 
   @override
   String get project_not_loaded_cannot_export =>
-      'Project not loaded. Cannot export data.';
+      'Progetto non caricato. Impossibile esportare i dati.';
 
   @override
   String get error_loading_points =>
-      'Error loading points for export. Please try again.';
+      'Errore durante il caricamento dei punti per l\'esportazione. Riprova.';
 
   @override
   String get export_page_note_text =>
-      'Note: Ensure you have granted necessary storage permissions if saving locally on mobile devices. Some export formats may not include all data types (e.g., images).';
+      'Nota: assicurati di aver concesso le autorizzazioni di archiviazione necessarie se salvi localmente su dispositivi mobili. Alcuni formati di esportazione potrebbero non includere tutti i tipi di dati (es. immagini).';
 
   @override
   String get please_save_project_first_to_export =>
-      'Please save the new project first to enable export.';
+      'Salva prima il nuovo progetto per abilitare l\'esportazione.';
 
   @override
-  String get export_requires_licence_title => 'Licence Required for Export';
+  String get export_requires_licence_title =>
+      'Licenza richiesta per l\'esportazione';
 
   @override
   String get export_requires_licence_message =>
-      'This feature requires an active licence. Please import a valid licence file to proceed.';
+      'Questa funzione richiede una licenza attiva. Importa un file di licenza valido per procedere.';
 
   @override
-  String get action_import_licence => 'Import Licence';
+  String get action_import_licence => 'Importa licenza';
+
+  @override
+  String get edit_project_title => 'Modifica progetto';
+
+  @override
+  String edit_project_title_named(String projectName) {
+    return 'Modifica progetto: $projectName';
+  }
+
+  @override
+  String get new_project_title => 'Nuovo progetto';
+
+  @override
+  String get delete_project_tooltip => 'Elimina progetto';
+
+  @override
+  String get save_project_tooltip => 'Salva progetto';
+
+  @override
+  String last_updated_label(String date) {
+    return 'Ultimo aggiornamento: $date';
+  }
+
+  @override
+  String get not_yet_saved_label => 'Non ancora salvato';
+
+  @override
+  String get tap_to_set_date => 'Tocca per impostare la data';
+
+  @override
+  String get invalid_number_validator => 'Inserisci un numero valido.';
+
+  @override
+  String get must_be_359_validator =>
+      'Il valore deve essere compreso tra 0 e 359.';
+
+  @override
+  String get please_correct_form_errors => 'Correggi gli errori nel modulo.';
+
+  @override
+  String get project_created_successfully => 'Progetto creato con successo.';
+
+  @override
+  String get project_already_up_to_date => 'Il progetto è già aggiornato.';
+
+  @override
+  String get cannot_delete_unsaved_project =>
+      'Impossibile eliminare un progetto non salvato.';
+
+  @override
+  String get confirm_delete_project_title => 'Conferma eliminazione progetto';
+
+  @override
+  String confirm_delete_project_content(Object projectName) {
+    return 'Sei sicuro di voler eliminare questo progetto? Questa azione non può essere annullata.';
+  }
+
+  @override
+  String get project_deleted_successfully => 'Progetto eliminato con successo.';
+
+  @override
+  String get project_not_found_or_deleted =>
+      'Progetto non trovato o già eliminato.';
+
+  @override
+  String error_saving_project(String errorMessage) {
+    return 'Errore durante il salvataggio del progetto: $errorMessage';
+  }
+
+  @override
+  String error_deleting_project(String errorMessage) {
+    return 'Errore durante l\'eliminazione del progetto: $errorMessage';
+  }
+
+  @override
+  String get unsaved_changes_dialog_title => 'Modifiche non salvate';
+
+  @override
+  String get unsaved_changes_dialog_content =>
+      'Hai modifiche non salvate. Vuoi scartarle e uscire?';
+
+  @override
+  String get discard_button_label => 'Scarta';
+
+  @override
+  String get details_tab_label => 'Dettagli';
+
+  @override
+  String get points_tab_label => 'Punti';
+
+  @override
+  String get compass_tab_label => 'Bussola';
+
+  @override
+  String get map_tab_label => 'Mappa';
+
+  @override
+  String get export_page_title => 'Esporta progetto';
+
+  @override
+  String get export_page_description =>
+      'Scegli il formato e le opzioni per esportare i dati del progetto.';
+
+  @override
+  String get export_format_csv => 'CSV (valori separati da virgola)';
+
+  @override
+  String get export_format_kml => 'KML (Google Earth)';
+
+  @override
+  String get export_format_geojson => 'GeoJSON';
+
+  @override
+  String get unsaved_changes_discard_message =>
+      'Hai modifiche non salvate. Scartarle e uscire?';
+
+  @override
+  String get unsaved_changes_discard_button => 'Scarta modifiche';
+
+  @override
+  String get unsaved_changes_save_button => 'Salva modifiche';
+
+  @override
+  String get export_page_no_points =>
+      'Nessun punto disponibile per l\'esportazione.';
 }

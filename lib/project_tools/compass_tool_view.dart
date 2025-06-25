@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:teleferika/db/models/project_model.dart';
+import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/logger.dart';
 
 // Define a typedef for the callback function for clarity
@@ -286,7 +287,10 @@ class _CompassToolViewState extends State<CompassToolView> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: CheckboxListTile(
-                title: const Text("Add as END point"),
+                title: Text(
+                  S.of(context)?.compassAddAsEndPointButton ??
+                      "Add as END point",
+                ),
                 value: _setAsEndPoint,
                 onChanged: (bool? value) {
                   if (mounted) {
@@ -312,7 +316,9 @@ class _CompassToolViewState extends State<CompassToolView> {
             else
               ElevatedButton.icon(
                 icon: const Icon(Icons.add_location_alt_outlined),
-                label: const Text('Add Point with Current Heading'),
+                label: Text(
+                  S.of(context)?.compassAddPointButton ?? 'Add Point',
+                ),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,

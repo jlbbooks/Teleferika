@@ -256,4 +256,129 @@ class SEn extends S {
 
   @override
   String get action_import_licence => 'Import Licence';
+
+  @override
+  String get edit_project_title => 'Edit Project';
+
+  @override
+  String edit_project_title_named(String projectName) {
+    return 'Edit: $projectName';
+  }
+
+  @override
+  String get new_project_title => 'New Project';
+
+  @override
+  String get delete_project_tooltip => 'Delete Project';
+
+  @override
+  String get save_project_tooltip => 'Save Project';
+
+  @override
+  String last_updated_label(String date) {
+    return 'Last updated: $date';
+  }
+
+  @override
+  String get not_yet_saved_label => 'Not yet saved';
+
+  @override
+  String get tap_to_set_date => 'Tap to set date';
+
+  @override
+  String get invalid_number_validator => 'Invalid number.';
+
+  @override
+  String get must_be_359_validator => 'Must be +/-359.99';
+
+  @override
+  String get please_correct_form_errors =>
+      'Please correct the errors in the form.';
+
+  @override
+  String get project_created_successfully => 'Project created successfully!';
+
+  @override
+  String get project_already_up_to_date =>
+      'Project already up to date or not found.';
+
+  @override
+  String get cannot_delete_unsaved_project =>
+      'Cannot delete a project that has not been saved yet.';
+
+  @override
+  String get confirm_delete_project_title => 'Confirm Delete';
+
+  @override
+  String confirm_delete_project_content(Object projectName) {
+    return 'Are you sure you want to delete the project \"$projectName\"? This action cannot be undone.';
+  }
+
+  @override
+  String get project_deleted_successfully => 'Project deleted successfully.';
+
+  @override
+  String get project_not_found_or_deleted =>
+      'Project not found or already deleted.';
+
+  @override
+  String error_saving_project(String errorMessage) {
+    return 'Error saving project: $errorMessage';
+  }
+
+  @override
+  String error_deleting_project(String errorMessage) {
+    return 'Error deleting project: $errorMessage';
+  }
+
+  @override
+  String get unsaved_changes_dialog_title => 'Unsaved Changes';
+
+  @override
+  String get unsaved_changes_dialog_content =>
+      'You have unsaved changes. Do you want to discard them and leave?';
+
+  @override
+  String get discard_button_label => 'Discard';
+
+  @override
+  String get details_tab_label => 'Details';
+
+  @override
+  String get points_tab_label => 'Points';
+
+  @override
+  String get compass_tab_label => 'Compass';
+
+  @override
+  String get map_tab_label => 'Map';
+
+  @override
+  String get export_page_title => 'Export Project Data';
+
+  @override
+  String get export_page_description =>
+      'Export your project data in various formats.';
+
+  @override
+  String get export_format_csv => 'CSV (Comma-Separated Values)';
+
+  @override
+  String get export_format_kml => 'KML (Keyhole Markup Language)';
+
+  @override
+  String get export_format_geojson => 'GeoJSON';
+
+  @override
+  String get unsaved_changes_discard_message =>
+      'You have unsaved changes. Discard them and leave?';
+
+  @override
+  String get unsaved_changes_discard_button => 'Discard Changes';
+
+  @override
+  String get unsaved_changes_save_button => 'Save Changes';
+
+  @override
+  String get export_page_no_points => 'No points available for export.';
 }

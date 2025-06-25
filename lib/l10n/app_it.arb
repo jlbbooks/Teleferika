@@ -133,23 +133,23 @@
       }
     }
   },
-  "export_project_data_title": "Export Project Data",
+  "export_project_data_title": "Esporta dati progetto",
   "@export_project_data_title": {
-    "description": "Title for the export data page/dialog."
+    "description": "Titolo per la pagina/finestra di dialogo di esportazione dati."
   },
-  "export_page_project_name_label": "Project: {projectName}",
+  "export_page_project_name_label": "Progetto: {projectName}",
   "@export_page_project_name_label": {
-    "description": "Label showing the name of the project being exported.",
+    "description": "Etichetta che mostra il nome del progetto da esportare.",
     "placeholders": {
       "projectName": {
         "type": "String",
-        "example": "My Awesome Project"
+        "example": "Il mio progetto"
       }
     }
   },
-  "export_page_points_count_label": "{count,plural, =0{No points found for export.} =1{{count} point found.} other{{count} points found.}}",
+  "export_page_points_count_label": "{count,plural, =0{Nessun punto trovato per l'esportazione.} =1{{count} punto trovato.} other{{count} punti trovati.}}",
   "@export_page_points_count_label": {
-    "description": "Label showing the number of points that will be exported.",
+    "description": "Etichetta che mostra il numero di punti che verranno esportati.",
     "placeholders": {
       "count": {
         "type": "int",
@@ -157,72 +157,238 @@
       }
     }
   },
-  "export_page_select_format_label": "Select Export Format:",
+  "export_page_select_format_label": "Seleziona formato di esportazione:",
   "@export_page_select_format_label": {
-    "description": "Label for the format selection dropdown."
+    "description": "Etichetta per il menu a tendina di selezione formato."
   },
-  "export_format_dropdown_label": "Format",
+  "export_format_dropdown_label": "Formato",
   "@export_format_dropdown_label": {
-    "description": "Label for the export format dropdown itself."
+    "description": "Etichetta per il menu a tendina del formato di esportazione."
   },
-  "export_page_share_button": "Share File",
+  "export_page_share_button": "Condividi file",
   "@export_page_share_button": {
-    "description": "Text for the button that initiates sharing the exported file."
+    "description": "Testo per il pulsante che avvia la condivisione del file esportato."
   },
-  "export_page_save_locally_button": "Save Locally",
+  "export_page_save_locally_button": "Salva localmente",
   "@export_page_save_locally_button": {
-    "description": "Text for the button that initiates saving the exported file to local device storage."
+    "description": "Testo per il pulsante che avvia il salvataggio del file esportato nella memoria locale del dispositivo."
   },
-  "export_failed": "Export failed. Please try again.",
+  "export_failed": "Esportazione fallita. Riprova.",
   "@export_failed": {
-    "description": "Error message shown when the export process encounters an issue."
+    "description": "Messaggio di errore mostrato quando il processo di esportazione incontra un problema."
   },
-  "file_shared_successfully": "File prepared for sharing.",
+  "file_shared_successfully": "File pronto per la condivisione.",
   "@file_shared_successfully": {
-    "description": "Success message shown after the file is ready for sharing via the share dialog."
+    "description": "Messaggio di successo mostrato dopo che il file è pronto per la condivisione tramite la finestra di dialogo di condivisione."
   },
-  "file_saved_successfully": "File saved successfully",
-  "file_save_cancelled_or_failed": "File save was cancelled or failed.",
+  "file_saved_successfully": "File salvato con successo",
+  "file_save_cancelled_or_failed": "Salvataggio file annullato o fallito.",
   "@file_save_cancelled_or_failed": {
-    "description": "Message shown if the user cancels the save dialog or if saving fails for other reasons."
+    "description": "Messaggio mostrato se l'utente annulla la finestra di dialogo di salvataggio o se il salvataggio fallisce per altri motivi."
   },
-  "export_project_data_tooltip": "Export Project Data",
+  "export_project_data_tooltip": "Esporta dati progetto",
   "@export_project_data_tooltip": {
-    "description": "Tooltip for the export button/icon in the project page app bar."
+    "description": "Tooltip per il pulsante/icona di esportazione nella barra dell'app della pagina progetto."
   },
-  "unsaved_changes_title": "Unsaved Changes",
+  "unsaved_changes_title": "Modifiche non salvate",
   "@unsaved_changes_title": {
-    "description": "Title for the dialog warning about unsaved changes."
+    "description": "Titolo per la finestra di dialogo che avvisa delle modifiche non salvate."
   },
-  "unsaved_changes_export_message": "You have unsaved changes. Please save the project before exporting to ensure all data is included.",
+  "unsaved_changes_export_message": "Hai modifiche non salvate. Salva il progetto prima di esportare per assicurarti che tutti i dati siano inclusi.",
   "@unsaved_changes_export_message": {
-    "description": "Message in the dialog prompting the user to save before exporting due to unsaved changes."
+    "description": "Messaggio nella finestra di dialogo che invita l'utente a salvare prima di esportare a causa di modifiche non salvate."
   },
-  "save_button_label": "Save",
+  "save_button_label": "Salva",
   "@save_button_label": {
-    "description": "Generic label for a save button, used in the unsaved changes dialog."
+    "description": "Etichetta generica per un pulsante di salvataggio, usata nella finestra di dialogo delle modifiche non salvate."
   },
-  "dialog_cancel": "Cancel",
+  "dialog_cancel": "Annulla",
   "@dialog_cancel": {
-    "description": "Generic label for a cancel button in dialogs."
+    "description": "Etichetta generica per un pulsante di annullamento nelle finestre di dialogo."
   },
-  "project_not_loaded_cannot_export": "Project not loaded. Cannot export data.",
+  "project_not_loaded_cannot_export": "Progetto non caricato. Impossibile esportare i dati.",
   "@project_not_loaded_cannot_export": {
-    "description": "Error message if export is attempted but the project data isn't available."
+    "description": "Messaggio di errore se si tenta di esportare ma i dati del progetto non sono disponibili."
   },
-  "error_loading_points": "Error loading points for export. Please try again.",
+  "error_loading_points": "Errore durante il caricamento dei punti per l'esportazione. Riprova.",
   "@error_loading_points": {
-    "description": "Error message if points associated with the project cannot be fetched for export."
+    "description": "Messaggio di errore se i punti associati al progetto non possono essere recuperati per l'esportazione."
   },
-  "export_page_note_text": "Note: Ensure you have granted necessary storage permissions if saving locally on mobile devices. Some export formats may not include all data types (e.g., images).",
+  "export_page_note_text": "Nota: assicurati di aver concesso le autorizzazioni di archiviazione necessarie se salvi localmente su dispositivi mobili. Alcuni formati di esportazione potrebbero non includere tutti i tipi di dati (es. immagini).",
   "@export_page_note_text": {
-    "description": "Informational note at the bottom of the export page."
+    "description": "Nota informativa in fondo alla pagina di esportazione."
   },
-  "please_save_project_first_to_export": "Please save the new project first to enable export.",
+  "please_save_project_first_to_export": "Salva prima il nuovo progetto per abilitare l'esportazione.",
   "@please_save_project_first_to_export": {
-    "description": "Message shown when trying to export a brand new, never-saved project."
+    "description": "Messaggio mostrato quando si tenta di esportare un progetto nuovo mai salvato."
   },
-  "export_requires_licence_title": "Licence Required for Export",
-  "export_requires_licence_message": "This feature requires an active licence. Please import a valid licence file to proceed.",
-  "action_import_licence": "Import Licence"
+  "export_requires_licence_title": "Licenza richiesta per l'esportazione",
+  "export_requires_licence_message": "Questa funzione richiede una licenza attiva. Importa un file di licenza valido per procedere.",
+  "action_import_licence": "Importa licenza",
+   "unsaved_changes_dialog_title": "Modifiche non salvate",
+  "@unsaved_changes_dialog_title": {
+    "description": "Titolo per la finestra di dialogo che avvisa delle modifiche non salvate."
+  },
+  "unsaved_changes_dialog_content": "Hai modifiche non salvate. Vuoi scartarle e uscire?",
+  "@unsaved_changes_dialog_content": {
+    "description": "Messaggio nella finestra di dialogo che chiede se scartare le modifiche non salvate e uscire."
+  },
+  "discard_button_label": "Scarta",
+  "@discard_button_label": {
+    "description": "Etichetta per il pulsante che scarta le modifiche non salvate nella finestra di dialogo."
+  },
+  "details_tab_label": "Dettagli",
+  "@details_tab_label": {
+    "description": "Etichetta per la tab dei dettagli."
+  },
+  "points_tab_label": "Punti",
+  "@points_tab_label": {
+    "description": "Etichetta per la tab dei punti."
+  },
+  "compass_tab_label": "Bussola",
+  "@compass_tab_label": {
+    "description": "Etichetta per la tab della bussola."
+  },
+  "map_tab_label": "Mappa",
+  "@map_tab_label": {
+    "description": "Etichetta per la tab della mappa."
+  },
+  "unsaved_changes_discard_message": "Hai modifiche non salvate. Scartarle e uscire?",
+  "@unsaved_changes_discard_message": {
+    "description": "Messaggio mostrato nella finestra di dialogo quando ci sono modifiche non salvate e l'utente tenta di uscire dalla pagina."
+  },
+  "unsaved_changes_discard_button": "Scarta modifiche",
+  "@unsaved_changes_discard_button": {
+    "description": "Etichetta per il pulsante che scarta le modifiche non salvate nella finestra di dialogo."
+  },
+  "unsaved_changes_save_button": "Salva modifiche",
+  "@unsaved_changes_save_button": {
+    "description": "Etichetta per il pulsante che salva le modifiche non salvate nella finestra di dialogo."
+  },
+  "export_page_no_points": "Nessun punto disponibile per l'esportazione.",
+  "@export_page_no_points": {
+    "description": "Messaggio mostrato quando non ci sono punti da esportare nel progetto."
+  },
+  "edit_project_title": "Modifica progetto",
+  "@edit_project_title": {
+    "description": "Titolo per la schermata di modifica di un progetto."
+  },
+  "edit_project_title_named": "Modifica progetto: {projectName}",
+  "@edit_project_title_named": {
+    "description": "Titolo per la schermata di modifica di un progetto con il nome del progetto.",
+    "placeholders": {
+      "projectName": {
+        "type": "String",
+        "example": "Il mio progetto"
+      }
+    }
+  },
+  "new_project_title": "Nuovo progetto",
+  "@new_project_title": {
+    "description": "Titolo per la schermata di creazione di un nuovo progetto."
+  },
+  "delete_project_tooltip": "Elimina progetto",
+  "@delete_project_tooltip": {
+    "description": "Tooltip per il pulsante di eliminazione progetto."
+  },
+  "save_project_tooltip": "Salva progetto",
+  "@save_project_tooltip": {
+    "description": "Tooltip per il pulsante di salvataggio progetto."
+  },
+  "last_updated_label": "Ultimo aggiornamento: {date}",
+  "@last_updated_label": {
+    "description": "Etichetta che mostra la data dell'ultimo aggiornamento.",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "12/06/2024"
+      }
+    }
+  },
+  "not_yet_saved_label": "Non ancora salvato",
+  "@not_yet_saved_label": {
+    "description": "Etichetta che indica che il progetto non è ancora stato salvato."
+  },
+  "tap_to_set_date": "Tocca per impostare la data",
+  "@tap_to_set_date": {
+    "description": "Testo che invita l'utente a selezionare una data."
+  },
+  "invalid_number_validator": "Inserisci un numero valido.",
+  "@invalid_number_validator": {
+    "description": "Messaggio di errore per la validazione di un campo numerico non valido."
+  },
+  "must_be_359_validator": "Il valore deve essere compreso tra 0 e 359.",
+  "@must_be_359_validator": {
+    "description": "Messaggio di errore per la validazione di un campo che deve essere tra 0 e 359."
+  },
+  "please_correct_form_errors": "Correggi gli errori nel modulo.",
+  "@please_correct_form_errors": {
+    "description": "Messaggio che invita l'utente a correggere gli errori nel modulo."
+  },
+  "project_created_successfully": "Progetto creato con successo.",
+  "@project_created_successfully": {
+    "description": "Messaggio di conferma dopo la creazione di un progetto."
+  },
+  "project_already_up_to_date": "Il progetto è già aggiornato.",
+  "@project_already_up_to_date": {
+    "description": "Messaggio che indica che il progetto non necessita di aggiornamenti."
+  },
+  "cannot_delete_unsaved_project": "Impossibile eliminare un progetto non salvato.",
+  "@cannot_delete_unsaved_project": {
+    "description": "Messaggio di errore quando si tenta di eliminare un progetto non ancora salvato."
+  },
+  "confirm_delete_project_title": "Conferma eliminazione progetto",
+  "@confirm_delete_project_title": {
+    "description": "Titolo della finestra di dialogo di conferma eliminazione progetto."
+  },
+  "confirm_delete_project_content": "Sei sicuro di voler eliminare questo progetto? Questa azione non può essere annullata.",
+  "@confirm_delete_project_content": {
+    "description": "Contenuto della finestra di dialogo di conferma eliminazione progetto."
+  },
+  "project_deleted_successfully": "Progetto eliminato con successo.",
+  "@project_deleted_successfully": {
+    "description": "Messaggio di conferma dopo l'eliminazione di un progetto."
+  },
+  "project_not_found_or_deleted": "Progetto non trovato o già eliminato.",
+  "@project_not_found_or_deleted": {
+    "description": "Messaggio di errore quando il progetto non viene trovato o è già stato eliminato."
+  },
+  "error_saving_project": "Errore durante il salvataggio del progetto: {errorMessage}",
+  "@error_saving_project": {
+    "description": "Messaggio di errore durante il salvataggio del progetto.",
+    "placeholders": {
+      "errorMessage": {
+        "type": "String"
+      }
+    }
+  },
+  "error_deleting_project": "Errore durante l'eliminazione del progetto: {errorMessage}",
+  "@error_deleting_project": {
+    "description": "Messaggio di errore durante l'eliminazione del progetto.",
+    "placeholders": {
+      "errorMessage": {
+        "type": "String"
+      }
+    }
+  },
+  "export_page_title": "Esporta progetto",
+  "@export_page_title": {
+    "description": "Titolo della pagina di esportazione del progetto."
+  },
+  "export_page_description": "Scegli il formato e le opzioni per esportare i dati del progetto.",
+  "@export_page_description": {
+    "description": "Descrizione della pagina di esportazione del progetto."
+  },
+  "export_format_csv": "CSV (valori separati da virgola)",
+  "@export_format_csv": {
+    "description": "Opzione di formato di esportazione: CSV."
+  },
+  "export_format_kml": "KML (Google Earth)",
+  "@export_format_kml": {
+    "description": "Opzione di formato di esportazione: KML."
+  },
+  "export_format_geojson": "GeoJSON",
+  "@export_format_geojson": {
+    "description": "Opzione di formato di esportazione: GeoJSON."
+  }
 }

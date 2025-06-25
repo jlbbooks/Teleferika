@@ -145,7 +145,6 @@ class _ProjectPageState extends State<ProjectPage> {
   }
 
   Future<void> _checkLicenceAndProceedToExport() async {
-    final s = S.of(context);
     bool licenceIsValid = await _licenceService.isLicenceValid();
 
     if (!licenceIsValid) {
@@ -669,8 +668,8 @@ class _ProjectPageState extends State<ProjectPage> {
             ); // Ensure ID consistency if DB generated it differently (not for UUIDs)
             // For client-generated UUIDs, projectToSave.id is already the ID.
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Project created successfully!'),
+              SnackBar(
+                content: Text(S.of(context)!.project_created_successfully),
                 backgroundColor: Colors.green,
               ),
             );
@@ -694,8 +693,8 @@ class _ProjectPageState extends State<ProjectPage> {
             _lastUpdateTime = _currentProject.lastUpdate;
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Project saved successfully!'),
+                SnackBar(
+                  content:  Text(S.of(context)!.projectSavedSuccessfully),
                   backgroundColor: Colors.green,
                 ),
               );
@@ -710,8 +709,8 @@ class _ProjectPageState extends State<ProjectPage> {
           } else {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Project already up to date or not found.'),
+                SnackBar(
+                  content: Text(S.of(context)!.project_already_up_to_date),
                   backgroundColor: Colors.orangeAccent,
                 ),
               );
@@ -723,7 +722,7 @@ class _ProjectPageState extends State<ProjectPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error saving project: ${e.toString()}'),
+              content: Text(S.of(context)!.error_saving_project(e.toString())),
               backgroundColor: Colors.red,
             ),
           );
@@ -737,8 +736,8 @@ class _ProjectPageState extends State<ProjectPage> {
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please correct the errors in the form.'),
+        SnackBar(
+          content: Text(S.of(context)!.please_correct_form_errors),
           backgroundColor: Colors.orange,
         ),
       );
@@ -749,8 +748,8 @@ class _ProjectPageState extends State<ProjectPage> {
   Future<void> _confirmDeleteProject() async {
     if (_isEffectivelyNew || _currentProject.id == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cannot delete a project that has not been saved yet.'),
+        SnackBar(
+          content: Text(S.of(context)!.cannot_delete_unsaved_project),
           backgroundColor: Colors.orange,
         ),
       );
@@ -760,21 +759,23 @@ class _ProjectPageState extends State<ProjectPage> {
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
+        final s = S.of(context); // Get S instance for localizations
         return AlertDialog(
           title: const Text('Confirm Delete'),
           content: Text(
-            'Are you sure you want to delete the project "${_currentProject.name}"? This action cannot be undone.',
+            s?.confirm_delete_project_content(_currentProject.name) ??
+                'Are you sure you want to delete the project "${_currentProject.name}"? This action cannot be undone.',
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancel'),
+              child: Text(s?.buttonCancel ?? 'Cancel'),
               onPressed: () {
                 Navigator.of(context).pop(false); // User canceled
               },
             ),
             TextButton(
               child: Text(
-                'Delete',
+               s?.buttonDelete ?? 'Delete',
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
               onPressed: () {
@@ -797,8 +798,8 @@ class _ProjectPageState extends State<ProjectPage> {
         if (deletedRows > 0) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Project deleted successfully.'),
+              SnackBar(
+                content: Text(S.of(context)!.project_deleted_successfully),
                 backgroundColor: Colors.green,
               ),
             );
@@ -810,8 +811,8 @@ class _ProjectPageState extends State<ProjectPage> {
           // This case might indicate the project was already deleted or not found
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Project not found or already deleted.'),
+              SnackBar(
+                content: Text(S.of(context)!.project_not_found_or_deleted),
                 backgroundColor: Colors.orangeAccent,
               ),
             );
@@ -822,7 +823,7 @@ class _ProjectPageState extends State<ProjectPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error deleting project: ${e.toString()}'),
+              content: Text(S.of(context)!.error_deleting_project(e.toString())),
               backgroundColor: Colors.red,
             ),
           );
@@ -950,24 +951,18 @@ class _ProjectPageState extends State<ProjectPage> {
       final locale = Localizations.localeOf(context).toString();
       formattedProjectDate = DateFormat.yMMMd(locale).format(_projectDate!);
     } else {
-      formattedProjectDate = 'Tap to set date';
+      formattedProjectDate = s?.tap_to_set_date ?? 'Tap to set date';
     }
     String formattedLastUpdate = _lastUpdateTime != null
-        ? DateFormat.yMMMd(
-            Localizations.localeOf(context).toString(),
-          ).add_Hm().format(_lastUpdateTime!) // Also localize time
-        : 'Not yet saved';
+        ? DateFormat.yMMMd(Localizations.localeOf(context).toString()).add_Hm().format(_lastUpdateTime!)
+        : s?.not_yet_saved_label ?? 'Not yet saved';
 
     // Determine the title based on whether it's a new project or editing an existing one
-    String appBarTitle;
+   String appBarTitle;
     if (_isEffectivelyNew) {
-      appBarTitle = 'New Project';
+      appBarTitle = s?.new_project_title ?? 'New Project';
     } else {
-      // Assuming 'edit_project_title' is a key in your ARB file.
-      // You might want a different key if the project name is part of the title.
-      // For example: "edit_project_title_named": "Edit: {projectName}"
-      // Then: s.edit_project_title_named(_currentProject?.name ?? '')
-      appBarTitle = _currentProject.name;
+      appBarTitle = s?.edit_project_title_named(_currentProject.name) ?? _currentProject.name;
     }
 
     // For the TabBar, you'll need a TabController.
@@ -983,7 +978,7 @@ class _ProjectPageState extends State<ProjectPage> {
               IconButton(
                 icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                 onPressed: _isLoading ? null : _confirmDeleteProject,
-                tooltip: 'Delete Project',
+                tooltip: s?.delete_project_tooltip ?? 'Delete Project',
               ),
             if (!_isEffectivelyNew)
               IconButton(
@@ -1000,23 +995,20 @@ class _ProjectPageState extends State<ProjectPage> {
             IconButton(
               icon: Icon(_hasUnsavedChanges ? Icons.save : Icons.save_outlined),
               onPressed: _isLoading ? null : _saveProject,
-              tooltip: 'Save Project',
+              tooltip: s?.save_project_tooltip ?? 'Save Project',
               color: _hasUnsavedChanges
                   ? Theme.of(context).colorScheme.primary
                   : null,
             ),
           ],
-          bottom: const TabBar(
+          bottom: TabBar(
             isScrollable:
                 false, // Set to true if you have many tabs that don't fit
             tabs: [
-              Tab(icon: Icon(Icons.info_outline), text: "Details"),
-              Tab(
-                icon: Icon(Icons.list_alt_outlined),
-                text: "Points",
-              ), // Changed icon for variety
-              Tab(icon: Icon(Icons.explore_outlined), text: "Compass"),
-              Tab(icon: Icon(Icons.map_outlined), text: "Map"),
+         Tab(icon:  const Icon(Icons.info_outline), text: s?.details_tab_label ?? "Details"),
+              Tab(icon: const Icon(Icons.list_alt_outlined), text: s?.points_tab_label ?? "Points"),
+              Tab(icon: const Icon(Icons.explore_outlined), text: s?.compass_tab_label ?? "Compass"),
+              Tab(icon: const Icon(Icons.map_outlined), text: s?.map_tab_label ?? "Map"),
             ],
           ),
         ),
@@ -1031,17 +1023,18 @@ class _ProjectPageState extends State<ProjectPage> {
               final bool? shouldPop = await showDialog<bool>(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: const Text('Unsaved Changes'),
-                  content: const Text(
+                  title:  Text(s?.unsaved_changes_title ?? 'Unsaved Changes'),
+                  content:  Text(
+                    s?.unsaved_changes_discard_message ??
                     'You have unsaved changes. Do you want to discard them and leave?',
                   ),
                   actions: [
                     TextButton(
-                      child: const Text('Cancel'),
+                      child:  Text(s?.dialog_cancel ?? 'Cancel'),
                       onPressed: () => Navigator.of(context).pop(false),
                     ),
                     TextButton(
-                      child: const Text('Discard'),
+                      child:  Text(s?.discard_button_label ?? 'Discard'),
                       onPressed: () => Navigator.of(context).pop(true),
                     ),
                   ],
@@ -1081,7 +1074,7 @@ class _ProjectPageState extends State<ProjectPage> {
                     children: <Widget>[
                       _buildTextFormField(
                         controller: _nameController,
-                        label: 'Project Name',
+                        label: s?.formFieldNameLabel ?? 'Project Name',
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
                             return S
@@ -1124,9 +1117,10 @@ class _ProjectPageState extends State<ProjectPage> {
                               validator: (value) {
                                 if (value != null && value.trim().isNotEmpty) {
                                   final num = double.tryParse(value.trim());
-                                  if (num == null) return 'Invalid number.';
+                                  if (num == null) return s?.invalid_number_validator ??
+                                  'Invalid number.';
                                   if (num <= -360 || num >= 360)
-                                    return 'Must be +/-359.99';
+                                    return s?.must_be_359_validator ?? 'Must be +/-359.99';
                                 }
                                 return null;
                               },
@@ -1153,6 +1147,7 @@ class _ProjectPageState extends State<ProjectPage> {
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 8.0),
                           child: Text(
+                            s?.last_updated_label(formattedLastUpdate) ??
                             'Last updated: $formattedLastUpdate',
                             style: Theme.of(context).textTheme.bodySmall,
                             textAlign: TextAlign.center,

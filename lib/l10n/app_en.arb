@@ -224,5 +224,98 @@
   },
   "export_requires_licence_title": "Licence Required for Export",
    "export_requires_licence_message": "This feature requires an active licence. Please import a valid licence file to proceed.",
-   "action_import_licence": "Import Licence"
+   "action_import_licence": "Import Licence",
+   "edit_project_title": "Edit Project",
+"edit_project_title_named": "Edit: {projectName}",
+  "@edit_project_title_named": {
+    "placeholders": {
+      "projectName": {
+        "type": "String"
+      }
+    }
+  },
+"new_project_title": "New Project",
+"delete_project_tooltip": "Delete Project",
+"save_project_tooltip": "Save Project",
+"last_updated_label": "Last updated: {date}",
+  "@last_updated_label": {
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "12/06/2024"
+      }
+    }
+  },
+"not_yet_saved_label": "Not yet saved",
+"tap_to_set_date": "Tap to set date",
+"invalid_number_validator": "Invalid number.",
+"must_be_359_validator": "Must be +/-359.99",
+"please_correct_form_errors": "Please correct the errors in the form.",
+"project_created_successfully": "Project created successfully!",
+"project_already_up_to_date": "Project already up to date or not found.",
+"cannot_delete_unsaved_project": "Cannot delete a project that has not been saved yet.",
+"confirm_delete_project_title": "Confirm Delete",
+"confirm_delete_project_content": "Are you sure you want to delete the project \"{projectName}\"? This action cannot be undone.",
+"project_deleted_successfully": "Project deleted successfully.",
+"project_not_found_or_deleted": "Project not found or already deleted.",
+"error_saving_project": "Error saving project: {errorMessage}",
+  "@error_saving_project": {
+    "placeholders": {
+      "errorMessage": {
+        "type": "String"
+      }
+    }
+  },
+"error_deleting_project": "Error deleting project: {errorMessage}",
+  "@error_deleting_project": {
+    "placeholders": {
+      "errorMessage": {
+        "type": "String"
+      }
+    }
+  },
+"unsaved_changes_dialog_title": "Unsaved Changes",
+"unsaved_changes_dialog_content": "You have unsaved changes. Do you want to discard them and leave?",
+"discard_button_label": "Discard",
+"details_tab_label": "Details",
+"points_tab_label": "Points",
+"compass_tab_label": "Compass",
+"map_tab_label": "Map",
+  "export_page_title": "Export Project Data",
+  "@export_page_title": {
+    "description": "Title for the export data page."
+  },
+  "export_page_description": "Export your project data in various formats.",
+  "@export_page_description": {
+    "description": "Description text for the export page."
+  },
+  "export_format_csv": "CSV (Comma-Separated Values)",
+  "@export_format_csv": {
+    "description": "Label for the CSV export format option."
+  },
+  "export_format_kml": "KML (Keyhole Markup Language)",
+  "@export_format_kml": {
+    "description": "Label for the KML export format option."
+  },
+  "export_format_geojson": "GeoJSON",
+  "@export_format_geojson": {
+    "description": "Label for the GeoJSON export format option."
+  },
+  "unsaved_changes_discard_message": "You have unsaved changes. Discard them and leave?",
+  "@unsaved_changes_discard_message": {
+    "description": "Message shown in the dialog when there are unsaved changes and the user attempts to leave the page."
+  },
+  "unsaved_changes_discard_button": "Discard Changes",
+  "@unsaved_changes_discard_button": {
+    "description": "Label for the button that discards unsaved changes in the dialog."
+  },
+  "unsaved_changes_save_button": "Save Changes",
+  "@unsaved_changes_save_button": {
+    "description": "Label for the button that saves unsaved changes in the dialog."
+  },
+  "export_page_no_points": "No points available for export.",
+  "@export_page_no_points": {
+    "description": "Message shown when there are no points to export in the project."
+  }
+ 
 }

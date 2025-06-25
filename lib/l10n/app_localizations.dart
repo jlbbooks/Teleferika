@@ -492,6 +492,222 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Import Licence'**
   String get action_import_licence;
+
+  /// No description provided for @edit_project_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Project'**
+  String get edit_project_title;
+
+  /// No description provided for @edit_project_title_named.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit: {projectName}'**
+  String edit_project_title_named(String projectName);
+
+  /// No description provided for @new_project_title.
+  ///
+  /// In en, this message translates to:
+  /// **'New Project'**
+  String get new_project_title;
+
+  /// No description provided for @delete_project_tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Project'**
+  String get delete_project_tooltip;
+
+  /// No description provided for @save_project_tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Project'**
+  String get save_project_tooltip;
+
+  /// No description provided for @last_updated_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Last updated: {date}'**
+  String last_updated_label(String date);
+
+  /// No description provided for @not_yet_saved_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Not yet saved'**
+  String get not_yet_saved_label;
+
+  /// No description provided for @tap_to_set_date.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to set date'**
+  String get tap_to_set_date;
+
+  /// No description provided for @invalid_number_validator.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid number.'**
+  String get invalid_number_validator;
+
+  /// No description provided for @must_be_359_validator.
+  ///
+  /// In en, this message translates to:
+  /// **'Must be +/-359.99'**
+  String get must_be_359_validator;
+
+  /// No description provided for @please_correct_form_errors.
+  ///
+  /// In en, this message translates to:
+  /// **'Please correct the errors in the form.'**
+  String get please_correct_form_errors;
+
+  /// No description provided for @project_created_successfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Project created successfully!'**
+  String get project_created_successfully;
+
+  /// No description provided for @project_already_up_to_date.
+  ///
+  /// In en, this message translates to:
+  /// **'Project already up to date or not found.'**
+  String get project_already_up_to_date;
+
+  /// No description provided for @cannot_delete_unsaved_project.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot delete a project that has not been saved yet.'**
+  String get cannot_delete_unsaved_project;
+
+  /// No description provided for @confirm_delete_project_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Delete'**
+  String get confirm_delete_project_title;
+
+  /// No description provided for @confirm_delete_project_content.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete the project \"{projectName}\"? This action cannot be undone.'**
+  String confirm_delete_project_content(Object projectName);
+
+  /// No description provided for @project_deleted_successfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Project deleted successfully.'**
+  String get project_deleted_successfully;
+
+  /// No description provided for @project_not_found_or_deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Project not found or already deleted.'**
+  String get project_not_found_or_deleted;
+
+  /// No description provided for @error_saving_project.
+  ///
+  /// In en, this message translates to:
+  /// **'Error saving project: {errorMessage}'**
+  String error_saving_project(String errorMessage);
+
+  /// No description provided for @error_deleting_project.
+  ///
+  /// In en, this message translates to:
+  /// **'Error deleting project: {errorMessage}'**
+  String error_deleting_project(String errorMessage);
+
+  /// No description provided for @unsaved_changes_dialog_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsaved Changes'**
+  String get unsaved_changes_dialog_title;
+
+  /// No description provided for @unsaved_changes_dialog_content.
+  ///
+  /// In en, this message translates to:
+  /// **'You have unsaved changes. Do you want to discard them and leave?'**
+  String get unsaved_changes_dialog_content;
+
+  /// No description provided for @discard_button_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get discard_button_label;
+
+  /// No description provided for @details_tab_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get details_tab_label;
+
+  /// No description provided for @points_tab_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Points'**
+  String get points_tab_label;
+
+  /// No description provided for @compass_tab_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Compass'**
+  String get compass_tab_label;
+
+  /// No description provided for @map_tab_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Map'**
+  String get map_tab_label;
+
+  /// Title for the export data page.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Project Data'**
+  String get export_page_title;
+
+  /// Description text for the export page.
+  ///
+  /// In en, this message translates to:
+  /// **'Export your project data in various formats.'**
+  String get export_page_description;
+
+  /// Label for the CSV export format option.
+  ///
+  /// In en, this message translates to:
+  /// **'CSV (Comma-Separated Values)'**
+  String get export_format_csv;
+
+  /// Label for the KML export format option.
+  ///
+  /// In en, this message translates to:
+  /// **'KML (Keyhole Markup Language)'**
+  String get export_format_kml;
+
+  /// Label for the GeoJSON export format option.
+  ///
+  /// In en, this message translates to:
+  /// **'GeoJSON'**
+  String get export_format_geojson;
+
+  /// Message shown in the dialog when there are unsaved changes and the user attempts to leave the page.
+  ///
+  /// In en, this message translates to:
+  /// **'You have unsaved changes. Discard them and leave?'**
+  String get unsaved_changes_discard_message;
+
+  /// Label for the button that discards unsaved changes in the dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard Changes'**
+  String get unsaved_changes_discard_button;
+
+  /// Label for the button that saves unsaved changes in the dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get unsaved_changes_save_button;
+
+  /// Message shown when there are no points to export in the project.
+  ///
+  /// In en, this message translates to:
+  /// **'No points available for export.'**
+  String get export_page_no_points;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {
