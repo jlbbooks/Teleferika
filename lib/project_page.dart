@@ -68,7 +68,9 @@ class ProjectPage extends StatefulWidget {
   State<ProjectPage> createState() => _ProjectPageState();
 }
 
-class _ProjectPageState extends State<ProjectPage> {
+class _ProjectPageState extends State<ProjectPage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   final GlobalKey<FormState> _projectFormKey = GlobalKey<FormState>();
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
@@ -115,6 +117,10 @@ class _ProjectPageState extends State<ProjectPage> {
     _noteController = TextEditingController(text: _currentProject.note ?? '');
     _azimuthController = TextEditingController(
       text: _currentProject.azimuth?.toStringAsFixed(2) ?? '',
+    );
+    _tabController = TabController(
+      length: ProjectPageTab.values.length,
+      vsync: this,
     );
     _projectDate =
         _currentProject.date ?? (widget.isNew ? DateTime.now() : null);
@@ -310,6 +316,7 @@ class _ProjectPageState extends State<ProjectPage> {
     _nameController.dispose();
     _noteController.dispose();
     _azimuthController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -694,7 +701,7 @@ class _ProjectPageState extends State<ProjectPage> {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content:  Text(S.of(context)!.projectSavedSuccessfully),
+                  content: Text(S.of(context)!.projectSavedSuccessfully),
                   backgroundColor: Colors.green,
                 ),
               );
@@ -775,7 +782,7 @@ class _ProjectPageState extends State<ProjectPage> {
             ),
             TextButton(
               child: Text(
-               s?.buttonDelete ?? 'Delete',
+                s?.buttonDelete ?? 'Delete',
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
               onPressed: () {
@@ -823,7 +830,9 @@ class _ProjectPageState extends State<ProjectPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(S.of(context)!.error_deleting_project(e.toString())),
+              content: Text(
+                S.of(context)!.error_deleting_project(e.toString()),
+              ),
               backgroundColor: Colors.red,
             ),
           );
@@ -928,6 +937,55 @@ class _ProjectPageState extends State<ProjectPage> {
     }
   }
 
+  void _handleOnPopInvokedWithResult(bool didPop, Object? result) async {
+    final s = S.of(context); // Get S instance for localizations
+    if (didPop) {
+      return;
+    }
+    if (_hasUnsavedChanges) {
+      final bool? shouldPop = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(s?.unsaved_changes_title ?? 'Unsaved Changes'),
+          content: Text(
+            s?.unsaved_changes_discard_message ??
+                'You have unsaved changes. Do you want to discard them and leave?',
+          ),
+          actions: [
+            TextButton(
+              child: Text(s?.dialog_cancel ?? 'Cancel'),
+              onPressed: () => Navigator.of(context).pop(false),
+            ),
+            TextButton(
+              child: Text(s?.discard_button_label ?? 'Discard'),
+              onPressed: () => Navigator.of(context).pop(true),
+            ),
+          ],
+        ),
+      );
+      if (shouldPop == true) {
+        // ignore: use_build_context_synchronously
+        if (mounted) Navigator.of(context).pop();
+      }
+    } else {
+      // No unsaved changes, so we can pop.
+      // Now check if a save occurred at any point.
+      if (mounted) {
+        if (_projectWasSuccessfullySaved) {
+          Navigator.of(context).pop<Map<String, dynamic>>({
+            'action': 'saved', // Or 'saved_and_exited'
+            'id': _currentProject.id, // Pass the latest saved state
+          });
+        } else {
+          // No unsaved changes, and no save occurred during this page's lifetime
+          Navigator.of(
+            context,
+          ).pop(); //({'action': 'no_changes_made'}); // Or simply pop() for null
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = S.of(context); // Get S instance for localizations
@@ -954,252 +1012,265 @@ class _ProjectPageState extends State<ProjectPage> {
       formattedProjectDate = s?.tap_to_set_date ?? 'Tap to set date';
     }
     String formattedLastUpdate = _lastUpdateTime != null
-        ? DateFormat.yMMMd(Localizations.localeOf(context).toString()).add_Hm().format(_lastUpdateTime!)
+        ? DateFormat.yMMMd(
+            Localizations.localeOf(context).toString(),
+          ).add_Hm().format(_lastUpdateTime!)
         : s?.not_yet_saved_label ?? 'Not yet saved';
 
     // Determine the title based on whether it's a new project or editing an existing one
-   String appBarTitle;
+    String appBarTitle;
     if (_isEffectivelyNew) {
       appBarTitle = s?.new_project_title ?? 'New Project';
     } else {
-      appBarTitle = s?.edit_project_title_named(_currentProject.name) ?? _currentProject.name;
+      appBarTitle =
+          s?.edit_project_title_named(_currentProject.name) ??
+          _currentProject.name;
     }
 
-    // For the TabBar, you'll need a TabController.
-    // The easiest way is to wrap your Scaffold with DefaultTabController.
-    return DefaultTabController(
-      length: ProjectPageTab.values.length, // Number of tabs
-      child: Scaffold(
+    final orientation = MediaQuery.of(context).orientation;
+    Widget tabBarViewWidget = TabBarView(
+      controller: _tabController,
+      children: [
+        // Tab 1: Project Details Form
+        SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _projectFormKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                _buildTextFormField(
+                  controller: _nameController,
+                  label: s?.formFieldNameLabel ?? 'Project Name',
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return S.of(context)!.projectNameCannotBeEmptyValidator;
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 8),
+                InkWell(
+                  onTap: () => _selectProjectDate(context),
+                  child: InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: S.of(context)!.formFieldProjectDateLabel,
+                      border: const OutlineInputBorder(),
+                    ),
+                    child: Text(formattedProjectDate),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _buildTextFormField(
+                  controller: _noteController,
+                  label: S.of(context)!.formFieldNoteLabel,
+                  maxLines: 3,
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: _buildTextFormField(
+                        controller: _azimuthController,
+                        label: S.of(context)!.formFieldAzimuthLabel,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                          signed: true,
+                        ),
+                        validator: (value) {
+                          if (value != null && value.trim().isNotEmpty) {
+                            final num = double.tryParse(value.trim());
+                            if (num == null)
+                              return s?.invalid_number_validator ??
+                                  'Invalid number.';
+                            if (num <= -360 || num >= 360)
+                              return s?.must_be_359_validator ??
+                                  'Must be +/-359.99';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: ElevatedButton(
+                        onPressed: _calculateAzimuth,
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                        ),
+                        child: Text(S.of(context)!.buttonCalculate),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                if (!_isEffectivelyNew && _lastUpdateTime != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text(
+                      s?.last_updated_label(formattedLastUpdate) ??
+                          'Last updated: $formattedLastUpdate',
+                      style: Theme.of(context).textTheme.bodySmall,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                // Add other relevant UI elements from your original design
+              ],
+            ),
+          ),
+        ),
+        // Tab 2: Points
+        PointsToolView(
+          key: _pointsToolViewKey, // Assign the GlobalKey
+          project: _currentProject,
+          onPointsChanged: _onPointsChanged,
+          newlyAddedPointId: _newlyAddedPointId,
+        ),
+
+        // Tab 3: Compass
+        // You might need to pass project data or specific settings
+        CompassToolView(
+          project: _currentProject,
+          onAddPointFromCompass:
+              _initiateAddPointFromCompass, // Pass the callback
+          isAddingPoint: _isAddingPointFromCompassInProgress,
+        ),
+
+        // Tab 4: Map
+        // Pass the current project. MapToolView will handle loading its points.
+        MapToolView(
+          key: _mapToolViewKey, // Assign the GlobalKey
+          project: _currentProject,
+          selectedPointId: null,
+          onNavigateToCompassTab: () {
+            _switchToTab(ProjectPageTab.compass);
+          },
+          onAddPointFromCompass:
+              _initiateAddPointFromCompass, // Pass the callback
+        ),
+      ],
+    );
+    List<Widget> tabWidgets = [
+      Tab(
+        icon: const Icon(Icons.info_outline),
+        text: s?.details_tab_label ?? "Details",
+      ),
+      Tab(
+        icon: const Icon(Icons.list_alt_outlined),
+        text: s?.points_tab_label ?? "Points",
+      ),
+      Tab(
+        icon: const Icon(Icons.explore_outlined),
+        text: s?.compass_tab_label ?? "Compass",
+      ),
+      Tab(
+        icon: const Icon(Icons.map_outlined),
+        text: s?.map_tab_label ?? "Map",
+      ),
+    ];
+
+    List<Widget> tabBarActions = [
+      if (!_isEffectivelyNew) // Show delete only for existing projects
+        IconButton(
+          icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+          onPressed: _isLoading ? null : _confirmDeleteProject,
+          tooltip: s?.delete_project_tooltip ?? 'Delete Project',
+        ),
+      if (!_isEffectivelyNew)
+        IconButton(
+          icon: const Icon(
+            Icons.output,
+          ), // Or Icons.ios_share, Icons.file_upload
+          // Using the localized string for the tooltip
+          tooltip: s?.export_project_data_tooltip ?? 'Export Project Data',
+          onPressed: (_isEffectivelyNew || _isLoading)
+              ? null // Disable if project is new and never saved, or if loading
+              : _checkLicenceAndProceedToExport,
+        ),
+      IconButton(
+        icon: Icon(_hasUnsavedChanges ? Icons.save : Icons.save_outlined),
+        onPressed: _isLoading ? null : _saveProject,
+        tooltip: s?.save_project_tooltip ?? 'Save Project',
+        color: _hasUnsavedChanges
+            ? Theme.of(context).colorScheme.primary
+            : null,
+      ),
+    ];
+
+    if (orientation == Orientation.portrait) {
+      // Portrait layout
+      return Scaffold(
         key: _scaffoldKey,
         appBar: AppBar(
           title: Text(appBarTitle),
-          actions: [
-            if (!_isEffectivelyNew) // Show delete only for existing projects
-              IconButton(
-                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                onPressed: _isLoading ? null : _confirmDeleteProject,
-                tooltip: s?.delete_project_tooltip ?? 'Delete Project',
-              ),
-            if (!_isEffectivelyNew)
-              IconButton(
-                icon: const Icon(
-                  Icons.output,
-                ), // Or Icons.ios_share, Icons.file_upload
-                // Using the localized string for the tooltip
-                tooltip:
-                    s?.export_project_data_tooltip ?? 'Export Project Data',
-                onPressed: (_isEffectivelyNew || _isLoading)
-                    ? null // Disable if project is new and never saved, or if loading
-                    : _checkLicenceAndProceedToExport,
-              ),
-            IconButton(
-              icon: Icon(_hasUnsavedChanges ? Icons.save : Icons.save_outlined),
-              onPressed: _isLoading ? null : _saveProject,
-              tooltip: s?.save_project_tooltip ?? 'Save Project',
-              color: _hasUnsavedChanges
-                  ? Theme.of(context).colorScheme.primary
-                  : null,
-            ),
-          ],
+          actions: tabBarActions,
           bottom: TabBar(
+            controller: _tabController,
             isScrollable:
                 false, // Set to true if you have many tabs that don't fit
-            tabs: [
-         Tab(icon:  const Icon(Icons.info_outline), text: s?.details_tab_label ?? "Details"),
-              Tab(icon: const Icon(Icons.list_alt_outlined), text: s?.points_tab_label ?? "Points"),
-              Tab(icon: const Icon(Icons.explore_outlined), text: s?.compass_tab_label ?? "Compass"),
-              Tab(icon: const Icon(Icons.map_outlined), text: s?.map_tab_label ?? "Map"),
-            ],
+            tabs: tabWidgets,
           ),
         ),
         body: PopScope(
           // Use PopScope for "are you sure you want to leave" dialog
           canPop: false,
-          onPopInvokedWithResult: (bool didPop, Object? result) async {
-            if (didPop) {
-              return;
-            }
-            if (_hasUnsavedChanges) {
-              final bool? shouldPop = await showDialog<bool>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title:  Text(s?.unsaved_changes_title ?? 'Unsaved Changes'),
-                  content:  Text(
-                    s?.unsaved_changes_discard_message ??
-                    'You have unsaved changes. Do you want to discard them and leave?',
-                  ),
-                  actions: [
-                    TextButton(
-                      child:  Text(s?.dialog_cancel ?? 'Cancel'),
-                      onPressed: () => Navigator.of(context).pop(false),
-                    ),
-                    TextButton(
-                      child:  Text(s?.discard_button_label ?? 'Discard'),
-                      onPressed: () => Navigator.of(context).pop(true),
-                    ),
-                  ],
-                ),
-              );
-              if (shouldPop == true) {
-                // ignore: use_build_context_synchronously
-                if (mounted) Navigator.of(context).pop();
-              }
-            } else {
-              // No unsaved changes, so we can pop.
-              // Now check if a save occurred at any point.
-              if (mounted) {
-                if (_projectWasSuccessfullySaved) {
-                  Navigator.of(context).pop<Map<String, dynamic>>({
-                    'action': 'saved', // Or 'saved_and_exited'
-                    'id': _currentProject.id, // Pass the latest saved state
-                  });
-                } else {
-                  // No unsaved changes, and no save occurred during this page's lifetime
-                  Navigator.of(
-                    context,
-                  ).pop(); //({'action': 'no_changes_made'}); // Or simply pop() for null
-                }
-              }
-            }
-          },
-          child: TabBarView(
-            children: [
-              // Tab 1: Project Details Form
-              SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
-                child: Form(
-                  key: _projectFormKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      _buildTextFormField(
-                        controller: _nameController,
-                        label: s?.formFieldNameLabel ?? 'Project Name',
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return S
-                                .of(context)!
-                                .projectNameCannotBeEmptyValidator;
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      InkWell(
-                        onTap: () => _selectProjectDate(context),
-                        child: InputDecorator(
-                          decoration: InputDecoration(
-                            labelText: S.of(context)!.formFieldProjectDateLabel,
-                            border: const OutlineInputBorder(),
-                          ),
-                          child: Text(formattedProjectDate),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      _buildTextFormField(
-                        controller: _noteController,
-                        label: S.of(context)!.formFieldNoteLabel,
-                        maxLines: 3,
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: _buildTextFormField(
-                              controller: _azimuthController,
-                              label: S.of(context)!.formFieldAzimuthLabel,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                    signed: true,
-                                  ),
-                              validator: (value) {
-                                if (value != null && value.trim().isNotEmpty) {
-                                  final num = double.tryParse(value.trim());
-                                  if (num == null) return s?.invalid_number_validator ??
-                                  'Invalid number.';
-                                  if (num <= -360 || num >= 360)
-                                    return s?.must_be_359_validator ?? 'Must be +/-359.99';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: ElevatedButton(
-                              onPressed: _calculateAzimuth,
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 12,
-                                ),
-                              ),
-                              child: Text(S.of(context)!.buttonCalculate),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      if (!_isEffectivelyNew && _lastUpdateTime != null)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: Text(
-                            s?.last_updated_label(formattedLastUpdate) ??
-                            'Last updated: $formattedLastUpdate',
-                            style: Theme.of(context).textTheme.bodySmall,
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      // Add other relevant UI elements from your original design
-                    ],
+          onPopInvokedWithResult: _handleOnPopInvokedWithResult,
+          child: tabBarViewWidget,
+        ),
+      );
+    } else {
+      // Horizontal layout
+      return Scaffold(
+        key: _scaffoldKey,
+        appBar: AppBar(
+          title: Text(appBarTitle),
+          actions: tabBarActions,
+          // No bottom TabBar in AppBar for landscape
+        ),
+        body: PopScope(
+          // Use PopScope for "are you sure you want to leave" dialog
+          canPop: false,
+          onPopInvokedWithResult: _handleOnPopInvokedWithResult,
+          child: Row(
+            children: <Widget>[
+              // Vertical TabBar on the side
+              Material(
+                // Optional: to provide a background color and elevation
+                elevation: 4.0, // Example elevation
+                child: RotatedBox(
+                  // Use RotatedBox if you want to reuse TabBar, but it can be tricky
+                  // A custom Column of InkWell/GestureDetector widgets might be easier for vertical tabs
+                  quarterTurns: 3, // Rotate a horizontal TabBar to be vertical
+                  // Note: This might not look perfect and might need width constraints
+                  child: TabBar(
+                    controller: _tabController,
+                    isScrollable:
+                        false, // Likely needed for vertical tabs if text is present
+                    indicatorWeight: 2.0, // Adjust as needed
+                    indicatorSize: TabBarIndicatorSize.tab, // Adjust as needed
+                    labelPadding: EdgeInsets.fromLTRB(0.0, 8, 0, 8),
+                    tabs: tabWidgets
+                        .map((tab) => RotatedBox(quarterTurns: 1, child: tab))
+                        .toList(), // Counter-rotate tab content
+                    // You might need to set a specific width for this vertical TabBar
+                    // e.g., using a SizedBox or ConstrainedBox
                   ),
                 ),
               ),
-              // Tab 2: Points
-              PointsToolView(
-                key: _pointsToolViewKey, // Assign the GlobalKey
-                project: _currentProject,
-                onPointsChanged: _onPointsChanged,
-                newlyAddedPointId: _newlyAddedPointId,
-              ),
 
-              // Tab 3: Compass
-              // You might need to pass project data or specific settings
-              CompassToolView(
-                project: _currentProject,
-                onAddPointFromCompass:
-                    _initiateAddPointFromCompass, // Pass the callback
-                isAddingPoint: _isAddingPointFromCompassInProgress,
-              ),
-
-              // Tab 4: Map
-              // Pass the current project. MapToolView will handle loading its points.
-              // Center(
-              //   child: SizedBox(
-              //     height:
-              //         MediaQuery.of(context).size.height *
-              //         0.7, // e.g., 60% of screen height
-              //     child:
-              MapToolView(
-                key: _mapToolViewKey, // Assign the GlobalKey
-                project: _currentProject,
-                selectedPointId: null,
-                onNavigateToCompassTab: () {
-                  _switchToTab(ProjectPageTab.compass);
-                },
-                onAddPointFromCompass:
-                    _initiateAddPointFromCompass, // Pass the callback
-              ),
-              //   ),
-              // ),
+              // Alternative: A custom vertical tab bar implementation
+              // buildVerticalTabBar(context, _tabController, tabWidgets, s),
+              Expanded(child: tabBarViewWidget),
             ],
           ),
         ),
-      ),
-    );
+      );
+    }
   }
 
   void _onPointsChanged() async {

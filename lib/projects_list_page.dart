@@ -593,6 +593,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'projectPageFAB',
         onPressed: _navigateToAddProjectPage,
         tooltip: 'Add New Project',
         child: const Icon(Icons.add),

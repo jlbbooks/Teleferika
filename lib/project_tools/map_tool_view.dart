@@ -1223,6 +1223,7 @@ class MapToolViewState extends State<MapToolView> {
               bottom: 24,
               left: 24,
               child: FloatingActionButton(
+                heroTag: 'center_on_location',
                 onPressed: () {
                   if (_currentPosition != null) {
                     _mapController.move(
@@ -1244,6 +1245,7 @@ class MapToolViewState extends State<MapToolView> {
               bottom: 96,
               left: 24,
               child: FloatingActionButton(
+                heroTag: 'add_new_point',
                 onPressed: _handleAddPointButtonPressed,
                 tooltip: 'Add New Point',
                 child: const Icon(Icons.add_location_alt_outlined),
@@ -1256,6 +1258,7 @@ class MapToolViewState extends State<MapToolView> {
               bottom: 24,
               right: 24,
               child: FloatingActionButton(
+                heroTag: 'center_on_points',
                 onPressed: _fitMapToPoints,
                 tooltip: 'Center on points',
                 child: const Icon(Icons.center_focus_strong),
