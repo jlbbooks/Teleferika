@@ -246,23 +246,38 @@ class _ProjectPageState extends State<ProjectPage>
     _navigateToExportPage(); // Your existing method
   }
 
+  // void _switchToTab(ProjectPageTab tab) {
+  //   if (!mounted) return;
+  //
+  //   final BuildContext? scaffoldContext = _scaffoldKey.currentContext;
+  //
+  //   if (scaffoldContext != null) {
+  //     final TabController controller = DefaultTabController.of(scaffoldContext);
+  //     final int tabIndex = tab.index;
+  //
+  //     if (tabIndex >= 0 && controller.index != tabIndex) {
+  //       controller.animateTo(tabIndex);
+  //     }
+  //   } else {
+  //     logger.warning(
+  //       "Scaffold key context is null, cannot switch tab. Widget might be unmounted or Scaffold not built yet.",
+  //     );
+  //   }
+  // }
+  // NEW AND CORRECT WAY
   void _switchToTab(ProjectPageTab tab) {
-    if (!mounted) return;
-
-    final BuildContext? scaffoldContext = _scaffoldKey.currentContext;
-
-    if (scaffoldContext != null) {
-      final TabController controller = DefaultTabController.of(scaffoldContext);
-      final int tabIndex = tab.index;
-
-      if (tabIndex >= 0 && controller.index != tabIndex) {
-        controller.animateTo(tabIndex);
-      }
-    } else {
-      logger.warning(
-        "Scaffold key context is null, cannot switch tab. Widget might be unmounted or Scaffold not built yet.",
-      );
+    if (!_tabController.indexIsChanging) {
+      _tabController.animateTo(ProjectPageTab.values.indexOf(tab));
     }
+    // Potentially other logic like setting _currentTab
+    // If you are tracking the current tab separately, ensure it's updated.
+    // However, _tabController.index can often be the source of truth.
+    setState(() {
+      // If you need to trigger a rebuild or update other UI elements based on the tab change,
+      // you might do so here.
+      // For example, if you have a variable like:
+      // _currentTab = tab;
+    });
   }
 
   Future<void> _loadProjectDetails() async {
