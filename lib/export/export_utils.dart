@@ -100,9 +100,6 @@ class KmlExportStrategy implements ExportStrategy {
       if (point.altitude != null) {
         kml.writeln('        Altitude: ${point.altitude} m');
       }
-      if (point.heading != null) {
-        kml.writeln('        Heading: ${point.heading?.toStringAsFixed(2)}°');
-      }
       if (point.timestamp != null) {
         kml.writeln('        Timestamp: ${point.timestamp?.toIso8601String()}');
       }
@@ -193,7 +190,6 @@ class CsvExportStrategy implements ExportStrategy {
       'Latitude',
       'Longitude',
       'Altitude (m)',
-      'Heading (deg)',
       'Timestamp',
       'Note',
     ];
@@ -206,8 +202,7 @@ class CsvExportStrategy implements ExportStrategy {
         point.ordinalNumber.toString(),
         point.latitude.toString(),
         point.longitude.toString(),
-        point.altitude?.toString(),
-        point.heading?.toStringAsFixed(2),
+        point.altitude?.toStringAsFixed(2),
         point.timestamp?.toIso8601String(),
         point.note,
       ];

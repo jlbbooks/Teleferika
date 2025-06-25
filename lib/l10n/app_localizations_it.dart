@@ -93,8 +93,8 @@ class SIt extends S {
       'Inserito prima del punto finale corrente.';
 
   @override
-  String pointFromCompassDefaultNote(String heading) {
-    return 'Punto da Bussola (A: $heading°)';
+  String pointFromCompassDefaultNote(String altitude) {
+    return 'Punto da Bussola (A: $altitude°)';
   }
 
   @override

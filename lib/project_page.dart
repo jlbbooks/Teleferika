@@ -421,12 +421,12 @@ class _ProjectPageState extends State<ProjectPage> {
         projectId: _currentProject.id,
         latitude: position.latitude,
         longitude: position.longitude,
+        altitude: position.altitude,
         ordinalNumber: newPointOrdinal,
         // You might want a default note or a way to add one later
         note: S
             .of(context)!
             .pointFromCompassDefaultNote(heading.toStringAsFixed(1)),
-        heading: heading, // FIXME: what about the timestamp????
       );
 
       final newPointIdFromCompass = await _dbHelper.insertPoint(

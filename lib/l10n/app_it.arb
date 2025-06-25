@@ -50,13 +50,13 @@
   },
   "pointAddedSetAsEndSnackbarSuffix": "Impostato come punto FINALE.",
   "pointAddedInsertedBeforeEndSnackbarSuffix": "Inserito prima del punto finale corrente.",
-  "pointFromCompassDefaultNote": "Punto da Bussola (A: {heading}°)",
+  "pointFromCompassDefaultNote": "Punto da Bussola (A: {altitude}°)",
   "@pointFromCompassDefaultNote": {
-    "description": "Nota predefinita per un punto aggiunto tramite lo strumento bussola, che mostra la direzione.",
+    "description": "Nota predefinita per un punto aggiunto tramite lo strumento bussola, che mostra l'altitudine.",
     "placeholders": {
-      "heading": {
+      "altitude": {
         "type": "String",
-        "example": "45.2"
+        "example": "1245.2"
       }
     }
   },

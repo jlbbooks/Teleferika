@@ -12,7 +12,6 @@ class PointModel {
   double? altitude; // New optional altitude field
   int ordinalNumber;
   String? note;
-  double? heading;
   DateTime? timestamp;
   List<ImageModel> images;
 
@@ -36,7 +35,6 @@ class PointModel {
     this.altitude, // Add to constructor
     required this.ordinalNumber,
     this.note,
-    this.heading,
     this.timestamp,
     List<ImageModel>? images,
   }) : this.id = id ?? generateUuid(),
@@ -52,8 +50,6 @@ class PointModel {
     int? ordinalNumber,
     String? note,
     bool clearNote = false,
-    double? heading,
-    bool clearHeading = false,
     DateTime? timestamp,
     bool clearTimestamp = false,
     List<ImageModel>? images,
@@ -68,7 +64,6 @@ class PointModel {
           : altitude ?? this.altitude, // Handle clearAltitude
       ordinalNumber: ordinalNumber ?? this.ordinalNumber,
       note: clearNote ? null : note ?? this.note,
-      heading: clearHeading ? null : heading ?? this.heading,
       timestamp: clearTimestamp ? null : timestamp ?? this.timestamp,
       images: images ?? this.images,
     );
@@ -83,7 +78,6 @@ class PointModel {
       columnAltitude: altitude, // Add to toMap
       columnOrdinalNumber: ordinalNumber,
       columnNote: note,
-      columnHeading: heading,
       columnTimestamp: timestamp?.toIso8601String(),
     };
   }
@@ -100,7 +94,6 @@ class PointModel {
       altitude: map[columnAltitude] as double?, // Add to fromMap
       ordinalNumber: map[columnOrdinalNumber] as int,
       note: map[columnNote] as String?,
-      heading: map[columnHeading] as double?,
       timestamp: map[columnTimestamp] != null
           ? DateTime.tryParse(map[columnTimestamp] as String)
           : null,
@@ -110,7 +103,7 @@ class PointModel {
 
   @override
   String toString() {
-    return 'PointModel(id: $id, projectId: $projectId, latitude: $latitude, longitude: $longitude, altitude: $altitude, ordinalNumber: $ordinalNumber, note: $note, heading: $heading, timestamp: $timestamp, images: ${images.length})';
+    return 'PointModel(id: $id, projectId: $projectId, latitude: $latitude, longitude: $longitude, altitude: $altitude, ordinalNumber: $ordinalNumber, note: $note, timestamp: $timestamp, images: ${images.length})';
   }
 
   @override
@@ -125,7 +118,6 @@ class PointModel {
         other.altitude == altitude && // Add to equality check
         other.ordinalNumber == ordinalNumber &&
         other.note == note &&
-        other.heading == heading &&
         other.timestamp == timestamp &&
         images.length ==
             other.images.length; // Simplified images check for brevity
@@ -142,7 +134,6 @@ class PointModel {
       altitude, // Add to hashCode
       ordinalNumber,
       note,
-      heading,
       timestamp,
       images.length, // Simplified images hash for brevity
     );

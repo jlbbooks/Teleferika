@@ -50,13 +50,13 @@
   },
   "pointAddedSetAsEndSnackbarSuffix": "Set as END point.",
   "pointAddedInsertedBeforeEndSnackbarSuffix": "Inserted before current end point.",
-  "pointFromCompassDefaultNote": "Point from Compass (H: {heading}°)",
+  "pointFromCompassDefaultNote": "Added (H: {altitude}°)",
   "@pointFromCompassDefaultNote": {
-    "description": "Default note for a point added using the compass tool, showing the heading.",
+    "description": "Default note for a point added using the compass tool, showing the altitude.",
     "placeholders": {
-      "heading": {
+      "altitude": {
         "type": "String",
-        "example": "45.2"
+        "example": "1245.2"
       }
     }
   },

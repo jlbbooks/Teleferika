@@ -565,7 +565,7 @@ class PointsToolViewState extends State<PointsToolView> {
                     ),
                   ),
             title: Text(
-              'P${point.ordinalNumber}: Lat: ${point.latitude.toStringAsFixed(5)}, Lon: ${point.longitude.toStringAsFixed(5)} | H: ${point.heading?.toStringAsFixed(2) ?? '---'}°',
+              'P${point.ordinalNumber}: Alt: ${point.altitude?.toStringAsFixed(2) ?? '---'}\nLat: ${point.latitude.toStringAsFixed(5)}\nLon: ${point.longitude.toStringAsFixed(5)}',
             ),
             subtitle: Column(
               // Use Column to add special role text if present

@@ -21,7 +21,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
   late TextEditingController _latitudeController;
   late TextEditingController _longitudeController;
   late TextEditingController _noteController;
-  late TextEditingController _headingController;
+  late TextEditingController _altitudeController;
 
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
   bool _isLoading = false;
@@ -41,9 +41,10 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
       text: widget.point.longitude.toString(),
     );
     _noteController = TextEditingController(text: widget.point.note ?? '');
-    _headingController = TextEditingController(
+    _altitudeController = TextEditingController(
       text:
-          widget.point.heading?.toStringAsFixed(2) ?? '', // Handle null heading
+          widget.point.altitude?.toStringAsFixed(2) ??
+          '', // Handle null altitude
     );
     // Initialize _currentImages from the point being edited
     _currentImages = List<ImageModel>.from(
@@ -55,7 +56,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
     _latitudeController.addListener(_markUnsavedTextChanges);
     _longitudeController.addListener(_markUnsavedTextChanges);
     _noteController.addListener(_markUnsavedTextChanges);
-    _headingController.addListener(_markUnsavedTextChanges);
+    _altitudeController.addListener(_markUnsavedTextChanges);
 
     logger.info(
       "PointDetailsPage initialized for Point ID: ${widget.point.id}, Initial image count: ${_currentImages.length}",
@@ -78,12 +79,12 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
     _latitudeController.removeListener(_markUnsavedTextChanges);
     _longitudeController.removeListener(_markUnsavedTextChanges);
     _noteController.removeListener(_markUnsavedTextChanges);
-    _headingController.removeListener(_markUnsavedTextChanges);
+    _altitudeController.removeListener(_markUnsavedTextChanges);
 
     _latitudeController.dispose();
     _longitudeController.dispose();
     _noteController.dispose();
-    _headingController.dispose();
+    _altitudeController.dispose();
     super.dispose();
   }
 
@@ -109,8 +110,8 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
 
     final double? latitude = double.tryParse(_latitudeController.text);
     final double? longitude = double.tryParse(_longitudeController.text);
-    final double? headingValue = _headingController.text.isNotEmpty
-        ? double.tryParse(_headingController.text)
+    final double? altitudeValue = _altitudeController.text.isNotEmpty
+        ? double.tryParse(_altitudeController.text)
         : null;
 
     if (latitude == null || longitude == null) {
@@ -128,13 +129,13 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
       });
       return;
     }
-    if (_headingController.text.isNotEmpty && headingValue == null) {
+    if (_altitudeController.text.isNotEmpty && altitudeValue == null) {
       if (mounted) {
         // Added mounted check
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Invalid heading format. Please enter a number or leave it empty.',
+              'Invalid altitude format. Please enter a number or leave it empty.',
             ),
             backgroundColor: Colors.red,
           ),
@@ -150,7 +151,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
       latitude: latitude,
       longitude: longitude,
       note: _noteController.text.isNotEmpty ? _noteController.text : null,
-      heading: headingValue,
+      altitude: altitudeValue,
       timestamp: DateTime.now(), // Or update timestamp logic
       images: _currentImages, // *** Include the current list of images ***
     );
@@ -413,7 +414,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                // ... your existing TextFormField widgets for latitude, longitude, heading, note ...
+                // ... your existing TextFormField widgets for latitude, longitude, altitude, note ...
                 // --- Latitude ---
                 TextFormField(
                   controller: _latitudeController,
@@ -472,15 +473,16 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
                 ),
                 const SizedBox(height: 16.0),
                 TextFormField(
-                  controller: _headingController,
+                  controller: _altitudeController,
                   decoration: const InputDecoration(
-                    labelText: 'Heading (degrees)',
-                    hintText: 'e.g. 123.5 (Optional)',
+                    labelText: 'altitude (m)',
+                    hintText: 'e.g. 1203.5 (Optional)',
                     border: OutlineInputBorder(),
-                    icon: Icon(Icons.explore_outlined), // Compass icon
+                    icon: Icon(Icons.layers), // Compass icon
                   ),
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
+                    signed: false,
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -490,8 +492,8 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
                     if (n == null) {
                       return 'Invalid number format';
                     }
-                    if (n <= -360 || n >= 360) {
-                      return 'Heading must be between -359.9 and 359.9';
+                    if (n < 0 || n > 8849) {
+                      return 'Enter a valid altitude';
                     }
                     return null;
                   },

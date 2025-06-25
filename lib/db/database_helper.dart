@@ -14,7 +14,7 @@ import 'models/project_model.dart';
 class DatabaseHelper {
   static const _databaseName = "Photogrammetry.db";
 
-  static const _databaseVersion = 7; // Incremented due to schema change
+  static const _databaseVersion = 8; // Incremented due to schema change
 
   DatabaseHelper._privateConstructor();
   static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
@@ -323,6 +323,11 @@ class DatabaseHelper {
         );
       }); // End transaction
     }
+    if (oldVersion < 6) {
+      throw UnimplementedError(
+        'Migration to version 6 not supported. Reinstall.',
+      );
+    }
     // ---- Migration to Version 7: Add altitude to points table ----
     if (oldVersion < 7) {
       logger.info(
@@ -342,6 +347,97 @@ class DatabaseHelper {
         );
         // Depending on your error handling strategy, you might re-throw or just log.
         // If the column already exists, this is often not a critical failure for this specific migration.
+      }
+    }
+    if (oldVersion < 8) {
+      // ---- Migration to Version 8: Remove heading from points table ----
+      logger.info(
+        "Applying migration for version 8: Removing ${PointModel.columnHeading} from ${PointModel.tableName}",
+      );
+      // The most straightforward way if supported by the underlying SQLite version.
+      // `sqflite` on modern platforms usually bundles a SQLite version that supports DROP COLUMN.
+      try {
+        // Check if the column exists before trying to drop it, to make the migration idempotent.
+        // This requires querying the table_info pragma.
+        var tableInfo = await db.rawQuery(
+          'PRAGMA table_info(${PointModel.tableName})',
+        );
+        bool headingColumnExists = tableInfo.any(
+          (column) => column['name'] == PointModel.columnHeading,
+        );
+
+        if (headingColumnExists) {
+          // Option 1: Recreate table (safer for older SQLite, more complex)
+          // This is the most robust way if DROP COLUMN isn't universally available or if you want to be extra safe.
+          await db.transaction((txn) async {
+            // 1. Create a temporary table without the 'heading' column
+            final tempPointTable = '${PointModel.tableName}_temp_v8_no_heading';
+            await txn.execute('''
+              CREATE TABLE $tempPointTable (
+                ${PointModel.columnId} TEXT PRIMARY KEY,
+                ${PointModel.columnProjectId} TEXT NOT NULL,
+                ${PointModel.columnLatitude} REAL NOT NULL,
+                ${PointModel.columnLongitude} REAL NOT NULL,
+                ${PointModel.columnAltitude} REAL,
+                ${PointModel.columnOrdinalNumber} INTEGER NOT NULL,
+                ${PointModel.columnNote} TEXT,
+                ${PointModel.columnTimestamp} TEXT,
+                FOREIGN KEY (${PointModel.columnProjectId}) REFERENCES ${ProjectModel.tableName} (${ProjectModel.columnId}) ON DELETE CASCADE
+              )
+              ''');
+            logger.info(
+              "Created temporary table $tempPointTable for points migration.",
+            );
+
+            // 2. Copy data from the old table to the temporary table, excluding the 'heading' column
+            await txn.execute('''
+              INSERT INTO $tempPointTable (
+                ${PointModel.columnId}, ${PointModel.columnProjectId}, ${PointModel.columnLatitude}, ${PointModel.columnLongitude},
+                ${PointModel.columnAltitude}, ${PointModel.columnOrdinalNumber}, ${PointModel.columnNote}, ${PointModel.columnTimestamp}
+              )
+              SELECT
+                ${PointModel.columnId}, ${PointModel.columnProjectId}, ${PointModel.columnLatitude}, ${PointModel.columnLongitude},
+                ${PointModel.columnAltitude}, ${PointModel.columnOrdinalNumber}, ${PointModel.columnNote}, ${PointModel.columnTimestamp}
+              FROM ${PointModel.tableName}
+              ''');
+            logger.info(
+              "Copied data from ${PointModel.tableName} to $tempPointTable.",
+            );
+
+            // 3. Drop the old points table
+            await txn.execute('DROP TABLE ${PointModel.tableName}');
+            logger.info("Dropped old table ${PointModel.tableName}.");
+
+            // 4. Rename the temporary table to the original table name
+            await txn.execute(
+              'ALTER TABLE $tempPointTable RENAME TO ${PointModel.tableName}',
+            );
+            logger.info("Renamed $tempPointTable to ${PointModel.tableName}.");
+
+            // 5. Recreate indexes (if any were specific to the old table structure and not covered by general creation)
+            // The index 'idx_point_project_ordinal' should still be valid as its columns haven't changed.
+            // If you had an index specifically on 'heading', it would be gone, which is intended.
+            await txn.execute(
+              'CREATE INDEX IF NOT EXISTS idx_point_project_ordinal ON ${PointModel.tableName} (${PointModel.columnProjectId}, ${PointModel.columnOrdinalNumber})',
+            );
+            logger.info(
+              "Recreated index idx_point_project_ordinal on ${PointModel.tableName} if it didn't exist.",
+            );
+          });
+          logger.info(
+            "Successfully removed ${PointModel.columnHeading} from ${PointModel.tableName} by recreating the table.",
+          );
+        } else {
+          logger.info(
+            "${PointModel.columnHeading} column does not exist in ${PointModel.tableName}. No action needed for version 8 migration regarding this column.",
+          );
+        }
+      } catch (e) {
+        logger.severe(
+          "Error removing ${PointModel.columnHeading} column from ${PointModel.tableName} for version 8. Error: $e",
+        );
+        // Depending on your error handling strategy, you might re-throw.
+        // If the column was already removed or the table was already in the new state, this might not be critical.
       }
     }
     logger.info("Database upgrade process complete.");

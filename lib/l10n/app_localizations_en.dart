@@ -93,8 +93,8 @@ class SEn extends S {
       'Inserted before current end point.';
 
   @override
-  String pointFromCompassDefaultNote(String heading) {
-    return 'Point from Compass (H: $heading°)';
+  String pointFromCompassDefaultNote(String altitude) {
+    return 'Added (H: $altitude°)';
   }
 
   @override

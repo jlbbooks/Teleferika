@@ -253,11 +253,11 @@ abstract class S {
   /// **'Inserted before current end point.'**
   String get pointAddedInsertedBeforeEndSnackbarSuffix;
 
-  /// Default note for a point added using the compass tool, showing the heading.
+  /// Default note for a point added using the compass tool, showing the altitude.
   ///
   /// In en, this message translates to:
-  /// **'Point from Compass (H: {heading}°)'**
-  String pointFromCompassDefaultNote(String heading);
+  /// **'Added (H: {altitude}°)'**
+  String pointFromCompassDefaultNote(String altitude);
 
   /// No description provided for @errorAddingPoint.
   ///
