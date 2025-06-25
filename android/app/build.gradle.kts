@@ -97,7 +97,7 @@ android {
     productFlavors {
         create("opensource") {
             dimension = "version"
-            applicationIdSuffix = ".opensource"
+            applicationIdSuffix = ".open"
             versionNameSuffix = "-opensource"
             // You can also add resValue or buildConfigField for flavor-specific settings
             resValue("string", "app_name", "TeleferiKa Open")
@@ -105,7 +105,7 @@ android {
         create("full") {
             dimension = "version"
             // No suffix for production, or define as needed
-            applicationIdSuffix = ".full"
+            applicationIdSuffix = ""
             versionNameSuffix = "-full"
             // You can also add resValue or buildConfigField for flavor-specific settings
             resValue("string", "app_name", "TeleferiKa")
