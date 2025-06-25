@@ -18,14 +18,24 @@ import '../point_details_page.dart';
 
 class MapToolView extends StatefulWidget {
   final ProjectModel project;
+  final String? selectedPointId; // From project_page
+  final VoidCallback? onNavigateToCompassTab;
+  final Function(BuildContext, double, {bool? setAsEndPoint})?
+  onAddPointFromCompass;
 
-  const MapToolView({super.key, required this.project});
+  const MapToolView({
+    super.key,
+    required this.project,
+    this.selectedPointId,
+    this.onNavigateToCompassTab,
+    this.onAddPointFromCompass,
+  });
 
   @override
-  State<MapToolView> createState() => _MapToolViewState();
+  State<MapToolView> createState() => MapToolViewState();
 }
 
-class _MapToolViewState extends State<MapToolView> {
+class MapToolViewState extends State<MapToolView> {
   List<PointModel> _projectPoints = [];
   bool _isLoadingPoints = true;
   final MapController _mapController = MapController();
@@ -411,11 +421,11 @@ class _MapToolViewState extends State<MapToolView> {
   void didUpdateWidget(covariant MapToolView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.project.id != oldWidget.project.id) {
-      // Project changed, reload points
-      _loadProjectPoints();
+      _loadProjectPoints(); // This will also recalculate lines
+    } else if (widget.project.azimuth != oldWidget.project.azimuth) {
+      // If only the heading changed, just recalculate lines
+      _recalculateAndDrawLines();
     }
-    // You might also need to refresh if points list could change by other means
-    // while MapToolView is active.
   }
 
   Widget _buildStandardMarkerView(
@@ -588,6 +598,13 @@ class _MapToolViewState extends State<MapToolView> {
         // }
       }
     }
+  }
+
+  // This is the "Add new point" button's action
+  void _handleAddPointButtonPressed() {
+    // Call the callback passed from ProjectPage
+    widget.onNavigateToCompassTab?.call();
+    // TODO: Alternatively, to also allow adding directly from map with current GPS
   }
 
   @override
@@ -1219,6 +1236,17 @@ class _MapToolViewState extends State<MapToolView> {
                 },
                 tooltip: 'Center on my location',
                 child: const Icon(Icons.my_location),
+              ),
+            ),
+          // Add new point button
+          if (_currentPosition != null && _hasLocationPermission)
+            Positioned(
+              bottom: 96,
+              left: 24,
+              child: FloatingActionButton(
+                onPressed: _handleAddPointButtonPressed,
+                tooltip: 'Add New Point',
+                child: const Icon(Icons.add_location_alt_outlined),
               ),
             ),
           // Center on Project points button

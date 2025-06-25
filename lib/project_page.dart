@@ -92,6 +92,8 @@ class _ProjectPageState extends State<ProjectPage> {
   // This is one way to trigger refresh. Another is to manage points list here.
   final GlobalKey<PointsToolViewState> _pointsToolViewKey =
       GlobalKey<PointsToolViewState>();
+  final GlobalKey<MapToolViewState> _mapToolViewKey =
+      GlobalKey<MapToolViewState>();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   // State variable to control CompassToolView's spinner for this action
@@ -1180,14 +1182,24 @@ class _ProjectPageState extends State<ProjectPage> {
 
               // Tab 4: Map
               // Pass the current project. MapToolView will handle loading its points.
-              Center(
-                child: SizedBox(
-                  height:
-                      MediaQuery.of(context).size.height *
-                      0.7, // e.g., 60% of screen height
-                  child: MapToolView(project: _currentProject),
-                ),
+              // Center(
+              //   child: SizedBox(
+              //     height:
+              //         MediaQuery.of(context).size.height *
+              //         0.7, // e.g., 60% of screen height
+              //     child:
+              MapToolView(
+                key: _mapToolViewKey, // Assign the GlobalKey
+                project: _currentProject,
+                selectedPointId: null,
+                onNavigateToCompassTab: () {
+                  _switchToTab(ProjectPageTab.compass);
+                },
+                onAddPointFromCompass:
+                    _initiateAddPointFromCompass, // Pass the callback
               ),
+              //   ),
+              // ),
             ],
           ),
         ),
