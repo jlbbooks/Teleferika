@@ -786,13 +786,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.3.1"
-  teleferika_licensed_features:
-    dependency: "direct main"
-    description:
-      path: licensed_features_package
-      relative: true
-    source: path
-    version: "0.0.1"
   term_glyph:
     dependency: transitive
     description:
