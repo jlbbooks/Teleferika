@@ -90,7 +90,7 @@ class CoreFeaturesPlugin extends FeaturePlugin {
   @override
   Widget? buildWidget(String widgetType) {
     switch (widgetType) {
-      case 'Opensource_banner':
+      case 'opensource_banner':
         return Container(
           padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -98,7 +98,7 @@ class CoreFeaturesPlugin extends FeaturePlugin {
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
-            '💡 Opensource Version - Upgrade for Premium Features!',
+            '💡 Opensource Version',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
         );

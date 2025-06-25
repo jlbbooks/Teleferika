@@ -23,10 +23,10 @@ class _LoadingPageState extends State<LoadingPage> {
   Widget build(BuildContext context) {
     final hasLicensedFeatures = FeatureRegistry.hasPlugin('licensed_features');
 
-    // show a banner if Opensource
-    Widget? banner =
-        FeatureRegistry.buildWidget('core_features', 'premium_banner') ??
-        FeatureRegistry.buildWidget('core_features', 'opensource_banner');
+    // show a banner for Opensource/Licensed versions
+    Widget? banner = hasLicensedFeatures
+        ? FeatureRegistry.buildWidget('licensed_features', 'premium_banner')
+        : FeatureRegistry.buildWidget('core_features', 'opensource_banner');
 
     return MaterialApp(
       debugShowCheckedModeBanner: kDebugMode,
@@ -79,18 +79,6 @@ class _LoadingPageState extends State<LoadingPage> {
                     ),
                   Divider(),
                   if (banner != null) banner,
-                  if (hasLicensedFeatures)
-                    Text(
-                      'You have the licenced version.\nRemember to import a licence.',
-                    )
-                  else
-                    Text(
-                      'Open source version.\nPaid features are not available.',
-                    ),
-                  // if (hasLicensedFeatures)
-                  //   FeatureRegistry.buildWidget('licensed_features', 'premium_banner') ?? Container()
-                  // else
-                  //   FeatureRegistry.buildWidget('core_features', 'free_banner') ?? Container(),
                 ],
               ),
             ),
