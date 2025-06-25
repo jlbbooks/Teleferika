@@ -53,12 +53,6 @@ if /i "%CLEAN%"=="true" (
     :: if exist "%LICENSED_PACKAGE_DIR_FULL_PATH%" rmdir /s /q "%LICENSED_PACKAGE_DIR_FULL_PATH%"
 )
 
-:: Backup current pubspec
-if exist pubspec.yaml (
-    copy pubspec.yaml pubspec.yaml.backup >nul
-    echo %INFO% Backed up current pubspec.yaml
-)
-
 :: Configure based on flavor
 if /i "%FLAVOR%"=="opensource" goto setup_opensource
 if /i "%FLAVOR%"=="open" goto setup_opensource
@@ -69,7 +63,6 @@ if /i "%FLAVOR%"=="licensed" goto setup_full
 
 echo %ERROR% Unknown flavor: %FLAVOR%
 echo %INFO% Available flavors: opensource, full
-if exist pubspec.yaml.backup copy pubspec.yaml.backup pubspec.yaml >nul
 exit /b 1
 
 :setup_opensource
@@ -78,7 +71,6 @@ echo %INFO% 🆓 Configuring for Open Source version...
 
 if not exist "build_configs\pubspec.opensource.yaml" (
     echo %ERROR% build_configs\pubspec.opensource.yaml not found!
-    if exist pubspec.yaml.backup copy pubspec.yaml.backup pubspec.yaml >nul
     exit /b 1
 )
 
@@ -128,7 +120,6 @@ if exist "%LICENSED_PACKAGE_DIR_FULL_PATH%\.git" (
     :: if errorlevel 1 (
     ::     echo %ERROR% Failed to clone licensed features repository from %LICENSED_REPO_URL%.
     ::     echo %ERROR% Please ensure you have access to the repository and SSH keys are set up if needed.
-    ::     if exist pubspec.yaml.backup copy pubspec.yaml.backup pubspec.yaml >nul
     ::     exit /b 1
     :: ) else (
     ::     echo %SUCCESS% Cloned licensed features repository successfully.
@@ -139,7 +130,6 @@ if exist "%LICENSED_PACKAGE_DIR_FULL_PATH%\.git" (
     if errorlevel 1 (
         echo %ERROR% Failed to clone licensed features repository from %LICENSED_REPO_URL%.
         echo %ERROR% Please ensure you have access to the repository and SSH keys are set up if needed.
-        if exist pubspec.yaml.backup copy pubspec.yaml.backup pubspec.yaml >nul
         exit /b 1
     ) else (
         echo %SUCCESS% Cloned licensed features repository successfully.
@@ -148,7 +138,6 @@ if exist "%LICENSED_PACKAGE_DIR_FULL_PATH%\.git" (
 
 if not exist "build_configs\pubspec.full.yaml" (
     echo %ERROR% build_configs\pubspec.full.yaml not found!
-    if exist pubspec.yaml.backup copy pubspec.yaml.backup pubspec.yaml >nul
     exit /b 1
 )
 
@@ -165,7 +154,6 @@ if exist "%FULL_LOADER_SOURCE_PATH%" (
     echo %ERROR% Full loader not found at %FULL_LOADER_SOURCE_PATH%
     echo %ERROR% Licensed features may not work properly. Ensure the repository was cloned correctly and the file path is accurate.
     :: Optionally, exit here
-    :: if exist pubspec.yaml.backup copy pubspec.yaml.backup pubspec.yaml >nul
     :: exit /b 1
 )
 
@@ -178,7 +166,6 @@ flutter pub get
 
 if errorlevel 1 (
     echo %ERROR% Failed to get dependencies
-    if exist pubspec.yaml.backup copy pubspec.yaml.backup pubspec.yaml >nul
     exit /b 1
 )
 
@@ -192,7 +179,6 @@ if not errorlevel 1 (
     flutter packages pub run build_runner build --delete-conflicting-outputs
     if errorlevel 1 (
         echo %ERROR% Build runner failed.
-        if exist pubspec.yaml.backup copy pubspec.yaml.backup pubspec.yaml >nul
         exit /b 1
     )
 ) else (
@@ -217,10 +203,6 @@ echo   %~nx0 full
 echo   %~nx0 full true  (to also clean before setup)
 echo.
 
-if exist pubspec.yaml.backup (
-    echo %INFO% Backup pubspec.yaml.backup is available.
-    :: del pubspec.yaml.backup
-)
 
 endlocal
 exit /b 0

@@ -5,6 +5,8 @@ lib/licensing/licensed_features_loader.dart
 *.backup
 pubspec.yaml.backup
 pubspec.yaml
+pubspec.lock
+
 
 # General
 *.DS_Store

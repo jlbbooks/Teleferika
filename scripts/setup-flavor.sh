@@ -61,12 +61,6 @@ if [ "$CLEAN" = "true" ]; then
     # rm -rf licensed_features_package/
 fi
 
-# Backup current pubspec if it exists
-if [ -f "pubspec.yaml" ]; then
-    cp pubspec.yaml pubspec.yaml.backup
-    print_status "Backed up current pubspec.yaml"
-fi
-
 # Configure based on flavor
 case $FLAVOR in
     "opensource"|"open"|"free")
@@ -135,10 +129,6 @@ EOF
 
         if [ ! -f "build_configs/pubspec.full.yaml" ]; then
             print_error "build_configs/pubspec.full.yaml not found!"
-            # Optionally, restore backup pubspec before exiting
-            # if [ -f "pubspec.yaml.backup" ]; then
-            #     cp pubspec.yaml.backup pubspec.yaml
-            # fi
             exit 1
         fi
 
@@ -177,10 +167,6 @@ if [ $? -eq 0 ]; then
     print_success "✅ Dependencies installed successfully"
 else
     print_error "Failed to get dependencies"
-    # Optionally, restore backup pubspec before exiting
-    # if [ -f "pubspec.yaml.backup" ]; then
-    #     cp pubspec.yaml.backup pubspec.yaml
-    # fi
     exit 1
 fi
 
@@ -190,7 +176,6 @@ if grep -q "build_runner" pubspec.yaml; then
     flutter packages pub run build_runner build --delete-conflicting-outputs
     if [ $? -ne 0 ]; then
         print_error "Build runner failed."
-        # Optionally, restore backup pubspec
         exit 1
     fi
 fi
@@ -218,10 +203,3 @@ echo "To switch flavors, run:"
 echo "  $0 opensource"
 echo "  $0 full"
 echo "  $0 full true  (to also clean before setup)"
-
-
-# Clean up backup pubspec
-if [ -f "pubspec.yaml.backup" ]; then
-    # rm pubspec.yaml.backup # Uncomment if you want to automatically remove it
-    print_status "Backup pubspec.yaml.backup is available."
-fi
