@@ -58,7 +58,8 @@ if [ "$CLEAN" = "true" ]; then
     rm -rf .dart_tool/
     rm -rf build/
     # Optionally remove the licensed package directory if you want a fresh clone every time with clean
-    # rm -rf licensed_features_package/
+    print_status "> Removing licensed package directory..."
+    rm -rf licensed_features_package
 fi
 
 # Configure based on flavor
