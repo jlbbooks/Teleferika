@@ -54,6 +54,9 @@ class _MapToolViewState extends State<MapToolView> {
 
   PointModel? _selectedPointInstance; // For the panel
 
+  Polyline?
+  _projectHeadingLine; // New state variable for the project heading line
+
   @override
   void initState() {
     super.initState();
@@ -195,6 +198,31 @@ class _MapToolViewState extends State<MapToolView> {
     return (initialBearingDegrees + 360) % 360;
   }
 
+  // Helper function to calculate a destination point given a starting point, bearing, and distance
+  LatLng _calculateDestinationPoint(
+    LatLng startPoint,
+    double bearingDegrees,
+    double distanceKm,
+  ) {
+    const R = 6371.0; // Earth's radius in kilometers
+    final lat1 = _degreesToRadians(startPoint.latitude);
+    final lon1 = _degreesToRadians(startPoint.longitude);
+    final bearingRad = _degreesToRadians(bearingDegrees);
+
+    final lat2 = math.asin(
+      math.sin(lat1) * math.cos(distanceKm / R) +
+          math.cos(lat1) * math.sin(distanceKm / R) * math.cos(bearingRad),
+    );
+    final lon2 =
+        lon1 +
+        math.atan2(
+          math.sin(bearingRad) * math.sin(distanceKm / R) * math.cos(lat1),
+          math.cos(distanceKm / R) - math.sin(lat1) * math.sin(lat2),
+        );
+
+    return LatLng(_radiansToDegrees(lat2), _radiansToDegrees(lon2));
+  }
+
   Future<void> _loadProjectPoints() async {
     setState(() {
       _isLoadingPoints = true;
@@ -207,7 +235,7 @@ class _MapToolViewState extends State<MapToolView> {
         setState(() {
           _projectPoints = points;
           _isLoadingPoints = false;
-          _recalculateHeadingLine();
+          _recalculateAndDrawLines();
         });
       }
       if (_isMapReady) {
@@ -225,6 +253,12 @@ class _MapToolViewState extends State<MapToolView> {
         );
       }
     }
+  }
+
+  void _recalculateAndDrawLines() {
+    _recalculateHeadingLine();
+    _recalculateProjectHeadingLine(); // New method for the project heading
+    // _recalculateDeviceHeadingLine(); // If you still have this separately
   }
 
   Future<void> _relocatePoint(
@@ -813,6 +847,7 @@ class _MapToolViewState extends State<MapToolView> {
                         // pattern: StrokePattern.dotted(),
                       ),
                     if (_headingLine != null) _headingLine!,
+                    if (_projectHeadingLine != null) _projectHeadingLine!,
                   ].whereType<Polyline>().toList(),
                 ),
               MarkerLayer(
@@ -1212,6 +1247,40 @@ class _MapToolViewState extends State<MapToolView> {
       );
     } else {
       _headingFromFirstToLast = null;
+    }
+  }
+
+  void _recalculateProjectHeadingLine() {
+    if (_projectPoints.isEmpty || widget.project.azimuth == null) {
+      if (mounted) setState(() => _projectHeadingLine = null);
+      return;
+    }
+
+    final firstPoint = LatLng(
+      _projectPoints.first.latitude,
+      _projectPoints.first.longitude,
+    );
+    final projectHeading = widget.project.azimuth!;
+
+    // Define a length for the heading line (e.g., 1 km, adjust as needed)
+    // You might want to make this dynamic based on zoom level or map bounds later
+    const lineLengthKm = 1.0; // Example length: 500 meters
+
+    final endPoint = _calculateDestinationPoint(
+      firstPoint,
+      projectHeading,
+      lineLengthKm,
+    );
+
+    if (mounted) {
+      setState(() {
+        _projectHeadingLine = Polyline(
+          points: [firstPoint, endPoint],
+          strokeWidth: 2.0,
+          color: Colors.black, // Choose a distinct color
+          pattern: StrokePattern.dotted(),
+        );
+      });
     }
   }
 }
