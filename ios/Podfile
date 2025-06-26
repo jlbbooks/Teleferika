@@ -58,7 +58,7 @@ post_install do |installer|
             ## macro.
             ##
             ## dart: [PermissionGroup.location, PermissionGroup.locationAlways, PermissionGroup.locationWhenInUse]
-
+            'PERMISSION_LOCATION=0',
             'PERMISSION_LOCATION_WHENINUSE=1',
 
 
