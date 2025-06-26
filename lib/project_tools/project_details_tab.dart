@@ -46,6 +46,12 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
   String? _originalAzimuthValue;
   bool _isUpdatingFromParent = false;
 
+  // Store original values to detect actual changes
+  String _originalName = '';
+  String _originalNote = '';
+  double? _originalAzimuth;
+  DateTime? _originalDate;
+
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
@@ -54,6 +60,13 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
     _currentProject = widget.project;
     _projectDate = widget.projectDate;
     _lastUpdateTime = widget.lastUpdateTime;
+    
+    // Store original values
+    _originalName = _currentProject.name;
+    _originalNote = _currentProject.note ?? '';
+    _originalAzimuth = _currentProject.azimuth;
+    _originalDate = _currentProject.date;
+    
     _nameController = TextEditingController(text: _currentProject.name);
     _noteController = TextEditingController(text: _currentProject.note ?? '');
     _azimuthController = TextEditingController(
@@ -112,34 +125,52 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
           _hasUnsavedChanges = false;
         });
       }
+      
+      // Update original values to reflect the new "saved" state
+      // This prevents the form from thinking it's modified when fields are interacted with
+      _originalName = _currentProject.name;
+      _originalNote = _currentProject.note ?? '';
+      _originalAzimuth = _currentProject.azimuth;
+      _originalDate = _currentProject.date;
     }
   }
 
   void _onChanged() {
     if (_isUpdatingFromParent) return; // Skip if updating from parent
 
-    setState(() {
-      _hasUnsavedChanges = true;
-      _currentProject = _currentProject.copyWith(
-        name: _nameController.text.trim(),
-        note: _noteController.text.trim().isEmpty
-            ? null
-            : _noteController.text.trim(),
-        azimuth: double.tryParse(_azimuthController.text),
-      );
-    });
+    // Check if any actual content has changed
+    final currentName = _nameController.text.trim();
+    final currentNote = _noteController.text.trim();
+    final currentAzimuth = double.tryParse(_azimuthController.text);
     
-    // Use WidgetsBinding.instance.addPostFrameCallback to avoid setState during build
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        widget.onChanged(
-          _currentProject,
-          hasUnsavedChanges: _hasUnsavedChanges,
-          projectDate: _projectDate,
-          lastUpdateTime: _lastUpdateTime,
+    bool hasContentChanged = 
+        currentName != _originalName ||
+        currentNote != _originalNote ||
+        currentAzimuth != _originalAzimuth ||
+        _projectDate != _originalDate;
+
+    if (hasContentChanged) {
+      setState(() {
+        _hasUnsavedChanges = true;
+        _currentProject = _currentProject.copyWith(
+          name: currentName,
+          note: currentNote.isEmpty ? null : currentNote,
+          azimuth: currentAzimuth,
         );
-      }
-    });
+      });
+      
+      // Use WidgetsBinding.instance.addPostFrameCallback to avoid setState during build
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          widget.onChanged(
+            _currentProject,
+            hasUnsavedChanges: _hasUnsavedChanges,
+            projectDate: _projectDate,
+            lastUpdateTime: _lastUpdateTime,
+          );
+        }
+      });
+    }
   }
 
   void _onAzimuthChanged() {
@@ -374,38 +405,48 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
                 const SizedBox(width: 10),
                 Padding(
                   padding: const EdgeInsets.only(top: 8.0),
-                  child: ElevatedButton(
-                    onPressed: _azimuthController.text.trim().isEmpty
-                        ? null
-                        : (_azimuthFieldModified
-                              ? _saveAzimuth
-                              : widget.onCalculateAzimuth),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 12,
+                  child: SizedBox(
+                    width: 120, // Fixed width for consistent button size
+                    child: ElevatedButton(
+                      onPressed: _azimuthController.text.trim().isEmpty
+                          ? null
+                          : (_azimuthFieldModified
+                                ? _saveAzimuth
+                                : widget.onCalculateAzimuth),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
+                        backgroundColor: _azimuthFieldModified
+                            ? Theme.of(context).colorScheme.primary
+                            : null,
+                        foregroundColor: _azimuthFieldModified
+                            ? Theme.of(context).colorScheme.onPrimary
+                            : null,
                       ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _azimuthController.text.trim().isEmpty
-                              ? Icons.calculate_outlined
-                              : (_azimuthFieldModified
-                                    ? Icons.save
-                                    : Icons.calculate),
-                          size: 16,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _azimuthController.text.trim().isEmpty
-                              ? (s?.buttonCalculate ?? 'Calculate')
-                              : (_azimuthFieldModified
-                                    ? (s?.buttonSave ?? 'Save')
-                                    : (s?.buttonCalculate ?? 'Calculate')),
-                        ),
-                      ],
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            _azimuthController.text.trim().isEmpty
+                                ? Icons.calculate_outlined
+                                : (_azimuthFieldModified
+                                      ? Icons.save
+                                      : Icons.calculate),
+                            size: 16,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _azimuthController.text.trim().isEmpty
+                                ? (s?.buttonCalculate ?? 'Calculate')
+                                : (_azimuthFieldModified
+                                      ? (s?.buttonSave ?? 'Save')
+                                      : (s?.buttonCalculate ?? 'Calculate')),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

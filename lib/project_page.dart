@@ -1136,9 +1136,20 @@ class _ProjectPageState extends State<ProjectPage>
     DateTime? projectDate,
     DateTime? lastUpdateTime,
   }) {
+    // Check if there are actual changes that need to be saved
+    bool hasRealChanges = false;
+    
+    // Compare with original project data
+    if (widget.project.name != updatedProject.name ||
+        widget.project.note != updatedProject.note ||
+        widget.project.azimuth != updatedProject.azimuth ||
+        widget.project.date != updatedProject.date) {
+      hasRealChanges = true;
+    }
+    
     setState(() {
       _currentProject = updatedProject;
-      _hasUnsavedChanges = hasUnsavedChanges;
+      _hasUnsavedChanges = hasRealChanges;
       if (projectDate != null) _projectDate = projectDate;
       if (lastUpdateTime != null) _lastUpdateTime = lastUpdateTime;
     });
