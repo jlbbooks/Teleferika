@@ -43,8 +43,8 @@ class _CompassToolViewState extends State<CompassToolView> {
   bool _isCompassAvailable = false;
   String? _errorMessage;
 
-  // State variable for the checkbox
-  bool _setAsEndPoint = false;
+  // State variable for the checkbox - persists during project session
+  static bool _setAsEndPoint = true;
 
   @override
   void initState() {
