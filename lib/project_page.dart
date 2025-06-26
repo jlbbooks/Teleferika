@@ -110,6 +110,18 @@ class _ProjectPageState extends State<ProjectPage>
       length: ProjectPageTab.values.length,
       vsync: this,
     );
+
+    // Add listener to detect tab changes
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) {
+        // Tab is about to change
+      } else if (_tabController.index != _tabController.previousIndex) {
+        // Tab has changed
+        // Dismiss keyboard when switching tabs
+        FocusScope.of(context).unfocus();
+      }
+    });
+
     _projectDate =
         _currentProject.date ?? (widget.isNew ? DateTime.now() : null);
     _lastUpdateTime = _currentProject.lastUpdate;
@@ -230,11 +242,9 @@ class _ProjectPageState extends State<ProjectPage>
     _navigateToExportPage(); // Your existing method
   }
 
-  void _switchToTab(ProjectPageTab tab) {
-    if (!_tabController.indexIsChanging) {
-      _tabController.animateTo(ProjectPageTab.values.indexOf(tab));
-    }
-    setState(() {});
+  void _switchToTab() {
+    // Dismiss keyboard when switching tabs
+    FocusScope.of(context).unfocus();
   }
 
   Future<void> _loadProjectDetails() async {
@@ -276,6 +286,7 @@ class _ProjectPageState extends State<ProjectPage>
 
   @override
   void dispose() {
+    _tabController.removeListener(() {}); // Remove the listener
     _tabController.dispose();
     super.dispose();
   }
@@ -455,7 +466,6 @@ class _ProjectPageState extends State<ProjectPage>
           ?.refreshPoints(); // Call refreshPoints on PointsToolView
 
       // If the compass tool is active, and you want to switch to points view
-      _switchToTab(ProjectPageTab.points);
     } catch (e, stackTrace) {
       logger.severe("Error adding point from compass", e, stackTrace);
       if (mounted) {

@@ -104,6 +104,14 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
         _isUpdatingFromParent = false;
         _azimuthController.addListener(_onAzimuthChanged);
       }
+      
+      // Reset unsaved changes flag when project is updated from parent (e.g., after save)
+      // This indicates the project was saved externally
+      if (_hasUnsavedChanges) {
+        setState(() {
+          _hasUnsavedChanges = false;
+        });
+      }
     }
   }
 
@@ -120,12 +128,18 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
         azimuth: double.tryParse(_azimuthController.text),
       );
     });
-    widget.onChanged(
-      _currentProject,
-      hasUnsavedChanges: _hasUnsavedChanges,
-      projectDate: _projectDate,
-      lastUpdateTime: _lastUpdateTime,
-    );
+    
+    // Use WidgetsBinding.instance.addPostFrameCallback to avoid setState during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        widget.onChanged(
+          _currentProject,
+          hasUnsavedChanges: _hasUnsavedChanges,
+          projectDate: _projectDate,
+          lastUpdateTime: _lastUpdateTime,
+        );
+      }
+    });
   }
 
   void _onAzimuthChanged() {
