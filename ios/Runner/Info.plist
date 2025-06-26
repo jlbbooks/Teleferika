@@ -29,10 +29,10 @@
 
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app needs access to your location to determine your current position for adding points and improving compass accuracy.</string>
-	<!--
+
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>This app needs background location access to [explain why, e.g., continuously track your route or provide location-based alerts even when the app is not active].</string>
-    -->
+    <string>This app needs background location access to determine your current position for tracking the distance from the theoretical heading line and improving compass accuracy.</string>
+
     <!-- If you don't need background location, you might be able to omit this, but it's safer to add if a library *might* request it. Be honest about why. -->
 
     <key>NSMotionUsageDescription</key>
