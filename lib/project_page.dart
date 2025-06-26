@@ -8,7 +8,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:teleferika/licensing/licence_service.dart';
 import 'package:teleferika/project_tools/compass_tool_view.dart';
-import 'package:teleferika/project_tools/map_tab.dart';
 import 'package:teleferika/project_tools/map_tool_view.dart';
 import 'package:teleferika/project_tools/points_tab.dart';
 import 'package:teleferika/project_tools/points_tool_view.dart';
@@ -993,7 +992,7 @@ class _ProjectPageState extends State<ProjectPage>
           onAddPointFromCompass: _initiateAddPointFromCompass,
           isAddingPoint: _isAddingPointFromCompassInProgress,
         ),
-        MapTab(
+        MapToolView(
           project: _currentProject,
           // selectedPointId: null, // Add if you track this
           // onNavigateToCompassTab: () { _switchToTab(ProjectPageTab.compass); }, // Add if you use this

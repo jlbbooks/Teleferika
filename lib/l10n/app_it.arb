@@ -612,5 +612,21 @@
   "retryButton": "Riprova",
   "@retryButton": {
     "description": "Testo del pulsante per riprovare un'operazione."
+  },
+  "mapAcquiringLocation": "Acquisizione posizione...",
+  "@mapAcquiringLocation": {
+    "description": "Testo del tooltip mostrato quando la posizione viene acquisita per i pulsanti di azione fluttuanti."
+  },
+  "mapCenterOnLocation": "Centra sulla mia posizione",
+  "@mapCenterOnLocation": {
+    "description": "Tooltip per il pulsante per centrare la mappa sulla posizione attuale dell'utente."
+  },
+  "mapAddNewPoint": "Aggiungi Nuovo Punto",
+  "@mapAddNewPoint": {
+    "description": "Tooltip per il pulsante per aggiungere un nuovo punto dalla mappa."
+  },
+  "mapCenterOnPoints": "Centra sui punti",
+  "@mapCenterOnPoints": {
+    "description": "Tooltip per il pulsante per centrare la mappa su tutti i punti del progetto."
   }
 }

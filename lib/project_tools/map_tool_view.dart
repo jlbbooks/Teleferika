@@ -13,6 +13,7 @@ import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../logger.dart';
 import '../point_details_page.dart';
@@ -85,74 +86,85 @@ class MapToolViewState extends State<MapToolView> {
 
   // --- Permission Handling ---
   Future<void> _checkAndRequestPermissions() async {
-    // Location Permission
-    LocationPermission locationPermission = await Geolocator.checkPermission();
-    if (locationPermission == LocationPermission.denied) {
-      locationPermission = await Geolocator.requestPermission();
-    }
-    if (locationPermission == LocationPermission.deniedForever) {
-      // Permissions are denied forever, handle appropriately.
-      logger.warning("Location permission denied forever.");
-      // You might want to show a dialog guiding user to settings
-    }
-
-    // Sensor (Compass) Permission
-    PermissionStatus sensorStatus = await Permission.sensors.status;
-    if (sensorStatus.isDenied) {
-      sensorStatus = await Permission.sensors.request();
-    }
-    if (sensorStatus.isPermanentlyDenied) {
-      logger.warning("Sensor (compass) permission denied forever.");
-      // Guide to settings
-    }
-
-    if (mounted) {
-      setState(() {
-        _hasLocationPermission =
-            locationPermission == LocationPermission.whileInUse ||
-            locationPermission == LocationPermission.always;
-        _hasSensorPermission = sensorStatus.isGranted;
-      });
-    }
-
-    if (_hasLocationPermission) {
-      _startListeningToLocation();
-    } else {
-      logger.info("MapToolView: Location permission not granted.");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              S.of(context)?.mapLocationPermissionDenied ??
-                  'Location permission denied. Map features requiring location will be limited.',
-            ),
-          ),
-        );
+    try {
+      // Location Permission
+      LocationPermission locationPermission =
+          await Geolocator.checkPermission();
+      if (locationPermission == LocationPermission.denied) {
+        locationPermission = await Geolocator.requestPermission();
       }
-    }
 
-    if (_hasSensorPermission) {
-      _startListeningToCompass();
-    } else {
-      logger.info("MapToolView: Sensor (compass) permission not granted.");
+      // Sensor (Compass) Permission
+      PermissionStatus sensorStatus = await Permission.sensors.status;
+      if (sensorStatus.isDenied) {
+        sensorStatus = await Permission.sensors.request();
+      }
+
+      if (mounted) {
+        setState(() {
+          _hasLocationPermission =
+              locationPermission == LocationPermission.whileInUse ||
+              locationPermission == LocationPermission.always;
+          _hasSensorPermission = sensorStatus.isGranted;
+        });
+      }
+
+      if (_hasLocationPermission) {
+        _startListeningToLocation();
+      } else {
+        _showPermissionWarning('location');
+      }
+
+      if (_hasSensorPermission) {
+        _startListeningToCompass();
+      } else {
+        _showPermissionWarning('sensor');
+      }
+    } catch (e) {
+      logger.severe("Error checking permissions", e);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              S.of(context)?.mapSensorPermissionDenied ??
-                  'Sensor (compass) permission denied. Device orientation features will be unavailable.',
-            ),
+            content: Text('Error checking permissions: $e'),
+            backgroundColor: Colors.red,
           ),
         );
       }
     }
   }
 
+  void _showPermissionWarning(String permissionType) {
+    final s = S.of(context);
+    String message;
+
+    switch (permissionType) {
+      case 'location':
+        message =
+            s?.mapLocationPermissionDenied ??
+            'Location permission denied. Map features requiring location will be limited.';
+        break;
+      case 'sensor':
+        message =
+            s?.mapSensorPermissionDenied ??
+            'Sensor (compass) permission denied. Device orientation features will be unavailable.';
+        break;
+      default:
+        message = 'Permission denied.';
+    }
+
+    if (mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
+
   void _startListeningToLocation() {
     const LocationSettings locationSettings = LocationSettings(
-      accuracy: LocationAccuracy.high, // TODO: Experiment with this. Or best
-      distanceFilter: 0, // Get all updates for responsive crosshair
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 0,
     );
+
     _positionStreamSubscription =
         Geolocator.getPositionStream(locationSettings: locationSettings).listen(
           (Position position) {
@@ -165,16 +177,12 @@ class MapToolViewState extends State<MapToolView> {
           onError: (error) {
             logger.severe("Error getting location updates: $error");
             if (mounted) {
-              // Optionally show a snackbar for this error
+              final s = S.of(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    S
-                            .of(context)
-                            ?.mapErrorGettingLocationUpdates(
-                              error.toString(),
-                            ) ??
-                        'Error getting location updates: ${error.toString()}',
+                    s?.mapErrorGettingLocationUpdates(error.toString()) ??
+                        'Error getting location updates: $error',
                   ),
                 ),
               );
@@ -191,29 +199,29 @@ class MapToolViewState extends State<MapToolView> {
       logger.warning(
         "Compass events stream is null. Cannot listen to compass.",
       );
-      if (mounted)
-        setState(() => _hasSensorPermission = false); // Reflect unavailability
+      if (mounted) {
+        setState(() => _hasSensorPermission = false);
+      }
       return;
     }
+
     _compassSubscription = FlutterCompass.events!.listen(
       (CompassEvent event) {
         if (mounted) {
           setState(() {
-            _currentDeviceHeading = event.heading; // Magnetic heading
+            _currentDeviceHeading = event.heading;
           });
         }
       },
       onError: (error) {
         logger.severe("Error getting compass updates: $error");
         if (mounted) {
-          // Optionally show a snackbar for this error
+          final s = S.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                S
-                        .of(context)
-                        ?.mapErrorGettingCompassUpdates(error.toString()) ??
-                    'Error getting compass updates: ${error.toString()}',
+                s?.mapErrorGettingCompassUpdates(error.toString()) ??
+                    'Error getting compass updates: $error',
               ),
             ),
           );
@@ -301,10 +309,11 @@ class MapToolViewState extends State<MapToolView> {
           _isLoadingPoints = false;
         });
 
+        final s = S.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              S.of(context)?.mapErrorLoadingPoints(e.toString()) ??
+              s?.mapErrorLoadingPoints(e.toString()) ??
                   "Error loading points for map: $e",
             ),
           ),
@@ -493,20 +502,19 @@ class MapToolViewState extends State<MapToolView> {
     }
   }
 
+  // --- UI Components ---
   Widget _buildStandardMarkerView(
     BuildContext context,
     PointModel point, {
     required bool isSelected,
   }) {
-    // Your current perfect standard marker widget
-    // (icon above label, pin tip is the anchor)
     return GestureDetector(
       onTap: () {
         setState(() {
           if (_selectedPointId == point.id) {
-            _selectedPointId = null; // Tap again to deselect
+            _selectedPointId = null;
           } else {
-            _selectedPointId = point.id; // Select this point
+            _selectedPointId = point.id;
           }
         });
       },
@@ -514,18 +522,15 @@ class MapToolViewState extends State<MapToolView> {
         children: [
           Icon(
             Icons.location_pin,
-            color:
-                isSelected &&
-                    !_isMovePointMode // Highlight only if not in move mode for clarity
+            color: isSelected && !_isMovePointMode
                 ? Colors.blueAccent
                 : (_isMovePointMode && _selectedPointId == point.id
                       ? Colors.orangeAccent
-                      : Colors.red), // Change icon color
-            size: isSelected ? 30.0 : 30.0, // Optionally change size
-          ), // ICON
+                      : Colors.red),
+            size: 30.0,
+          ),
           const SizedBox(height: 4),
           Container(
-            // LABEL
             padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
             decoration: BoxDecoration(
               color: isSelected && !_isMovePointMode
@@ -549,7 +554,7 @@ class MapToolViewState extends State<MapToolView> {
                 fontSize: 10,
                 color: isSelected && !_isMovePointMode
                     ? Colors.white
-                    : Colors.black, // Change label text color
+                    : Colors.black,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -562,142 +567,277 @@ class MapToolViewState extends State<MapToolView> {
   Widget _buildCrosshairMarker() {
     if (_currentPosition == null) return const SizedBox.shrink();
 
-    // The crosshair itself (e.g., an Icon or a CustomPaint)
-    // For simplicity, using an Icon here.
-    // You can replace this with a CustomPaint for a more precise crosshair.
     return IgnorePointer(
-      // So it doesn't interfere with map taps
       child: Icon(
-        Icons.gps_fixed, // A simple crosshair-like icon
+        Icons.gps_fixed,
         color: Colors.blueAccent.withOpacity(0.8),
         size: 24,
       ),
     );
   }
 
-  // Method to handle deletion triggered from the side panel
-  Future<void> _handleDeletePointFromPanel(PointModel pointToDelete) async {
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Confirm Deletion'),
-          content: Text(
-            S
-                    .of(context)
-                    ?.mapDeletePointDialogContent(
-                      pointToDelete.ordinalNumber.toString(),
-                    ) ??
-                'Are you sure you want to delete point P${pointToDelete.ordinalNumber}?',
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text(
-                S.of(context)?.mapDeletePointDialogCancelButton ?? 'Cancel',
-              ),
-              onPressed: () => Navigator.of(context).pop(false),
-            ),
-            TextButton(
-              child: Text(
-                S.of(context)?.mapDeletePointDialogDeleteButton ?? 'Delete',
-                style: TextStyle(color: Colors.red),
-              ),
-              onPressed: () => Navigator.of(context).pop(true),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed == true) {
-      // You might want a loading indicator for the panel
-      setState(() {
-        // _isDeletingFromPanel = true; // If you have such a flag
-      });
-
-      try {
-        final int count = await _dbHelper.deletePointById(pointToDelete.id);
-
-        if (!mounted) return;
-
-        if (count > 0) {
-          setState(() {
-            _projectPoints.removeWhere((p) => p.id == pointToDelete.id);
-            logger.info(
-              "Point P${pointToDelete.ordinalNumber} (ID: ${pointToDelete.id}) removed from MapToolView after panel delete.",
-            );
-            if (_selectedPointId == pointToDelete.id) {
-              _selectedPointId = null;
-              _selectedPointInstance = null;
-            }
-            _recalculateHeadingLine();
-          });
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(
-                content: Text(
-                  S
-                          .of(context)
-                          ?.mapPointDeletedSuccessSnackbar(
-                            pointToDelete.ordinalNumber.toString(),
-                          ) ??
-                      'Point P${pointToDelete.ordinalNumber} deleted.',
-                ),
-                backgroundColor: Colors.green,
-              ),
-            );
-        } else {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(
-                content: Text(
-                  S
-                          .of(context)
-                          ?.mapErrorPointNotFoundOrDeletedSnackbar(
-                            pointToDelete.ordinalNumber.toString(),
-                          ) ??
-                      'Error: Point P${pointToDelete.ordinalNumber} could not be found or deleted from map view.',
-                ),
-                backgroundColor: Colors.red,
-              ),
-            );
-        }
-      } catch (e) {
-        if (!mounted) return;
-        logger.severe(
-          'Failed to delete point P${pointToDelete.ordinalNumber} from panel: $e',
-        );
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(
-              content: Text(
-                S
-                        .of(context)
-                        ?.mapErrorDeletingPointSnackbar(
-                          pointToDelete.ordinalNumber.toString(),
-                          e.toString(),
-                        ) ??
-                    'Error deleting point P${pointToDelete.ordinalNumber}: ${e.toString()}',
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
-      } finally {
-        // if (mounted) {
-        //   setState(() { _isDeletingFromPanel = false; });
-        // }
-      }
+  Widget _buildPermissionOverlay() {
+    if (_hasLocationPermission && _hasSensorPermission) {
+      return const SizedBox.shrink();
     }
+
+    final s = S.of(context);
+    return Positioned.fill(
+      child: Container(
+        color: Colors.black.withOpacity(0.65),
+        child: Center(
+          child: Card(
+            margin: const EdgeInsets.all(24),
+            elevation: 8,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    size: 48,
+                    color: Colors.orange.shade700,
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    s?.mapPermissionsRequiredTitle ?? "Permissions Required",
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  if (!_hasLocationPermission)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Text(
+                        s?.mapLocationPermissionInfoText ??
+                            "Location permission is needed to show your current position and for some map features.",
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ),
+                  if (!_hasSensorPermission)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Text(
+                        s?.mapSensorPermissionInfoText ??
+                            "Sensor (compass) permission is needed for direction-based features.",
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ),
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.settings),
+                    label: Text(
+                      s?.mapButtonOpenAppSettings ?? "Open App Settings",
+                    ),
+                    onPressed: () async {
+                      openAppSettings();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: _checkAndRequestPermissions,
+                    child: Text(
+                      s?.mapButtonRetryPermissions ?? "Retry Permissions",
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
-  // This is the "Add new point" button's action
-  void _handleAddPointButtonPressed() {
-    // Call the callback passed from ProjectPage
-    widget.onNavigateToCompassTab?.call();
-    // TODO: Alternatively, to also allow adding directly from map with current GPS
+  Widget _buildPointDetailsPanel() {
+    if (_selectedPointInstance == null) return const SizedBox.shrink();
+
+    return Positioned(
+      top: 10,
+      right: 10,
+      child: Material(
+        elevation: 4.0,
+        borderRadius: BorderRadius.circular(8.0),
+        child: Container(
+          padding: const EdgeInsets.all(12.0),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: IntrinsicWidth(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Selected: P${_selectedPointInstance!.ordinalNumber}',
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.start,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (_selectedPointInstance!.note?.isNotEmpty ?? false)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: Container(
+                      constraints: const BoxConstraints(maxWidth: 250),
+                      child: Text(
+                        _selectedPointInstance!.note!,
+                        style: Theme.of(context).textTheme.bodySmall,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.start,
+                      ),
+                    ),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  child: Text(
+                    'Lat: ${_selectedPointInstance!.latitude.toStringAsFixed(6)}, Lon: ${_selectedPointInstance!.longitude.toStringAsFixed(6)}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                    textAlign: TextAlign.start,
+                  ),
+                ),
+                if (_isMovePointMode &&
+                    _selectedPointInstance!.id == _selectedPointId)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text(
+                      'Tap on the map to set new location.',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontStyle: FontStyle.italic,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                const Divider(height: 16),
+                _buildPointActionButtons(),
+                if (_isMovingPointLoading)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 8.0),
+                    child: Center(child: LinearProgressIndicator()),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPointActionButtons() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        TextButton.icon(
+          icon: const Icon(Icons.edit, color: Colors.blue),
+          label: const Text('Edit'),
+          onPressed: _isMovePointMode ? null : _handleEditPoint,
+        ),
+        TextButton.icon(
+          icon: Icon(
+            _isMovePointMode && _selectedPointInstance!.id == _selectedPointId
+                ? Icons.cancel_outlined
+                : Icons.open_with,
+            color:
+                _isMovePointMode &&
+                    _selectedPointInstance!.id == _selectedPointId
+                ? Colors.orangeAccent
+                : Colors.teal,
+          ),
+          label: Text(
+            _isMovePointMode && _selectedPointInstance!.id == _selectedPointId
+                ? 'Cancel'
+                : 'Move',
+          ),
+          onPressed: _isMovingPointLoading ? null : _handleMovePointAction,
+        ),
+        TextButton.icon(
+          icon: const Icon(Icons.delete, color: Colors.redAccent),
+          label: const Text('Delete'),
+          onPressed: (_isMovePointMode || _isMovingPointLoading)
+              ? null
+              : _handleDeletePoint,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFloatingActionButtons() {
+    final bool isLocationLoading = _hasLocationPermission && _currentPosition == null;
+    final s = S.of(context);
+    
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Center on current location button
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: FloatingActionButton(
+            heroTag: 'center_on_location',
+            onPressed: isLocationLoading ? null : _centerOnCurrentLocation,
+            tooltip: isLocationLoading 
+                ? (s?.mapAcquiringLocation ?? 'Acquiring location...')
+                : (s?.mapCenterOnLocation ?? 'Center on my location'),
+            child: isLocationLoading 
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Icon(Icons.my_location),
+          ),
+        ),
+        // Add new point button
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: FloatingActionButton(
+            heroTag: 'add_new_point',
+            onPressed: isLocationLoading ? null : _handleAddPointButtonPressed,
+            tooltip: isLocationLoading 
+                ? (s?.mapAcquiringLocation ?? 'Acquiring location...')
+                : (s?.mapAddNewPoint ?? 'Add New Point'),
+            child: isLocationLoading 
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Icon(Icons.add_location_alt_outlined),
+          ),
+        ),
+        // Center on Project points button
+        FloatingActionButton(
+          heroTag: 'center_on_points',
+          onPressed: _fitMapToPoints,
+          tooltip: s?.mapCenterOnPoints ?? 'Center on points',
+          child: const Icon(Icons.center_focus_strong),
+        ),
+      ],
+    );
   }
 
   @override
@@ -722,407 +862,14 @@ class MapToolViewState extends State<MapToolView> {
       body: Stack(
         children: [
           _buildFlutterMapWidget(allMapMarkers, polylinePathPoints),
-          // --- Permission Denied Overlay ---
-          if (!_hasLocationPermission ||
-              !_hasSensorPermission) // Show if either is missing
-            Positioned.fill(
-              child: Container(
-                color: Colors.black.withOpacity(0.65), // Darken background more
-                child: Center(
-                  child: Card(
-                    margin: const EdgeInsets.all(24), // Increased margin
-                    elevation: 8,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24.0), // Increased padding
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.warning_amber_rounded,
-                            size: 48,
-                            color: Colors.orange.shade700,
-                          ),
-                          const SizedBox(height: 20),
-                          Text(
-                            S.of(context)?.mapPermissionsRequiredTitle ??
-                                "Permissions Required",
-                            style: Theme.of(context).textTheme.headlineSmall
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 12),
-                          if (!_hasLocationPermission)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 8.0),
-                              child: Text(
-                                S.of(context)?.mapLocationPermissionInfoText ??
-                                    "Location permission is needed to show your current position and for some map features.",
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                            ),
-                          if (!_hasSensorPermission)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 8.0),
-                              child: Text(
-                                S.of(context)?.mapSensorPermissionInfoText ??
-                                    "Sensor (compass) permission is needed for direction-based features.",
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                            ),
-                          const SizedBox(height: 20),
-                          ElevatedButton.icon(
-                            icon: const Icon(Icons.settings),
-                            label: Text(
-                              S.of(context)?.mapButtonOpenAppSettings ??
-                                  "Open App Settings",
-                            ),
-                            onPressed: () async {
-                              openAppSettings(); // From permission_handler package
-                            },
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 12,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextButton(
-                            onPressed: _checkAndRequestPermissions, // Re-try
-                            child: Text(
-                              S.of(context)?.mapButtonRetryPermissions ??
-                                  "Retry Permissions",
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          // Layer: Side Panel for Actions (only when a point is selected)
-          if (_selectedPointInstance != null)
-            Positioned(
-              top:
-                  10, // Adjust as needed (e.g., MediaQuery.of(context).padding.top + 10)
-              right: 10,
-              child: Material(
-                elevation: 4.0,
-                borderRadius: BorderRadius.circular(8.0),
-                child: Container(
-                  padding: const EdgeInsets.all(12.0),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: IntrinsicWidth(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Selected: P${_selectedPointInstance!.ordinalNumber}',
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.start,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        // const SizedBox(height: 4.0),
-                        if (_selectedPointInstance!.note?.isNotEmpty ?? false)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4.0),
-                            child: Container(
-                              constraints: const BoxConstraints(
-                                maxWidth: 250, // Adjust as needed
-                              ),
-                              child: Text(
-                                _selectedPointInstance!.note!,
-                                // "test",
-                                style: Theme.of(context).textTheme.bodySmall,
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                                textAlign: TextAlign.start,
-                              ),
-                            ),
-                          ),
-                        Padding(
-                          // Coordinates
-                          padding: const EdgeInsets.symmetric(vertical: 4.0),
-                          child: Text(
-                            'Lat: ${_selectedPointInstance!.latitude.toStringAsFixed(6)}, Lon: ${_selectedPointInstance!.longitude.toStringAsFixed(6)}',
-                            style: Theme.of(context).textTheme.bodySmall,
-                            textAlign: TextAlign.start,
-                          ),
-                        ),
-                        if (_isMovePointMode &&
-                            _selectedPointInstance!.id == _selectedPointId)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                            child: Text(
-                              'Tap on the map to set new location.',
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.primary,
-                                fontStyle: FontStyle.italic,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        const Divider(height: 16),
-                        Row(
-                          mainAxisSize: MainAxisSize
-                              .min, // Crucial for this Row to report its minimum required width
-                          // This width is what IntrinsicWidth will likely use if it's the dominant one.
-                          mainAxisAlignment: MainAxisAlignment
-                              .start, // Use this with SizedBox for defined spacing
-                          // Or MainAxisAlignment.spaceBetween if you want them to spread within the min width
-                          children: [
-                            TextButton.icon(
-                              icon: const Icon(Icons.edit, color: Colors.blue),
-                              label: const Text('Edit'),
-                              onPressed: _isMovePointMode
-                                  ? null // Disable if in move mode
-                                  : () async {
-                                      if (_selectedPointInstance == null)
-                                        return; // Guard against null
-
-                                      logger.info(
-                                        "Navigating to edit point P${_selectedPointInstance!.ordinalNumber}",
-                                      );
-                                      // Navigate to PointDetailsPage and wait for a result
-                                      final result =
-                                          await Navigator.push<
-                                            Map<String, dynamic>
-                                          >(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  PointDetailsPage(
-                                                    point:
-                                                        _selectedPointInstance!,
-                                                  ),
-                                            ),
-                                          );
-                                      // Process the result when PointDetailsPage is popped
-                                      if (result != null) {
-                                        final String? action =
-                                            result['action'] as String?;
-                                        logger.info(
-                                          "Returned from PointDetailsPage with action: $action",
-                                        );
-
-                                        if (action == 'updated') {
-                                          final PointModel? updatedPoint =
-                                              result['point'] as PointModel?;
-                                          if (updatedPoint != null) {
-                                            setState(() {
-                                              final index = _projectPoints
-                                                  .indexWhere(
-                                                    (p) =>
-                                                        p.id == updatedPoint.id,
-                                                  );
-                                              if (index != -1) {
-                                                _projectPoints[index] =
-                                                    updatedPoint;
-                                                logger.info(
-                                                  "Point P${updatedPoint.ordinalNumber} updated in MapToolView.",
-                                                );
-                                                // If the updated point was the selected one, the side panel
-                                                // will automatically reflect changes in the next build because
-                                                // _selectedPointInstance is re-derived from _projectPoints.
-                                              }
-                                            });
-                                            // ignore: use_build_context_synchronously
-                                            ScaffoldMessenger.of(context)
-                                              ..hideCurrentSnackBar()
-                                              ..showSnackBar(
-                                                SnackBar(
-                                                  content: Text(
-                                                    'Point P${updatedPoint.ordinalNumber} details updated!',
-                                                  ),
-                                                  backgroundColor: Colors.green,
-                                                ),
-                                              );
-                                          }
-                                        } else if (action == 'deleted') {
-                                          final String? deletedPointId =
-                                              result['pointId'] as String?;
-                                          // final int? ordinalNumber = result['ordinalNumber'] as int?; // For messages
-                                          if (deletedPointId != null) {
-                                            setState(() {
-                                              _projectPoints.removeWhere(
-                                                (p) => p.id == deletedPointId,
-                                              );
-                                              logger.info(
-                                                "Point ID $deletedPointId removed from MapToolView.",
-                                              );
-                                              // If the deleted point was selected, deselect it
-                                              if (_selectedPointId ==
-                                                  deletedPointId) {
-                                                _selectedPointId = null;
-                                              }
-                                            });
-                                            // ignore: use_build_context_synchronously
-                                            ScaffoldMessenger.of(context)
-                                              ..hideCurrentSnackBar()
-                                              ..showSnackBar(
-                                                const SnackBar(
-                                                  // You can use ordinalNumber here if you pass it back
-                                                  content: Text(
-                                                    'Point deleted.',
-                                                  ),
-                                                  backgroundColor:
-                                                      Colors.orange, // Or green
-                                                ),
-                                              );
-                                          }
-                                        }
-                                      } else {
-                                        logger.info(
-                                          "PointDetailsPage popped without a result (e.g., back button pressed).",
-                                        );
-                                      }
-                                      // Optionally, you might want to always deselect or refresh the _selectedPointInstance
-                                      // if the side panel relies on a copy that isn't directly from _projectPoints.
-                                      // However, your current structure of deriving _selectedPointInstance at the start
-                                      // of the build method from _projectPoints should handle this.
-                                    },
-                            ),
-                            TextButton.icon(
-                              icon: Icon(
-                                _isMovePointMode &&
-                                        _selectedPointInstance!.id ==
-                                            _selectedPointId
-                                    ? Icons
-                                          .cancel_outlined // Show cancel if this point is being moved
-                                    : Icons.open_with, // Standard move icon
-                                color:
-                                    _isMovePointMode &&
-                                        _selectedPointInstance!.id ==
-                                            _selectedPointId
-                                    ? Colors.orangeAccent
-                                    : Colors.teal,
-                              ),
-                              label: Text(
-                                _isMovePointMode &&
-                                        _selectedPointInstance!.id ==
-                                            _selectedPointId
-                                    ? 'Cancel'
-                                    : 'Move',
-                              ),
-                              onPressed: _isMovingPointLoading
-                                  ? null
-                                  : () {
-                                      // Disable if a move is processing
-                                      if (_isMovePointMode &&
-                                          _selectedPointInstance?.id ==
-                                              _selectedPointId) {
-                                        // Cancel move mode
-                                        setState(() {
-                                          _isMovePointMode = false;
-                                        });
-                                      } else if (!_isMovePointMode) {
-                                        // Activate move mode for this point
-                                        setState(() {
-                                          _isMovePointMode = true;
-                                          // _selectedPointId is already set for the panel to show
-                                        });
-                                        ScaffoldMessenger.of(context)
-                                          ..hideCurrentSnackBar()
-                                          ..showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Move mode activated. Tap map to relocate point.',
-                                              ),
-                                              backgroundColor: Colors.blueGrey,
-                                            ),
-                                          );
-                                      }
-                                    },
-                            ),
-                            TextButton.icon(
-                              icon: const Icon(
-                                Icons.delete,
-                                color: Colors.redAccent,
-                              ),
-                              label: const Text('Delete'),
-                              onPressed:
-                                  (_isMovePointMode || _isMovingPointLoading)
-                                  ? null
-                                  : () {
-                                      logger.info(
-                                        "Delete tapped for point P${_selectedPointInstance!.ordinalNumber}",
-                                      );
-                                      _handleDeletePointFromPanel(
-                                        _selectedPointInstance!,
-                                      );
-                                    },
-                            ),
-                          ],
-                        ),
-                        if (_isMovingPointLoading)
-                          const Padding(
-                            padding: EdgeInsets.only(top: 8.0),
-                            child: Center(child: LinearProgressIndicator()),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          // Center on current location button
-          if (_currentPosition != null && _hasLocationPermission)
-            Positioned(
-              bottom: 24,
-              left: 24,
-              child: FloatingActionButton(
-                heroTag: 'center_on_location',
-                onPressed: () {
-                  if (_currentPosition != null) {
-                    _mapController.move(
-                      LatLng(
-                        _currentPosition!.latitude,
-                        _currentPosition!.longitude,
-                      ),
-                      _mapController.camera.zoom, // Keep current zoom
-                    );
-                  }
-                },
-                tooltip: 'Center on my location',
-                child: const Icon(Icons.my_location),
-              ),
-            ),
-          // Add new point button
-          if (_currentPosition != null && _hasLocationPermission)
-            Positioned(
-              bottom: 96,
-              left: 24,
-              child: FloatingActionButton(
-                heroTag: 'add_new_point',
-                onPressed: _handleAddPointButtonPressed,
-                tooltip: 'Add New Point',
-                child: const Icon(Icons.add_location_alt_outlined),
-              ),
-            ),
-          // Center on Project points button
-          if (!_isLoadingPoints &&
-              _projectPoints.isNotEmpty) // Show FAB only if map is usable
-            Positioned(
-              bottom: 24,
-              right: 24,
-              child: FloatingActionButton(
-                heroTag: 'center_on_points',
-                onPressed: _fitMapToPoints,
-                tooltip: 'Center on points',
-                child: const Icon(Icons.center_focus_strong),
-              ),
-            ),
+          _buildPermissionOverlay(),
+          _buildPointDetailsPanel(),
+          // Floating action buttons positioned on the left
+          Positioned(
+            bottom: 24,
+            left: 24,
+            child: _buildFloatingActionButtons(),
+          ),
         ],
       ),
     );
@@ -1352,6 +1099,18 @@ class MapToolViewState extends State<MapToolView> {
               'com.jlbbooks.teleferika', // Recommended for OSM tile usage policy
           // Add any other TileLayer options you had, like tms, additionalOptions etc.
         ),
+        RichAttributionWidget(
+          // Include a stylish prebuilt attribution widget that meets all requirments
+          attributions: [
+            TextSourceAttribution(
+              'OpenStreetMap contributors',
+              onTap: () => launchUrl(
+                Uri.parse('https://openstreetmap.org/copyright'),
+              ), // (external)
+            ),
+            // Also add images...
+          ],
+        ),
         if (polylinePathPoints.isNotEmpty)
           PolylineLayer(
             polylines: [
@@ -1429,6 +1188,233 @@ class MapToolViewState extends State<MapToolView> {
           pattern: StrokePattern.dotted(),
         );
       });
+    }
+  }
+
+  // --- Action Handlers ---
+  Future<void> _handleEditPoint() async {
+    if (_selectedPointInstance == null) return;
+
+    logger.info(
+      "Navigating to edit point P${_selectedPointInstance!.ordinalNumber}",
+    );
+
+    final result = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PointDetailsPage(point: _selectedPointInstance!),
+      ),
+    );
+
+    if (result != null) {
+      final String? action = result['action'] as String?;
+      logger.info("Returned from PointDetailsPage with action: $action");
+
+      if (action == 'updated') {
+        final PointModel? updatedPoint = result['point'] as PointModel?;
+        if (updatedPoint != null) {
+          setState(() {
+            final index = _projectPoints.indexWhere(
+              (p) => p.id == updatedPoint.id,
+            );
+            if (index != -1) {
+              _projectPoints[index] = updatedPoint;
+              logger.info(
+                "Point P${updatedPoint.ordinalNumber} updated in MapToolView.",
+              );
+            }
+          });
+
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Point P${updatedPoint.ordinalNumber} details updated!',
+                ),
+                backgroundColor: Colors.green,
+              ),
+            );
+        }
+      } else if (action == 'deleted') {
+        final String? deletedPointId = result['pointId'] as String?;
+        if (deletedPointId != null) {
+          setState(() {
+            _projectPoints.removeWhere((p) => p.id == deletedPointId);
+            logger.info("Point ID $deletedPointId removed from MapToolView.");
+            if (_selectedPointId == deletedPointId) {
+              _selectedPointId = null;
+            }
+          });
+
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              const SnackBar(
+                content: Text('Point deleted.'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+        }
+      }
+    } else {
+      logger.info(
+        "PointDetailsPage popped without a result (e.g., back button pressed).",
+      );
+    }
+  }
+
+  void _handleMovePointAction() {
+    if (_isMovePointMode && _selectedPointInstance?.id == _selectedPointId) {
+      // Cancel move mode
+      setState(() {
+        _isMovePointMode = false;
+      });
+    } else if (!_isMovePointMode) {
+      // Activate move mode for this point
+      setState(() {
+        _isMovePointMode = true;
+      });
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text('Move mode activated. Tap map to relocate point.'),
+            backgroundColor: Colors.blueGrey,
+          ),
+        );
+    }
+  }
+
+  Future<void> _handleDeletePoint() async {
+    logger.info(
+      "Delete tapped for point P${_selectedPointInstance!.ordinalNumber}",
+    );
+    await _handleDeletePointFromPanel(_selectedPointInstance!);
+  }
+
+  void _centerOnCurrentLocation() {
+    if (_currentPosition != null) {
+      _mapController.move(
+        LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+        _mapController.camera.zoom,
+      );
+    }
+  }
+
+  void _handleAddPointButtonPressed() {
+    // For now, just show a message that this would navigate to compass tab
+    // In the future, this could add a point directly from the map
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Add point functionality would navigate to compass tab'),
+        backgroundColor: Colors.blue,
+      ),
+    );
+  }
+
+  // Method to handle deletion triggered from the side panel
+  Future<void> _handleDeletePointFromPanel(PointModel pointToDelete) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        final s = S.of(context);
+        return AlertDialog(
+          title: Text(s?.mapDeletePointDialogTitle ?? 'Confirm Deletion'),
+          content: Text(
+            s?.mapDeletePointDialogContent(
+                  pointToDelete.ordinalNumber.toString(),
+                ) ??
+                'Are you sure you want to delete point P${pointToDelete.ordinalNumber}?',
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(s?.mapDeletePointDialogCancelButton ?? 'Cancel'),
+              onPressed: () => Navigator.of(context).pop(false),
+            ),
+            TextButton(
+              child: Text(
+                s?.mapDeletePointDialogDeleteButton ?? 'Delete',
+                style: const TextStyle(color: Colors.red),
+              ),
+              onPressed: () => Navigator.of(context).pop(true),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      try {
+        final int count = await _dbHelper.deletePointById(pointToDelete.id);
+
+        if (!mounted) return;
+
+        if (count > 0) {
+          setState(() {
+            _projectPoints.removeWhere((p) => p.id == pointToDelete.id);
+            logger.info(
+              "Point P${pointToDelete.ordinalNumber} (ID: ${pointToDelete.id}) removed from MapToolView after panel delete.",
+            );
+            if (_selectedPointId == pointToDelete.id) {
+              _selectedPointId = null;
+              _selectedPointInstance = null;
+            }
+            _recalculateHeadingLine();
+          });
+
+          final s = S.of(context);
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(
+                  s?.mapPointDeletedSuccessSnackbar(
+                        pointToDelete.ordinalNumber.toString(),
+                      ) ??
+                      'Point P${pointToDelete.ordinalNumber} deleted.',
+                ),
+                backgroundColor: Colors.green,
+              ),
+            );
+        } else {
+          final s = S.of(context);
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(
+                  s?.mapErrorPointNotFoundOrDeletedSnackbar(
+                        pointToDelete.ordinalNumber.toString(),
+                      ) ??
+                      'Error: Point P${pointToDelete.ordinalNumber} could not be found or deleted from map view.',
+                ),
+                backgroundColor: Colors.red,
+              ),
+            );
+        }
+      } catch (e) {
+        if (!mounted) return;
+        logger.severe(
+          'Failed to delete point P${pointToDelete.ordinalNumber} from panel: $e',
+        );
+
+        final s = S.of(context);
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                s?.mapErrorDeletingPointSnackbar(
+                      pointToDelete.ordinalNumber.toString(),
+                      e.toString(),
+                    ) ??
+                    'Error deleting point P${pointToDelete.ordinalNumber}: $e',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+      }
     }
   }
 }

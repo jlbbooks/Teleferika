@@ -945,6 +945,30 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Retry'**
   String get retryButton;
+
+  /// Tooltip text shown when location is being acquired for floating action buttons.
+  ///
+  /// In en, this message translates to:
+  /// **'Acquiring location...'**
+  String get mapAcquiringLocation;
+
+  /// Tooltip for the button to center the map on the user's current location.
+  ///
+  /// In en, this message translates to:
+  /// **'Center on my location'**
+  String get mapCenterOnLocation;
+
+  /// Tooltip for the button to add a new point from the map.
+  ///
+  /// In en, this message translates to:
+  /// **'Add New Point'**
+  String get mapAddNewPoint;
+
+  /// Tooltip for the button to center the map on all project points.
+  ///
+  /// In en, this message translates to:
+  /// **'Center on points'**
+  String get mapCenterOnPoints;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

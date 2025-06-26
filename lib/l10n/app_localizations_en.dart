@@ -532,4 +532,16 @@ class SEn extends S {
 
   @override
   String get retryButton => 'Retry';
+
+  @override
+  String get mapAcquiringLocation => 'Acquiring location...';
+
+  @override
+  String get mapCenterOnLocation => 'Center on my location';
+
+  @override
+  String get mapAddNewPoint => 'Add New Point';
+
+  @override
+  String get mapCenterOnPoints => 'Center on points';
 }

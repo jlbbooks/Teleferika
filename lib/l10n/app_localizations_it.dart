@@ -535,4 +535,16 @@ class SIt extends S {
 
   @override
   String get retryButton => 'Riprova';
+
+  @override
+  String get mapAcquiringLocation => 'Acquisizione posizione...';
+
+  @override
+  String get mapCenterOnLocation => 'Centra sulla mia posizione';
+
+  @override
+  String get mapAddNewPoint => 'Aggiungi Nuovo Punto';
+
+  @override
+  String get mapCenterOnPoints => 'Centra sui punti';
 }

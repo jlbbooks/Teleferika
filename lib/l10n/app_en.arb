@@ -538,5 +538,21 @@
   "retryButton": "Retry",
   "@retryButton": {
     "description": "Button text to retry an operation."
+  },
+  "mapAcquiringLocation": "Acquiring location...",
+  "@mapAcquiringLocation": {
+    "description": "Tooltip text shown when location is being acquired for floating action buttons."
+  },
+  "mapCenterOnLocation": "Center on my location",
+  "@mapCenterOnLocation": {
+    "description": "Tooltip for the button to center the map on the user's current location."
+  },
+  "mapAddNewPoint": "Add New Point",
+  "@mapAddNewPoint": {
+    "description": "Tooltip for the button to add a new point from the map."
+  },
+  "mapCenterOnPoints": "Center on points",
+  "@mapCenterOnPoints": {
+    "description": "Tooltip for the button to center the map on all project points."
   }
 }
