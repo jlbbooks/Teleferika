@@ -381,4 +381,113 @@ class SEn extends S {
 
   @override
   String get export_page_no_points => 'No points available for export.';
+
+  @override
+  String mapErrorLoadingPoints(String errorMessage) {
+    return 'Error loading points for map: $errorMessage';
+  }
+
+  @override
+  String mapPointMovedSuccessfully(String ordinalNumber) {
+    return 'Point P$ordinalNumber moved successfully!';
+  }
+
+  @override
+  String mapErrorMovingPoint(String ordinalNumber) {
+    return 'Error: Could not move point P$ordinalNumber. Point not found or not updated.';
+  }
+
+  @override
+  String mapErrorMovingPointGeneric(String ordinalNumber, String errorMessage) {
+    return 'Error moving point P$ordinalNumber: $errorMessage';
+  }
+
+  @override
+  String get mapTooltipMovePoint => 'Move Point';
+
+  @override
+  String get mapTooltipSaveChanges => 'Save Changes';
+
+  @override
+  String get mapTooltipCancelMove => 'Cancel Move';
+
+  @override
+  String get mapTooltipEditPointDetails => 'Edit Details';
+
+  @override
+  String get mapTooltipAddPointFromCompass =>
+      'Add Point at Current Location (from Compass)';
+
+  @override
+  String get mapNoPointsToDisplay => 'No points to display on the map.';
+
+  @override
+  String get mapLocationPermissionDenied =>
+      'Location permission denied. Map features requiring location will be limited.';
+
+  @override
+  String get mapSensorPermissionDenied =>
+      'Sensor (compass) permission denied. Device orientation features will be unavailable.';
+
+  @override
+  String mapErrorGettingLocationUpdates(String errorMessage) {
+    return 'Error getting location updates: $errorMessage';
+  }
+
+  @override
+  String mapErrorGettingCompassUpdates(String errorMessage) {
+    return 'Error getting compass updates: $errorMessage';
+  }
+
+  @override
+  String get mapLoadingPointsIndicator => 'Loading points...';
+
+  @override
+  String get mapPermissionsRequiredTitle => 'Permissions Required';
+
+  @override
+  String get mapLocationPermissionInfoText =>
+      'Location permission is needed to show your current position and for some map features.';
+
+  @override
+  String get mapSensorPermissionInfoText =>
+      'Sensor (compass) permission is needed for direction-based features.';
+
+  @override
+  String get mapButtonOpenAppSettings => 'Open App Settings';
+
+  @override
+  String get mapButtonRetryPermissions => 'Retry Permissions';
+
+  @override
+  String get mapDeletePointDialogTitle => 'Confirm Deletion';
+
+  @override
+  String mapDeletePointDialogContent(String pointOrdinalNumber) {
+    return 'Are you sure you want to delete point P$pointOrdinalNumber?';
+  }
+
+  @override
+  String get mapDeletePointDialogCancelButton => 'Cancel';
+
+  @override
+  String get mapDeletePointDialogDeleteButton => 'Delete';
+
+  @override
+  String mapPointDeletedSuccessSnackbar(String pointOrdinalNumber) {
+    return 'Point P$pointOrdinalNumber deleted.';
+  }
+
+  @override
+  String mapErrorPointNotFoundOrDeletedSnackbar(String pointOrdinalNumber) {
+    return 'Error: Point P$pointOrdinalNumber could not be found or deleted from map view.';
+  }
+
+  @override
+  String mapErrorDeletingPointSnackbar(
+    String pointOrdinalNumber,
+    String errorMessage,
+  ) {
+    return 'Error deleting point P$pointOrdinalNumber: $errorMessage';
+  }
 }

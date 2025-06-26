@@ -383,4 +383,114 @@ class SIt extends S {
   @override
   String get export_page_no_points =>
       'Nessun punto disponibile per l\'esportazione.';
+
+  @override
+  String mapErrorLoadingPoints(String errorMessage) {
+    return 'Errore durante il caricamento dei punti sulla mappa: $errorMessage';
+  }
+
+  @override
+  String mapPointMovedSuccessfully(String ordinalNumber) {
+    return 'Punto P$ordinalNumber spostato con successo!';
+  }
+
+  @override
+  String mapErrorMovingPoint(String ordinalNumber) {
+    return 'Errore: Impossibile spostare il punto P$ordinalNumber. Punto non trovato o non aggiornato.';
+  }
+
+  @override
+  String mapErrorMovingPointGeneric(String ordinalNumber, String errorMessage) {
+    return 'Errore durante lo spostamento del punto P$ordinalNumber: $errorMessage';
+  }
+
+  @override
+  String get mapTooltipMovePoint => 'Sposta Punto';
+
+  @override
+  String get mapTooltipSaveChanges => 'Salva Modifiche';
+
+  @override
+  String get mapTooltipCancelMove => 'Annulla Spostamento';
+
+  @override
+  String get mapTooltipEditPointDetails => 'Modifica Dettagli';
+
+  @override
+  String get mapTooltipAddPointFromCompass =>
+      'Aggiungi Punto alla Posizione Corrente (da Bussola)';
+
+  @override
+  String get mapNoPointsToDisplay =>
+      'Nessun punto da visualizzare sulla mappa.';
+
+  @override
+  String get mapLocationPermissionDenied =>
+      'Permesso di localizzazione negato. Le funzionalità della mappa che richiedono la posizione saranno limitate.';
+
+  @override
+  String get mapSensorPermissionDenied =>
+      'Permesso sensore (bussola) negato. Le funzionalità di orientamento del dispositivo non saranno disponibili.';
+
+  @override
+  String mapErrorGettingLocationUpdates(String errorMessage) {
+    return 'Errore durante l\'ottenimento degli aggiornamenti sulla posizione: $errorMessage';
+  }
+
+  @override
+  String mapErrorGettingCompassUpdates(String errorMessage) {
+    return 'Errore durante l\'ottenimento degli aggiornamenti della bussola: $errorMessage';
+  }
+
+  @override
+  String get mapLoadingPointsIndicator => 'Caricamento punti...';
+
+  @override
+  String get mapPermissionsRequiredTitle => 'Permessi Richiesti';
+
+  @override
+  String get mapLocationPermissionInfoText =>
+      'Il permesso di localizzazione è necessario per mostrare la tua posizione attuale e per alcune funzionalità della mappa.';
+
+  @override
+  String get mapSensorPermissionInfoText =>
+      'Il permesso del sensore (bussola) è necessario per le funzionalità basate sulla direzione.';
+
+  @override
+  String get mapButtonOpenAppSettings => 'Apri Impostazioni App';
+
+  @override
+  String get mapButtonRetryPermissions => 'Riprova Permessi';
+
+  @override
+  String get mapDeletePointDialogTitle => 'Conferma Eliminazione';
+
+  @override
+  String mapDeletePointDialogContent(String pointOrdinalNumber) {
+    return 'Sei sicuro di voler eliminare il punto P$pointOrdinalNumber?';
+  }
+
+  @override
+  String get mapDeletePointDialogCancelButton => 'Annulla';
+
+  @override
+  String get mapDeletePointDialogDeleteButton => 'Elimina';
+
+  @override
+  String mapPointDeletedSuccessSnackbar(String pointOrdinalNumber) {
+    return 'Punto P$pointOrdinalNumber eliminato.';
+  }
+
+  @override
+  String mapErrorPointNotFoundOrDeletedSnackbar(String pointOrdinalNumber) {
+    return 'Errore: Impossibile trovare o eliminare il punto P$pointOrdinalNumber dalla vista mappa.';
+  }
+
+  @override
+  String mapErrorDeletingPointSnackbar(
+    String pointOrdinalNumber,
+    String errorMessage,
+  ) {
+    return 'Errore durante l\'eliminazione del punto P$pointOrdinalNumber: $errorMessage';
+  }
 }

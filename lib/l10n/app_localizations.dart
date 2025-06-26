@@ -708,6 +708,171 @@ abstract class S {
   /// In en, this message translates to:
   /// **'No points available for export.'**
   String get export_page_no_points;
+
+  /// Error message shown on the map when points cannot be loaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading points for map: {errorMessage}'**
+  String mapErrorLoadingPoints(String errorMessage);
+
+  /// Snackbar message when a point is successfully moved on the map.
+  ///
+  /// In en, this message translates to:
+  /// **'Point P{ordinalNumber} moved successfully!'**
+  String mapPointMovedSuccessfully(String ordinalNumber);
+
+  /// Snackbar error message when moving a point on the map fails because it's not found or not updated.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: Could not move point P{ordinalNumber}. Point not found or not updated.'**
+  String mapErrorMovingPoint(String ordinalNumber);
+
+  /// Generic snackbar error message when moving a point on the map fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Error moving point P{ordinalNumber}: {errorMessage}'**
+  String mapErrorMovingPointGeneric(String ordinalNumber, String errorMessage);
+
+  /// Tooltip for the button/icon to activate move point mode for a selected point on the map.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Point'**
+  String get mapTooltipMovePoint;
+
+  /// Tooltip for the button/icon to save the new position of a point being moved on the map.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get mapTooltipSaveChanges;
+
+  /// Tooltip for the button/icon to cancel moving a point and revert to its original position.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Move'**
+  String get mapTooltipCancelMove;
+
+  /// Tooltip for the button/icon to navigate to the point details page for the selected point.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Details'**
+  String get mapTooltipEditPointDetails;
+
+  /// Tooltip for the FAB (Floating Action Button) that uses current compass/GPS data to add a new point. Navigates to compass tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Point at Current Location (from Compass)'**
+  String get mapTooltipAddPointFromCompass;
+
+  /// Message shown on the map when there are no project points.
+  ///
+  /// In en, this message translates to:
+  /// **'No points to display on the map.'**
+  String get mapNoPointsToDisplay;
+
+  /// Message displayed on the map or as a snackbar if location permission is denied.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission denied. Map features requiring location will be limited.'**
+  String get mapLocationPermissionDenied;
+
+  /// Message displayed if compass/sensor permission is denied.
+  ///
+  /// In en, this message translates to:
+  /// **'Sensor (compass) permission denied. Device orientation features will be unavailable.'**
+  String get mapSensorPermissionDenied;
+
+  /// Error message if fetching continuous location updates fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Error getting location updates: {errorMessage}'**
+  String mapErrorGettingLocationUpdates(String errorMessage);
+
+  /// Error message if fetching compass updates fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Error getting compass updates: {errorMessage}'**
+  String mapErrorGettingCompassUpdates(String errorMessage);
+
+  /// Text for the CircularProgressIndicator shown while map points are loading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading points...'**
+  String get mapLoadingPointsIndicator;
+
+  /// Title text for the permissions required overlay/card on the map.
+  ///
+  /// In en, this message translates to:
+  /// **'Permissions Required'**
+  String get mapPermissionsRequiredTitle;
+
+  /// Informational text explaining why location permission is needed for the map.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is needed to show your current position and for some map features.'**
+  String get mapLocationPermissionInfoText;
+
+  /// Informational text explaining why sensor (compass) permission is needed for the map.
+  ///
+  /// In en, this message translates to:
+  /// **'Sensor (compass) permission is needed for direction-based features.'**
+  String get mapSensorPermissionInfoText;
+
+  /// Button text to open the application's settings page.
+  ///
+  /// In en, this message translates to:
+  /// **'Open App Settings'**
+  String get mapButtonOpenAppSettings;
+
+  /// Button text to re-try requesting necessary permissions for the map.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry Permissions'**
+  String get mapButtonRetryPermissions;
+
+  /// Title for the dialog confirming point deletion from the map view.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Deletion'**
+  String get mapDeletePointDialogTitle;
+
+  /// Content/message of the dialog confirming point deletion, asking for user confirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete point P{pointOrdinalNumber}?'**
+  String mapDeletePointDialogContent(String pointOrdinalNumber);
+
+  /// Text for the 'Cancel' button in the delete point confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get mapDeletePointDialogCancelButton;
+
+  /// Text for the 'Delete' button in the delete point confirmation dialog (often styled differently, e.g., red).
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get mapDeletePointDialogDeleteButton;
+
+  /// Snackbar message shown when a point is successfully deleted from the map.
+  ///
+  /// In en, this message translates to:
+  /// **'Point P{pointOrdinalNumber} deleted.'**
+  String mapPointDeletedSuccessSnackbar(String pointOrdinalNumber);
+
+  /// Snackbar message shown when an error occurs trying to delete a point from the map because it wasn't found.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: Point P{pointOrdinalNumber} could not be found or deleted from map view.'**
+  String mapErrorPointNotFoundOrDeletedSnackbar(String pointOrdinalNumber);
+
+  /// Generic snackbar message for an error occurring during point deletion from the map.
+  ///
+  /// In en, this message translates to:
+  /// **'Error deleting point P{pointOrdinalNumber}: {errorMessage}'**
+  String mapErrorDeletingPointSnackbar(
+    String pointOrdinalNumber,
+    String errorMessage,
+  );
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

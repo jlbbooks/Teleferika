@@ -12,6 +12,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
+import 'package:teleferika/l10n/app_localizations.dart';
 
 import '../logger.dart';
 import '../point_details_page.dart';
@@ -118,14 +119,32 @@ class MapToolViewState extends State<MapToolView> {
       _startListeningToLocation();
     } else {
       logger.info("MapToolView: Location permission not granted.");
-      // Optionally show a message on the map if permission is missing
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              S.of(context)?.mapLocationPermissionDenied ??
+                  'Location permission denied. Map features requiring location will be limited.',
+            ),
+          ),
+        );
+      }
     }
 
     if (_hasSensorPermission) {
       _startListeningToCompass();
     } else {
       logger.info("MapToolView: Sensor (compass) permission not granted.");
-      // Optionally show a message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              S.of(context)?.mapSensorPermissionDenied ??
+                  'Sensor (compass) permission denied. Device orientation features will be unavailable.',
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -146,6 +165,19 @@ class MapToolViewState extends State<MapToolView> {
           onError: (error) {
             logger.severe("Error getting location updates: $error");
             if (mounted) {
+              // Optionally show a snackbar for this error
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    S
+                            .of(context)
+                            ?.mapErrorGettingLocationUpdates(
+                              error.toString(),
+                            ) ??
+                        'Error getting location updates: ${error.toString()}',
+                  ),
+                ),
+              );
               setState(() {
                 _currentPosition = null;
               });
@@ -174,6 +206,17 @@ class MapToolViewState extends State<MapToolView> {
       onError: (error) {
         logger.severe("Error getting compass updates: $error");
         if (mounted) {
+          // Optionally show a snackbar for this error
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                S
+                        .of(context)
+                        ?.mapErrorGettingCompassUpdates(error.toString()) ??
+                    'Error getting compass updates: ${error.toString()}',
+              ),
+            ),
+          );
           setState(() {
             _currentDeviceHeading = null;
           });
@@ -259,7 +302,12 @@ class MapToolViewState extends State<MapToolView> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error loading points for map: $e")),
+          SnackBar(
+            content: Text(
+              S.of(context)?.mapErrorLoadingPoints(e.toString()) ??
+                  "Error loading points for map: $e",
+            ),
+          ),
         );
       }
     }
@@ -324,7 +372,12 @@ class MapToolViewState extends State<MapToolView> {
           ..showSnackBar(
             SnackBar(
               content: Text(
-                'Point P${updatedPoint.ordinalNumber} moved successfully!',
+                S
+                        .of(context)
+                        ?.mapPointMovedSuccessfully(
+                          updatedPoint.ordinalNumber.toString(),
+                        ) ??
+                    'Point P${updatedPoint.ordinalNumber} moved successfully!',
               ),
               backgroundColor: Colors.green,
             ),
@@ -335,7 +388,12 @@ class MapToolViewState extends State<MapToolView> {
           ..showSnackBar(
             SnackBar(
               content: Text(
-                'Error: Could not move point P${pointToMove.ordinalNumber}. Point not found or not updated.',
+                S
+                        .of(context)
+                        ?.mapErrorMovingPoint(
+                          pointToMove.ordinalNumber.toString(),
+                        ) ??
+                    'Error: Could not move point P${pointToMove.ordinalNumber}. Point not found or not updated.',
               ),
               backgroundColor: Colors.red,
             ),
@@ -350,7 +408,13 @@ class MapToolViewState extends State<MapToolView> {
         ..showSnackBar(
           SnackBar(
             content: Text(
-              'Error moving point P${pointToMove.ordinalNumber}: ${e.toString()}',
+              S
+                      .of(context)
+                      ?.mapErrorMovingPointGeneric(
+                        pointToMove.ordinalNumber.toString(),
+                        e.toString(),
+                      ) ??
+                  'Error moving point P${pointToMove.ordinalNumber}: ${e.toString()}',
             ),
             backgroundColor: Colors.red,
           ),
@@ -519,15 +583,25 @@ class MapToolViewState extends State<MapToolView> {
         return AlertDialog(
           title: const Text('Confirm Deletion'),
           content: Text(
-            'Are you sure you want to delete point P${pointToDelete.ordinalNumber}?',
+            S
+                    .of(context)
+                    ?.mapDeletePointDialogContent(
+                      pointToDelete.ordinalNumber.toString(),
+                    ) ??
+                'Are you sure you want to delete point P${pointToDelete.ordinalNumber}?',
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancel'),
+              child: Text(
+                S.of(context)?.mapDeletePointDialogCancelButton ?? 'Cancel',
+              ),
               onPressed: () => Navigator.of(context).pop(false),
             ),
             TextButton(
-              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+              child: Text(
+                S.of(context)?.mapDeletePointDialogDeleteButton ?? 'Delete',
+                style: TextStyle(color: Colors.red),
+              ),
               onPressed: () => Navigator.of(context).pop(true),
             ),
           ],
@@ -562,7 +636,14 @@ class MapToolViewState extends State<MapToolView> {
             ..hideCurrentSnackBar()
             ..showSnackBar(
               SnackBar(
-                content: Text('Point P${pointToDelete.ordinalNumber} deleted.'),
+                content: Text(
+                  S
+                          .of(context)
+                          ?.mapPointDeletedSuccessSnackbar(
+                            pointToDelete.ordinalNumber.toString(),
+                          ) ??
+                      'Point P${pointToDelete.ordinalNumber} deleted.',
+                ),
                 backgroundColor: Colors.green,
               ),
             );
@@ -572,7 +653,12 @@ class MapToolViewState extends State<MapToolView> {
             ..showSnackBar(
               SnackBar(
                 content: Text(
-                  'Error: Point P${pointToDelete.ordinalNumber} could not be found or deleted from map view.',
+                  S
+                          .of(context)
+                          ?.mapErrorPointNotFoundOrDeletedSnackbar(
+                            pointToDelete.ordinalNumber.toString(),
+                          ) ??
+                      'Error: Point P${pointToDelete.ordinalNumber} could not be found or deleted from map view.',
                 ),
                 backgroundColor: Colors.red,
               ),
@@ -588,7 +674,13 @@ class MapToolViewState extends State<MapToolView> {
           ..showSnackBar(
             SnackBar(
               content: Text(
-                'Error deleting point P${pointToDelete.ordinalNumber}: ${e.toString()}',
+                S
+                        .of(context)
+                        ?.mapErrorDeletingPointSnackbar(
+                          pointToDelete.ordinalNumber.toString(),
+                          e.toString(),
+                        ) ??
+                    'Error deleting point P${pointToDelete.ordinalNumber}: ${e.toString()}',
               ),
               backgroundColor: Colors.red,
             ),
@@ -611,8 +703,12 @@ class MapToolViewState extends State<MapToolView> {
   @override
   Widget build(BuildContext context) {
     if (_isLoadingPoints) {
-      return const Center(
-        child: CircularProgressIndicator(key: ValueKey("Loading points...")),
+      return Center(
+        child: CircularProgressIndicator(
+          key: ValueKey(
+            S.of(context)?.mapLoadingPointsIndicator ?? "Loading points...",
+          ),
+        ),
       );
     }
 
@@ -651,7 +747,8 @@ class MapToolViewState extends State<MapToolView> {
                           ),
                           const SizedBox(height: 20),
                           Text(
-                            "Permissions Required",
+                            S.of(context)?.mapPermissionsRequiredTitle ??
+                                "Permissions Required",
                             style: Theme.of(context).textTheme.headlineSmall
                                 ?.copyWith(fontWeight: FontWeight.bold),
                             textAlign: TextAlign.center,
@@ -661,7 +758,8 @@ class MapToolViewState extends State<MapToolView> {
                             Padding(
                               padding: const EdgeInsets.only(bottom: 8.0),
                               child: Text(
-                                "Location permission is needed to show your current position and for some map features.",
+                                S.of(context)?.mapLocationPermissionInfoText ??
+                                    "Location permission is needed to show your current position and for some map features.",
                                 textAlign: TextAlign.center,
                                 style: Theme.of(context).textTheme.bodyMedium,
                               ),
@@ -670,7 +768,8 @@ class MapToolViewState extends State<MapToolView> {
                             Padding(
                               padding: const EdgeInsets.only(bottom: 8.0),
                               child: Text(
-                                "Sensor (compass) permission is needed for direction-based features.",
+                                S.of(context)?.mapSensorPermissionInfoText ??
+                                    "Sensor (compass) permission is needed for direction-based features.",
                                 textAlign: TextAlign.center,
                                 style: Theme.of(context).textTheme.bodyMedium,
                               ),
@@ -678,7 +777,10 @@ class MapToolViewState extends State<MapToolView> {
                           const SizedBox(height: 20),
                           ElevatedButton.icon(
                             icon: const Icon(Icons.settings),
-                            label: const Text("Open App Settings"),
+                            label: Text(
+                              S.of(context)?.mapButtonOpenAppSettings ??
+                                  "Open App Settings",
+                            ),
                             onPressed: () async {
                               openAppSettings(); // From permission_handler package
                             },
@@ -692,7 +794,10 @@ class MapToolViewState extends State<MapToolView> {
                           const SizedBox(height: 8),
                           TextButton(
                             onPressed: _checkAndRequestPermissions, // Re-try
-                            child: const Text("Retry Permissions"),
+                            child: Text(
+                              S.of(context)?.mapButtonRetryPermissions ??
+                                  "Retry Permissions",
+                            ),
                           ),
                         ],
                       ),

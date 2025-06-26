@@ -390,5 +390,173 @@
   "export_format_geojson": "GeoJSON",
   "@export_format_geojson": {
     "description": "Opzione di formato di esportazione: GeoJSON."
+  },
+  "mapErrorLoadingPoints": "Errore durante il caricamento dei punti sulla mappa: {errorMessage}",
+  "@mapErrorLoadingPoints": {
+    "description": "Messaggio di errore visualizzato sulla mappa quando i punti non possono essere caricati.",
+    "placeholders": {
+      "errorMessage": {
+        "type": "String"
+      }
+    }
+  },
+  "mapPointMovedSuccessfully": "Punto P{ordinalNumber} spostato con successo!",
+  "@mapPointMovedSuccessfully": {
+    "description": "Messaggio Snackbar quando un punto viene spostato con successo sulla mappa.",
+    "placeholders": {
+      "ordinalNumber": {
+        "type": "String"
+      }
+    }
+  },
+  "mapErrorMovingPoint": "Errore: Impossibile spostare il punto P{ordinalNumber}. Punto non trovato o non aggiornato.",
+  "@mapErrorMovingPoint": {
+    "description": "Messaggio di errore Snackbar quando lo spostamento di un punto sulla mappa fallisce perché non trovato o non aggiornato.",
+    "placeholders": {
+      "ordinalNumber": {
+        "type": "String"
+      }
+    }
+  },
+  "mapErrorMovingPointGeneric": "Errore durante lo spostamento del punto P{ordinalNumber}: {errorMessage}",
+  "@mapErrorMovingPointGeneric": {
+    "description": "Messaggio di errore Snackbar generico quando lo spostamento di un punto sulla mappa fallisce.",
+    "placeholders": {
+      "ordinalNumber": {
+        "type": "String"
+      },
+      "errorMessage": {
+        "type": "String"
+      }
+    }
+  },
+  "mapTooltipMovePoint": "Sposta Punto",
+  "@mapTooltipMovePoint": {
+    "description": "Tooltip per il pulsante/icona per attivare la modalità di spostamento punto per un punto selezionato sulla mappa."
+  },
+  "mapTooltipSaveChanges": "Salva Modifiche",
+  "@mapTooltipSaveChanges": {
+    "description": "Tooltip per il pulsante/icona per salvare la nuova posizione di un punto in corso di spostamento sulla mappa."
+  },
+  "mapTooltipCancelMove": "Annulla Spostamento",
+  "@mapTooltipCancelMove": {
+    "description": "Tooltip per il pulsante/icona per annullare lo spostamento di un punto e ripristinare la sua posizione originale."
+  },
+  "mapTooltipEditPointDetails": "Modifica Dettagli",
+  "@mapTooltipEditPointDetails": {
+    "description": "Tooltip per il pulsante/icona per navigare alla pagina dei dettagli del punto selezionato."
+  },
+  "mapTooltipAddPointFromCompass": "Aggiungi Punto alla Posizione Corrente (da Bussola)",
+  "@mapTooltipAddPointFromCompass": {
+    "description": "Tooltip per il FAB (Pulsante di Azione Fluttuante) che utilizza i dati attuali della bussola/GPS per aggiungere un nuovo punto. Naviga alla scheda bussola."
+  },
+  "mapNoPointsToDisplay": "Nessun punto da visualizzare sulla mappa.",
+  "@mapNoPointsToDisplay": {
+    "description": "Messaggio visualizzato sulla mappa quando non ci sono punti del progetto."
+  },
+  "mapLocationPermissionDenied": "Permesso di localizzazione negato. Le funzionalità della mappa che richiedono la posizione saranno limitate.",
+  "@mapLocationPermissionDenied": {
+    "description": "Messaggio visualizzato sulla mappa o come snackbar se il permesso di localizzazione è negato."
+  },
+  "mapSensorPermissionDenied": "Permesso sensore (bussola) negato. Le funzionalità di orientamento del dispositivo non saranno disponibili.",
+  "@mapSensorPermissionDenied": {
+    "description": "Messaggio visualizzato se il permesso bussola/sensore è negato."
+  },
+  "mapErrorGettingLocationUpdates": "Errore durante l'ottenimento degli aggiornamenti sulla posizione: {errorMessage}",
+  "@mapErrorGettingLocationUpdates": {
+    "description": "Messaggio di errore se il recupero degli aggiornamenti continui sulla posizione fallisce.",
+    "placeholders": {
+      "errorMessage": {
+        "type": "String"
+      }
+    }
+  },
+  "mapErrorGettingCompassUpdates": "Errore durante l'ottenimento degli aggiornamenti della bussola: {errorMessage}",
+  "@mapErrorGettingCompassUpdates": {
+    "description": "Messaggio di errore se il recupero degli aggiornamenti della bussola fallisce.",
+    "placeholders": {
+      "errorMessage": {
+        "type": "String"
+      }
+    }
+  },
+  "mapLoadingPointsIndicator": "Caricamento punti...",
+  "@mapLoadingPointsIndicator": {
+    "description": "Testo per il CircularProgressIndicator mostrato durante il caricamento dei punti della mappa."
+  },
+  "mapPermissionsRequiredTitle": "Permessi Richiesti",
+  "@mapPermissionsRequiredTitle": {
+    "description": "Testo del titolo per la sovrapposizione/scheda dei permessi richiesti sulla mappa."
+  },
+  "mapLocationPermissionInfoText": "Il permesso di localizzazione è necessario per mostrare la tua posizione attuale e per alcune funzionalità della mappa.",
+  "@mapLocationPermissionInfoText": {
+    "description": "Testo informativo che spiega perché il permesso di localizzazione è necessario per la mappa."
+  },
+  "mapSensorPermissionInfoText": "Il permesso del sensore (bussola) è necessario per le funzionalità basate sulla direzione.",
+  "@mapSensorPermissionInfoText": {
+    "description": "Testo informativo che spiega perché il permesso del sensore (bussola) è necessario per la mappa."
+  },
+  "mapButtonOpenAppSettings": "Apri Impostazioni App",
+  "@mapButtonOpenAppSettings": {
+    "description": "Testo del pulsante per aprire la pagina delle impostazioni dell'applicazione."
+  },
+  "mapButtonRetryPermissions": "Riprova Permessi",
+  "@mapButtonRetryPermissions": {
+    "description": "Testo del pulsante per ritentare la richiesta dei permessi necessari per la mappa."
+  },
+  "mapDeletePointDialogTitle": "Conferma Eliminazione",
+  "@mapDeletePointDialogTitle": {
+    "description": "Titolo per la finestra di dialogo che conferma l'eliminazione del punto dalla vista mappa."
+  },
+  "mapDeletePointDialogContent": "Sei sicuro di voler eliminare il punto P{pointOrdinalNumber}?",
+  "@mapDeletePointDialogContent": {
+    "description": "Contenuto/messaggio della finestra di dialogo che conferma l'eliminazione del punto, chiedendo conferma all'utente.",
+    "placeholders": {
+      "pointOrdinalNumber": {
+        "type": "String",
+        "example": "3"
+      }
+    }
+  },
+  "mapDeletePointDialogCancelButton": "Annulla",
+  "@mapDeletePointDialogCancelButton": {
+    "description": "Testo per il pulsante 'Annulla' nella finestra di dialogo di conferma eliminazione punto."
+  },
+  "mapDeletePointDialogDeleteButton": "Elimina",
+  "@mapDeletePointDialogDeleteButton": {
+    "description": "Testo per il pulsante 'Elimina' nella finestra di dialogo di conferma eliminazione punto (spesso stilizzato diversamente, es. rosso)."
+  },
+  "mapPointDeletedSuccessSnackbar": "Punto P{pointOrdinalNumber} eliminato.",
+  "@mapPointDeletedSuccessSnackbar": {
+    "description": "Messaggio Snackbar mostrato quando un punto viene eliminato con successo dalla mappa.",
+    "placeholders": {
+      "pointOrdinalNumber": {
+        "type": "String",
+        "example": "3"
+      }
+    }
+  },
+  "mapErrorPointNotFoundOrDeletedSnackbar": "Errore: Impossibile trovare o eliminare il punto P{pointOrdinalNumber} dalla vista mappa.",
+  "@mapErrorPointNotFoundOrDeletedSnackbar": {
+    "description": "Messaggio Snackbar mostrato quando si verifica un errore nel tentativo di eliminare un punto dalla mappa perché non è stato trovato.",
+    "placeholders": {
+      "pointOrdinalNumber": {
+        "type": "String",
+        "example": "3"
+      }
+    }
+  },
+  "mapErrorDeletingPointSnackbar": "Errore durante l'eliminazione del punto P{pointOrdinalNumber}: {errorMessage}",
+  "@mapErrorDeletingPointSnackbar": {
+    "description": "Messaggio Snackbar generico per un errore che si verifica durante l'eliminazione del punto dalla mappa.",
+    "placeholders": {
+      "pointOrdinalNumber": {
+        "type": "String",
+        "example": "3"
+      },
+      "errorMessage": {
+        "type": "String"
+      }
+    }
   }
 }
