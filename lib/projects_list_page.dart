@@ -217,7 +217,6 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
   }
 
   void _onItemLongPress(ProjectModel project) {
-    if (project.id == null) return;
     setState(() {
       _isSelectionMode = true;
       _highlightedProjectId = null; // Clear single highlight
@@ -227,9 +226,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
 
   void _onItemTap(ProjectModel project) async {
     if (_isSelectionMode) {
-      if (project.id != null) {
-        _toggleSelection(project.id!);
-      }
+      _toggleSelection(project.id!);
     } else {
       logger.info("Navigating to details for project: ${project.name}");
       // Clear any previous highlight before navigating
