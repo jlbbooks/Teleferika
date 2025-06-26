@@ -80,16 +80,8 @@ if exist "lib\licensing\licensed_features_loader_stub.dart" (
     if not exist "lib\licensing" mkdir "lib\licensing"
     copy "lib\licensing\licensed_features_loader_stub.dart" "lib\licensing\licensed_features_loader.dart" >nul
 ) else (
-    echo %WARNING% Stub loader not found, creating basic one...
-    if not exist "lib\licensing" mkdir "lib\licensing"
-    (
-        echo class LicensedFeaturesLoader {
-        echo   static Future^<void^> registerLicensedFeatures^(^) async {
-        echo     // Stub implementation
-        echo     print^('Licensed features not available in this build (stub loader)'^);
-        echo   }
-        echo }
-    ) > "lib\licensing\licensed_features_loader.dart"
+    echo %ERROR% Stub loader not found!
+    exit /b 1
 )
 
 echo %SUCCESS% ✅ Open Source configuration applied

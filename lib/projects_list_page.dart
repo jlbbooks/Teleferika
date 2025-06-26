@@ -2,6 +2,8 @@ import 'dart:async'; // For Timer
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:teleferika/licensing/feature_registry.dart';
+import 'package:teleferika/licensing/licensed_features_loader.dart';
 import 'package:teleferika/licensing/licence_model.dart';
 import 'package:teleferika/licensing/licence_service.dart';
 import 'package:teleferika/project_page.dart';
@@ -115,6 +117,95 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
         },
       );
     });
+  }
+
+  void _showPremiumFeaturesDialog() {
+    final hasLicensedFeatures = LicensedFeaturesLoader.hasLicensedFeatures;
+    final availableFeatures = LicensedFeaturesLoader.licensedFeatures;
+    
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(
+                hasLicensedFeatures ? Icons.star : Icons.star_border,
+                color: hasLicensedFeatures ? Colors.amber : Colors.grey,
+              ),
+              const SizedBox(width: 8),
+              const Text('Premium Features'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (hasLicensedFeatures) ...[
+                const Text('Premium features are available in this build!'),
+                const SizedBox(height: 16),
+                const Text('Available Features:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                ...availableFeatures.map((feature) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.check_circle, color: Colors.green, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text(feature)),
+                    ],
+                  ),
+                )),
+                const SizedBox(height: 16),
+                // Show a sample premium widget
+                if (LicensedFeaturesLoader.buildLicensedWidget('premium_banner') != null)
+                  LicensedFeaturesLoader.buildLicensedWidget('premium_banner')!,
+              ] else ...[
+                const Text('Premium features are not available in this build.'),
+                const SizedBox(height: 8),
+                const Text('This is the opensource version of the app.'),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: const Text("Close"),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            if (hasLicensedFeatures)
+              TextButton(
+                child: const Text("Try Feature"),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _demonstrateLicensedFeature();
+                },
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _demonstrateLicensedFeature() {
+    // Demonstrate a licensed function
+    try {
+      final licenceInfo = LicensedFeaturesLoader.getLicenceStatus();
+      if (licenceInfo != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Licence Status: ${licenceInfo['status']}'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Feature demonstration failed: $e'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
   }
 
   Future<void> _handleImportLicence() async {
@@ -551,6 +642,11 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
                     ),
                     tooltip: "Licence Status / Import",
                     onPressed: _showLicenceInfoDialog,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.star),
+                    tooltip: "Premium Features",
+                    onPressed: _showPremiumFeaturesDialog,
                   ),
                 ],
               ),

@@ -79,20 +79,10 @@ case $FLAVOR in
         if [ -f "lib/licensing/licensed_features_loader_stub.dart" ]; then
             cp lib/licensing/licensed_features_loader_stub.dart lib/licensing/licensed_features_loader.dart
         else
-            print_warning "Stub loader not found, creating basic one..."
-            mkdir -p lib/licensing
-            cat > lib/licensing/licensed_features_loader.dart << 'EOF'
-class LicensedFeaturesLoader {
-  static Future<void> registerLicensedFeatures() async {
-    // Stub implementation
-    print('Licensed features not available in this build (stub loader)');
-  }
-}
-EOF
+            print_error "Stub loader not found!"
+            exit 1
         fi
-
-        print_success "✅ Open Source configuration applied"
-        ;;
+      
 
     "full"|"premium"|"licensed")
         FLAVOR="full"
