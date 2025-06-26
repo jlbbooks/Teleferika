@@ -496,4 +496,43 @@ class SIt extends S {
   ) {
     return 'Errore durante l\'eliminazione del punto P$pointOrdinalNumber: $errorMessage';
   }
+
+  @override
+  String get compassHeadingNotAvailable =>
+      'Impossibile aggiungere punto: direzione bussola non disponibile.';
+
+  @override
+  String projectAzimuthLabel(String azimuth) {
+    return 'Azimut Progetto: $azimuth°';
+  }
+
+  @override
+  String get projectAzimuthRequiresPoints =>
+      'Azimut Progetto: (Richiede almeno 2 punti)';
+
+  @override
+  String get projectAzimuthNotCalculated =>
+      'Azimut Progetto: Non ancora calcolato';
+
+  @override
+  String get compassAccuracyHigh => 'Alta Precisione';
+
+  @override
+  String get compassAccuracyMedium => 'Precisione Media';
+
+  @override
+  String get compassAccuracyLow => 'Bassa Precisione';
+
+  @override
+  String get compassPermissionsRequired => 'Permessi Richiesti';
+
+  @override
+  String get compassPermissionsMessage =>
+      'Questo strumento richiede i permessi di sensore e localizzazione per funzionare correttamente. Concedili nelle impostazioni del dispositivo.';
+
+  @override
+  String get openSettingsButton => 'Apri Impostazioni';
+
+  @override
+  String get retryButton => 'Riprova';
 }

@@ -123,6 +123,9 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
       if (_hasUnsavedChanges) {
         setState(() {
           _hasUnsavedChanges = false;
+          // Also reset the azimuth field modified flag when project is saved externally
+          _azimuthFieldModified = false;
+          _originalAzimuthValue = _azimuthController.text;
         });
       }
       
@@ -238,10 +241,25 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
       );
       return;
     }
+    
+    // Temporarily remove listener to prevent circular updates
+    _azimuthController.removeListener(_onAzimuthChanged);
+    _isUpdatingFromParent = true;
+    
     setState(() {
       _currentProject = _currentProject.copyWith(azimuth: num);
       _hasUnsavedChanges = true;
+      // Update both the string and double original values to match the calculated value
+      // This prevents the field from appearing modified after calculation
+      _originalAzimuthValue = num.toStringAsFixed(2);
+      _originalAzimuth = num;
+      _azimuthFieldModified = false;
     });
+    
+    // Re-add listener after update
+    _isUpdatingFromParent = false;
+    _azimuthController.addListener(_onAzimuthChanged);
+    
     widget.onChanged(
       _currentProject,
       hasUnsavedChanges: _hasUnsavedChanges,

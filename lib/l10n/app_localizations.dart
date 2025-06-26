@@ -879,6 +879,72 @@ abstract class S {
     String pointOrdinalNumber,
     String errorMessage,
   );
+
+  /// Error message shown when trying to add a point but compass heading is not available.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot add point: Compass heading not available.'**
+  String get compassHeadingNotAvailable;
+
+  /// Label showing the project's calculated azimuth value.
+  ///
+  /// In en, this message translates to:
+  /// **'Project Azimuth: {azimuth}°'**
+  String projectAzimuthLabel(String azimuth);
+
+  /// Message shown when project azimuth cannot be calculated because there are not enough points.
+  ///
+  /// In en, this message translates to:
+  /// **'Project Azimuth: (Requires at least 2 points)'**
+  String get projectAzimuthRequiresPoints;
+
+  /// Message shown when project azimuth exists but hasn't been calculated yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Project Azimuth: Not yet calculated'**
+  String get projectAzimuthNotCalculated;
+
+  /// Label for high compass accuracy indicator.
+  ///
+  /// In en, this message translates to:
+  /// **'High Accuracy'**
+  String get compassAccuracyHigh;
+
+  /// Label for medium compass accuracy indicator.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium Accuracy'**
+  String get compassAccuracyMedium;
+
+  /// Label for low compass accuracy indicator.
+  ///
+  /// In en, this message translates to:
+  /// **'Low Accuracy'**
+  String get compassAccuracyLow;
+
+  /// Title for the compass permissions required screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Permissions Required'**
+  String get compassPermissionsRequired;
+
+  /// Message explaining why compass permissions are needed.
+  ///
+  /// In en, this message translates to:
+  /// **'This tool requires sensor and location permissions to function correctly. Please grant them in your device settings.'**
+  String get compassPermissionsMessage;
+
+  /// Button text to open app settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Settings'**
+  String get openSettingsButton;
+
+  /// Button text to retry an operation.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retryButton;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

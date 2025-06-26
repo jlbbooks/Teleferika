@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:teleferika/licensing/licence_service.dart';
-import 'package:teleferika/project_tools/compass_tab.dart';
+import 'package:teleferika/project_tools/compass_tool_view.dart';
 import 'package:teleferika/project_tools/map_tab.dart';
 import 'package:teleferika/project_tools/map_tool_view.dart';
 import 'package:teleferika/project_tools/points_tab.dart';
@@ -119,6 +119,8 @@ class _ProjectPageState extends State<ProjectPage>
         // Tab has changed
         // Dismiss keyboard when switching tabs
         FocusScope.of(context).unfocus();
+        // Trigger rebuild to show/hide save button based on current tab
+        setState(() {});
       }
     });
 
@@ -986,10 +988,10 @@ class _ProjectPageState extends State<ProjectPage>
           onPointsChanged: _onPointsChanged,
           // newlyAddedPointId: _newlyAddedPointId, // Add if you track this
         ),
-        CompassTab(
+        CompassToolView(
           project: _currentProject,
-          // onAddPointFromCompass: _initiateAddPointFromCompass, // Add if you use this callback
-          // isAddingPoint: _isAddingPointFromCompassInProgress, // Add if you track this
+          onAddPointFromCompass: _initiateAddPointFromCompass,
+          isAddingPoint: _isAddingPointFromCompassInProgress,
         ),
         MapTab(
           project: _currentProject,
@@ -1019,7 +1021,8 @@ class _ProjectPageState extends State<ProjectPage>
     ];
 
     List<Widget> tabBarActions = [
-      if (!_isEffectivelyNew) // Show delete only for existing projects
+      // Only show delete button on the Details tab
+      if (!_isEffectivelyNew && _tabController.index == ProjectPageTab.details.index)
         IconButton(
           icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
           onPressed: _isLoading ? null : _confirmDeleteProject,
@@ -1036,27 +1039,29 @@ class _ProjectPageState extends State<ProjectPage>
               ? null // Disable if project is new and never saved, or if loading
               : _checkLicenceAndProceedToExport,
         ),
-      IconButton(
-        icon: Icon(_hasUnsavedChanges ? Icons.save : Icons.save_outlined),
-        onPressed: _isLoading
-            ? null
-            : () {
-                // Only validate if on the details tab, or always if you want
-                if (_tabController.index == ProjectPageTab.details.index) {
-                  final isValid =
-                      _detailsTabKey.currentState?.validateForm() ?? false;
-                  if (!isValid) {
-                    // Optionally show a message
-                    return;
+      // Only show save button on the Details tab
+      if (_tabController.index == ProjectPageTab.details.index)
+        IconButton(
+          icon: Icon(_hasUnsavedChanges ? Icons.save : Icons.save_outlined),
+          onPressed: _isLoading
+              ? null
+              : () {
+                  // Only validate if on the details tab, or always if you want
+                  if (_tabController.index == ProjectPageTab.details.index) {
+                    final isValid =
+                        _detailsTabKey.currentState?.validateForm() ?? false;
+                    if (!isValid) {
+                      // Optionally show a message
+                      return;
+                    }
                   }
-                }
-                _saveProject();
-              },
-        tooltip: s?.save_project_tooltip ?? 'Save Project',
-        color: _hasUnsavedChanges
-            ? Theme.of(context).colorScheme.primary
-            : null,
-      ),
+                  _saveProject();
+                },
+          tooltip: s?.save_project_tooltip ?? 'Save Project',
+          color: _hasUnsavedChanges
+              ? Theme.of(context).colorScheme.primary
+              : null,
+        ),
     ];
 
     if (orientation == Orientation.portrait) {

@@ -488,5 +488,55 @@
         "type": "String"
       }
     }
+  },
+  "compassHeadingNotAvailable": "Cannot add point: Compass heading not available.",
+  "@compassHeadingNotAvailable": {
+    "description": "Error message shown when trying to add a point but compass heading is not available."
+  },
+  "projectAzimuthLabel": "Project Azimuth: {azimuth}°",
+  "@projectAzimuthLabel": {
+    "description": "Label showing the project's calculated azimuth value.",
+    "placeholders": {
+      "azimuth": {
+        "type": "String",
+        "example": "123.4"
+      }
+    }
+  },
+  "projectAzimuthRequiresPoints": "Project Azimuth: (Requires at least 2 points)",
+  "@projectAzimuthRequiresPoints": {
+    "description": "Message shown when project azimuth cannot be calculated because there are not enough points."
+  },
+  "projectAzimuthNotCalculated": "Project Azimuth: Not yet calculated",
+  "@projectAzimuthNotCalculated": {
+    "description": "Message shown when project azimuth exists but hasn't been calculated yet."
+  },
+  "compassAccuracyHigh": "High Accuracy",
+  "@compassAccuracyHigh": {
+    "description": "Label for high compass accuracy indicator."
+  },
+  "compassAccuracyMedium": "Medium Accuracy",
+  "@compassAccuracyMedium": {
+    "description": "Label for medium compass accuracy indicator."
+  },
+  "compassAccuracyLow": "Low Accuracy",
+  "@compassAccuracyLow": {
+    "description": "Label for low compass accuracy indicator."
+  },
+  "compassPermissionsRequired": "Permissions Required",
+  "@compassPermissionsRequired": {
+    "description": "Title for the compass permissions required screen."
+  },
+  "compassPermissionsMessage": "This tool requires sensor and location permissions to function correctly. Please grant them in your device settings.",
+  "@compassPermissionsMessage": {
+    "description": "Message explaining why compass permissions are needed."
+  },
+  "openSettingsButton": "Open Settings",
+  "@openSettingsButton": {
+    "description": "Button text to open app settings."
+  },
+  "retryButton": "Retry",
+  "@retryButton": {
+    "description": "Button text to retry an operation."
   }
 }

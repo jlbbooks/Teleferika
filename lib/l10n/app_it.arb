@@ -562,5 +562,55 @@
         "type": "String"
       }
     }
+  },
+  "compassHeadingNotAvailable": "Impossibile aggiungere punto: direzione bussola non disponibile.",
+  "@compassHeadingNotAvailable": {
+    "description": "Messaggio di errore mostrato quando si tenta di aggiungere un punto ma la direzione della bussola non è disponibile."
+  },
+  "projectAzimuthLabel": "Azimut Progetto: {azimuth}°",
+  "@projectAzimuthLabel": {
+    "description": "Etichetta che mostra il valore dell'azimut calcolato del progetto.",
+    "placeholders": {
+      "azimuth": {
+        "type": "String",
+        "example": "123.4"
+      }
+    }
+  },
+  "projectAzimuthRequiresPoints": "Azimut Progetto: (Richiede almeno 2 punti)",
+  "@projectAzimuthRequiresPoints": {
+    "description": "Messaggio mostrato quando l'azimut del progetto non può essere calcolato perché non ci sono abbastanza punti."
+  },
+  "projectAzimuthNotCalculated": "Azimut Progetto: Non ancora calcolato",
+  "@projectAzimuthNotCalculated": {
+    "description": "Messaggio mostrato quando l'azimut del progetto esiste ma non è stato ancora calcolato."
+  },
+  "compassAccuracyHigh": "Alta Precisione",
+  "@compassAccuracyHigh": {
+    "description": "Etichetta per l'indicatore di alta precisione della bussola."
+  },
+  "compassAccuracyMedium": "Precisione Media",
+  "@compassAccuracyMedium": {
+    "description": "Etichetta per l'indicatore di precisione media della bussola."
+  },
+  "compassAccuracyLow": "Bassa Precisione",
+  "@compassAccuracyLow": {
+    "description": "Etichetta per l'indicatore di bassa precisione della bussola."
+  },
+  "compassPermissionsRequired": "Permessi Richiesti",
+  "@compassPermissionsRequired": {
+    "description": "Titolo per la schermata dei permessi richiesti per la bussola."
+  },
+  "compassPermissionsMessage": "Questo strumento richiede i permessi di sensore e localizzazione per funzionare correttamente. Concedili nelle impostazioni del dispositivo.",
+  "@compassPermissionsMessage": {
+    "description": "Messaggio che spiega perché sono necessari i permessi della bussola."
+  },
+  "openSettingsButton": "Apri Impostazioni",
+  "@openSettingsButton": {
+    "description": "Testo del pulsante per aprire le impostazioni dell'app."
+  },
+  "retryButton": "Riprova",
+  "@retryButton": {
+    "description": "Testo del pulsante per riprovare un'operazione."
   }
 }

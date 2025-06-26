@@ -493,4 +493,43 @@ class SEn extends S {
   ) {
     return 'Error deleting point P$pointOrdinalNumber: $errorMessage';
   }
+
+  @override
+  String get compassHeadingNotAvailable =>
+      'Cannot add point: Compass heading not available.';
+
+  @override
+  String projectAzimuthLabel(String azimuth) {
+    return 'Project Azimuth: $azimuth°';
+  }
+
+  @override
+  String get projectAzimuthRequiresPoints =>
+      'Project Azimuth: (Requires at least 2 points)';
+
+  @override
+  String get projectAzimuthNotCalculated =>
+      'Project Azimuth: Not yet calculated';
+
+  @override
+  String get compassAccuracyHigh => 'High Accuracy';
+
+  @override
+  String get compassAccuracyMedium => 'Medium Accuracy';
+
+  @override
+  String get compassAccuracyLow => 'Low Accuracy';
+
+  @override
+  String get compassPermissionsRequired => 'Permissions Required';
+
+  @override
+  String get compassPermissionsMessage =>
+      'This tool requires sensor and location permissions to function correctly. Please grant them in your device settings.';
+
+  @override
+  String get openSettingsButton => 'Open Settings';
+
+  @override
+  String get retryButton => 'Retry';
 }
