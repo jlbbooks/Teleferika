@@ -26,10 +26,22 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app needs access to your location to determine your current position for adding points and improving compass accuracy.</string>
-	<key>NSMotionUsageDescription</key>
+	<!--
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>This app needs background location access to [explain why, e.g., continuously track your route or provide location-based alerts even when the app is not active].</string>
+    -->
+    <!-- If you don't need background location, you might be able to omit this, but it's safer to add if a library *might* request it. Be honest about why. -->
+
+    <key>NSMotionUsageDescription</key>
 	<string>This app uses motion data to provide compass functionality and determine device orientation.</string>
+
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>This app needs access to your photo library so you can select images to attach to points of interest.</string>
+    <!-- Customize this message based on your app's actual use case -->
+
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
