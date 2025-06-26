@@ -5,18 +5,18 @@
 Please refer to our [Contribution Guidelines](./CONTRIBUTING.md)
    
 
-## Note per gli sviluppatori JLB
+## Note per gli la pubblicazione su Google playstore
 
-* Per la chiave di firma Android, creare una cartella `keys` e inserire il file delle chiavi `jlb-keystore.jks` e un file `keystore.properties` nella cartella.
+* Per la chiave di firma Android, creare una cartella `keys` e inserire il file delle chiavi `keystore.jks` e un file `keystore.properties` nella cartella.
 
 * Nel file `keystore.properties` inserire:
 
 ```
 properties
-    storePassword=...la password...
-    keyAlias=upload
-    keyPassword=...la password...
-    storeFile=../../keys/jlb-keystore.jks
+    storePassword=...password del keystore...
+    keyAlias=...nome della chiave...
+    keyPassword=...password della chiave...
+    storeFile=../../keys/keystore.jks
 #   Path relative to android directory
 ```
 
