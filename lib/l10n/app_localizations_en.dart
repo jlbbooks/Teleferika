@@ -130,6 +130,9 @@ class SEn extends S {
   }
 
   @override
+  String get azimuthSavedSnackbar => 'Azimuth saved successfully.';
+
+  @override
   String get projectNameCannotBeEmptyValidator =>
       'Project name cannot be empty.';
 

@@ -96,6 +96,10 @@
       }
     }
   },
+  "azimuthSavedSnackbar": "Azimuth saved successfully.",
+  "@azimuthSavedSnackbar": {
+    "description": "Snackbar message when azimuth is successfully saved."
+  },
   "projectNameCannotBeEmptyValidator": "Project name cannot be empty.",
   "projectSavedSuccessfully": "Project saved successfully.",
   "dialogTitleConfirmDelete": "Confirm Delete",

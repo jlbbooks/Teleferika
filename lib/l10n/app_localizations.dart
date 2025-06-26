@@ -301,6 +301,12 @@ abstract class S {
   /// **'Azimuth calculated: {azimuthValue}°'**
   String azimuthCalculatedSnackbar(String azimuthValue);
 
+  /// Snackbar message when azimuth is successfully saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Azimuth saved successfully.'**
+  String get azimuthSavedSnackbar;
+
   /// No description provided for @projectNameCannotBeEmptyValidator.
   ///
   /// In en, this message translates to:

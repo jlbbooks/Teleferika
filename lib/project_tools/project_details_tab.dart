@@ -16,6 +16,8 @@ class ProjectDetailsTab extends StatefulWidget {
     DateTime? lastUpdateTime,
   })
   onChanged;
+  final VoidCallback? onCalculateAzimuth;
+  final Future<bool?> Function()? onSaveProject;
 
   const ProjectDetailsTab({
     super.key,
@@ -24,6 +26,8 @@ class ProjectDetailsTab extends StatefulWidget {
     required this.projectDate,
     required this.lastUpdateTime,
     required this.onChanged,
+    this.onCalculateAzimuth,
+    this.onSaveProject,
   });
 
   @override
@@ -38,6 +42,9 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
   late DateTime? _lastUpdateTime;
   late ProjectModel _currentProject;
   bool _hasUnsavedChanges = false;
+  bool _azimuthFieldModified = false;
+  String? _originalAzimuthValue;
+  bool _isUpdatingFromParent = false;
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
@@ -52,23 +59,57 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
     _azimuthController = TextEditingController(
       text: _currentProject.azimuth?.toStringAsFixed(2) ?? '',
     );
+    _originalAzimuthValue = _azimuthController.text;
     _nameController.addListener(_onChanged);
     _noteController.addListener(_onChanged);
-    _azimuthController.addListener(_onChanged);
+    _azimuthController.addListener(_onAzimuthChanged);
   }
 
   @override
   void dispose() {
     _nameController.removeListener(_onChanged);
     _noteController.removeListener(_onChanged);
-    _azimuthController.removeListener(_onChanged);
+    _azimuthController.removeListener(_onAzimuthChanged);
     _nameController.dispose();
     _noteController.dispose();
     _azimuthController.dispose();
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(ProjectDetailsTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Update controllers if project data changed externally
+    if (widget.project != oldWidget.project) {
+      _currentProject = widget.project;
+      _nameController.text = _currentProject.name;
+      _noteController.text = _currentProject.note ?? '';
+
+      // Only update azimuth field if the actual azimuth value changed (not just widget update)
+      final newAzimuthValue = _currentProject.azimuth?.toStringAsFixed(2) ?? '';
+      final currentFieldValue = _azimuthController.text;
+      
+      // Only update if the actual azimuth value is different from what's in the field
+      // AND the field hasn't been manually modified by the user
+      if (newAzimuthValue != currentFieldValue && !_azimuthFieldModified) {
+        // Temporarily remove listener to prevent circular updates
+        _azimuthController.removeListener(_onAzimuthChanged);
+        _isUpdatingFromParent = true;
+
+        _azimuthController.text = newAzimuthValue;
+        _originalAzimuthValue = newAzimuthValue;
+        _azimuthFieldModified = false;
+
+        // Re-add listener after update
+        _isUpdatingFromParent = false;
+        _azimuthController.addListener(_onAzimuthChanged);
+      }
+    }
+  }
+
   void _onChanged() {
+    if (_isUpdatingFromParent) return; // Skip if updating from parent
+
     setState(() {
       _hasUnsavedChanges = true;
       _currentProject = _currentProject.copyWith(
@@ -85,6 +126,21 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
       projectDate: _projectDate,
       lastUpdateTime: _lastUpdateTime,
     );
+  }
+
+  void _onAzimuthChanged() {
+    if (_isUpdatingFromParent) return; // Skip if updating from parent
+
+    // Check if user manually modified the azimuth field
+    final currentValue = _azimuthController.text;
+    final isModified = currentValue != _originalAzimuthValue;
+
+    setState(() {
+      _azimuthFieldModified = isModified;
+    });
+
+    // Also call the regular change handler
+    _onChanged();
   }
 
   Future<void> _selectProjectDate(BuildContext context) async {
@@ -110,8 +166,6 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
   }
 
   void _calculateAzimuth() {
-    // This is a placeholder. Actual azimuth calculation should be handled by ProjectPage if needed.
-    // Here, we just parse and validate the field.
     final s = S.of(context);
     final value = _azimuthController.text.trim();
     if (value.isEmpty) {
@@ -139,7 +193,6 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
       );
       return;
     }
-    // If valid, update the model
     setState(() {
       _currentProject = _currentProject.copyWith(azimuth: num);
       _hasUnsavedChanges = true;
@@ -158,6 +211,45 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
         ),
       ),
     );
+  }
+
+  void _saveAzimuth() async {
+    if (widget.onSaveProject != null) {
+      // Immediately reset the button state to Calculate
+      setState(() {
+        _azimuthFieldModified = false;
+        _originalAzimuthValue = _azimuthController.text;
+      });
+
+      final saved = await widget.onSaveProject!();
+
+      final s = S.of(context);
+      if (saved == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(s?.azimuthSavedSnackbar ?? 'Azimuth saved.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        // If save failed, show error but don't change button state back to Save
+        // The button should remain as Calculate since the user already clicked Save
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              s?.error_saving_project('') ?? 'Error saving project.',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _updateAzimuthField(String value) {
+    _azimuthController.text = value;
+    _originalAzimuthValue = value;
+    _azimuthFieldModified = false;
   }
 
   Widget _buildTextFormField({
@@ -269,14 +361,38 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
                 Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: ElevatedButton(
-                    onPressed: _calculateAzimuth,
+                    onPressed: _azimuthController.text.trim().isEmpty
+                        ? null
+                        : (_azimuthFieldModified
+                              ? _saveAzimuth
+                              : widget.onCalculateAzimuth),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 12,
                       ),
                     ),
-                    child: Text(s?.buttonCalculate ?? 'Calculate'),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _azimuthController.text.trim().isEmpty
+                              ? Icons.calculate_outlined
+                              : (_azimuthFieldModified
+                                    ? Icons.save
+                                    : Icons.calculate),
+                          size: 16,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _azimuthController.text.trim().isEmpty
+                              ? (s?.buttonCalculate ?? 'Calculate')
+                              : (_azimuthFieldModified
+                                    ? (s?.buttonSave ?? 'Save')
+                                    : (s?.buttonCalculate ?? 'Calculate')),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

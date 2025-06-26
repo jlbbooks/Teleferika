@@ -130,6 +130,9 @@ class SIt extends S {
   }
 
   @override
+  String get azimuthSavedSnackbar => 'Azimut salvato con successo.';
+
+  @override
   String get projectNameCannotBeEmptyValidator =>
       'Il nome del progetto non può essere vuoto.';
 

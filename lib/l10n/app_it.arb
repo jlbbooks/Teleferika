@@ -96,6 +96,10 @@
       }
     }
   },
+  "azimuthSavedSnackbar": "Azimut salvato con successo.",
+  "@azimuthSavedSnackbar": {
+    "description": "Messaggio snackbar quando l'azimut viene salvato con successo."
+  },
   "projectNameCannotBeEmptyValidator": "Il nome del progetto non può essere vuoto.",
   "projectSavedSuccessfully": "Progetto salvato con successo.",
   "dialogTitleConfirmDelete": "Conferma Eliminazione",

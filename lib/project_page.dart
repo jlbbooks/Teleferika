@@ -515,13 +515,7 @@ class _ProjectPageState extends State<ProjectPage>
           backgroundColor: Colors.orange,
         ),
       );
-      setStateIfMounted(() {
-        _currentProject = _currentProject.copyWith(
-          azimuth: null,
-          clearAzimuth: true,
-        );
-      });
-      return;
+      return; // Don't clear azimuth, just return
     }
 
     if (startPointId == endPointId) {
@@ -531,13 +525,7 @@ class _ProjectPageState extends State<ProjectPage>
           backgroundColor: Colors.orange,
         ),
       );
-      setStateIfMounted(() {
-        _currentProject = _currentProject.copyWith(
-          azimuth: null,
-          clearAzimuth: true,
-        );
-      });
-      return;
+      return; // Don't clear azimuth, just return
     }
 
     try {
@@ -556,7 +544,7 @@ class _ProjectPageState extends State<ProjectPage>
         logger.severe(
           "Error calculating azimuth: StartPoint (ID $startPointId) or EndPoint (ID $endPointId) not found.",
         );
-        return;
+        return; // Don't clear azimuth, just return
       }
 
       final double calculatedAzimuth = calculateBearingFromPoints(
@@ -595,6 +583,7 @@ class _ProjectPageState extends State<ProjectPage>
           ),
         );
       }
+      // Don't clear azimuth on error, just return
     }
   }
 
@@ -979,6 +968,8 @@ class _ProjectPageState extends State<ProjectPage>
           projectDate: _projectDate,
           lastUpdateTime: _lastUpdateTime,
           onChanged: _onProjectDetailsChanged,
+          onCalculateAzimuth: _calculateAzimuth,
+          onSaveProject: _saveProject,
         ),
         PointsTab(
           project: _currentProject,
