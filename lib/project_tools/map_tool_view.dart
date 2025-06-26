@@ -18,6 +18,12 @@ import 'package:url_launcher/url_launcher.dart';
 import '../logger.dart';
 import '../point_details_page.dart';
 
+enum MapType {
+  openStreetMap,
+  satellite,
+  terrain,
+}
+
 class MapToolView extends StatefulWidget {
   final ProjectModel project;
   final String? selectedPointId; // From project_page
@@ -68,6 +74,9 @@ class MapToolViewState extends State<MapToolView> {
 
   Polyline?
   _projectHeadingLine; // New state variable for the project heading line
+
+  // Map type selection
+  MapType _currentMapType = MapType.openStreetMap;
 
   @override
   void initState() {
@@ -870,6 +879,7 @@ class MapToolViewState extends State<MapToolView> {
             left: 24,
             child: _buildFloatingActionButtons(),
           ),
+          _buildMapTypeSelector(),
         ],
       ),
     );
@@ -1094,7 +1104,7 @@ class MapToolViewState extends State<MapToolView> {
       ),
       children: [
         TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          urlTemplate: _getTileLayerUrl(),
           userAgentPackageName:
               'com.jlbbooks.teleferika', // Recommended for OSM tile usage policy
           // Add any other TileLayer options you had, like tms, additionalOptions etc.
@@ -1103,9 +1113,9 @@ class MapToolViewState extends State<MapToolView> {
           // Include a stylish prebuilt attribution widget that meets all requirments
           attributions: [
             TextSourceAttribution(
-              'OpenStreetMap contributors',
+              _getTileLayerAttribution(),
               onTap: () => launchUrl(
-                Uri.parse('https://openstreetmap.org/copyright'),
+                Uri.parse(_getAttributionUrl()),
               ), // (external)
             ),
             // Also add images...
@@ -1415,6 +1425,137 @@ class MapToolViewState extends State<MapToolView> {
             ),
           );
       }
+    }
+  }
+
+  // --- Map Type Methods ---
+  String _getTileLayerUrl() {
+    switch (_currentMapType) {
+      case MapType.openStreetMap:
+        return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+      case MapType.satellite:
+        return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+      case MapType.terrain:
+        return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}';
+    }
+  }
+
+  String _getTileLayerAttribution() {
+    switch (_currentMapType) {
+      case MapType.openStreetMap:
+        return '© OpenStreetMap contributors';
+      case MapType.satellite:
+        return '© Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community';
+      case MapType.terrain:
+        return '© Esri — Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012';
+    }
+  }
+
+  String _getAttributionUrl() {
+    switch (_currentMapType) {
+      case MapType.openStreetMap:
+        return 'https://openstreetmap.org/copyright';
+      case MapType.satellite:
+      case MapType.terrain:
+        return 'https://www.esri.com/en-us/home';
+    }
+  }
+
+  String _getMapTypeDisplayName() {
+    final s = S.of(context);
+    switch (_currentMapType) {
+      case MapType.openStreetMap:
+        return s?.mapTypeStreet ?? 'Street';
+      case MapType.satellite:
+        return s?.mapTypeSatellite ?? 'Satellite';
+      case MapType.terrain:
+        return s?.mapTypeTerrain ?? 'Terrain';
+    }
+  }
+
+  Widget _buildMapTypeSelector() {
+    final s = S.of(context);
+    return Positioned(
+      top: 10,
+      left: 10,
+      child: Card(
+        elevation: 4.0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                _getMapTypeIcon(),
+                size: 20,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _getMapTypeDisplayName(),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(width: 8),
+              PopupMenuButton<MapType>(
+                icon: const Icon(Icons.arrow_drop_down),
+                onSelected: (MapType mapType) {
+                  setState(() {
+                    _currentMapType = mapType;
+                  });
+                },
+                itemBuilder: (BuildContext context) => [
+                  _buildMapTypeMenuItem(MapType.openStreetMap, s?.mapTypeStreet ?? 'Street', Icons.map),
+                  _buildMapTypeMenuItem(MapType.satellite, s?.mapTypeSatellite ?? 'Satellite', Icons.satellite_alt),
+                  _buildMapTypeMenuItem(MapType.terrain, s?.mapTypeTerrain ?? 'Terrain', Icons.terrain),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  PopupMenuItem<MapType> _buildMapTypeMenuItem(MapType mapType, String label, IconData icon) {
+    return PopupMenuItem<MapType>(
+      value: mapType,
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 18,
+            color: _currentMapType == mapType 
+                ? Theme.of(context).colorScheme.primary 
+                : null,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontWeight: _currentMapType == mapType ? FontWeight.bold : FontWeight.normal,
+              color: _currentMapType == mapType 
+                  ? Theme.of(context).colorScheme.primary 
+                  : null,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _getMapTypeIcon() {
+    switch (_currentMapType) {
+      case MapType.openStreetMap:
+        return Icons.map;
+      case MapType.satellite:
+        return Icons.satellite_alt;
+      case MapType.terrain:
+        return Icons.terrain;
     }
   }
 }

@@ -554,5 +554,21 @@
   "mapCenterOnPoints": "Center on points",
   "@mapCenterOnPoints": {
     "description": "Tooltip for the button to center the map on all project points."
+  },
+  "mapTypeStreet": "Street",
+  "@mapTypeStreet": {
+    "description": "Label for street map type."
+  },
+  "mapTypeSatellite": "Satellite",
+  "@mapTypeSatellite": {
+    "description": "Label for satellite map type."
+  },
+  "mapTypeTerrain": "Terrain",
+  "@mapTypeTerrain": {
+    "description": "Label for terrain map type."
+  },
+  "mapTypeSelector": "Map Type",
+  "@mapTypeSelector": {
+    "description": "Label for the map type selector."
   }
 }

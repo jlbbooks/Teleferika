@@ -628,5 +628,21 @@
   "mapCenterOnPoints": "Centra sui punti",
   "@mapCenterOnPoints": {
     "description": "Tooltip per il pulsante per centrare la mappa su tutti i punti del progetto."
+  },
+  "mapTypeStreet": "Strada",
+  "@mapTypeStreet": {
+    "description": "Etichetta per il tipo di mappa stradale."
+  },
+  "mapTypeSatellite": "Satellite",
+  "@mapTypeSatellite": {
+    "description": "Etichetta per il tipo di mappa satellitare."
+  },
+  "mapTypeTerrain": "Terreno",
+  "@mapTypeTerrain": {
+    "description": "Etichetta per il tipo di mappa del terreno."
+  },
+  "mapTypeSelector": "Tipo Mappa",
+  "@mapTypeSelector": {
+    "description": "Etichetta per il selettore del tipo di mappa."
   }
 }

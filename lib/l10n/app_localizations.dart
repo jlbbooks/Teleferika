@@ -969,6 +969,30 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Center on points'**
   String get mapCenterOnPoints;
+
+  /// Label for street map type.
+  ///
+  /// In en, this message translates to:
+  /// **'Street'**
+  String get mapTypeStreet;
+
+  /// Label for satellite map type.
+  ///
+  /// In en, this message translates to:
+  /// **'Satellite'**
+  String get mapTypeSatellite;
+
+  /// Label for terrain map type.
+  ///
+  /// In en, this message translates to:
+  /// **'Terrain'**
+  String get mapTypeTerrain;
+
+  /// Label for the map type selector.
+  ///
+  /// In en, this message translates to:
+  /// **'Map Type'**
+  String get mapTypeSelector;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {
