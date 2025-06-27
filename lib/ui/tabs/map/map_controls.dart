@@ -109,52 +109,53 @@ class MapControls {
       top: 16,
       left: 16,
       child: Material(
-        elevation: 8.0,
-        borderRadius: BorderRadius.circular(12.0),
-        shadowColor: Colors.black26,
+        elevation: 4.0,
+        borderRadius: BorderRadius.circular(8.0),
+        shadowColor: Colors.black12,
         child: Container(
           decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(12.0),
+            color: Theme.of(context).cardColor.withOpacity(0.9),
+            borderRadius: BorderRadius.circular(8.0),
             border: Border.all(
-              color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-              width: 1,
+              color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+              width: 0.5,
             ),
           ),
           child: PopupMenuButton<MapType>(
             onSelected: onMapTypeChanged,
             child: Padding(
               padding: const EdgeInsets.symmetric(
-                horizontal: 12.0,
-                vertical: 8.0,
+                horizontal: 8.0,
+                vertical: 6.0,
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(6),
+                    padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(6),
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(4),
                     ),
                     child: Icon(
                       _getMapTypeIcon(currentMapType),
-                      size: 18,
-                      color: Theme.of(context).colorScheme.primary,
+                      size: 14,
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Text(
                     _getMapTypeDisplayName(currentMapType, s),
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 12,
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 2),
                   Icon(
                     Icons.arrow_drop_down,
-                    size: 20,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    size: 16,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.6),
                   ),
                 ],
               ),
