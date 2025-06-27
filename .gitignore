@@ -3,9 +3,6 @@ lib/licensing/licensed_features_loader.dart
 #/licensed_features_package/
 # Backup files
 *.backup
-pubspec.yaml.backup
-pubspec.yaml
-pubspec.lock
 
 
 # General

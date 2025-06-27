@@ -52,8 +52,8 @@ if not exist "lib\licensing" (
     echo %ERROR% Required directory not found: lib\licensing
     exit /b 1
 )
-if not exist "build_configs" (
-    echo %ERROR% Required directory not found: build_configs
+if not exist "pubspec.yaml" (
+    echo %ERROR% Required file not found: pubspec.yaml
     exit /b 1
 )
 
@@ -94,21 +94,20 @@ set "FLAVOR=opensource"
 echo %INFO% 🆓 Configuring for Open Source version...
 
 :: Verify required files exist
-if not exist "build_configs\pubspec.opensource.yaml" (
-    echo %ERROR% Required file not found: build_configs\pubspec.opensource.yaml
-    exit /b 1
-)
 if not exist "lib\licensing\licensed_features_loader_stub.dart" (
     echo %ERROR% Required file not found: lib\licensing\licensed_features_loader_stub.dart
     exit /b 1
 )
 
-:: Copy configuration
-copy "build_configs\pubspec.opensource.yaml" pubspec.yaml >nul
-echo %SUCCESS% Copied opensource pubspec.yaml
+:: Remove licensed package dependency if present
+if exist "scripts\modify-pubspec.bat" (
+    call scripts\modify-pubspec.bat remove-licensed
+) else (
+    echo %WARNING% modify-pubspec.bat not found, manually removing licensed package dependency
+)
 
 :: Set up stub loader
-    copy "lib\licensing\licensed_features_loader_stub.dart" "lib\licensing\licensed_features_loader.dart" >nul
+copy "lib\licensing\licensed_features_loader_stub.dart" "lib\licensing\licensed_features_loader.dart" >nul
 echo %SUCCESS% Copied stub loader
 
 echo %SUCCESS% ✅ Open Source configuration applied
@@ -117,12 +116,6 @@ goto install_deps
 :setup_full
 set "FLAVOR=full"
 echo %INFO% ⭐ Configuring for Full version with licensed features...
-
-:: Verify required files exist
-if not exist "build_configs\pubspec.full.yaml" (
-    echo %ERROR% Required file not found: build_configs\pubspec.full.yaml
-    exit /b 1
-)
 
 :: Clone or update the licensed features repository
 if exist "%LICENSED_PACKAGE_DIR_FULL_PATH%\.git" (
@@ -171,9 +164,12 @@ if not exist "%LICENSED_PACKAGE_DIR_FULL_PATH%\lib\licensed_plugin.dart" (
     exit /b 1
 )
 
-:: Copy configuration
-copy "build_configs\pubspec.full.yaml" pubspec.yaml >nul
-echo %SUCCESS% Copied full pubspec.yaml
+:: Add licensed package dependency
+if exist "scripts\modify-pubspec.bat" (
+    call scripts\modify-pubspec.bat add-licensed
+) else (
+    echo %WARNING% modify-pubspec.bat not found, manually adding licensed package dependency
+)
 
 :: Set up full loader
 copy "%LICENSED_PACKAGE_DIR_FULL_PATH%\lib\licensed_features_loader_full.dart" "lib\licensing\licensed_features_loader.dart" >nul

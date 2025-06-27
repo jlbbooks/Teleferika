@@ -77,7 +77,7 @@ print_status "Project root: $PROJECT_ROOT"
 # Verify essential directories exist
 verify_directory "lib" || exit 1
 verify_directory "lib/licensing" || exit 1
-verify_directory "build_configs" || exit 1
+verify_file "pubspec.yaml" || exit 1
 
 # Clean if requested
 if [ "$CLEAN" = "true" ]; then
@@ -106,15 +106,17 @@ case $FLAVOR in
         print_status "🆓 Configuring for Open Source version..."
 
         # Verify required files exist
-        verify_file "build_configs/pubspec.opensource.yaml" || exit 1
         verify_file "lib/licensing/licensed_features_loader_stub.dart" || exit 1
 
-        # Copy configuration
-        cp build_configs/pubspec.opensource.yaml pubspec.yaml
-        print_success "Copied opensource pubspec.yaml"
+        # Remove licensed package dependency if present
+        if [ -f "scripts/modify-pubspec.sh" ]; then
+            ./scripts/modify-pubspec.sh remove-licensed
+        else
+            print_warning "modify-pubspec.sh not found, manually removing licensed package dependency"
+        fi
 
         # Set up stub loader
-            cp lib/licensing/licensed_features_loader_stub.dart lib/licensing/licensed_features_loader.dart
+        cp lib/licensing/licensed_features_loader_stub.dart lib/licensing/licensed_features_loader.dart
         print_success "Copied stub loader"
       
         print_success "✅ Open Source configuration applied"
@@ -126,9 +128,6 @@ case $FLAVOR in
         LICENSED_PACKAGE_DIR="licensed_features_package"
 
         print_status "⭐ Configuring for Full version with licensed features..."
-
-        # Verify required files exist
-        verify_file "build_configs/pubspec.full.yaml" || exit 1
 
         # Clone or update the licensed features repository
         if [ -d "$LICENSED_PACKAGE_DIR/.git" ]; then
@@ -167,9 +166,12 @@ case $FLAVOR in
         verify_file "$LICENSED_PACKAGE_DIR/lib/licensed_features_loader_full.dart" || exit 1
         verify_file "$LICENSED_PACKAGE_DIR/lib/licensed_plugin.dart" || exit 1
 
-        # Copy configuration
-        cp build_configs/pubspec.full.yaml pubspec.yaml
-        print_success "Copied full pubspec.yaml"
+        # Add licensed package dependency
+        if [ -f "scripts/modify-pubspec.sh" ]; then
+            ./scripts/modify-pubspec.sh add-licensed
+        else
+            print_warning "modify-pubspec.sh not found, manually adding licensed package dependency"
+        fi
 
         # Set up full loader
         cp "$LICENSED_PACKAGE_DIR/lib/licensed_features_loader_full.dart" "lib/licensing/licensed_features_loader.dart"

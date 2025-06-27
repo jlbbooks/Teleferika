@@ -1,6 +1,5 @@
-# This is the file build_configs/pubspec.opensource.yaml
-# Changes should go to that file, not the main pubspec.yaml.
-# Project setup will copy the correct file to pubspec.yaml
+# This is the main pubspec.yaml file
+# The setup scripts will modify this file based on the selected flavor
 
 name: teleferika
 description: "TeleferiKa app."
@@ -36,6 +35,13 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Licensed features package (will be added/removed by setup scripts)
+  # DO NOT REMOVE THE NEXT LINE!!!
+  # LICENSED_PACKAGE_PLACEHOLDER
+  licensed_features_package:
+    path: ./licensed_features_package
+
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -63,6 +69,10 @@ dependencies:
   device_info_plus: ^11.5.0
   shared_preferences: ^2.5.3
   url_launcher: ^6.3.1
+
+#dependency_overrides:
+#  teleferika:
+#    path: .
 
 dev_dependencies:
   flutter_test:
