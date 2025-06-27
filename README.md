@@ -13,29 +13,34 @@ A Flutter mobile application for cable crane line planning and forest management
 ### First Time Setup
 
 1. **Clone the repository**
+   
    ```bash
    git clone https://github.com/your-org/teleferika.git
    cd teleferika
    ```
 
 2. **Make scripts executable** (Unix/macOS/Linux only)
+   
    ```bash
    chmod +x scripts/*.sh
    ```
 
 3. **Set up the project for your needs**
-
+   
    **For Open Source Contributors:**
+   
    ```bash
    ./scripts/setup-flavor.sh opensource
    ```
-
+   
    **For Team Members (with licensed features access):**
+   
    ```bash
    ./scripts/setup-flavor.sh full
    ```
 
 4. **Run the app**
+   
    ```bash
    flutter run --flavor opensource  # or 'full' for licensed version
    ```
@@ -156,15 +161,19 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ### Common Issues
 
 1. **"Script not found"**
+   
    - Make scripts executable: `chmod +x scripts/*.sh`
 
 2. **"Wrong flavor setup"**
+   
    - Run setup again: `./scripts/setup-flavor.sh [flavor]`
 
 3. **Dependencies not updating**
+   
    - Clean and reinstall: `./scripts/setup-flavor.sh [flavor] true`
 
 4. **Build failures**
+   
    - Check Flutter version: `flutter --version`
    - Clean build: `flutter clean && flutter pub get`
 
