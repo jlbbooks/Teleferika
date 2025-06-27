@@ -1262,8 +1262,12 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   Widget _buildPointDetailsPanel() {
     if (_selectedPointInstance == null) return const SizedBox.shrink();
 
+    // Determine if the panel should appear at the bottom
+    final bool shouldShowAtBottom = _shouldShowPanelAtBottom();
+
     return Positioned(
-      top: 16,
+      top: shouldShowAtBottom ? null : 16,
+      bottom: shouldShowAtBottom ? 16 : null,
       right: 16,
       child: Material(
         elevation: 8.0,
@@ -1428,6 +1432,32 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         ),
       ),
     );
+  }
+
+  bool _shouldShowPanelAtBottom() {
+    if (_selectedPointInstance == null || !_isMapReady) return false;
+    
+    try {
+      // Get the current map bounds
+      final bounds = _mapController.camera.visibleBounds;
+      if (bounds == null) return false;
+      
+      // Get the selected point's position
+      final pointLatLng = LatLng(
+        _selectedPointInstance!.latitude,
+        _selectedPointInstance!.longitude,
+      );
+      
+      // Calculate the midpoint of the visible map
+      final mapMidpoint = (bounds.northEast.latitude + bounds.southWest.latitude) / 2;
+      
+      // If the point is in the upper half of the map, show panel at bottom
+      return pointLatLng.latitude > mapMidpoint;
+    } catch (e) {
+      // Fallback to showing at top if there's any error
+      logger.warning('Error determining panel position: $e');
+      return false;
+    }
   }
 
   Widget _buildPointActionButtons() {
