@@ -9,13 +9,11 @@ import 'package:teleferika/ui/pages/point_details_page.dart';
 class PointsToolView extends StatefulWidget {
   final ProjectModel project;
   final VoidCallback? onPointsChanged; // Callback for when points are modified
-  final String? newlyAddedPointId;
 
   const PointsToolView({
     super.key,
     required this.project,
     this.onPointsChanged, // Add to constructor
-    this.newlyAddedPointId,
   });
 
   @override
@@ -40,6 +38,11 @@ class PointsToolViewState extends State<PointsToolView> {
         _loadPoints(); // Initialize the future for FutureBuilder
   }
 
+  @override
+  void didUpdateWidget(covariant PointsToolView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+  }
+
   // @override
   // void didUpdateWidget(PointsToolView oldWidget) {
   //   super.didUpdateWidget(oldWidget);
@@ -54,7 +57,6 @@ class PointsToolViewState extends State<PointsToolView> {
 
   // Make _loadPoints return Future<void> and update _points
   Future<void> _loadPoints() async {
-    // project.id is always generated, so no need to check for null
     try {
       final pointsFromDb = await _dbHelper.getPointsForProject(
         widget.project.id,
@@ -365,10 +367,6 @@ class PointsToolViewState extends State<PointsToolView> {
     final Color baseSelectionColor = Theme.of(context).primaryColorLight;
     const double selectedOpacity = 0.3;
 
-    bool isNewlyAdded =
-        (widget.newlyAddedPointId != null &&
-        widget.newlyAddedPointId == point.id);
-
     // --- Determine if it's a start or end point ---
     final bool isProjectStartPoint =
         point.id != null && point.id == widget.project.startingPointId;
@@ -496,26 +494,6 @@ class PointsToolViewState extends State<PointsToolView> {
                     _handlePointLongPress(point);
                   },
           ),
-          if (isNewlyAdded)
-            Positioned(
-              top: 4,
-              right: 4,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.green, // "New" badge color
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Text(
-                  'NEW',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );

@@ -25,6 +25,7 @@ class MapToolView extends StatefulWidget {
   final VoidCallback? onNavigateToCompassTab;
   final Function(BuildContext, double, {bool? setAsEndPoint})?
   onAddPointFromCompass;
+  final VoidCallback? onPointsChanged;
 
   const MapToolView({
     super.key,
@@ -32,6 +33,7 @@ class MapToolView extends StatefulWidget {
     this.selectedPointId,
     this.onNavigateToCompassTab,
     this.onAddPointFromCompass,
+    this.onPointsChanged,
   });
 
   @override
@@ -302,6 +304,7 @@ class MapToolViewState extends State<MapToolView> {
           _isLoadingPoints = false;
           _recalculateAndDrawLines();
         });
+        widget.onPointsChanged?.call();
       }
       if (_isMapReady) {
         _fitMapToPoints();
@@ -322,6 +325,7 @@ class MapToolViewState extends State<MapToolView> {
             ),
           ),
         );
+        widget.onPointsChanged?.call();
       }
     }
   }
@@ -395,6 +399,7 @@ class MapToolViewState extends State<MapToolView> {
               backgroundColor: Colors.green,
             ),
           );
+        widget.onPointsChanged?.call();
       } else {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
@@ -412,6 +417,7 @@ class MapToolViewState extends State<MapToolView> {
             ),
           );
         // TODO: Optional: Revert optimistic UI update if you did one
+        widget.onPointsChanged?.call();
       }
     } catch (e) {
       logger.severe('Failed to move point P${pointToMove.ordinalNumber}: $e');
@@ -433,6 +439,7 @@ class MapToolViewState extends State<MapToolView> {
           ),
         );
       // Optional: Revert optimistic UI update
+      widget.onPointsChanged?.call();
     } finally {
       if (mounted) {
         setState(() {
@@ -1243,7 +1250,6 @@ class MapToolViewState extends State<MapToolView> {
               );
             }
           });
-
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
             ..showSnackBar(
@@ -1254,6 +1260,7 @@ class MapToolViewState extends State<MapToolView> {
                 backgroundColor: Colors.green,
               ),
             );
+          widget.onPointsChanged?.call();
         }
       } else if (action == 'deleted') {
         final String? deletedPointId = result['pointId'] as String?;
@@ -1265,7 +1272,6 @@ class MapToolViewState extends State<MapToolView> {
               _selectedPointId = null;
             }
           });
-
           ScaffoldMessenger.of(context)
             ..hideCurrentSnackBar()
             ..showSnackBar(
@@ -1274,6 +1280,7 @@ class MapToolViewState extends State<MapToolView> {
                 backgroundColor: Colors.orange,
               ),
             );
+          widget.onPointsChanged?.call();
         }
       }
     } else {
@@ -1377,7 +1384,6 @@ class MapToolViewState extends State<MapToolView> {
             );
             if (_selectedPointId == pointToDelete.id) {
               _selectedPointId = null;
-              _selectedPointInstance = null;
             }
             _recalculateHeadingLine();
           });
@@ -1396,6 +1402,7 @@ class MapToolViewState extends State<MapToolView> {
                 backgroundColor: Colors.green,
               ),
             );
+          widget.onPointsChanged?.call();
         } else {
           final s = S.of(context);
           ScaffoldMessenger.of(context)

@@ -92,7 +92,6 @@ class _ProjectPageState extends State<ProjectPage>
       GlobalKey<MapToolViewState>();
 
   bool _isAddingPointFromCompassInProgress = false;
-  String? _newlyAddedPointId;
   bool _projectWasSuccessfullySaved = false;
 
   final LicenceService _licenceService =
@@ -460,7 +459,6 @@ class _ProjectPageState extends State<ProjectPage>
         longitude: position.longitude,
         altitude: position.altitude,
         ordinalNumber: newPointOrdinal,
-        // You might want a default note or a way to add one later
         note: S
             .of(context)!
             .pointFromCompassDefaultNote(heading.toStringAsFixed(1)),
@@ -470,7 +468,7 @@ class _ProjectPageState extends State<ProjectPage>
         pointFromCompass,
       );
       logger.info(
-        'Point added via Compass: ID $newPointIdFromCompass, Lat: ${position.longitude}, Lon: ${position.longitude}, Heading used for note: $heading, Ordinal: ${pointFromCompass.ordinalNumber}',
+        'Point added via Compass: ID $newPointIdFromCompass, Lat: \\${position.longitude}, Lon: \\${position.longitude}, Heading used for note: $heading, Ordinal: \\${pointFromCompass.ordinalNumber}',
       );
 
       // AFTER point is inserted, update the project's start/end points
@@ -490,13 +488,11 @@ class _ProjectPageState extends State<ProjectPage>
 
       // This method should now correctly identify start and end points based on their IDs
       // and potentially their ordinals (if it falls back to highest ordinal for end point if not set).
-      await _dbHelper.updateProjectStartEndPoints(_currentProject.id!);
-      await _loadProjectDetails(); // Reload project to get updated start/end IDs for the UI
+      await _dbHelper.updateProjectStartEndPoints(_currentProject.id);
+
+      await _loadProjectDetails(); // Do NOT reset _newlyAddedPointId here
 
       if (mounted) {
-        setState(() {
-          _newlyAddedPointId = newPointIdFromCompass;
-        });
         ScaffoldMessenger.of(
           context,
         ).removeCurrentSnackBar(); // Remove "Fetching location..."
@@ -946,7 +942,6 @@ class _ProjectPageState extends State<ProjectPage>
         PointsTab(
           project: _currentProject,
           onPointsChanged: _handlePointsChanged,
-          // newlyAddedPointId: _newlyAddedPointId, // Add if you track this
         ),
         CompassToolView(
           project: _currentProject,
@@ -955,9 +950,7 @@ class _ProjectPageState extends State<ProjectPage>
         ),
         MapToolView(
           project: _currentProject,
-          // selectedPointId: null, // Add if you track this
-          // onNavigateToCompassTab: () { _switchToTab(ProjectPageTab.compass); }, // Add if you use this
-          // onAddPointFromCompass: _initiateAddPointFromCompass, // Add if you use this
+          onPointsChanged: _handlePointsChanged,
         ),
       ],
     );
