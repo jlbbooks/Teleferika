@@ -138,8 +138,8 @@ class MapControllerLogic {
       );
       final projectHeading = project.azimuth!;
 
-      // Define a length for the heading line (e.g., 1 km, adjust as needed)
-      const lineLengthKm = 1.0; // Example length: 1 kilometer
+      // Use presumed total length from project, default to 500m if not provided
+      final lineLengthKm = (project.presumedTotalLength ?? 500.0) / 1000.0; // Convert meters to kilometers
 
       final endPoint = _calculateDestinationPoint(
         firstPoint,
