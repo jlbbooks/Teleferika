@@ -1,5 +1,8 @@
+import 'dart:math' as Math;
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 
@@ -15,7 +18,6 @@ class ProjectDetailsTab extends StatefulWidget {
     DateTime? lastUpdateTime,
   })
   onChanged;
-  final VoidCallback? onCalculateAzimuth;
   final Future<bool?> Function()? onSaveProject;
 
   const ProjectDetailsTab({
@@ -25,7 +27,6 @@ class ProjectDetailsTab extends StatefulWidget {
     required this.projectDate,
     required this.lastUpdateTime,
     required this.onChanged,
-    this.onCalculateAzimuth,
     this.onSaveProject,
   });
 
@@ -182,9 +183,11 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
     final currentValue = _azimuthController.text;
     final isModified = currentValue != _originalAzimuthValue;
 
-    setState(() {
-      _azimuthFieldModified = isModified;
-    });
+    if (_azimuthFieldModified != isModified) {
+      setState(() {
+        _azimuthFieldModified = isModified;
+      });
+    }
 
     // Also call the regular change handler
     _onChanged();
@@ -212,71 +215,85 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
     }
   }
 
-  void _calculateAzimuth() {
+  void _calculateAzimuth() async {
     final s = S.of(context);
-    final value = _azimuthController.text.trim();
-    if (value.isEmpty) {
+    if (_currentProject.points.length < 2) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(s?.formFieldAzimuthLabel ?? 'Azimuth is empty.'),
+          content: Text(
+            s?.errorAzimuthPointsNotSet ?? 'At least two points are required.',
+          ),
+          backgroundColor: Colors.orange,
         ),
       );
       return;
     }
-    final num = double.tryParse(value);
-    if (num == null) {
+    final startPoint = _currentProject.points.first;
+    final endPoint = _currentProject.points.last;
+    if (startPoint.id == endPoint.id) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(s?.invalid_number_validator ?? 'Invalid number.'),
+          content: Text(
+            s?.errorAzimuthPointsSame ??
+                'Start and end points must be different.',
+          ),
+          backgroundColor: Colors.orange,
         ),
       );
       return;
     }
-    if (num <= -360 || num >= 360) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(s?.must_be_359_validator ?? 'Must be +/-359.99'),
-        ),
-      );
-      return;
+    // Calculate azimuth
+    double _degreesToRadians(double degrees) =>
+        degrees * 3.141592653589793 / 180.0;
+    double _radiansToDegrees(double radians) =>
+        radians * 180.0 / 3.141592653589793;
+    double calculateBearingFromPoints(PointModel start, PointModel end) {
+      final double lat1Rad = _degreesToRadians(start.latitude);
+      final double lon1Rad = _degreesToRadians(start.longitude);
+      final double lat2Rad = _degreesToRadians(end.latitude);
+      final double lon2Rad = _degreesToRadians(end.longitude);
+      final double dLon = lon2Rad - lon1Rad;
+      final double y = Math.sin(dLon) * Math.cos(lat2Rad);
+      final double x =
+          Math.cos(lat1Rad) * Math.sin(lat2Rad) -
+          Math.sin(lat1Rad) * Math.cos(lat2Rad) * Math.cos(dLon);
+      double bearingRad = Math.atan2(y, x);
+      double bearingDeg = _radiansToDegrees(bearingRad);
+      return (bearingDeg + 360) % 360;
     }
 
-    // Temporarily remove listener to prevent circular updates
-    _azimuthController.removeListener(_onAzimuthChanged);
-    _isUpdatingFromParent = true;
-
-    setState(() {
-      _currentProject = _currentProject.copyWith(azimuth: num);
-      _hasUnsavedChanges = true;
-      // Update both the string and double original values to match the calculated value
-      // This prevents the field from appearing modified after calculation
-      _originalAzimuthValue = num.toStringAsFixed(2);
-      _originalAzimuth = num;
-      _azimuthFieldModified = false;
-    });
-
-    // Re-add listener after update
-    _isUpdatingFromParent = false;
-    _azimuthController.addListener(_onAzimuthChanged);
-
-    widget.onChanged(
-      _currentProject,
-      hasUnsavedChanges: _hasUnsavedChanges,
-      projectDate: _projectDate,
-      lastUpdateTime: _lastUpdateTime,
+    final double calculatedAzimuth = calculateBearingFromPoints(
+      startPoint,
+      endPoint,
     );
+    // Update local state and mark as dirty
+    setState(() {
+      _azimuthController.text = calculatedAzimuth.toStringAsFixed(2);
+      _azimuthFieldModified = true;
+      _hasUnsavedChanges = true;
+      _currentProject = _currentProject.copyWith(azimuth: calculatedAzimuth);
+    });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          s?.azimuthCalculatedSnackbar(num.toStringAsFixed(2)) ??
+          s?.azimuthCalculatedSnackbar(calculatedAzimuth.toStringAsFixed(2)) ??
               'Azimuth calculated.',
         ),
+        backgroundColor: Colors.green,
       ),
     );
   }
 
   void _saveAzimuth() async {
     if (widget.onSaveProject != null) {
+      // Push the latest form state to the parent before saving
+      widget.onChanged(
+        _currentProject,
+        hasUnsavedChanges: false,
+        projectDate: _projectDate,
+        lastUpdateTime: _lastUpdateTime,
+      );
+
       // Immediately reset the button state to Calculate
       setState(() {
         _azimuthFieldModified = false;
@@ -429,7 +446,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
                           ? null
                           : (_azimuthFieldModified
                                 ? _saveAzimuth
-                                : widget.onCalculateAzimuth),
+                                : _calculateAzimuth),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,

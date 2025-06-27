@@ -490,7 +490,7 @@ class _ProjectPageState extends State<ProjectPage>
       // and potentially their ordinals (if it falls back to highest ordinal for end point if not set).
       await _dbHelper.updateProjectStartEndPoints(_currentProject.id);
 
-      await _loadProjectDetails(); // Do NOT reset _newlyAddedPointId here
+      await _loadProjectDetails();
 
       if (mounted) {
         ScaffoldMessenger.of(
@@ -561,93 +561,6 @@ class _ProjectPageState extends State<ProjectPage>
         _projectDate = pickedDate;
         _hasUnsavedChanges = true;
       });
-    }
-  }
-
-  Future<void> _calculateAzimuth() async {
-    logger.info(
-      "Calculate Azimuth button tapped for project: ${_currentProject.name}",
-    );
-
-    final String? startPointId = _currentProject.startingPointId;
-    final String? endPointId = _currentProject.endingPointId;
-
-    if (startPointId == null || endPointId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(S.of(context)!.errorAzimuthPointsNotSet),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return; // Don't clear azimuth, just return
-    }
-
-    if (startPointId == endPointId) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(S.of(context)!.errorAzimuthPointsSame),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return; // Don't clear azimuth, just return
-    }
-
-    try {
-      final PointModel? startPoint = await _dbHelper.getPointById(startPointId);
-      final PointModel? endPoint = await _dbHelper.getPointById(endPointId);
-
-      if (startPoint == null || endPoint == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(S.of(context)!.errorAzimuthCouldNotRetrievePoints),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        logger.severe(
-          "Error calculating azimuth: StartPoint (ID $startPointId) or EndPoint (ID $endPointId) not found.",
-        );
-        return; // Don't clear azimuth, just return
-      }
-
-      final double calculatedAzimuth = calculateBearingFromPoints(
-        startPoint,
-        endPoint,
-      );
-
-      setStateIfMounted(() {
-        _currentProject = _currentProject.copyWith(azimuth: calculatedAzimuth);
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              S
-                  .of(context)!
-                  .azimuthCalculatedSnackbar(
-                    calculatedAzimuth.toStringAsFixed(2),
-                  ),
-            ),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-      logger.info(
-        "Azimuth calculated successfully: ${calculatedAzimuth.toStringAsFixed(2)}° from P${startPoint.ordinalNumber} to P${endPoint.ordinalNumber}",
-      );
-    } catch (e, stackTrace) {
-      logger.severe("Error during azimuth calculation: $e", e, stackTrace);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(S.of(context)!.errorCalculatingAzimuth(e.toString())),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-      // Don't clear azimuth on error, just return
     }
   }
 
@@ -936,7 +849,6 @@ class _ProjectPageState extends State<ProjectPage>
           projectDate: _projectDate,
           lastUpdateTime: _lastUpdateTime,
           onChanged: _onProjectDetailsChanged,
-          onCalculateAzimuth: _calculateAzimuth,
           onSaveProject: _saveProject,
         ),
         PointsTab(
@@ -1107,7 +1019,10 @@ class _ProjectPageState extends State<ProjectPage>
     }
 
     setState(() {
-      _currentProject = updatedProject;
+      if (!hasUnsavedChanges) {
+        // Only update _currentProject when changes are committed (e.g., on save)
+        _currentProject = updatedProject;
+      }
       _hasUnsavedChanges = hasRealChanges;
       if (projectDate != null) _projectDate = projectDate;
       if (lastUpdateTime != null) _lastUpdateTime = lastUpdateTime;
