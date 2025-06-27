@@ -686,8 +686,8 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     List<Marker> projectPointMarkers = _projectPoints.map((point) {
       final bool isSelected = point.id == _selectedPointId;
       return Marker(
-        width: 70, // Increased from 60 to accommodate larger selected markers
-        height: 70, // Increased from 58 to accommodate larger selected markers
+        width: 60,
+        height: 58,
         point: LatLng(point.latitude, point.longitude),
         child: _buildStandardMarkerView(context, point, isSelected: isSelected),
       );
