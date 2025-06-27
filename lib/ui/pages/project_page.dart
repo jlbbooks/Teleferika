@@ -10,9 +10,9 @@ import 'package:teleferika/core/logger.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
-import 'package:teleferika/features/export/export_page.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/licensing/licence_service.dart';
+import 'package:teleferika/licensing/licensed_features_loader.dart';
 import 'package:teleferika/ui/tabs/compass_tool_view.dart';
 import 'package:teleferika/ui/tabs/map_tool_view.dart';
 import 'package:teleferika/ui/tabs/points_tab.dart';
@@ -147,6 +147,15 @@ class _ProjectPageState extends State<ProjectPage>
   }
 
   Future<void> _checkLicenceAndProceedToExport() async {
+    // Check if export feature is available
+    if (!LicensedFeaturesLoader.hasExportFeature) {
+      if (mounted) {
+        LicensedFeaturesLoader.showExportUpgradeDialog(context);
+      }
+      return;
+    }
+
+    // Check if license is valid
     bool licenceIsValid = await _licenceService.isLicenceValid();
 
     if (!licenceIsValid) {
@@ -178,11 +187,6 @@ class _ProjectPageState extends State<ProjectPage>
                   ),
                   onPressed: () async {
                     Navigator.of(dialogContext).pop(); // Close current dialog
-                    // You might want to navigate to a dedicated licence page or trigger the import flow from here
-                    // For simplicity, let's assume we can trigger the import flow similarly to ProjectsListPage
-                    // This might involve passing a callback or navigating back to ProjectsListPage to handle it
-                    // Or, call _licenceService.importLicenceFromFile() directly if UI context is suitable
-                    // For now, let's just log and inform the user to do it from the main page
                     try {
                       final importedLicence = await _licenceService
                           .importLicenceFromFile();
@@ -199,9 +203,7 @@ class _ProjectPageState extends State<ProjectPage>
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text(
-                                'Licence import cancelled or failed.',
-                              ),
+                              content: Text('Licence import cancelled or failed.'),
                               backgroundColor: Colors.orange,
                             ),
                           );
@@ -220,9 +222,7 @@ class _ProjectPageState extends State<ProjectPage>
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text(
-                              'Error importing licence: $e. Please try from the main page.',
-                            ),
+                            content: Text('Error importing licence: $e'),
                             backgroundColor: Colors.red,
                           ),
                         );
@@ -238,8 +238,153 @@ class _ProjectPageState extends State<ProjectPage>
       return; // Stop export if licence is not valid
     }
 
-    // If licence is valid, proceed to the actual export navigation
-    _navigateToExportPage(); // Your existing method
+    // If licence is valid, proceed to the actual export
+    _showExportOptions();
+  }
+
+  void _showExportOptions() {
+    if (!LicensedFeaturesLoader.hasExportFeature) {
+      LicensedFeaturesLoader.showExportUpgradeDialog(context);
+      return;
+    }
+
+    final exportFormats = LicensedFeaturesLoader.getExportFormats();
+    if (exportFormats.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No export formats available.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.file_download, color: Colors.blue),
+              SizedBox(width: 8),
+              Text('Export Project'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Choose export format:'),
+              const SizedBox(height: 16),
+              ...exportFormats.map((format) => ListTile(
+                leading: const Icon(Icons.file_download),
+                title: Text(format),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _exportProject(format);
+                },
+              )),
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _exportProject(String format) async {
+    try {
+      // Check if project is saved
+      if (_isEffectivelyNew || _hasUnsavedChanges) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please save the project before exporting.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      // Get project points
+      final points = await _dbHelper.getPointsForProject(_currentProject.id!);
+      if (points.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No points to export.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const AlertDialog(
+            content: Row(
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 16),
+                Text('Exporting...'),
+              ],
+            ),
+          );
+        },
+      );
+
+      // Perform export
+      final success = await LicensedFeaturesLoader.exportProject(
+        format,
+        _currentProject,
+        points,
+      );
+
+      // Hide loading indicator
+      if (mounted) {
+        Navigator.of(context).pop(); // Close loading dialog
+      }
+
+      if (success) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Project exported successfully in $format format!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Export failed. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      // Hide loading indicator
+      if (mounted) {
+        Navigator.of(context).pop(); // Close loading dialog
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Export error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _switchToTab() {
@@ -784,96 +929,6 @@ class _ProjectPageState extends State<ProjectPage>
           });
         }
       }
-    }
-  }
-
-  void _navigateToExportPage() {
-    // Get the S instance for localization
-    final s = S.of(context);
-    if (s == null) {
-      // This should ideally not happen if localizations are set up correctly.
-      // Fallback or log an error.
-      logger.warning(
-        "S.of(context) is null in _navigateToExportPage. Using default strings.",
-      );
-      // As a minimal fallback, you might proceed without localized strings,
-      // or show an error and prevent navigation.
-      // For this example, we'll use hardcoded defaults if 's' is null,
-      // but in a real app, you'd want a more robust fallback.
-    }
-
-    if (_currentProject != null) {
-      if (_hasUnsavedChanges && !_isEffectivelyNew) {
-        showDialog(
-          context: context,
-          builder: (BuildContext dialogContext) {
-            // Use dialogContext
-            final dialogS = S.of(
-              dialogContext,
-            ); // Get S instance for dialog's context
-
-            return AlertDialog(
-              title: Text(dialogS?.unsaved_changes_title ?? 'Unsaved Changes'),
-              content: Text(
-                dialogS?.unsaved_changes_export_message ??
-                    'You have unsaved changes. Please save the project before exporting to ensure all data is included.',
-              ),
-              actions: <Widget>[
-                TextButton(
-                  child: Text(dialogS?.dialog_cancel ?? 'Cancel'),
-                  onPressed: () {
-                    Navigator.of(dialogContext).pop();
-                  },
-                ),
-                TextButton(
-                  child: Text(dialogS?.save_button_label ?? 'Save'),
-                  onPressed: () async {
-                    Navigator.of(dialogContext).pop(); // Close the dialog first
-                    bool saved = await _saveProject() ?? false;
-                    if (saved && mounted) {
-                      // Check 'mounted' again after async operation
-                      Navigator.push(
-                        context, // Use the original page context for navigation
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              ExportPage(project: _currentProject),
-                        ),
-                      );
-                    }
-                  },
-                ),
-              ],
-            );
-          },
-        );
-      } else if (_currentProject!.id.isEmpty && _isEffectivelyNew) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              s?.please_save_project_first_to_export ??
-                  'Please save the new project first to enable export.',
-            ),
-          ),
-        );
-      } else {
-        // Proceed to export page if no unsaved changes for an existing project,
-        // or if it's a new project that's already been saved (has an ID).
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ExportPage(project: _currentProject!),
-          ),
-        );
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            s?.project_not_loaded_cannot_export ??
-                'Project not loaded. Cannot export data.',
-          ),
-        ),
-      );
     }
   }
 
