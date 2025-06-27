@@ -1,6 +1,7 @@
 // project_details_page.dart
 // ignore_for_file: curly_braces_in_flow_control_structures
 
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -16,6 +17,7 @@ import 'package:teleferika/ui/tabs/map_tool_view.dart';
 import 'package:teleferika/ui/tabs/points_tab.dart';
 import 'package:teleferika/ui/tabs/points_tool_view.dart';
 import 'package:teleferika/ui/tabs/project_details_tab.dart';
+import 'package:teleferika/ui/widgets/status_indicator.dart';
 
 enum ProjectPageTab {
   details, // 0
@@ -68,7 +70,7 @@ class ProjectPage extends StatefulWidget {
 }
 
 class _ProjectPageState extends State<ProjectPage>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, StatusMixin {
   late TabController _tabController;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
@@ -168,6 +170,11 @@ class _ProjectPageState extends State<ProjectPage>
     }
   }
 
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   Future<bool?> _saveProject(ProjectModel updated) async {
     if (_isLoading) return null;
     setState(() => _isLoading = true);
@@ -184,6 +191,7 @@ class _ProjectPageState extends State<ProjectPage>
           _hasUnsavedChanges = false;
           _currentProject = projectToSave;
         });
+        showSuccessStatus('Project saved successfully');
       } else {
         int updatedRows = await _dbHelper.updateProject(projectToSave);
         if (updatedRows > 0) {
@@ -193,18 +201,13 @@ class _ProjectPageState extends State<ProjectPage>
             _hasUnsavedChanges = false;
             _projectWasSuccessfullySaved = true;
           });
+          showSuccessStatus('Project updated successfully');
         }
       }
-      // Do NOT pop here; just update state
       return true;
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error saving project: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        showErrorStatus('Error saving project: $e');
       }
       return false;
     } finally {
@@ -311,13 +314,8 @@ class _ProjectPageState extends State<ProjectPage>
       try {
         await _deleteProjectFromDb();
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                s?.project_deleted_successfully ?? 'Project deleted.',
-              ),
-              backgroundColor: Colors.green,
-            ),
+          showSuccessStatus(
+            s?.project_deleted_successfully ?? 'Project deleted',
           );
           Navigator.of(
             context,
@@ -325,14 +323,9 @@ class _ProjectPageState extends State<ProjectPage>
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                s?.error_deleting_project(e.toString()) ??
-                    'Error deleting project: $e',
-              ),
-              backgroundColor: Colors.red,
-            ),
+          showErrorStatus(
+            s?.error_deleting_project(e.toString()) ??
+                'Error deleting project: $e',
           );
         }
       } finally {
@@ -344,27 +337,16 @@ class _ProjectPageState extends State<ProjectPage>
   void _calculateAzimuth() {
     final s = S.of(context);
     if (_currentProject.points.length < 2) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            s?.errorAzimuthPointsNotSet ?? 'At least two points are required.',
-          ),
-          backgroundColor: Colors.orange,
-        ),
+      showErrorStatus(
+        s?.errorAzimuthPointsNotSet ?? 'At least two points are required',
       );
       return;
     }
     final startPoint = _currentProject.points.first;
     final endPoint = _currentProject.points.last;
     if (startPoint.id == endPoint.id) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            s?.errorAzimuthPointsSame ??
-                'Start and end points must be different.',
-          ),
-          backgroundColor: Colors.orange,
-        ),
+      showErrorStatus(
+        s?.errorAzimuthPointsSame ?? 'Start and end points must be different',
       );
       return;
     }
@@ -393,14 +375,9 @@ class _ProjectPageState extends State<ProjectPage>
     );
     // Update the azimuth in the form via the tab's state
     _detailsTabKey.currentState?.setAzimuthFromParent(calculatedAzimuth);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          s?.azimuthCalculatedSnackbar(calculatedAzimuth.toStringAsFixed(2)) ??
-              'Azimuth calculated.',
-        ),
-        backgroundColor: Colors.green,
-      ),
+    showSuccessStatus(
+      s?.azimuthCalculatedSnackbar(calculatedAzimuth.toStringAsFixed(2)) ??
+          'Azimuth calculated',
     );
   }
 
@@ -440,19 +417,15 @@ class _ProjectPageState extends State<ProjectPage>
   }) async {
     final bool addAsEndPoint = setAsEndPoint ?? false;
     logger.info(
-      "Initiating add point. Heading: $heading, Project ID: \\${_currentProject.id}, Explicit End Point: $setAsEndPoint",
+      "Initiating add point. Heading: $heading, Project ID: ${_currentProject.id}, Explicit End Point: $setAsEndPoint",
     );
     if (mounted) {
       setState(() {
         _isAddingPointFromCompassInProgress = true;
       });
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(S.of(context)!.infoFetchingLocation),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    showLoadingStatus(S.of(context)!.infoFetchingLocation);
+
     PointModel? currentEndPointModel;
     int? originalEndPointOrdinal;
     int newPointOrdinal;
@@ -473,11 +446,11 @@ class _ProjectPageState extends State<ProjectPage>
           );
           await _dbHelper.updatePoint(updatedOldEndPoint);
           logger.info(
-            "Old end point (ID: \\${currentEndPointModel.id})'s ordinal shifted from $originalEndPointOrdinal to $newOrdinalForOldEndPoint.",
+            "Old end point (ID: ${currentEndPointModel.id})'s ordinal shifted from $originalEndPointOrdinal to $newOrdinalForOldEndPoint.",
           );
         } else {
           logger.warning(
-            "Project's endingPointId \\${_currentProject.endingPointId} not found in DB. Proceeding as if no end point.",
+            "Project's endingPointId ${_currentProject.endingPointId} not found in DB. Proceeding as if no end point.",
           );
           newPointOrdinal = await _getNextOrdinalNumber(_currentProject.id);
         }
@@ -498,7 +471,7 @@ class _ProjectPageState extends State<ProjectPage>
         pointFromCompass,
       );
       logger.info(
-        'Point added via Compass: ID $newPointIdFromCompass, Lat: \\${position.latitude}, Lon: \\${position.longitude}, Heading used for note: $heading, Ordinal: \\${pointFromCompass.ordinalNumber}',
+        'Point added via Compass: ID $newPointIdFromCompass, Lat: ${position.latitude}, Lon: ${position.longitude}, Heading used for note: $heading, Ordinal: ${pointFromCompass.ordinalNumber}',
       );
       if (addAsEndPoint) {
         ProjectModel projectToUpdate = _currentProject.copyWith(
@@ -506,41 +479,31 @@ class _ProjectPageState extends State<ProjectPage>
         );
         await _dbHelper.updateProject(projectToUpdate);
         logger.info(
-          "New point ID $newPointIdFromCompass set as the END point for project \\${_currentProject.id}.",
+          "New point ID $newPointIdFromCompass set as the END point for project ${_currentProject.id}.",
         );
       }
       await _dbHelper.updateProjectStartEndPoints(_currentProject.id);
       await _loadProjectDetails();
       if (mounted) {
-        ScaffoldMessenger.of(context).removeCurrentSnackBar();
+        hideStatus();
         String baseMessage = S
             .of(context)!
             .pointAddedSnackbar(pointFromCompass.ordinalNumber.toString());
         String suffix = "";
         if (addAsEndPoint == true) {
-          suffix = " \\${S.of(context)!.pointAddedSetAsEndSnackbarSuffix}";
+          suffix = " ${S.of(context)!.pointAddedSetAsEndSnackbarSuffix}";
         } else if (currentEndPointModel != null) {
           suffix =
-              " \\${S.of(context)!.pointAddedInsertedBeforeEndSnackbarSuffix}";
+              " ${S.of(context)!.pointAddedInsertedBeforeEndSnackbarSuffix}";
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(baseMessage + suffix),
-            backgroundColor: Colors.green,
-          ),
-        );
+        showSuccessStatus(baseMessage + suffix);
       }
       _pointsToolViewKey.currentState?.refreshPoints();
     } catch (e, stackTrace) {
       logger.severe("Error adding point from compass", e, stackTrace);
       if (mounted) {
-        ScaffoldMessenger.of(context).removeCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(S.of(context)!.errorAddingPoint(e.toString())),
-            backgroundColor: Colors.red,
-          ),
-        );
+        hideStatus();
+        showErrorStatus(S.of(context)!.errorAddingPoint(e.toString()));
       }
     } finally {
       if (mounted) {
@@ -660,10 +623,22 @@ class _ProjectPageState extends State<ProjectPage>
             tabs: tabWidgets,
           ),
         ),
-        body: PopScope(
-          canPop: false,
-          onPopInvokedWithResult: _handleOnPopInvokedWithResult,
-          child: tabBarViewWidget,
+        body: Stack(
+          children: [
+            PopScope(
+              canPop: false,
+              onPopInvokedWithResult: _handleOnPopInvokedWithResult,
+              child: tabBarViewWidget,
+            ),
+            Positioned(
+              top: 24,
+              right: 24,
+              child: StatusIndicator(
+                status: currentStatus,
+                onDismiss: hideStatus,
+              ),
+            ),
+          ],
         ),
       );
     } else {
@@ -679,30 +654,44 @@ class _ProjectPageState extends State<ProjectPage>
           ),
           actions: tabBarActions,
         ),
-        body: PopScope(
-          canPop: false,
-          onPopInvokedWithResult: _handleOnPopInvokedWithResult,
-          child: Row(
-            children: <Widget>[
-              Material(
-                elevation: 4.0,
-                child: RotatedBox(
-                  quarterTurns: 3,
-                  child: TabBar(
-                    controller: _tabController,
-                    isScrollable: false,
-                    indicatorWeight: 2.0,
-                    indicatorSize: TabBarIndicatorSize.tab,
-                    labelPadding: EdgeInsets.fromLTRB(0.0, 8, 0, 8),
-                    tabs: tabWidgets
-                        .map((tab) => RotatedBox(quarterTurns: 1, child: tab))
-                        .toList(),
+        body: Stack(
+          children: [
+            PopScope(
+              canPop: false,
+              onPopInvokedWithResult: _handleOnPopInvokedWithResult,
+              child: Row(
+                children: <Widget>[
+                  Material(
+                    elevation: 4.0,
+                    child: RotatedBox(
+                      quarterTurns: 3,
+                      child: TabBar(
+                        controller: _tabController,
+                        isScrollable: false,
+                        indicatorWeight: 2.0,
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        labelPadding: EdgeInsets.fromLTRB(0.0, 8, 0, 8),
+                        tabs: tabWidgets
+                            .map(
+                              (tab) => RotatedBox(quarterTurns: 1, child: tab),
+                            )
+                            .toList(),
+                      ),
+                    ),
                   ),
-                ),
+                  Expanded(child: tabBarViewWidget),
+                ],
               ),
-              Expanded(child: tabBarViewWidget),
-            ],
-          ),
+            ),
+            Positioned(
+              top: 24,
+              right: 24,
+              child: StatusIndicator(
+                status: currentStatus,
+                onDismiss: hideStatus,
+              ),
+            ),
+          ],
         ),
       );
     }

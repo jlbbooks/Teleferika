@@ -46,16 +46,16 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
   Future<void> _loadActiveLicence() async {
     try {
       logger.info('Loading active license...');
-      
+
       // Ensure the service is initialized first
       await _licenceService.initialize();
       logger.info('License service initialized');
-      
+
       // Now load the license
       _activeLicence = await _licenceService.currentLicence;
       logger.info('License loaded: ${_activeLicence?.email ?? 'null'}');
       logger.info('License valid: ${_activeLicence?.isValid ?? 'null'}');
-      
+
       if (mounted) {
         setState(() {
           // Trigger a rebuild to update the UI with license status
@@ -582,15 +582,17 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
   Future<void> _testImportExampleLicence() async {
     try {
       logger.info('Testing import of demo license...');
-      
+
       // Create a demo license
       final demoLicence = Licence.createDemo();
-      logger.info('Created demo license: ${demoLicence.email}, valid: ${demoLicence.isValid}');
-      
+      logger.info(
+        'Created demo license: ${demoLicence.email}, valid: ${demoLicence.isValid}',
+      );
+
       // Save the license
       final saved = await _licenceService.saveLicence(demoLicence);
       logger.info('License saved: $saved');
-      
+
       if (saved && mounted) {
         setState(() {
           _activeLicence = demoLicence;
@@ -618,9 +620,9 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
   Future<void> _clearLicense() async {
     try {
       logger.info('Clearing license...');
-      
+
       await _licenceService.removeLicence();
-      
+
       if (mounted) {
         setState(() {
           _activeLicence = null;
@@ -741,9 +743,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
               title: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(
-                    child: Text(titleText),
-                  ),
+                  Expanded(child: Text(titleText)),
                   PopupMenuButton<String>(
                     icon: Icon(
                       _activeLicence != null && _activeLicence!.isValid
@@ -755,7 +755,8 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
                                 ? Colors.red
                                 : Colors.grey),
                     ),
-                    tooltip: "Licence Status / Import\n"
+                    tooltip:
+                        "Licence Status / Import\n"
                         "License: ${_activeLicence?.email ?? 'None'}\n"
                         "Valid: ${_activeLicence?.isValid ?? 'Unknown'}",
                     onSelected: (String value) {
@@ -774,74 +775,81 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
                           break;
                       }
                     },
-                    itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                      PopupMenuItem<String>(
-                        value: 'license_info',
-                        child: Row(
-                          children: [
-                            Icon(
-                              _activeLicence != null && _activeLicence!.isValid
-                                  ? Icons.verified_user
-                                  : Icons.security,
-                              color: _activeLicence != null && _activeLicence!.isValid
-                                  ? Colors.green
-                                  : (_activeLicence != null && !_activeLicence!.isValid
-                                        ? Colors.red
-                                        : Colors.grey),
-                              size: 20,
+                    itemBuilder: (BuildContext context) =>
+                        <PopupMenuEntry<String>>[
+                          PopupMenuItem<String>(
+                            value: 'license_info',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _activeLicence != null &&
+                                          _activeLicence!.isValid
+                                      ? Icons.verified_user
+                                      : Icons.security,
+                                  color:
+                                      _activeLicence != null &&
+                                          _activeLicence!.isValid
+                                      ? Colors.green
+                                      : (_activeLicence != null &&
+                                                !_activeLicence!.isValid
+                                            ? Colors.red
+                                            : Colors.grey),
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                const Text('License Status'),
+                              ],
                             ),
-                            const SizedBox(width: 8),
-                            const Text('License Status'),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuItem<String>(
-                        value: 'premium_features',
-                        child: Row(
-                          children: [
-                            Icon(Icons.star, size: 20),
-                            SizedBox(width: 8),
-                            Text('Premium Features'),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuItem<String>(
-                        value: 'test_license',
-                        child: Row(
-                          children: [
-                            Icon(Icons.bug_report, size: 20),
-                            SizedBox(width: 8),
-                            Text('Test License Import'),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuItem<String>(
-                        value: 'clear_license',
-                        child: Row(
-                          children: [
-                            Icon(Icons.clear, size: 20),
-                            SizedBox(width: 8),
-                            Text('Clear License'),
-                          ],
-                        ),
-                      ),
-                    ],
+                          ),
+                          // const PopupMenuItem<String>(
+                          //   value: 'premium_features',
+                          //   child: Row(
+                          //     children: [
+                          //       Icon(Icons.star, size: 20),
+                          //       SizedBox(width: 8),
+                          //       Text('Premium Features'),
+                          //     ],
+                          //   ),
+                          // ),
+                          const PopupMenuItem<String>(
+                            value: 'test_license',
+                            child: Row(
+                              children: [
+                                Icon(Icons.bug_report, size: 20),
+                                SizedBox(width: 8),
+                                Text('Install Demo License'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem<String>(
+                            value: 'clear_license',
+                            child: Row(
+                              children: [
+                                Icon(Icons.clear, size: 20),
+                                SizedBox(width: 8),
+                                Text('Clear License'),
+                              ],
+                            ),
+                          ),
+                        ],
                   ),
                 ],
               ),
-              bottom: version != null ? PreferredSize(
-                preferredSize: const Size.fromHeight(20),
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0, left: 16.0),
-                  child: Text(
-                    version!,
-                    style: const TextStyle(
-                      fontSize: 10.0,
-                      color: Colors.white70,
-                    ),
-                  ),
-                ),
-              ) : null,
+              bottom: version != null
+                  ? PreferredSize(
+                      preferredSize: const Size.fromHeight(20),
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0, left: 16.0),
+                        child: Text(
+                          version!,
+                          style: const TextStyle(
+                            fontSize: 10.0,
+                            color: Colors.white70,
+                          ),
+                        ),
+                      ),
+                    )
+                  : null,
             ),
       body: FutureBuilder<List<ProjectModel>>(
         future: _projectsFuture,

@@ -5,6 +5,7 @@ import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/ui/pages/point_details_page.dart';
+import 'package:teleferika/ui/widgets/status_indicator.dart';
 
 class PointsToolView extends StatefulWidget {
   final ProjectModel project;
@@ -20,7 +21,7 @@ class PointsToolView extends StatefulWidget {
   State<PointsToolView> createState() => PointsToolViewState();
 }
 
-class PointsToolViewState extends State<PointsToolView> {
+class PointsToolViewState extends State<PointsToolView> with StatusMixin {
   // We need to manage the list of points directly in the state for ReorderableListView
   List<PointModel> _points = []; // Holds the current list of points
   Future<void>? _loadPointsFuture; // To manage the initial loading state
@@ -73,12 +74,7 @@ class PointsToolViewState extends State<PointsToolView> {
       logger.severe("Error loading points in PointsToolView", e, stackTrace);
       if (mounted) {
         setState(() => _points = []); // Set to empty on error
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error loading points: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        showErrorStatus('Error loading points: ${e.toString()}');
         widget.onPointsChanged?.call(); // Notify parent even on error
       }
     }
@@ -223,12 +219,7 @@ class PointsToolViewState extends State<PointsToolView> {
         stackTrace,
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error saving new point order: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        showErrorStatus('Error saving new point order: ${e.toString()}');
       }
       // If DB update fails, revert the list in UI to previous state (reload from DB)
       await _loadPoints();
@@ -335,12 +326,7 @@ class PointsToolViewState extends State<PointsToolView> {
       );
       logger.info('Successfully deleted $count points.');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('$count point(s) deleted.'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        showSuccessStatus('$count point(s) deleted.');
       }
       _clearSelection();
       await _loadPoints(); // Reload points to reflect deletions and re-sequencing
@@ -348,12 +334,7 @@ class PointsToolViewState extends State<PointsToolView> {
     } catch (error, stackTrace) {
       logger.severe('Error deleting points', error, stackTrace);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error deleting points: $error'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        showErrorStatus('Error deleting points: $error');
       }
       widget.onPointsChanged?.call(); // Notify parent on error
     }
@@ -485,9 +466,9 @@ class PointsToolViewState extends State<PointsToolView> {
             // via the ReorderableDragStartListener.
             onLongPress: _isSelectionMode
                 ? () =>
-                      _handlePointLongPress(
-                        point,
-                      ) // Allow long press toggle within selection mode
+                    _handlePointLongPress(
+                      point,
+                    ) // Allow long press toggle within selection mode
                 : () {
                     // If not in selection mode, long press on ListTile body should enable it
                     // and select the item. Drag handle is separate.
@@ -563,64 +544,76 @@ class PointsToolViewState extends State<PointsToolView> {
     logger.finest(
       "PointsToolView build method called. Selection mode: $_isSelectionMode, Points count: ${_points.length}",
     );
-    return Column(
-      mainAxisSize: MainAxisSize.max,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Stack(
       children: [
-        _buildTopBar(context),
-        Expanded(
-          child: FutureBuilder<void>(
-            future: _loadPointsFuture, // Use the future for initial load
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting &&
-                  _points.isEmpty) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError && _points.isEmpty) {
-                // Error already logged in _loadPoints, SnackBar shown there
-                return Center(
-                  child: Text(
-                    'Error loading points. Please try again.\n${snapshot.error.toString()}',
-                  ),
-                );
-              }
+        Column(
+          mainAxisSize: MainAxisSize.max,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildTopBar(context),
+            Expanded(
+              child: FutureBuilder<void>(
+                future: _loadPointsFuture, // Use the future for initial load
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting &&
+                      _points.isEmpty) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError && _points.isEmpty) {
+                    // Error already logged in _loadPoints, status shown there
+                    return Center(
+                      child: Text(
+                        'Error loading points. Please try again.\n${snapshot.error.toString()}',
+                      ),
+                    );
+                  }
 
-              if (_points.isEmpty) {
-                return const Center(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24.0),
-                    child: Text(
-                      'No points added to this project yet.\nTap "Add Point" to get started!',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 16.0),
-                    ),
-                  ),
-                );
-              }
+                  if (_points.isEmpty) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24.0),
+                        child: Text(
+                          'No points added to this project yet.\nTap "Add Point" to get started!',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 16.0),
+                        ),
+                      ),
+                    );
+                  }
 
-              // Once points are loaded (or if already loaded), display ReorderableListView
-              return ReorderableListView.builder(
-                // physics:
-                //     const NeverScrollableScrollPhysics(), // If inside another scrollable
-                itemCount: _points.length,
-                itemBuilder: (context, index) {
-                  final point = _points[index];
-                  // Pass index for ReorderableDragStartListener and Key
-                  return _buildPointItem(context, point, index);
+                  // Once points are loaded (or if already loaded), display ReorderableListView
+                  return ReorderableListView.builder(
+                    // physics:
+                    //     const NeverScrollableScrollPhysics(), // If inside another scrollable
+                    itemCount: _points.length,
+                    itemBuilder: (context, index) {
+                      final point = _points[index];
+                      // Pass index for ReorderableDragStartListener and Key
+                      return _buildPointItem(context, point, index);
+                    },
+                    // Disable reordering if in selection mode
+                    onReorder: _isSelectionMode
+                        ? (int oldI, int newI) {}
+                        : _handleReorder,
+                    // Optional: Customize drag feedback
+                    // TODO: proxyDecorator: (Widget child, int index, Animation<double> animation) {
+                    //   return Material(
+                    //     elevation: 4.0,
+                    //     color: Colors.transparent, // Or some highlight color
+                    //     child: child,
+                    //   );
+                    // },
+                  );
                 },
-                // Disable reordering if in selection mode
-                onReorder: _isSelectionMode
-                    ? (int oldI, int newI) {}
-                    : _handleReorder,
-                // Optional: Customize drag feedback
-                // TODO: proxyDecorator: (Widget child, int index, Animation<double> animation) {
-                //   return Material(
-                //     elevation: 4.0,
-                //     color: Colors.transparent, // Or some highlight color
-                //     child: child,
-                //   );
-                // },
-              );
-            },
+              ),
+            ),
+          ],
+        ),
+        Positioned(
+          top: 24,
+          right: 24,
+          child: StatusIndicator(
+            status: currentStatus,
+            onDismiss: hideStatus,
           ),
         ),
       ],

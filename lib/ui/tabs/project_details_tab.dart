@@ -1,9 +1,5 @@
-import 'dart:math' as Math;
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:teleferika/core/app_config.dart';
-import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 
@@ -76,17 +72,19 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
     final presumed = double.tryParse(_presumedTotalLengthController.text);
     final azimuth = double.tryParse(_azimuthController.text);
     final dirty =
-      name != widget.project.name ||
-      note != (widget.project.note ?? '') ||
-      presumed != widget.project.presumedTotalLength ||
-      azimuth != widget.project.azimuth ||
-      _projectDate != widget.project.date;
+        name != widget.project.name ||
+        note != (widget.project.note ?? '') ||
+        presumed != widget.project.presumedTotalLength ||
+        azimuth != widget.project.azimuth ||
+        _projectDate != widget.project.date;
     setState(() {
       _dirty = dirty;
       _currentProject = _currentProject.copyWith(
         name: name,
         note: note.isEmpty ? null : note,
-        presumedTotalLength: _presumedTotalLengthController.text.trim().isEmpty ? null : presumed,
+        presumedTotalLength: _presumedTotalLengthController.text.trim().isEmpty
+            ? null
+            : presumed,
         azimuth: _azimuthController.text.trim().isEmpty ? null : azimuth,
         date: _projectDate,
       );
@@ -149,9 +147,11 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
     final azimuthButtonIsSave = _azimuthFieldModified;
     final saveButtonColor = isDirty ? Colors.green : null;
     final azimuthButtonLabel = azimuthButtonIsSave
-      ? (s?.buttonSave ?? 'Save')
-      : (s?.buttonCalculate ?? 'Calculate');
-    final azimuthButtonIcon = azimuthButtonIsSave ? Icons.save : Icons.calculate;
+        ? (s?.buttonSave ?? 'Save')
+        : (s?.buttonCalculate ?? 'Calculate');
+    final azimuthButtonIcon = azimuthButtonIsSave
+        ? Icons.save
+        : Icons.calculate;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Form(
@@ -167,7 +167,8 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return s?.projectNameCannotBeEmptyValidator ?? 'Project name cannot be empty.';
+                  return s?.projectNameCannotBeEmptyValidator ??
+                      'Project name cannot be empty.';
                 }
                 return null;
               },
@@ -180,9 +181,13 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
                   labelText: s?.formFieldProjectDateLabel ?? 'Project Date',
                   border: const OutlineInputBorder(),
                 ),
-                child: Text(_projectDate != null
-                  ? DateFormat.yMMMd(Localizations.localeOf(context).toString()).format(_projectDate!)
-                  : (s?.tap_to_set_date ?? 'Tap to set date')),
+                child: Text(
+                  _projectDate != null
+                      ? DateFormat.yMMMd(
+                          Localizations.localeOf(context).toString(),
+                        ).format(_projectDate!)
+                      : (s?.tap_to_set_date ?? 'Tap to set date'),
+                ),
               ),
             ),
             const SizedBox(height: 8),
@@ -198,10 +203,15 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
             TextFormField(
               controller: _presumedTotalLengthController,
               decoration: InputDecoration(
-                labelText: s?.formFieldPresumedTotalLengthLabel ?? 'Presumed Total Length (m)',
+                labelText:
+                    s?.formFieldPresumedTotalLengthLabel ??
+                    'Presumed Total Length (m)',
                 border: const OutlineInputBorder(),
               ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: false),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+                signed: false,
+              ),
               validator: (value) {
                 if (value != null && value.trim().isNotEmpty) {
                   final num = double.tryParse(value.trim());
@@ -226,15 +236,20 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
                       labelText: s?.formFieldAzimuthLabel ?? 'Azimuth',
                       border: const OutlineInputBorder(),
                     ),
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                      signed: true,
+                    ),
                     validator: (value) {
                       if (value != null && value.trim().isNotEmpty) {
                         final num = double.tryParse(value.trim());
                         if (num == null) {
-                          return s?.invalid_number_validator ?? 'Invalid number.';
+                          return s?.invalid_number_validator ??
+                              'Invalid number.';
                         }
                         if (num <= -360 || num >= 360) {
-                          return s?.must_be_359_validator ?? 'Must be +/-359.99';
+                          return s?.must_be_359_validator ??
+                              'Must be +/-359.99';
                         }
                       }
                       return null;
@@ -243,19 +258,21 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
                 ),
                 const SizedBox(width: 10),
                 SizedBox(
-                  width: 120,
+                  width: 140,
                   child: ElevatedButton.icon(
                     onPressed: !canCalculate && !azimuthButtonIsSave
-                      ? null
-                      : () async {
-                        if (azimuthButtonIsSave) {
-                          await _handleSave();
-                        } else if (widget.onCalculateAzimuth != null) {
-                          widget.onCalculateAzimuth!();
-                        }
-                      },
+                        ? null
+                        : () async {
+                            if (azimuthButtonIsSave) {
+                              await _handleSave();
+                            } else if (widget.onCalculateAzimuth != null) {
+                              widget.onCalculateAzimuth!();
+                            }
+                          },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: azimuthButtonIsSave && isDirty ? Colors.green : null,
+                      backgroundColor: azimuthButtonIsSave && isDirty
+                          ? Colors.green
+                          : null,
                     ),
                     icon: Icon(azimuthButtonIcon),
                     label: Text(azimuthButtonLabel),

@@ -15,6 +15,7 @@ import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/pages/point_details_page.dart';
+import 'package:teleferika/ui/widgets/status_indicator.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 enum MapType { openStreetMap, satellite, terrain }
@@ -40,7 +41,7 @@ class MapToolView extends StatefulWidget {
   State<MapToolView> createState() => MapToolViewState();
 }
 
-class MapToolViewState extends State<MapToolView> {
+class MapToolViewState extends State<MapToolView> with StatusMixin {
   List<PointModel> _projectPoints = [];
   bool _isLoadingPoints = true;
   final MapController _mapController = MapController();
@@ -129,12 +130,7 @@ class MapToolViewState extends State<MapToolView> {
     } catch (e) {
       logger.severe("Error checking permissions", e);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error checking permissions: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        showErrorStatus('Error checking permissions: $e');
       }
     }
   }
@@ -159,9 +155,7 @@ class MapToolViewState extends State<MapToolView> {
     }
 
     if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      showInfoStatus(message);
     }
   }
 
@@ -184,13 +178,9 @@ class MapToolViewState extends State<MapToolView> {
             logger.severe("Error getting location updates: $error");
             if (mounted) {
               final s = S.of(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    s?.mapErrorGettingLocationUpdates(error.toString()) ??
-                        'Error getting location updates: $error',
-                  ),
-                ),
+              showErrorStatus(
+                s?.mapErrorGettingLocationUpdates(error.toString()) ??
+                    'Error getting location updates: $error',
               );
               setState(() {
                 _currentPosition = null;
@@ -223,13 +213,9 @@ class MapToolViewState extends State<MapToolView> {
         logger.severe("Error getting compass updates: $error");
         if (mounted) {
           final s = S.of(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                s?.mapErrorGettingCompassUpdates(error.toString()) ??
-                    'Error getting compass updates: $error',
-              ),
-            ),
+          showErrorStatus(
+            s?.mapErrorGettingCompassUpdates(error.toString()) ??
+                'Error getting compass updates: $error',
           );
           setState(() {
             _currentDeviceHeading = null;
@@ -317,13 +303,9 @@ class MapToolViewState extends State<MapToolView> {
         });
 
         final s = S.of(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              s?.mapErrorLoadingPoints(e.toString()) ??
-                  "Error loading points for map: $e",
-            ),
-          ),
+        showErrorStatus(
+          s?.mapErrorLoadingPoints(e.toString()) ??
+              "Error loading points for map: $e",
         );
         widget.onPointsChanged?.call();
       }
@@ -384,60 +366,21 @@ class MapToolViewState extends State<MapToolView> {
           // _recalculateHeadingLine();
           _recalculateAndDrawLines();
         });
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(
-              content: Text(
-                S
-                        .of(context)
-                        ?.mapPointMovedSuccessfully(
-                          updatedPoint.ordinalNumber.toString(),
-                        ) ??
-                    'Point P${updatedPoint.ordinalNumber} moved successfully!',
-              ),
-              backgroundColor: Colors.green,
-            ),
-          );
+        showSuccessStatus('Point P${updatedPoint.ordinalNumber} moved successfully!');
         widget.onPointsChanged?.call();
       } else {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(
-              content: Text(
-                S
-                        .of(context)
-                        ?.mapErrorMovingPoint(
-                          pointToMove.ordinalNumber.toString(),
-                        ) ??
-                    'Error: Could not move point P${pointToMove.ordinalNumber}. Point not found or not updated.',
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
+        showErrorStatus(
+          'Error: Could not move point P${pointToMove.ordinalNumber}. Point not found or not updated.',
+        );
         // TODO: Optional: Revert optimistic UI update if you did one
         widget.onPointsChanged?.call();
       }
     } catch (e) {
       logger.severe('Failed to move point P${pointToMove.ordinalNumber}: $e');
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text(
-              S
-                      .of(context)
-                      ?.mapErrorMovingPointGeneric(
-                        pointToMove.ordinalNumber.toString(),
-                        e.toString(),
-                      ) ??
-                  'Error moving point P${pointToMove.ordinalNumber}: ${e.toString()}',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
+      showErrorStatus(
+        'Error moving point P${pointToMove.ordinalNumber}: ${e.toString()}',
+      );
       // Optional: Revert optimistic UI update
       widget.onPointsChanged?.call();
     } finally {
@@ -855,12 +798,24 @@ class MapToolViewState extends State<MapToolView> {
   @override
   Widget build(BuildContext context) {
     if (_isLoadingPoints) {
-      return Center(
-        child: CircularProgressIndicator(
-          key: ValueKey(
-            S.of(context)?.mapLoadingPointsIndicator ?? "Loading points...",
+      return Stack(
+        children: [
+          Center(
+            child: CircularProgressIndicator(
+              key: ValueKey(
+                S.of(context)?.mapLoadingPointsIndicator ?? "Loading points...",
+              ),
+            ),
           ),
-        ),
+          Positioned(
+            top: 24,
+            right: 24,
+            child: StatusIndicator(
+              status: currentStatus,
+              onDismiss: hideStatus,
+            ),
+          ),
+        ],
       );
     }
 
@@ -890,27 +845,51 @@ class MapToolViewState extends State<MapToolView> {
         initialMapCenter.longitude.isNaN ||
         initialMapZoom.isNaN ||
         initialMapZoom.isInfinite) {
-      return Center(
-        child: Text('Waiting for valid map data...'),
+      return Stack(
+        children: [
+          Center(
+            child: Text('Waiting for valid map data...'),
+          ),
+          Positioned(
+            top: 24,
+            right: 24,
+            child: StatusIndicator(
+              status: currentStatus,
+              onDismiss: hideStatus,
+            ),
+          ),
+        ],
       );
     }
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          _buildFlutterMapWidget(allMapMarkers, polylinePathPoints,
-              initialMapCenter: initialMapCenter, initialMapZoom: initialMapZoom),
-          _buildPermissionOverlay(),
-          _buildPointDetailsPanel(),
-          // Floating action buttons positioned on the left
-          Positioned(
-            bottom: 24,
-            left: 24,
-            child: _buildFloatingActionButtons(),
+    return Stack(
+      children: [
+        Scaffold(
+          body: Stack(
+            children: [
+              _buildFlutterMapWidget(allMapMarkers, polylinePathPoints,
+                  initialMapCenter: initialMapCenter, initialMapZoom: initialMapZoom),
+              _buildPermissionOverlay(),
+              _buildPointDetailsPanel(),
+              // Floating action buttons positioned on the left
+              Positioned(
+                bottom: 24,
+                left: 24,
+                child: _buildFloatingActionButtons(),
+              ),
+              _buildMapTypeSelector(),
+            ],
           ),
-          _buildMapTypeSelector(),
-        ],
-      ),
+        ),
+        Positioned(
+          top: 24,
+          right: 24,
+          child: StatusIndicator(
+            status: currentStatus,
+            onDismiss: hideStatus,
+          ),
+        ),
+      ],
     );
   }
 
@@ -1070,15 +1049,9 @@ class MapToolViewState extends State<MapToolView> {
                 logger.warning(
                   "Error finding point to move in onTap: $_selectedPointId. $e",
                 );
-                ScaffoldMessenger.of(context)
-                  ..hideCurrentSnackBar()
-                  ..showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        "Error: Selected point not found. Please select again.",
-                      ),
-                    ),
-                  );
+                showErrorStatus(
+                  "Error: Selected point not found. Please select again.",
+                );
                 setState(() {
                   // Exit move mode if selected point is lost
                   _isMovePointMode = false;
@@ -1087,15 +1060,9 @@ class MapToolViewState extends State<MapToolView> {
                 });
               }
             } else {
-              ScaffoldMessenger.of(context)
-                ..hideCurrentSnackBar()
-                ..showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      "No point selected to move. Tap a point first, then activate 'Move Point' mode.",
-                    ),
-                  ),
-                );
+              showErrorStatus(
+                "No point selected to move. Tap a point first, then activate 'Move Point' mode.",
+              );
             }
           } else {
             // If not in move mode, tapping the map deselects any selected point
@@ -1250,16 +1217,7 @@ class MapToolViewState extends State<MapToolView> {
               );
             }
           });
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Point P${updatedPoint.ordinalNumber} details updated!',
-                ),
-                backgroundColor: Colors.green,
-              ),
-            );
+          showSuccessStatus('Point P${updatedPoint.ordinalNumber} details updated!');
           widget.onPointsChanged?.call();
         }
       } else if (action == 'deleted') {
@@ -1272,14 +1230,7 @@ class MapToolViewState extends State<MapToolView> {
               _selectedPointId = null;
             }
           });
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              const SnackBar(
-                content: Text('Point deleted.'),
-                backgroundColor: Colors.orange,
-              ),
-            );
+          showSuccessStatus('Point deleted.');
           widget.onPointsChanged?.call();
         }
       }
@@ -1301,14 +1252,7 @@ class MapToolViewState extends State<MapToolView> {
       setState(() {
         _isMovePointMode = true;
       });
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text('Move mode activated. Tap map to relocate point.'),
-            backgroundColor: Colors.blueGrey,
-          ),
-        );
+      showInfoStatus('Move mode activated. Tap map to relocate point.');
     }
   }
 
@@ -1331,12 +1275,7 @@ class MapToolViewState extends State<MapToolView> {
   void _handleAddPointButtonPressed() {
     // For now, just show a message that this would navigate to compass tab
     // In the future, this could add a point directly from the map
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Add point functionality would navigate to compass tab'),
-        backgroundColor: Colors.blue,
-      ),
-    );
+    showInfoStatus('Add point functionality would navigate to compass tab');
   }
 
   // Method to handle deletion triggered from the side panel
@@ -1388,36 +1327,14 @@ class MapToolViewState extends State<MapToolView> {
             _recalculateHeadingLine();
           });
 
-          final s = S.of(context);
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(
-                content: Text(
-                  s?.mapPointDeletedSuccessSnackbar(
-                        pointToDelete.ordinalNumber.toString(),
-                      ) ??
-                      'Point P${pointToDelete.ordinalNumber} deleted.',
-                ),
-                backgroundColor: Colors.green,
-              ),
-            );
+          showSuccessStatus(
+            'Point P${pointToDelete.ordinalNumber} deleted.',
+          );
           widget.onPointsChanged?.call();
         } else {
-          final s = S.of(context);
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(
-                content: Text(
-                  s?.mapErrorPointNotFoundOrDeletedSnackbar(
-                        pointToDelete.ordinalNumber.toString(),
-                      ) ??
-                      'Error: Point P${pointToDelete.ordinalNumber} could not be found or deleted from map view.',
-                ),
-                backgroundColor: Colors.red,
-              ),
-            );
+          showErrorStatus(
+            'Error: Point P${pointToDelete.ordinalNumber} could not be found or deleted from map view.',
+          );
         }
       } catch (e) {
         if (!mounted) return;
@@ -1425,21 +1342,9 @@ class MapToolViewState extends State<MapToolView> {
           'Failed to delete point P${pointToDelete.ordinalNumber} from panel: $e',
         );
 
-        final s = S.of(context);
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(
-              content: Text(
-                s?.mapErrorDeletingPointSnackbar(
-                      pointToDelete.ordinalNumber.toString(),
-                      e.toString(),
-                    ) ??
-                    'Error deleting point P${pointToDelete.ordinalNumber}: $e',
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
+        showErrorStatus(
+          'Error deleting point P${pointToDelete.ordinalNumber}: $e',
+        );
       }
     }
   }
