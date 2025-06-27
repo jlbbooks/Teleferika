@@ -44,11 +44,30 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
   }
 
   Future<void> _loadActiveLicence() async {
-    _activeLicence = await _licenceService.loadLicence();
-    if (mounted) {
-      setState(() {
-        // TODO: Trigger a rebuild if you want to display licence info or change UI based on it
-      });
+    try {
+      logger.info('Loading active license...');
+      
+      // Ensure the service is initialized first
+      await _licenceService.initialize();
+      logger.info('License service initialized');
+      
+      // Now load the license
+      _activeLicence = await _licenceService.currentLicence;
+      logger.info('License loaded: ${_activeLicence?.email ?? 'null'}');
+      logger.info('License valid: ${_activeLicence?.isValid ?? 'null'}');
+      
+      if (mounted) {
+        setState(() {
+          // Trigger a rebuild to update the UI with license status
+        });
+      }
+    } catch (e, stackTrace) {
+      logger.severe('Error loading active license', e, stackTrace);
+      if (mounted) {
+        setState(() {
+          _activeLicence = null;
+        });
+      }
     }
   }
 
@@ -69,17 +88,23 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
         ),
       ];
 
+      // Add version info if available
+      String versionInfo = '';
+      if (widget.appVersion != null && widget.appVersion!.isNotEmpty) {
+        versionInfo = '\nApp Version: ${widget.appVersion}';
+      }
+
       if (_activeLicence != null && _activeLicence!.isValid) {
         contentText =
             "Licensed to: ${_activeLicence!.email}\n"
             "Status: Active\n"
-            "Valid Until: ${DateFormat.yMMMd().add_Hm().format(_activeLicence!.validUntil.toLocal())}";
+            "Valid Until: ${DateFormat.yMMMd().add_Hm().format(_activeLicence!.validUntil.toLocal())}$versionInfo";
       } else if (_activeLicence != null && !_activeLicence!.isValid) {
         contentText =
             "Licensed to: ${_activeLicence!.email}\n"
             "Status: Expired\n"
             "Valid Until: ${DateFormat.yMMMd().add_Hm().format(_activeLicence!.validUntil.toLocal())}\n\n"
-            "Please import a valid licence.";
+            "Please import a valid licence.$versionInfo";
         actions.insert(
           0,
           TextButton(
@@ -92,7 +117,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
         );
       } else {
         contentText =
-            "No active licence found. Please import a licence file to unlock premium features.";
+            "No active licence found. Please import a licence file to unlock premium features.$versionInfo";
         actions.insert(
           0,
           TextButton(
@@ -121,6 +146,12 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
   void _showPremiumFeaturesDialog() {
     final hasLicensedFeatures = LicensedFeaturesLoader.hasLicensedFeatures;
     final availableFeatures = LicensedFeaturesLoader.licensedFeatures;
+
+    // Add version info if available
+    String versionInfo = '';
+    if (widget.appVersion != null && widget.appVersion!.isNotEmpty) {
+      versionInfo = '\nApp Version: ${widget.appVersion}';
+    }
 
     showDialog(
       context: context,
@@ -175,6 +206,17 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
                 const Text('Premium features are not available in this build.'),
                 const SizedBox(height: 8),
                 const Text('This is the opensource version of the app.'),
+              ],
+              if (versionInfo.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(
+                  versionInfo,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
               ],
             ],
           ),
@@ -537,6 +579,72 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
     }
   }
 
+  Future<void> _testImportExampleLicence() async {
+    try {
+      logger.info('Testing import of demo license...');
+      
+      // Create a demo license
+      final demoLicence = Licence.createDemo();
+      logger.info('Created demo license: ${demoLicence.email}, valid: ${demoLicence.isValid}');
+      
+      // Save the license
+      final saved = await _licenceService.saveLicence(demoLicence);
+      logger.info('License saved: $saved');
+      
+      if (saved && mounted) {
+        setState(() {
+          _activeLicence = demoLicence;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Demo license imported successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e, stackTrace) {
+      logger.severe('Error testing demo license import', e, stackTrace);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error importing demo license: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _clearLicense() async {
+    try {
+      logger.info('Clearing license...');
+      
+      await _licenceService.removeLicence();
+      
+      if (mounted) {
+        setState(() {
+          _activeLicence = null;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('License cleared successfully!'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } catch (e, stackTrace) {
+      logger.severe('Error clearing license', e, stackTrace);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error clearing license: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   Widget _buildProjectItem(ProjectModel project) {
     // Get the current locale from the context for date formatting
     final locale = Localizations.localeOf(context).toString();
@@ -633,13 +741,9 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
               title: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(titleText),
-
-                  if (version != null)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: Text(version, style: TextStyle(fontSize: 10.0)),
-                    ),
+                  Expanded(
+                    child: Text(titleText),
+                  ),
                   IconButton(
                     icon: Icon(
                       _activeLicence != null && _activeLicence!.isValid
@@ -649,9 +753,11 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
                           ? Colors.green
                           : (_activeLicence != null && !_activeLicence!.isValid
                                 ? Colors.red
-                                : null),
+                                : Colors.grey),
                     ),
-                    tooltip: "Licence Status / Import",
+                    tooltip: "Licence Status / Import\n"
+                        "License: ${_activeLicence?.email ?? 'None'}\n"
+                        "Valid: ${_activeLicence?.isValid ?? 'Unknown'}",
                     onPressed: _showLicenceInfoDialog,
                   ),
                   IconButton(
@@ -659,11 +765,31 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
                     tooltip: "Premium Features",
                     onPressed: _showPremiumFeaturesDialog,
                   ),
+                  IconButton(
+                    icon: const Icon(Icons.bug_report),
+                    tooltip: "Test License Import",
+                    onPressed: _testImportExampleLicence,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.clear),
+                    tooltip: "Clear License",
+                    onPressed: _clearLicense,
+                  ),
                 ],
               ),
-              actions: [
-                // IconButton for future settings/search can go here
-              ],
+              bottom: version != null ? PreferredSize(
+                preferredSize: const Size.fromHeight(20),
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0, left: 16.0),
+                  child: Text(
+                    version!,
+                    style: const TextStyle(
+                      fontSize: 10.0,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ),
+              ) : null,
             ),
       body: FutureBuilder<List<ProjectModel>>(
         future: _projectsFuture,
