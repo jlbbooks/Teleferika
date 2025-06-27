@@ -519,13 +519,57 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     if (_isLoadingPoints) {
       return Stack(
         children: [
-          Center(
-            child: CircularProgressIndicator(
-              key: ValueKey(
-                S.of(context)?.mapLoadingPointsIndicator ?? "Loading points...",
+          // Background with subtle pattern
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Theme.of(context).colorScheme.surface,
+                  Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                ],
               ),
             ),
           ),
+          // Loading content
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Animated loading icon
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Theme.of(context).colorScheme.primary,
+                    ),
+                    strokeWidth: 3,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Loading text
+                Text(
+                  S.of(context)?.mapLoadingPointsIndicator ?? "Loading points...",
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Please wait while we load your project data",
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Status indicator
           Positioned(
             top: 24,
             right: 24,
@@ -642,8 +686,8 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     List<Marker> projectPointMarkers = _projectPoints.map((point) {
       final bool isSelected = point.id == _selectedPointId;
       return Marker(
-        width: 60,
-        height: 58,
+        width: 70, // Increased from 60 to accommodate larger selected markers
+        height: 70, // Increased from 58 to accommodate larger selected markers
         point: LatLng(point.latitude, point.longitude),
         child: _buildStandardMarkerView(context, point, isSelected: isSelected),
       );
@@ -931,60 +975,114 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           }
         });
       },
-      child: Column(
-        children: [
-          Icon(
-            Icons.location_pin,
-            color: isSelected && !_isMovePointMode
-                ? Colors.blueAccent
-                : (_isMovePointMode && _selectedPointId == point.id
-                      ? Colors.orangeAccent
-                      : Colors.red),
-            size: 30.0,
-          ),
-          const SizedBox(height: 4),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
-            decoration: BoxDecoration(
-              color: isSelected && !_isMovePointMode
-                  ? Colors.blue.withAlpha((0.8 * 255).round())
-                  : Colors.white.withAlpha(220),
-              borderRadius: BorderRadius.circular(3),
-              border: isSelected && !_isMovePointMode
-                  ? Border.all(color: Colors.blueAccent, width: 1.5)
-                  : null,
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 2,
-                  offset: Offset(0, 1),
-                ),
-              ],
-            ),
-            child: Text(
-              "P${point.ordinalNumber}",
-              style: TextStyle(
-                fontSize: 10,
-                color: isSelected && !_isMovePointMode
-                    ? Colors.white
-                    : Colors.black,
-                fontWeight: FontWeight.bold,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        child: Column(
+          mainAxisSize: MainAxisSize.min, // Ensure column takes minimum space
+          children: [
+            // Main pin icon
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.location_pin,
+                color: _getMarkerColor(isSelected),
+                size: isSelected ? 32.0 : 28.0, // Slightly reduced sizes
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 2), // Reduced spacing
+            // Point label
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1), // Reduced padding
+              decoration: BoxDecoration(
+                color: _getLabelBackgroundColor(isSelected),
+                borderRadius: BorderRadius.circular(4), // Reduced radius
+                border: _getLabelBorder(isSelected),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 2,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: Text(
+                "P${point.ordinalNumber}",
+                style: TextStyle(
+                  fontSize: 10, // Reduced font size
+                  fontWeight: FontWeight.bold,
+                  color: _getLabelTextColor(isSelected),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  Color _getMarkerColor(bool isSelected) {
+    if (isSelected && !_isMovePointMode) {
+      return Colors.blue.shade600;
+    } else if (_isMovePointMode && _selectedPointId == _selectedPointInstance?.id) {
+      return Colors.orange.shade600;
+    } else {
+      return Colors.red.shade600;
+    }
+  }
+
+  Color _getLabelBackgroundColor(bool isSelected) {
+    if (isSelected && !_isMovePointMode) {
+      return Colors.blue.shade600;
+    } else {
+      return Colors.white;
+    }
+  }
+
+  Border? _getLabelBorder(bool isSelected) {
+    if (isSelected && !_isMovePointMode) {
+      return Border.all(color: Colors.blue.shade600, width: 1.5);
+    } else if (_isMovePointMode && _selectedPointId == _selectedPointInstance?.id) {
+      return Border.all(color: Colors.orange.shade600, width: 1.5);
+    }
+    return null;
+  }
+
+  Color _getLabelTextColor(bool isSelected) {
+    if (isSelected && !_isMovePointMode) {
+      return Colors.white;
+    } else {
+      return Colors.black;
+    }
   }
 
   Widget _buildCrosshairMarker() {
     if (_currentPosition == null) return const SizedBox.shrink();
 
     return IgnorePointer(
-      child: Icon(
-        Icons.gps_fixed,
-        color: Colors.blueAccent.withOpacity(0.8),
-        size: 24,
+      child: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.blue.shade600.withOpacity(0.1),
+          border: Border.all(
+            color: Colors.blue.shade600,
+            width: 2,
+          ),
+        ),
+        child: const Icon(
+          Icons.gps_fixed,
+          color: Colors.blue,
+          size: 20,
+        ),
       ),
     );
   }
@@ -997,77 +1095,104 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     final s = S.of(context);
     return Positioned.fill(
       child: Container(
-        color: Colors.black.withOpacity(0.65),
+        color: Colors.black.withOpacity(0.7),
         child: Center(
-          child: Card(
-            margin: const EdgeInsets.all(24),
-            elevation: 8,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.warning_amber_rounded,
-                    size: 48,
-                    color: Colors.orange.shade700,
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    s?.mapPermissionsRequiredTitle ?? "Permissions Required",
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
+          child: Container(
+            margin: const EdgeInsets.all(32),
+            child: Card(
+              elevation: 16,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header icon
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.warning_amber_rounded,
+                        size: 48,
+                        color: Colors.orange.shade700,
+                      ),
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  if (!_hasLocationPermission)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: Text(
-                        s?.mapLocationPermissionInfoText ??
+                    const SizedBox(height: 24),
+                    
+                    // Title
+                    Text(
+                      s?.mapPermissionsRequiredTitle ?? "Permissions Required",
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Permission details
+                    if (!_hasLocationPermission) ...[
+                      _buildPermissionItem(
+                        icon: Icons.location_on_outlined,
+                        title: 'Location Permission',
+                        description: s?.mapLocationPermissionInfoText ??
                             "Location permission is needed to show your current position and for some map features.",
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium,
+                        color: Colors.blue,
                       ),
-                    ),
-                  if (!_hasSensorPermission)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: Text(
-                        s?.mapSensorPermissionInfoText ??
+                      const SizedBox(height: 12),
+                    ],
+                    if (!_hasSensorPermission) ...[
+                      _buildPermissionItem(
+                        icon: Icons.compass_calibration_outlined,
+                        title: 'Sensor Permission',
+                        description: s?.mapSensorPermissionInfoText ??
                             "Sensor (compass) permission is needed for direction-based features.",
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium,
+                        color: Colors.green,
                       ),
+                      const SizedBox(height: 12),
+                    ],
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Action buttons
+                    Column(
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            icon: const Icon(Icons.settings),
+                            label: Text(
+                              s?.mapButtonOpenAppSettings ?? "Open App Settings",
+                            ),
+                            onPressed: () async {
+                              openAppSettings();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 16,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextButton(
+                          onPressed: _checkAndRequestPermissions,
+                          child: Text(
+                            s?.mapButtonRetryPermissions ?? "Retry Permissions",
+                          ),
+                        ),
+                      ],
                     ),
-                  const SizedBox(height: 20),
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.settings),
-                    label: Text(
-                      s?.mapButtonOpenAppSettings ?? "Open App Settings",
-                    ),
-                    onPressed: () async {
-                      openAppSettings();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: _checkAndRequestPermissions,
-                    child: Text(
-                      s?.mapButtonRetryPermissions ?? "Retry Permissions",
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -1076,78 +1201,229 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     );
   }
 
+  Widget _buildPermissionItem({
+    required IconData icon,
+    required String title,
+    required String description,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              size: 20,
+              color: color,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPointDetailsPanel() {
     if (_selectedPointInstance == null) return const SizedBox.shrink();
 
     return Positioned(
-      top: 10,
-      right: 10,
+      top: 16,
+      right: 16,
       child: Material(
-        elevation: 4.0,
-        borderRadius: BorderRadius.circular(8.0),
+        elevation: 8.0,
+        borderRadius: BorderRadius.circular(12.0),
+        shadowColor: Colors.black26,
         child: Container(
-          padding: const EdgeInsets.all(12.0),
+          constraints: const BoxConstraints(maxWidth: 320),
+          padding: const EdgeInsets.all(16.0),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-          child: IntrinsicWidth(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Selected: P${_selectedPointInstance!.ordinalNumber}',
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.start,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                if (_selectedPointInstance!.note?.isNotEmpty ?? false)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: Container(
-                      constraints: const BoxConstraints(maxWidth: 250),
-                      child: Text(
-                        _selectedPointInstance!.note!,
-                        style: Theme.of(context).textTheme.bodySmall,
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.start,
-                      ),
-                    ),
-                  ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4.0),
-                  child: Text(
-                    'Lat: ${_selectedPointInstance!.latitude.toStringAsFixed(6)}, Lon: ${_selectedPointInstance!.longitude.toStringAsFixed(6)}',
-                    style: Theme.of(context).textTheme.bodySmall,
-                    textAlign: TextAlign.start,
-                  ),
-                ),
-                if (_isMovePointMode &&
-                    _selectedPointInstance!.id == _selectedPointId)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Text(
-                      'Tap on the map to set new location.',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontStyle: FontStyle.italic,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                const Divider(height: 16),
-                _buildPointActionButtons(),
-                if (_isMovingPointLoading)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 8.0),
-                    child: Center(child: LinearProgressIndicator()),
-                  ),
-              ],
+            borderRadius: BorderRadius.circular(12.0),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+              width: 1,
             ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with point number and close button
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      'P${_selectedPointInstance!.ordinalNumber}',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 20),
+                    onPressed: () {
+                      setState(() {
+                        _selectedPointId = null;
+                        _selectedPointInstance = null;
+                      });
+                    },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 12),
+              
+              // Coordinates
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.location_on_outlined,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '${_selectedPointInstance!.latitude.toStringAsFixed(6)}, ${_selectedPointInstance!.longitude.toStringAsFixed(6)}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontFamily: 'monospace',
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Note section
+              if (_selectedPointInstance!.note?.isNotEmpty ?? false) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.note_outlined,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.onSecondaryContainer,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _selectedPointInstance!.note!,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSecondaryContainer,
+                          ),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              
+              // Move mode indicator
+              if (_isMovePointMode && _selectedPointInstance!.id == _selectedPointId) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.touch_app,
+                        size: 16,
+                        color: Colors.orange.shade700,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Tap on the map to set new location',
+                          style: TextStyle(
+                            color: Colors.orange.shade700,
+                            fontStyle: FontStyle.italic,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              
+              const SizedBox(height: 16),
+              
+              // Action buttons
+              _buildPointActionButtons(),
+              
+              // Loading indicator
+              if (_isMovingPointLoading)
+                const Padding(
+                  padding: EdgeInsets.only(top: 12.0),
+                  child: Center(child: LinearProgressIndicator()),
+                ),
+            ],
           ),
         ),
       ),
@@ -1157,39 +1433,92 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   Widget _buildPointActionButtons() {
     return Row(
       mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        TextButton.icon(
-          icon: const Icon(Icons.edit, color: Colors.blue),
-          label: const Text('Edit'),
-          onPressed: _isMovePointMode ? null : _handleEditPoint,
+        Expanded(
+          child: _buildActionButton(
+            icon: Icons.edit_outlined,
+            label: 'Edit',
+            color: Colors.blue,
+            onPressed: _isMovePointMode ? null : _handleEditPoint,
+          ),
         ),
-        TextButton.icon(
-          icon: Icon(
-            _isMovePointMode && _selectedPointInstance!.id == _selectedPointId
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildActionButton(
+            icon: _isMovePointMode && _selectedPointInstance!.id == _selectedPointId
                 ? Icons.cancel_outlined
                 : Icons.open_with,
-            color:
-                _isMovePointMode &&
-                    _selectedPointInstance!.id == _selectedPointId
-                ? Colors.orangeAccent
-                : Colors.teal,
-          ),
-          label: Text(
-            _isMovePointMode && _selectedPointInstance!.id == _selectedPointId
+            label: _isMovePointMode && _selectedPointInstance!.id == _selectedPointId
                 ? 'Cancel'
                 : 'Move',
+            color: _isMovePointMode && _selectedPointInstance!.id == _selectedPointId
+                ? Colors.orange
+                : Colors.teal,
+            onPressed: _isMovingPointLoading ? null : _handleMovePointAction,
           ),
-          onPressed: _isMovingPointLoading ? null : _handleMovePointAction,
         ),
-        TextButton.icon(
-          icon: const Icon(Icons.delete, color: Colors.redAccent),
-          label: const Text('Delete'),
-          onPressed: (_isMovePointMode || _isMovingPointLoading)
-              ? null
-              : _handleDeletePoint,
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildActionButton(
+            icon: Icons.delete_outline,
+            label: 'Delete',
+            color: Colors.red,
+            onPressed: (_isMovePointMode || _isMovingPointLoading)
+                ? null
+                : _handleDeletePoint,
+          ),
         ),
       ],
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback? onPressed,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          decoration: BoxDecoration(
+            color: onPressed != null 
+                ? color.withOpacity(0.1)
+                : Colors.grey.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: onPressed != null 
+                  ? color.withOpacity(0.3)
+                  : Colors.grey.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: onPressed != null ? color : Colors.grey,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: onPressed != null ? color : Colors.grey,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -1198,59 +1527,86 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         _hasLocationPermission && _currentPosition == null;
     final s = S.of(context);
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Center on current location button
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
-          child: FloatingActionButton(
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Center on current location button
+          _buildFloatingActionButton(
             heroTag: 'center_on_location',
-            onPressed: isLocationLoading ? null : _centerOnCurrentLocation,
+            icon: Icons.my_location,
             tooltip: isLocationLoading
                 ? (s?.mapAcquiringLocation ?? 'Acquiring location...')
                 : (s?.mapCenterOnLocation ?? 'Center on my location'),
-            child: isLocationLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : const Icon(Icons.my_location),
+            onPressed: isLocationLoading ? null : _centerOnCurrentLocation,
+            isLoading: isLocationLoading,
+            color: Colors.blue,
           ),
-        ),
-        // Add new point button
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
-          child: FloatingActionButton(
+          
+          // Add new point button
+          _buildFloatingActionButton(
             heroTag: 'add_new_point',
-            onPressed: isLocationLoading ? null : _handleAddPointButtonPressed,
+            icon: Icons.add_location_alt_outlined,
             tooltip: isLocationLoading
                 ? (s?.mapAcquiringLocation ?? 'Acquiring location...')
                 : (s?.mapAddNewPoint ?? 'Add New Point'),
-            child: isLocationLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : const Icon(Icons.add_location_alt_outlined),
+            onPressed: isLocationLoading ? null : _handleAddPointButtonPressed,
+            isLoading: isLocationLoading,
+            color: Colors.green,
           ),
-        ),
-        // Center on Project points button
-        FloatingActionButton(
-          heroTag: 'center_on_points',
-          onPressed: _fitMapToPoints,
-          tooltip: s?.mapCenterOnPoints ?? 'Center on points',
-          child: const Icon(Icons.center_focus_strong),
-        ),
-      ],
+          
+          // Center on Project points button
+          _buildFloatingActionButton(
+            heroTag: 'center_on_points',
+            icon: Icons.center_focus_strong,
+            tooltip: s?.mapCenterOnPoints ?? 'Center on points',
+            onPressed: _fitMapToPoints,
+            color: Colors.purple,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFloatingActionButton({
+    required String heroTag,
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback? onPressed,
+    bool isLoading = false,
+    Color? color,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: FloatingActionButton(
+        heroTag: heroTag,
+        onPressed: onPressed,
+        tooltip: tooltip,
+        backgroundColor: color ?? Theme.of(context).colorScheme.primary,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        mini: true,
+        child: isLoading
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Icon(icon, size: 20),
+      ),
     );
   }
 
@@ -1484,53 +1840,75 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   Widget _buildMapTypeSelector() {
     final s = S.of(context);
     return Positioned(
-      top: 10,
-      left: 10,
-      child: Card(
-        elevation: 4.0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+      top: 16,
+      left: 16,
+      child: Material(
+        elevation: 8.0,
+        borderRadius: BorderRadius.circular(12.0),
+        shadowColor: Colors.black26,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                _getMapTypeIcon(),
-                size: 20,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                _getMapTypeDisplayName(),
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(width: 8),
-              PopupMenuButton<MapType>(
-                icon: const Icon(Icons.arrow_drop_down),
-                onSelected: (MapType mapType) {
-                  setState(() {
-                    _currentMapType = mapType;
-                  });
-                },
-                itemBuilder: (BuildContext context) => [
-                  _buildMapTypeMenuItem(
-                    MapType.openStreetMap,
-                    s?.mapTypeStreet ?? 'Street',
-                    Icons.map,
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.circular(12.0),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          child: PopupMenuButton<MapType>(
+            onSelected: (MapType mapType) {
+              setState(() {
+                _currentMapType = mapType;
+              });
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Icon(
+                      _getMapTypeIcon(),
+                      size: 18,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                   ),
-                  _buildMapTypeMenuItem(
-                    MapType.satellite,
-                    s?.mapTypeSatellite ?? 'Satellite',
-                    Icons.satellite_alt,
+                  const SizedBox(width: 8),
+                  Text(
+                    _getMapTypeDisplayName(),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  _buildMapTypeMenuItem(
-                    MapType.terrain,
-                    s?.mapTypeTerrain ?? 'Terrain',
-                    Icons.terrain,
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.arrow_drop_down,
+                    size: 20,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ],
+              ),
+            ),
+            itemBuilder: (BuildContext context) => [
+              _buildMapTypeMenuItem(
+                MapType.openStreetMap,
+                s?.mapTypeStreet ?? 'Street',
+                Icons.map,
+              ),
+              _buildMapTypeMenuItem(
+                MapType.satellite,
+                s?.mapTypeSatellite ?? 'Satellite',
+                Icons.satellite_alt,
+              ),
+              _buildMapTypeMenuItem(
+                MapType.terrain,
+                s?.mapTypeTerrain ?? 'Terrain',
+                Icons.terrain,
               ),
             ],
           ),
@@ -1544,30 +1922,49 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     String label,
     IconData icon,
   ) {
+    final isSelected = _currentMapType == mapType;
     return PopupMenuItem<MapType>(
       value: mapType,
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            size: 18,
-            color: _currentMapType == mapType
-                ? Theme.of(context).colorScheme.primary
-                : null,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: TextStyle(
-              fontWeight: _currentMapType == mapType
-                  ? FontWeight.bold
-                  : FontWeight.normal,
-              color: _currentMapType == mapType
-                  ? Theme.of(context).colorScheme.primary
-                  : null,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: isSelected 
+                    ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Icon(
+                icon,
+                size: 18,
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  color: isSelected
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ),
+            if (isSelected)
+              Icon(
+                Icons.check,
+                size: 18,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+          ],
+        ),
       ),
     );
   }
