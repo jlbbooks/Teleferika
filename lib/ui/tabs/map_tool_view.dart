@@ -79,8 +79,32 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   @override
   void initState() {
     super.initState();
+    // Initialize selectedPointId from widget
+    _selectedPointId = widget.selectedPointId;
     _loadProjectPoints();
     _checkAndRequestPermissions();
+  }
+
+  @override
+  void didUpdateWidget(covariant MapToolView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    // Handle project changes
+    // this will never happen with the current implementation, but you never know!
+    if (widget.project.id != oldWidget.project.id) {
+      _loadProjectPoints(); // This will also recalculate lines
+    } else if (widget.project.azimuth != oldWidget.project.azimuth) {
+      // If only the heading changed, just recalculate lines
+      _recalculateAndDrawLines();
+    }
+    
+    // Handle selectedPointId changes from parent
+    if (widget.selectedPointId != oldWidget.selectedPointId) {
+      setState(() {
+        _selectedPointId = widget.selectedPointId;
+        _updateSelectedPointInstance();
+      });
+    }
   }
 
   @override
@@ -399,35 +423,57 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       );
       return;
     }
-    if (_projectPoints.isEmpty || !mounted) {
+    
+    if (_projectPoints.isEmpty) {
       // Optionally move to a default location or the project's starting point if available
       // For now, if no points, map stays at its initial or default view
-      _mapController.move(_getInitialCenter(), _getInitialZoom());
+      try {
+        _mapController.move(_getInitialCenter(), _getInitialZoom());
+      } catch (e) {
+        logger.warning('Error moving map to default center: $e');
+      }
       return;
     }
 
     if (_projectPoints.length == 1) {
-      _mapController.move(
-        LatLng(_projectPoints.first.latitude, _projectPoints.first.longitude),
-        15.0, // Zoom in on a single point
-      );
+      try {
+        _mapController.move(
+          LatLng(_projectPoints.first.latitude, _projectPoints.first.longitude),
+          15.0, // Zoom in on a single point
+        );
+      } catch (e) {
+        logger.warning('Error moving map to single point: $e');
+      }
       return;
     }
 
     // Calculate bounds for multiple points
-    final List<LatLng> pointCoords = _projectPoints
-        .map((p) => LatLng(p.latitude, p.longitude))
-        .toList();
+    try {
+      final List<LatLng> pointCoords = _projectPoints
+          .map((p) => LatLng(p.latitude, p.longitude))
+          .toList();
 
-    final bounds = LatLngBounds.fromPoints(pointCoords);
+      final bounds = LatLngBounds.fromPoints(pointCoords);
 
-    // Add some padding to the bounds
-    _mapController.fitCamera(
-      CameraFit.bounds(
-        bounds: bounds,
-        padding: const EdgeInsets.all(50.0), // Adjust padding as needed
-      ),
-    );
+      // Add some padding to the bounds
+      _mapController.fitCamera(
+        CameraFit.bounds(
+          bounds: bounds,
+          padding: const EdgeInsets.all(50.0), // Adjust padding as needed
+        ),
+      );
+    } catch (e) {
+      logger.warning('Error fitting map to points: $e');
+      // Fallback to moving to first point
+      try {
+        _mapController.move(
+          LatLng(_projectPoints.first.latitude, _projectPoints.first.longitude),
+          14.0,
+        );
+      } catch (e2) {
+        logger.warning('Error in fallback map move: $e2');
+      }
+    }
   }
 
   LatLng _getInitialCenter() {
@@ -437,22 +483,435 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         _projectPoints.first.longitude,
       );
     }
-    // You could also try to get a starting point from widget.project if available
+    
+    // Fallback to current position if available
+    if (_currentPosition != null) {
+      return LatLng(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+      );
+    }
+    
+    // Final fallback to default center
     return _defaultCenter;
   }
 
   double _getInitialZoom() {
-    return _projectPoints.isNotEmpty ? 14.0 : _defaultZoom;
+    if (_projectPoints.isNotEmpty) {
+      if (_projectPoints.length == 1) {
+        return 15.0; // Closer zoom for single point
+      } else {
+        return 14.0; // Medium zoom for multiple points
+      }
+    }
+    
+    // If no points but have current position, use medium zoom
+    if (_currentPosition != null) {
+      return 12.0;
+    }
+    
+    // Default zoom for no data
+    return _defaultZoom;
   }
 
   @override
-  void didUpdateWidget(covariant MapToolView oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.project.id != oldWidget.project.id) {
-      _loadProjectPoints(); // This will also recalculate lines
-    } else if (widget.project.azimuth != oldWidget.project.azimuth) {
-      // If only the heading changed, just recalculate lines
-      _recalculateAndDrawLines();
+  Widget build(BuildContext context) {
+    if (_isLoadingPoints) {
+      return Stack(
+        children: [
+          Center(
+            child: CircularProgressIndicator(
+              key: ValueKey(
+                S.of(context)?.mapLoadingPointsIndicator ?? "Loading points...",
+              ),
+            ),
+          ),
+          Positioned(
+            top: 24,
+            right: 24,
+            child: StatusIndicator(
+              status: currentStatus,
+              onDismiss: hideStatus,
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Prepare data for the map
+    _updateSelectedPointInstance(); // Helper to encapsulate selected point logic
+    final List<Marker> allMapMarkers = _buildAllMapMarkers();
+    final List<LatLng> polylinePathPoints = _buildPolylinePathPoints();
+    _updateHeadingLine(); // Helper to encapsulate heading line creation logic
+
+    // Defensive: Ensure initial center/zoom are valid
+    LatLng initialMapCenter = _defaultCenter;
+    double initialMapZoom = _defaultZoom;
+
+    if (_projectPoints.isNotEmpty) {
+      initialMapCenter = _getInitialCenter();
+      initialMapZoom = _getInitialZoom();
+    } else if (_currentPosition != null && _hasLocationPermission) {
+      initialMapCenter = LatLng(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+      );
+      initialMapZoom = _defaultZoom;
+    }
+
+    // Check for NaN or infinite values
+    if (initialMapCenter.latitude.isNaN ||
+        initialMapCenter.longitude.isNaN ||
+        initialMapZoom.isNaN ||
+        initialMapZoom.isInfinite) {
+      return Stack(
+        children: [
+          Center(
+            child: Text('Waiting for valid map data...'),
+          ),
+          Positioned(
+            top: 24,
+            right: 24,
+            child: StatusIndicator(
+              status: currentStatus,
+              onDismiss: hideStatus,
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Stack(
+      children: [
+        Scaffold(
+          body: Stack(
+            children: [
+              _buildFlutterMapWidget(allMapMarkers, polylinePathPoints,
+                  initialMapCenter: initialMapCenter, initialMapZoom: initialMapZoom),
+              _buildPermissionOverlay(),
+              _buildPointDetailsPanel(),
+              // Floating action buttons positioned on the left
+              Positioned(
+                bottom: 24,
+                left: 24,
+                child: _buildFloatingActionButtons(),
+              ),
+              _buildMapTypeSelector(),
+            ],
+          ),
+        ),
+        Positioned(
+          top: 24,
+          right: 24,
+          child: StatusIndicator(
+            status: currentStatus,
+            onDismiss: hideStatus,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Helper to update _selectedPointInstance
+  void _updateSelectedPointInstance() {
+    _selectedPointInstance = null; // Reset before trying
+    if (_selectedPointId != null && _projectPoints.isNotEmpty) {
+      try {
+        _selectedPointInstance = _projectPoints.firstWhere(
+          (p) => p.id == _selectedPointId,
+        );
+      } catch (e) {
+        logger.warning(
+          "Selected point ID $_selectedPointId not found in project points. Deselecting.",
+        );
+        // Using Future.microtask to avoid calling setState during build
+        Future.microtask(() {
+          if (mounted) {
+            setState(() {
+              _selectedPointId = null;
+              _selectedPointInstance = null; // Ensure it's null in state too
+            });
+          }
+        });
+      }
+    }
+  }
+
+  // Helper to build the list of all markers for the map
+  List<Marker> _buildAllMapMarkers() {
+    List<Marker> projectPointMarkers = _projectPoints.map((point) {
+      final bool isSelected = point.id == _selectedPointId;
+      return Marker(
+        width: 60,
+        height: 58,
+        point: LatLng(point.latitude, point.longitude),
+        child: _buildStandardMarkerView(context, point, isSelected: isSelected),
+      );
+    }).toList();
+
+    List<Marker> allMarkers = [...projectPointMarkers];
+
+    // Add heading label marker
+    if (_headingFromFirstToLast != null && _projectPoints.length >= 2) {
+      allMarkers.add(_buildHeadingLabelMarker());
+    }
+
+    // Add current position crosshair marker
+    if (_currentPosition != null && _hasLocationPermission) {
+      allMarkers.add(_buildCurrentPositionMarker());
+    }
+
+    return allMarkers;
+  }
+
+  // Helper specifically for the heading label marker
+  Marker _buildHeadingLabelMarker() {
+    if (_projectPoints.length < 2) {
+      throw StateError('Cannot build heading label marker with less than 2 points');
+    }
+    
+    final firstP = _projectPoints.first;
+    final lastP = _projectPoints.last;
+    final midLat = (firstP.latitude + lastP.latitude) / 2;
+    final midLon = (firstP.longitude + lastP.longitude) / 2;
+    final angleForRotation = _degreesToRadians(_headingFromFirstToLast!);
+
+    return Marker(
+      point: LatLng(midLat, midLon),
+      width: 120,
+      height: 30,
+      child: Transform.rotate(
+        angle: angleForRotation - (math.pi / 2), // Use math.pi instead of hardcoded value
+        alignment: Alignment.center,
+        child: Card(
+          elevation: 2.0,
+          color: Colors.white.withAlpha((0.9 * 255).round()),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(6.0),
+            side: BorderSide(
+              color: Colors.purple.withAlpha((0.7 * 255).round()),
+              width: 1,
+            ),
+          ),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(3, 1, 3, 0),
+            decoration: BoxDecoration(
+              color: Colors.black.withAlpha((0.2 * 255).round()),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              'Heading: ${_headingFromFirstToLast!.toStringAsFixed(1)}°',
+              style: const TextStyle(color: Colors.black, fontSize: 12),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Helper specifically for the current position marker (crosshair)
+  Marker _buildCurrentPositionMarker() {
+    if (_currentPosition == null) {
+      throw StateError('Cannot build current position marker with null position');
+    }
+    
+    return Marker(
+      width: 30,
+      height: 30,
+      point: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+      child: _buildCrosshairMarker(),
+    );
+  }
+
+  // Helper to prepare points for the main polyline connecting project points
+  List<LatLng> _buildPolylinePathPoints() {
+    if (!_isLoadingPoints && _projectPoints.length >= 2) {
+      return _projectPoints
+          .map((p) => LatLng(p.latitude, p.longitude))
+          .toList();
+    }
+    return []; // Return empty list if conditions not met
+  }
+
+  // Helper to update/create the _headingLine Polyline
+  void _updateHeadingLine() {
+    if (_headingFromFirstToLast != null && _projectPoints.length >= 2) {
+      _headingLine = Polyline(
+        points: [
+          LatLng(_projectPoints.first.latitude, _projectPoints.first.longitude),
+          LatLng(_projectPoints.last.latitude, _projectPoints.last.longitude),
+        ],
+        color: Colors.purple.withAlpha((0.7 * 255).round()),
+        strokeWidth: 3.0,
+        pattern: StrokePattern.dotted(),
+      );
+    } else {
+      _headingLine = null; // Ensure it's null if conditions aren't met
+    }
+  }
+
+  // Helper to build the core FlutterMap widget
+  Widget _buildFlutterMapWidget(
+    List<Marker> allMapMarkers,
+    List<LatLng> polylinePathPoints, {
+    required LatLng initialMapCenter,
+    required double initialMapZoom,
+  }) {
+    return FlutterMap(
+      mapController: _mapController,
+      options: MapOptions(
+        initialCenter: initialMapCenter,
+        initialZoom: initialMapZoom,
+        onTap: (tapPosition, latlng) {
+          if (_isMovePointMode) {
+            if (_selectedPointId != null) {
+              try {
+                final pointToMove = _projectPoints.firstWhere(
+                  (p) => p.id == _selectedPointId,
+                );
+                _handleMovePoint(pointToMove, latlng);
+              } catch (e) {
+                logger.warning(
+                  "Error finding point to move in onTap: $_selectedPointId. $e",
+                );
+                showErrorStatus(
+                  "Error: Selected point not found. Please select again.",
+                );
+                setState(() {
+                  // Exit move mode if selected point is lost
+                  _isMovePointMode = false;
+                  _selectedPointId = null;
+                  _selectedPointInstance = null;
+                });
+              }
+            } else {
+              showErrorStatus(
+                "No point selected to move. Tap a point first, then activate 'Move Point' mode.",
+              );
+            }
+          } else {
+            // If not in move mode, tapping the map deselects any selected point
+            if (_selectedPointId != null) {
+              setState(() {
+                _selectedPointId = null;
+                _selectedPointInstance = null;
+              });
+            }
+          }
+        },
+        onMapReady: () {
+          logger.info("MapToolView: Map is ready (onMapReady called).");
+          if (mounted) {
+            // Ensure widget is still mounted
+            setState(() {
+              _isMapReady = true;
+            });
+            // Now that map is ready, try to fit points (they might have loaded already)
+            _fitMapToPoints();
+          }
+        },
+      ),
+      children: [
+        TileLayer(
+          urlTemplate: _getTileLayerUrl(),
+          userAgentPackageName:
+              'com.jlbbooks.teleferika', // Recommended for OSM tile usage policy
+        ),
+        RichAttributionWidget(
+          attributions: [
+            TextSourceAttribution(
+              _getTileLayerAttribution(),
+              onTap: () {
+                final url = _getAttributionUrl();
+                if (url.isNotEmpty) {
+                  launchUrl(Uri.parse(url));
+                }
+              },
+            ),
+          ],
+        ),
+        if (polylinePathPoints.isNotEmpty)
+          PolylineLayer(
+            polylines: [
+              Polyline(
+                points: polylinePathPoints,
+                gradientColors: [
+                  Colors.green,
+                  Colors.yellow,
+                  Colors.red,
+                ],
+                colorsStop: [
+                  0.0, // Start with green
+                  0.5, // Transition to yellow by the midpoint
+                  1.0, // End with red
+                ],
+                strokeWidth: 3.0,
+              ),
+            ],
+          ),
+        if (_headingLine != null)
+          PolylineLayer(
+            polylines: [_headingLine!],
+          ),
+        if (_projectHeadingLine != null)
+          PolylineLayer(polylines: [_projectHeadingLine!]),
+        MarkerLayer(markers: allMapMarkers),
+      ],
+    );
+  }
+
+  void _recalculateHeadingLine() {
+    if (_projectPoints.length >= 2) {
+      _headingFromFirstToLast = calculateBearing(
+        LatLng(_projectPoints.first.latitude, _projectPoints.first.longitude),
+        LatLng(_projectPoints.last.latitude, _projectPoints.last.longitude),
+      );
+    } else {
+      _headingFromFirstToLast = null;
+    }
+  }
+
+  void _recalculateProjectHeadingLine() {
+    if (_projectPoints.isEmpty || widget.project.azimuth == null) {
+      if (mounted) {
+        setState(() => _projectHeadingLine = null);
+      }
+      return;
+    }
+
+    try {
+      final firstPoint = LatLng(
+        _projectPoints.first.latitude,
+        _projectPoints.first.longitude,
+      );
+      final projectHeading = widget.project.azimuth!;
+
+      // Define a length for the heading line (e.g., 1 km, adjust as needed)
+      // You might want to make this dynamic based on zoom level or map bounds later
+      const lineLengthKm = 1.0; // Example length: 1 kilometer
+
+      final endPoint = _calculateDestinationPoint(
+        firstPoint,
+        projectHeading,
+        lineLengthKm,
+      );
+
+      if (mounted) {
+        setState(() {
+          _projectHeadingLine = Polyline(
+            points: [firstPoint, endPoint],
+            strokeWidth: 2.0,
+            color: Colors.black, // Choose a distinct color
+            pattern: StrokePattern.dotted(),
+          );
+        });
+      }
+    } catch (e) {
+      logger.warning('Error calculating project heading line: $e');
+      if (mounted) {
+        setState(() => _projectHeadingLine = null);
+      }
     }
   }
 
@@ -795,395 +1254,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    if (_isLoadingPoints) {
-      return Stack(
-        children: [
-          Center(
-            child: CircularProgressIndicator(
-              key: ValueKey(
-                S.of(context)?.mapLoadingPointsIndicator ?? "Loading points...",
-              ),
-            ),
-          ),
-          Positioned(
-            top: 24,
-            right: 24,
-            child: StatusIndicator(
-              status: currentStatus,
-              onDismiss: hideStatus,
-            ),
-          ),
-        ],
-      );
-    }
-
-    // Prepare data for the map
-    _updateSelectedPointInstance(); // Helper to encapsulate selected point logic
-    final List<Marker> allMapMarkers = _buildAllMapMarkers();
-    final List<LatLng> polylinePathPoints = _buildPolylinePathPoints();
-    _updateHeadingLine(); // Helper to encapsulate heading line creation logic
-
-    // Defensive: Ensure initial center/zoom are valid
-    LatLng initialMapCenter = _defaultCenter;
-    double initialMapZoom = _defaultZoom;
-
-    if (_projectPoints.isNotEmpty) {
-      initialMapCenter = _getInitialCenter();
-      initialMapZoom = _getInitialZoom();
-    } else if (_currentPosition != null && _hasLocationPermission) {
-      initialMapCenter = LatLng(
-        _currentPosition!.latitude,
-        _currentPosition!.longitude,
-      );
-      initialMapZoom = _defaultZoom;
-    }
-
-    // Check for NaN or infinite values
-    if (initialMapCenter.latitude.isNaN ||
-        initialMapCenter.longitude.isNaN ||
-        initialMapZoom.isNaN ||
-        initialMapZoom.isInfinite) {
-      return Stack(
-        children: [
-          Center(
-            child: Text('Waiting for valid map data...'),
-          ),
-          Positioned(
-            top: 24,
-            right: 24,
-            child: StatusIndicator(
-              status: currentStatus,
-              onDismiss: hideStatus,
-            ),
-          ),
-        ],
-      );
-    }
-
-    return Stack(
-      children: [
-        Scaffold(
-          body: Stack(
-            children: [
-              _buildFlutterMapWidget(allMapMarkers, polylinePathPoints,
-                  initialMapCenter: initialMapCenter, initialMapZoom: initialMapZoom),
-              _buildPermissionOverlay(),
-              _buildPointDetailsPanel(),
-              // Floating action buttons positioned on the left
-              Positioned(
-                bottom: 24,
-                left: 24,
-                child: _buildFloatingActionButtons(),
-              ),
-              _buildMapTypeSelector(),
-            ],
-          ),
-        ),
-        Positioned(
-          top: 24,
-          right: 24,
-          child: StatusIndicator(
-            status: currentStatus,
-            onDismiss: hideStatus,
-          ),
-        ),
-      ],
-    );
-  }
-
-  // Helper to update _selectedPointInstance
-  void _updateSelectedPointInstance() {
-    _selectedPointInstance = null; // Reset before trying
-    if (_selectedPointId != null) {
-      try {
-        _selectedPointInstance = _projectPoints.firstWhere(
-          (p) => p.id == _selectedPointId,
-        );
-      } catch (e) {
-        logger.warning(
-          "Selected point ID $_selectedPointId not found in project points. Deselecting.",
-        );
-        // Using Future.microtask to avoid calling setState during build
-        Future.microtask(() {
-          if (mounted) {
-            setState(() {
-              _selectedPointId = null;
-              _selectedPointInstance = null; // Ensure it's null in state too
-            });
-          }
-        });
-      }
-    }
-  }
-
-  // Helper to build the list of all markers for the map
-  List<Marker> _buildAllMapMarkers() {
-    List<Marker> projectPointMarkers = _projectPoints.map((point) {
-      final bool isSelected = point.id == _selectedPointId;
-      return Marker(
-        width: 60,
-        height: 58,
-        point: LatLng(point.latitude, point.longitude),
-        child: _buildStandardMarkerView(context, point, isSelected: isSelected),
-      );
-    }).toList();
-
-    List<Marker> allMarkers = [...projectPointMarkers];
-
-    // Add heading label marker
-    if (_headingFromFirstToLast != null && _projectPoints.length >= 2) {
-      allMarkers.add(_buildHeadingLabelMarker());
-    }
-
-    // Add current position crosshair marker
-    if (_currentPosition != null && _hasLocationPermission) {
-      allMarkers.add(_buildCurrentPositionMarker());
-    }
-
-    return allMarkers;
-  }
-
-  // Helper specifically for the heading label marker
-  Marker _buildHeadingLabelMarker() {
-    final firstP = _projectPoints.first;
-    final lastP = _projectPoints.last;
-    final midLat = (firstP.latitude + lastP.latitude) / 2;
-    final midLon = (firstP.longitude + lastP.longitude) / 2;
-    final angleForRotation = _degreesToRadians(_headingFromFirstToLast!);
-
-    return Marker(
-      point: LatLng(midLat, midLon),
-      width: 120,
-      height: 30,
-      child: Transform.rotate(
-        angle: angleForRotation - (3.1415926535 / 2), // math.pi / 2
-        alignment: Alignment.center,
-        child: Card(
-          elevation: 2.0,
-          color: Colors.white.withAlpha((0.9 * 255).round()),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6.0),
-            side: BorderSide(
-              color: Colors.purple.withAlpha((0.7 * 255).round()),
-              width: 1,
-            ),
-          ),
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(3, 1, 3, 0),
-            decoration: BoxDecoration(
-              color: Colors.black.withAlpha((0.2 * 255).round()),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              'Heading: ${_headingFromFirstToLast!.toStringAsFixed(1)}°',
-              style: const TextStyle(color: Colors.black, fontSize: 12),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Helper specifically for the current position marker (crosshair)
-  Marker _buildCurrentPositionMarker() {
-    return Marker(
-      width: 30,
-      height: 30,
-      point: LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-      child:
-          _buildCrosshairMarker(), // Assuming _buildCrosshairMarker() returns the crosshair Icon/Widget
-    );
-  }
-
-  // Helper to prepare points for the main polyline connecting project points
-  List<LatLng> _buildPolylinePathPoints() {
-    if (!_isLoadingPoints && _projectPoints.length >= 2) {
-      return _projectPoints
-          .map((p) => LatLng(p.latitude, p.longitude))
-          .toList();
-    }
-    return []; // Return empty list if conditions not met
-  }
-
-  // Helper to update/create the _headingLine Polyline
-  void _updateHeadingLine() {
-    if (_headingFromFirstToLast != null && _projectPoints.length >= 2) {
-      _headingLine = Polyline(
-        points: [
-          LatLng(_projectPoints.first.latitude, _projectPoints.first.longitude),
-          LatLng(_projectPoints.last.latitude, _projectPoints.last.longitude),
-        ],
-        color: Colors.purple.withAlpha((0.7 * 255).round()),
-        strokeWidth: 3.0,
-        pattern: StrokePattern.dotted(),
-      );
-    } else {
-      _headingLine = null; // Ensure it's null if conditions aren't met
-    }
-  }
-
-  // Helper to build the core FlutterMap widget
-  Widget _buildFlutterMapWidget(
-    List<Marker> allMapMarkers,
-    List<LatLng> polylinePathPoints, {
-    required LatLng initialMapCenter,
-    required double initialMapZoom,
-  }) {
-    return FlutterMap(
-      mapController: _mapController,
-      options: MapOptions(
-        initialCenter: initialMapCenter,
-        initialZoom: initialMapZoom,
-        onTap: (tapPosition, latlng) {
-          if (_isMovePointMode) {
-            if (_selectedPointId != null) {
-              try {
-                final pointToMove = _projectPoints.firstWhere(
-                  (p) => p.id == _selectedPointId,
-                );
-                _handleMovePoint(pointToMove, latlng);
-              } catch (e) {
-                logger.warning(
-                  "Error finding point to move in onTap: $_selectedPointId. $e",
-                );
-                showErrorStatus(
-                  "Error: Selected point not found. Please select again.",
-                );
-                setState(() {
-                  // Exit move mode if selected point is lost
-                  _isMovePointMode = false;
-                  _selectedPointId = null;
-                  _selectedPointInstance = null;
-                });
-              }
-            } else {
-              showErrorStatus(
-                "No point selected to move. Tap a point first, then activate 'Move Point' mode.",
-              );
-            }
-          } else {
-            // If not in move mode, tapping the map deselects any selected point
-            if (_selectedPointId != null) {
-              setState(() {
-                _selectedPointId = null;
-                _selectedPointInstance = null;
-              });
-            }
-          }
-        },
-        onMapReady: () {
-          logger.info("MapToolView: Map is ready (onMapReady called).");
-          if (mounted) {
-            // Ensure widget is still mounted
-            setState(() {
-              _isMapReady = true;
-            });
-            // Now that map is ready, try to fit points (they might have loaded already)
-            _fitMapToPoints();
-          }
-        },
-      ),
-      children: [
-        TileLayer(
-          urlTemplate: _getTileLayerUrl(),
-          userAgentPackageName:
-              'com.jlbbooks.teleferika', // Recommended for OSM tile usage policy
-          // Add any other TileLayer options you had, like tms, additionalOptions etc.
-        ),
-        RichAttributionWidget(
-          // Include a stylish prebuilt attribution widget that meets all requirments
-          attributions: [
-            TextSourceAttribution(
-              _getTileLayerAttribution(),
-              onTap: () =>
-                  launchUrl(Uri.parse(_getAttributionUrl())), // (external)
-            ),
-            // Also add images...
-          ],
-        ),
-        if (polylinePathPoints.isNotEmpty)
-          PolylineLayer(
-            polylines: [
-              Polyline(
-                points: polylinePathPoints,
-                // color: Colors.black.withAlpha(
-                //   150,
-                // ), // Your original color and stroke
-                gradientColors: [
-                  // TODO: Example: From green to red
-                  Colors.green,
-                  Colors.yellow,
-                  Colors.red,
-                ],
-                colorsStop: [
-                  // Defines where each color transition happens
-                  0.0, // Start with green
-                  0.5, // Transition to yellow by the midpoint
-                  1.0, // End with red
-                ],
-                strokeWidth: 3.0,
-              ),
-            ],
-          ),
-        if (_headingLine != null)
-          PolylineLayer(
-            polylines: [_headingLine!],
-          ), // _headingLine is already a Polyline
-        if (_projectHeadingLine != null)
-          PolylineLayer(polylines: [_projectHeadingLine!]),
-        MarkerLayer(markers: allMapMarkers),
-      ],
-    );
-  }
-
-  void _recalculateHeadingLine() {
-    if (_projectPoints.length >= 2) {
-      _headingFromFirstToLast = calculateBearing(
-        LatLng(_projectPoints.first.latitude, _projectPoints.first.longitude),
-        LatLng(_projectPoints.last.latitude, _projectPoints.last.longitude),
-      );
-    } else {
-      _headingFromFirstToLast = null;
-    }
-  }
-
-  void _recalculateProjectHeadingLine() {
-    if (_projectPoints.isEmpty || widget.project.azimuth == null) {
-      if (mounted) setState(() => _projectHeadingLine = null);
-      return;
-    }
-
-    final firstPoint = LatLng(
-      _projectPoints.first.latitude,
-      _projectPoints.first.longitude,
-    );
-    final projectHeading = widget.project.azimuth!;
-
-    // Define a length for the heading line (e.g., 1 km, adjust as needed)
-    // You might want to make this dynamic based on zoom level or map bounds later
-    const lineLengthKm = 1.0; // Example length: 500 meters
-
-    final endPoint = _calculateDestinationPoint(
-      firstPoint,
-      projectHeading,
-      lineLengthKm,
-    );
-
-    if (mounted) {
-      setState(() {
-        _projectHeadingLine = Polyline(
-          points: [firstPoint, endPoint],
-          strokeWidth: 2.0,
-          color: Colors.black, // Choose a distinct color
-          pattern: StrokePattern.dotted(),
-        );
-      });
-    }
-  }
-
   // --- Action Handlers ---
   Future<void> _handleEditPoint() async {
     if (_selectedPointInstance == null) return;
@@ -1257,6 +1327,11 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   }
 
   Future<void> _handleDeletePoint() async {
+    if (_selectedPointInstance == null) {
+      showErrorStatus('No point selected to delete.');
+      return;
+    }
+    
     logger.info(
       "Delete tapped for point P${_selectedPointInstance!.ordinalNumber}",
     );
@@ -1264,18 +1339,30 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   }
 
   void _centerOnCurrentLocation() {
-    if (_currentPosition != null) {
+    if (_currentPosition == null) {
+      showInfoStatus('Current location not available. Please wait for GPS signal.');
+      return;
+    }
+    
+    try {
       _mapController.move(
         LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
         _mapController.camera.zoom,
       );
+      showSuccessStatus('Centered on your current location.');
+    } catch (e) {
+      logger.warning('Error centering on current location: $e');
+      showErrorStatus('Error centering on current location.');
     }
   }
 
   void _handleAddPointButtonPressed() {
-    // For now, just show a message that this would navigate to compass tab
-    // In the future, this could add a point directly from the map
-    showInfoStatus('Add point functionality would navigate to compass tab');
+    if (widget.onNavigateToCompassTab != null) {
+      widget.onNavigateToCompassTab!();
+      showInfoStatus('Navigating to compass tab to add new point.');
+    } else {
+      showInfoStatus('Add point functionality not available. Please use compass tab.');
+    }
   }
 
   // Method to handle deletion triggered from the side panel
