@@ -1,0 +1,3 @@
+[submodule "licensed_features_package"]
+    path = licensed_features_package
+    url = git@github.com:jlbbooks/teleferika_licenced_packages.git
