@@ -27,6 +27,7 @@
   "formFieldAzimuthLabel": "Azimut (°)",
   "formFieldProjectDateLabel": "Data Progetto",
   "formFieldLastUpdatedLabel": "Ultimo Aggiornamento",
+  "formFieldPresumedTotalLengthLabel": "Lunghezza totale presunta (m)",
   "buttonSave": "Salva",
   "buttonCalculateAzimuth": "Calcola Azimut",
   "buttonCalculate": "Calcola",
@@ -644,5 +645,6 @@
   "mapTypeSelector": "Tipo Mappa",
   "@mapTypeSelector": {
     "description": "Etichetta per il selettore del tipo di mappa."
-  }
+  },
+  "must_be_positive_validator": "Deve essere positivo."
 }

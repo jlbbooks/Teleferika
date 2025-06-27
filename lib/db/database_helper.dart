@@ -14,7 +14,7 @@ import 'models/project_model.dart';
 class DatabaseHelper {
   static const _databaseName = "Photogrammetry.db";
 
-  static const _databaseVersion = 8; // Incremented due to schema change
+  static const _databaseVersion = 9; // Incremented due to schema change and presumed_total_length
 
   DatabaseHelper._privateConstructor();
   static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
@@ -53,6 +53,7 @@ class DatabaseHelper {
         ${ProjectModel.columnNote} TEXT,
         ${ProjectModel.columnLastUpdate} TEXT,
         ${ProjectModel.columnDate} TEXT,
+        ${ProjectModel.columnPresumedTotalLength} REAL,
         FOREIGN KEY (${ProjectModel.columnStartingPointId}) REFERENCES ${PointModel.tableName} (${PointModel.columnId}) ON DELETE SET NULL,
         FOREIGN KEY (${ProjectModel.columnEndingPointId}) REFERENCES ${PointModel.tableName} (${PointModel.columnId}) ON DELETE SET NULL
       )
@@ -438,6 +439,21 @@ class DatabaseHelper {
         );
         // Depending on your error handling strategy, you might re-throw.
         // If the column was already removed or the table was already in the new state, this might not be critical.
+      }
+    }
+    if (oldVersion < 9) {
+      // Add presumed_total_length column to projects table
+      try {
+        await db.execute(
+          'ALTER TABLE ${ProjectModel.tableName} ADD COLUMN ${ProjectModel.columnPresumedTotalLength} REAL',
+        );
+        logger.info(
+          "Applied migration for version 9: Added ${ProjectModel.columnPresumedTotalLength} column",
+        );
+      } catch (e) {
+        logger.warning(
+          "Could not add ${ProjectModel.columnPresumedTotalLength} to ${ProjectModel.tableName} (may already exist): $e",
+        );
       }
     }
     logger.info("Database upgrade process complete.");

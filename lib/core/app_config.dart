@@ -38,6 +38,7 @@ class AppConfig {
     GlobalWidgetsLocalizations.delegate,
     GlobalCupertinoLocalizations.delegate,
   ];
+  static const bool saveButtonSavesWholeProject = true;
 
   // Private constructor to prevent instantiation if all members are static
   AppConfig._();

@@ -13,6 +13,7 @@ class ProjectModel {
   static const String columnAzimuth = 'azimuth';
   static const String columnLastUpdate = 'last_update';
   static const String columnDate = 'date';
+  static const String columnPresumedTotalLength = 'presumed_total_length';
 
   final String id;
   final String name;
@@ -22,6 +23,7 @@ class ProjectModel {
   final double? azimuth;
   final DateTime? lastUpdate; // Tracks when the record was last modified in DB
   final DateTime? date; // User-settable date for the project
+  final double? presumedTotalLength;
   final List<PointModel>
   points; // In-memory list of points for this project (not persisted in DB)
 
@@ -35,6 +37,7 @@ class ProjectModel {
     this.lastUpdate,
     this.date,
     List<PointModel>? points,
+    this.presumedTotalLength,
   }) : id = id ?? generateUuid(),
        points = points ?? const []; // Default to empty list
 
@@ -48,6 +51,7 @@ class ProjectModel {
       columnAzimuth: azimuth,
       columnLastUpdate: lastUpdate?.toIso8601String(),
       columnDate: date?.toIso8601String(),
+      columnPresumedTotalLength: presumedTotalLength,
       // points is not persisted in DB, so not included here
     };
   }
@@ -70,6 +74,7 @@ class ProjectModel {
           ? DateTime.tryParse(map[columnDate] as String)
           : null,
       points: points,
+      presumedTotalLength: map[columnPresumedTotalLength] as double?,
     );
   }
   ProjectModel copyWith({
@@ -88,6 +93,8 @@ class ProjectModel {
     DateTime? date,
     bool clearDate = false,
     List<PointModel>? points,
+    double? presumedTotalLength,
+    bool clearPresumedTotalLength = false,
   }) {
     return ProjectModel(
       id: id ?? this.id,
@@ -103,6 +110,7 @@ class ProjectModel {
       lastUpdate: clearLastUpdate ? null : (lastUpdate ?? this.lastUpdate),
       date: clearDate ? null : (date ?? this.date),
       points: points ?? this.points,
+      presumedTotalLength: clearPresumedTotalLength ? null : (presumedTotalLength ?? this.presumedTotalLength),
     );
   }
 
@@ -131,6 +139,7 @@ class ProjectModel {
             (other.date != null &&
                 date != null &&
                 other.date!.isAtSameMomentAs(date!))) &&
+        other.presumedTotalLength == presumedTotalLength &&
         _listEquals(other.points, points);
   }
 
@@ -152,6 +161,7 @@ class ProjectModel {
     azimuth,
     lastUpdate,
     date,
+    presumedTotalLength,
     Object.hashAll(points),
   );
 }

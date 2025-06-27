@@ -27,6 +27,7 @@
   "formFieldAzimuthLabel": "Azimuth (°)",
   "formFieldProjectDateLabel": "Project Date",
   "formFieldLastUpdatedLabel": "Last Updated",
+  "formFieldPresumedTotalLengthLabel": "Presumed Total Length (m)",
   "buttonSave": "Save",
   "buttonCalculateAzimuth": "Calculate Azimuth",
   "buttonCalculate": "Calculate",
@@ -570,5 +571,6 @@
   "mapTypeSelector": "Map Type",
   "@mapTypeSelector": {
     "description": "Label for the map type selector."
-  }
+  },
+  "must_be_positive_validator": "Must be positive."
 }

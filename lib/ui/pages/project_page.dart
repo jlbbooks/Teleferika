@@ -5,14 +5,12 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:intl/intl.dart';
 import 'package:teleferika/core/logger.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/licensing/licence_service.dart';
-import 'package:teleferika/licensing/licensed_features_loader.dart';
 import 'package:teleferika/ui/tabs/compass_tool_view.dart';
 import 'package:teleferika/ui/tabs/map_tool_view.dart';
 import 'package:teleferika/ui/tabs/points_tab.dart';
@@ -73,8 +71,6 @@ class _ProjectPageState extends State<ProjectPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  final GlobalKey<ProjectDetailsTabState> _detailsTabKey =
-      GlobalKey<ProjectDetailsTabState>();
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
   late DateTime? _projectDate;
@@ -88,8 +84,6 @@ class _ProjectPageState extends State<ProjectPage>
 
   final GlobalKey<PointsToolViewState> _pointsToolViewKey =
       GlobalKey<PointsToolViewState>();
-  final GlobalKey<MapToolViewState> _mapToolViewKey =
-      GlobalKey<MapToolViewState>();
 
   bool _isAddingPointFromCompassInProgress = false;
   bool _projectWasSuccessfullySaved = false;
@@ -97,11 +91,27 @@ class _ProjectPageState extends State<ProjectPage>
   final LicenceService _licenceService =
       LicenceService.instance; // Get instance
 
+  double? realTotalLength;
+  bool _pendingDeleteOnPop = false;
+
+  // Add a GlobalKey to access the ProjectDetailsTab state
+  final GlobalKey<ProjectDetailsTabState> _detailsTabKey =
+      GlobalKey<ProjectDetailsTabState>();
+
   @override
   void initState() {
     super.initState();
     _currentProject = widget.project;
-    _isEffectivelyNew = widget.isNew; // Initialize based on widget property
+    _isEffectivelyNew = widget.isNew;
+    _projectDate =
+        _currentProject.date ?? (widget.isNew ? DateTime.now() : null);
+    _lastUpdateTime = _currentProject.lastUpdate;
+    realTotalLength = _calculateRealTotalLength(_currentProject.points);
+    if (widget.isNew) {
+      _insertNewProjectToDb();
+    } else {
+      _loadProjectDetails();
+    }
 
     _tabController = TabController(
       length: ProjectPageTab.values.length,
@@ -120,192 +130,27 @@ class _ProjectPageState extends State<ProjectPage>
         setState(() {});
       }
     });
-
-    _projectDate =
-        _currentProject.date ?? (widget.isNew ? DateTime.now() : null);
-    _lastUpdateTime = _currentProject.lastUpdate;
-
-    if (!widget.isNew) {
-      logger.info(
-        "ProjectPage initialized for EXISTING project. ID: \\${_currentProject.id}, Name: \\${_currentProject.name}. Loading details...",
-      );
-      _loadProjectDetails();
-    } else {
-      logger.info(
-        "ProjectDetailsPage initialized for a NEW project. Name: \\${_currentProject.name}",
-      );
-    }
   }
 
-  void _onChanged() {
-    if (!_hasUnsavedChanges) {
+  Future<void> _insertNewProjectToDb() async {
+    // Insert the new project into the DB so points can be added
+    await _dbHelper.insertProject(_currentProject);
+    // Optionally reload from DB to get any DB-generated fields
+    final dbProject = await _dbHelper.getProjectById(_currentProject.id);
+    if (dbProject != null && mounted) {
       setState(() {
-        _hasUnsavedChanges = true;
+        _currentProject = dbProject;
+        _isEffectivelyNew = true;
       });
     }
   }
 
-  Future<void> _checkLicenceAndProceedToExport() async {
-    // Check if export feature is available
-    if (!LicensedFeaturesLoader.hasExportFeature) {
-      if (mounted) {
-        LicensedFeaturesLoader.showExportUpgradeDialog(context);
-      }
-      return;
-    }
-
-    // Check if license is valid
-    bool licenceIsValid = await _licenceService.isLicenceValid();
-
-    if (!licenceIsValid) {
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (BuildContext dialogContext) {
-            final dialogS = S.of(
-              dialogContext,
-            ); // Get S instance for dialog's context
-            return AlertDialog(
-              title: Text(
-                dialogS?.export_requires_licence_title ?? "Licence Required",
-              ),
-              content: Text(
-                dialogS?.export_requires_licence_message ??
-                    "Exporting project data requires an active licence. Please import a valid licence.",
-              ),
-              actions: <Widget>[
-                TextButton(
-                  child: Text(dialogS?.dialog_cancel ?? 'Cancel'),
-                  onPressed: () {
-                    Navigator.of(dialogContext).pop();
-                  },
-                ),
-                TextButton(
-                  child: Text(
-                    dialogS?.action_import_licence ?? 'Import Licence',
-                  ),
-                  onPressed: () async {
-                    Navigator.of(dialogContext).pop(); // Close current dialog
-                    try {
-                      final importedLicence = await _licenceService
-                          .importLicenceFromFile();
-                      if (mounted) {
-                        if (importedLicence != null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                'Licence for ${importedLicence.email} imported! Try exporting again.',
-                              ),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Licence import cancelled or failed.',
-                              ),
-                              backgroundColor: Colors.orange,
-                            ),
-                          );
-                        }
-                      }
-                    } on FormatException catch (e) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(e.message),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      }
-                    } catch (e) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Error importing licence: $e'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      }
-                    }
-                  },
-                ),
-              ],
-            );
-          },
-        );
-      }
-      return; // Stop export if licence is not valid
-    }
-
-    // If licence is valid, proceed to the actual export
-    _showExportOptions();
-  }
-
-  void _showExportOptions() {
-    if (!LicensedFeaturesLoader.hasExportFeature) {
-      LicensedFeaturesLoader.showExportUpgradeDialog(context);
-      return;
-    }
-
-    // Check if project is saved
-    if (_isEffectivelyNew || _hasUnsavedChanges) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please save the project before exporting.'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
-
-    // Get project points
-    _dbHelper
-        .getPointsForProject(_currentProject.id!)
-        .then((points) {
-          if (points.isEmpty) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('No points to export.'),
-                backgroundColor: Colors.orange,
-              ),
-            );
-            return;
-          }
-
-          // Use the licensed plugin to show export dialog
-          LicensedFeaturesLoader.showExportDialog(
-            context,
-            _currentProject,
-            points,
-            onExportComplete: (success) {
-              // Optional: Handle export completion if needed
-              if (success) {
-                logger.info('Project exported successfully');
-              } else {
-                logger.warning('Project export failed');
-              }
-            },
-          );
-        })
-        .catchError((e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error loading project points: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        });
-  }
-
-  void _switchToTab() {
-    // Dismiss keyboard when switching tabs
-    FocusScope.of(context).unfocus();
+  Future<void> _deleteProjectFromDb() async {
+    await _dbHelper.deleteProject(_currentProject.id);
   }
 
   Future<void> _loadProjectDetails() async {
-    setStateIfMounted(() => _isLoading = true);
+    setState(() => _isLoading = true);
     try {
       final projectDataFromDb = await _dbHelper.getProjectById(
         _currentProject.id,
@@ -315,445 +160,78 @@ class _ProjectPageState extends State<ProjectPage>
           _currentProject = projectDataFromDb;
           _projectDate = _currentProject.date;
           _lastUpdateTime = _currentProject.lastUpdate;
+          realTotalLength = _calculateRealTotalLength(_currentProject.points);
         });
       }
-      logger.info(
-        "Project details loaded/refreshed for ID: \\${_currentProject.id}",
-      );
-    } catch (e, stackTrace) {
-      logger.severe(
-        "Error loading project details for ID \\${_currentProject.id}",
-        e,
-        stackTrace,
-      );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              S.of(context)!.errorLoadingProjectDetails(e.toString()),
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
     } finally {
-      setStateIfMounted(() => _isLoading = false);
+      setState(() => _isLoading = false);
     }
   }
 
-  @override
-  void dispose() {
-    _tabController.removeListener(() {}); // Remove the listener
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  // --- Logic for Adding Point from Compass ---
-  Future<Position> _determinePosition() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      logger.warning('Location services are disabled.');
-      throw Exception('Location services are disabled.');
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        logger.warning('Location permissions are denied.');
-        throw Exception('Location permissions are denied');
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      logger.warning(
-        'Location permissions are permanently denied, we cannot request permissions.',
-      );
-      throw Exception(
-        'Location permissions are permanently denied, we cannot request permissions.',
-      );
-    }
-    return await Geolocator.getCurrentPosition();
-  }
-
-  Future<int> _getNextOrdinalNumber(String projectId) async {
-    final lastOrdinal = await _dbHelper.getLastPointOrdinal(projectId);
-    return (lastOrdinal ?? -1) + 1; // If no points, next ordinal is 0
-  }
-
-  Future<void> _initiateAddPointFromCompass(
-    BuildContext descendantContext,
-    double heading, {
-    bool? setAsEndPoint, // Added optional named parameter
-  }) async {
-    final bool addAsEndPoint =
-        setAsEndPoint ?? false; // Default to false if null
-
-    logger.info(
-      "Initiating add point. Heading: $heading, Project ID: ${_currentProject.id}, Explicit End Point: $setAsEndPoint",
-    );
-
-    // START loading indicator in CompassToolView by setting state
-    if (mounted) {
-      setState(() {
-        _isAddingPointFromCompassInProgress = true;
-      });
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(S.of(context)!.infoFetchingLocation),
-        duration: const Duration(seconds: 2), // Short duration
-      ),
-    );
-
-    PointModel? currentEndPointModel;
-    int? originalEndPointOrdinal;
-    int
-    newPointOrdinal; // This will be the ordinal for the point being added from compass
-
-    try {
-      final position = await _determinePosition();
-      // final nextOrdinal = await _getNextOrdinalNumber(_currentProject.id!);
-      if (!addAsEndPoint && _currentProject.endingPointId != null) {
-        // --- Case 1: NOT setting as new end point, AND an old end point exists ---
-        currentEndPointModel = await _dbHelper.getPointById(
-          _currentProject.endingPointId!,
-        );
-
-        if (currentEndPointModel != null) {
-          originalEndPointOrdinal = currentEndPointModel.ordinalNumber;
-          // The new point from compass will take the original end point's ordinal
-          newPointOrdinal = originalEndPointOrdinal;
-
-          // The OLD end point needs a new, higher ordinal
-          final int newOrdinalForOldEndPoint = await _getNextOrdinalNumber(
-            _currentProject.id,
-          );
-
-          PointModel updatedOldEndPoint = currentEndPointModel.copyWith(
-            ordinalNumber: newOrdinalForOldEndPoint,
-          );
-          await _dbHelper.updatePoint(updatedOldEndPoint);
-          logger.info(
-            "Old end point (ID: ${currentEndPointModel.id})'s ordinal shifted from $originalEndPointOrdinal to $newOrdinalForOldEndPoint.",
-          );
-        } else {
-          // Fallback if currentProject.endingPointId was set but point not found (data integrity issue)
-          logger.warning(
-            "Project's endingPointId ${_currentProject.endingPointId} not found in DB. Proceeding as if no end point.",
-          );
-          newPointOrdinal = await _getNextOrdinalNumber(_currentProject.id);
-        }
-      } else {
-        // --- Case 2: Setting as new end point OR no existing end point to shuffle ---
-        newPointOrdinal = await _getNextOrdinalNumber(_currentProject.id);
-      }
-
-      final pointFromCompass = PointModel(
-        projectId: _currentProject.id,
-        latitude: position.latitude,
-        longitude: position.longitude,
-        altitude: position.altitude,
-        ordinalNumber: newPointOrdinal,
-        note: S
-            .of(context)!
-            .pointFromCompassDefaultNote(heading.toStringAsFixed(1)),
-      );
-
-      final newPointIdFromCompass = await _dbHelper.insertPoint(
-        pointFromCompass,
-      );
-      logger.info(
-        'Point added via Compass: ID $newPointIdFromCompass, Lat: \\${position.longitude}, Lon: \\${position.longitude}, Heading used for note: $heading, Ordinal: \\${pointFromCompass.ordinalNumber}',
-      );
-
-      // AFTER point is inserted, update the project's start/end points
-      if (addAsEndPoint) {
-        // Update the project's endingPointId with the newPointIdFromCompass
-        // Create a copy of _currentProject to modify its endingPointId
-        ProjectModel projectToUpdate = _currentProject.copyWith(
-          endingPointId: newPointIdFromCompass,
-        );
-        await _dbHelper.updateProject(projectToUpdate);
-        logger.info(
-          "New point ID $newPointIdFromCompass set as the END point for project ${_currentProject.id}.",
-        );
-      }
-      // If !addAsExplicitEndPoint, _currentProject.endingPointId remains unchanged,
-      // pointing to the ID of the original end point (which now has a new ordinal).
-
-      // This method should now correctly identify start and end points based on their IDs
-      // and potentially their ordinals (if it falls back to highest ordinal for end point if not set).
-      await _dbHelper.updateProjectStartEndPoints(_currentProject.id);
-
-      await _loadProjectDetails();
-
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).removeCurrentSnackBar(); // Remove "Fetching location..."
-        String baseMessage = S
-            .of(context)!
-            .pointAddedSnackbar(pointFromCompass.ordinalNumber.toString());
-        String suffix = "";
-        if (addAsEndPoint == true) {
-          // Explicitly check for true if addAsEndPoint is bool?
-          suffix = " ${S.of(context)!.pointAddedSetAsEndSnackbarSuffix}";
-        } else if (currentEndPointModel != null) {
-          suffix =
-              " ${S.of(context)!.pointAddedInsertedBeforeEndSnackbarSuffix}";
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(baseMessage + suffix),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-
-      // Refresh PointsToolView if it's active or if you always want it updated
-      _pointsToolViewKey.currentState
-          ?.refreshPoints(); // Call refreshPoints on PointsToolView
-
-      // If the compass tool is active, and you want to switch to points view
-    } catch (e, stackTrace) {
-      logger.severe("Error adding point from compass", e, stackTrace);
-      if (mounted) {
-        ScaffoldMessenger.of(context).removeCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(S.of(context)!.errorAddingPoint(e.toString())),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      // STOP loading indicator in CompassToolView
-      if (mounted) {
-        setState(() {
-          _isAddingPointFromCompassInProgress = false;
-        });
-      }
-    }
-  }
-  // --- End Logic for Adding Point ---
-
-  void setStateIfMounted(VoidCallback fn) {
-    if (mounted) {
-      setState(fn);
-    }
-  }
-
-  Future<void> _selectProjectDate(BuildContext context) async {
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: _projectDate ?? DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime(2101),
-    );
-
-    if (pickedDate != null && pickedDate != _projectDate) {
-      setStateIfMounted(() {
-        _projectDate = pickedDate;
-        _hasUnsavedChanges = true;
-      });
-    }
-  }
-
-  Future<bool?> _saveProject() async {
+  Future<bool?> _saveProject(ProjectModel updated) async {
     if (_isLoading) return null;
-
-    if (_detailsTabKey.currentState?.validateForm() ?? false) {
-      setState(() => _isLoading = true);
-
-      // Use _currentProject, which is kept up-to-date by ProjectDetailsTab
-      ProjectModel projectToSave = _currentProject.copyWith(
-        id: _currentProject.id,
+    setState(() => _isLoading = true);
+    try {
+      final projectToSave = updated.copyWith(
         date: _projectDate,
         lastUpdate: DateTime.now(),
-        startingPointId: _currentProject.startingPointId,
-        endingPointId: _currentProject.endingPointId,
       );
-
-      try {
-        if (_isEffectivelyNew) {
-          await _dbHelper.insertProject(projectToSave);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(S.of(context)!.project_created_successfully),
-                backgroundColor: Colors.green,
-              ),
-            );
-            _hasUnsavedChanges = false;
-            _isEffectivelyNew =
-                false; // It's no longer 'new' for this page instance
-            _projectWasSuccessfullySaved = true;
-            setState(
-              () {},
-            ); // To refresh display with new ID/lastUpdate if needed
-          }
-        } else {
-          // For an existing project, update it
-          int updatedRows = await _dbHelper.updateProject(projectToSave);
-          if (updatedRows > 0) {
+      if (_isEffectivelyNew) {
+        await _dbHelper.updateProject(projectToSave);
+        setState(() {
+          _isEffectivelyNew = false;
+          _projectWasSuccessfullySaved = true;
+          _hasUnsavedChanges = false;
+          _currentProject = projectToSave;
+        });
+      } else {
+        int updatedRows = await _dbHelper.updateProject(projectToSave);
+        if (updatedRows > 0) {
+          setState(() {
             _currentProject = projectToSave;
             _lastUpdateTime = _currentProject.lastUpdate;
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(S.of(context)!.projectSavedSuccessfully),
-                  backgroundColor: Colors.green,
-                ),
-              );
-              _hasUnsavedChanges = false;
-              _projectWasSuccessfullySaved = true;
-              setState(() {}); // To refresh display of lastUpdate
-            }
-          } else {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(S.of(context)!.project_already_up_to_date),
-                  backgroundColor: Colors.orangeAccent,
-                ),
-              );
-            }
-          }
-        }
-      } catch (e, stackTrace) {
-        logger.severe("Error saving project: $e", e, stackTrace);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(S.of(context)!.error_saving_project(e.toString())),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
+            _hasUnsavedChanges = false;
+            _projectWasSuccessfullySaved = true;
           });
         }
       }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(S.of(context)!.please_correct_form_errors),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      // Do NOT pop here; just update state
+      return true;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving project: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return false;
+    } finally {
+      setState(() => _isLoading = false);
     }
-    return _projectWasSuccessfullySaved;
   }
 
-  Future<void> _confirmDeleteProject() async {
-    if (_isEffectivelyNew || _currentProject.id == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(S.of(context)!.cannot_delete_unsaved_project),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
-
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        final s = S.of(context); // Get S instance for localizations
-        return AlertDialog(
-          title: const Text('Confirm Delete'),
-          content: Text(
-            s?.confirm_delete_project_content(_currentProject.name) ??
-                'Are you sure you want to delete the project "${_currentProject.name}"? This action cannot be undone.',
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text(s?.buttonCancel ?? 'Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop(false); // User canceled
-              },
-            ),
-            TextButton(
-              child: Text(
-                s?.buttonDelete ?? 'Delete',
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop(true); // User confirmed
-              },
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed == true) {
-      if (_isLoading) return; // Prevent multiple delete attempts
-      setState(() {
-        _isLoading = true;
-      });
-
-      try {
-        int deletedRows = await _dbHelper.deleteProject(_currentProject.id!);
-        if (deletedRows > 0) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(S.of(context)!.project_deleted_successfully),
-                backgroundColor: Colors.green,
-              ),
-            );
-            Navigator.of(
-              context,
-            ).pop({'action': 'deleted', 'id': _currentProject.id!});
-          }
-        } else {
-          // This case might indicate the project was already deleted or not found
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(S.of(context)!.project_not_found_or_deleted),
-                backgroundColor: Colors.orangeAccent,
-              ),
-            );
-          }
-        }
-      } catch (e, stackTrace) {
-        logger.severe("Error deleting project: $e", e, stackTrace);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                S.of(context)!.error_deleting_project(e.toString()),
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      }
-    }
+  void _onProjectDetailsChanged(
+    ProjectModel updated, {
+    bool hasUnsavedChanges = false,
+  }) {
+    setState(() {
+      _currentProject = updated;
+      _hasUnsavedChanges = hasUnsavedChanges;
+    });
   }
 
   void _handleOnPopInvokedWithResult(bool didPop, Object? result) async {
-    final s = S.of(context); // Get S instance for localizations
-    if (didPop) {
+    if (didPop) return;
+    if (_isEffectivelyNew && !_projectWasSuccessfullySaved) {
+      // Delete the project from DB if it was never saved
+      await _deleteProjectFromDb();
+      if (mounted) Navigator.of(context).pop();
       return;
     }
     if (_hasUnsavedChanges) {
+      final s = S.of(context);
       final bool? shouldPop = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
@@ -775,70 +253,309 @@ class _ProjectPageState extends State<ProjectPage>
         ),
       );
       if (shouldPop == true) {
-        // ignore: use_build_context_synchronously
-        if (mounted) Navigator.of(context).pop();
+        if (mounted) {
+          if (_projectWasSuccessfullySaved) {
+            Navigator.of(
+              context,
+            ).pop({'action': 'saved', 'id': _currentProject.id});
+          } else {
+            Navigator.of(context).pop();
+          }
+        }
       }
     } else {
-      // No unsaved changes, so we can pop.
-      // Now check if a save occurred at any point.
-      if (mounted) {
-        if (_projectWasSuccessfullySaved) {
-          Navigator.of(context).pop<Map<String, dynamic>>({
-            'action': 'saved', // Or 'saved_and_exited'
-            'id': _currentProject.id, // Pass the latest saved state
-          });
-        } else {
-          // No unsaved changes, and no save occurred during this page's lifetime
+      // Pop with 'saved' if project was ever saved, otherwise 'navigated_back'
+      if (mounted && _projectWasSuccessfullySaved) {
+        Navigator.of(
+          context,
+        ).pop({'action': 'saved', 'id': _currentProject.id});
+      } else if (mounted && !_isEffectivelyNew) {
+        Navigator.of(
+          context,
+        ).pop({'action': 'navigated_back', 'id': _currentProject.id});
+      } else if (mounted) {
+        Navigator.of(context).pop();
+      }
+    }
+  }
+
+  Future<void> _confirmDeleteProject() async {
+    final s = S.of(context);
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(s?.delete_project_tooltip ?? 'Delete Project'),
+          content: Text(
+            s?.confirm_delete_project_content(_currentProject.name) ??
+                'Are you sure you want to delete the project "${_currentProject.name}"? This action cannot be undone.',
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(s?.buttonCancel ?? 'Cancel'),
+              onPressed: () => Navigator.of(context).pop(false),
+            ),
+            TextButton(
+              child: Text(
+                s?.buttonDelete ?? 'Delete',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+              onPressed: () => Navigator.of(context).pop(true),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed == true) {
+      setState(() => _isLoading = true);
+      try {
+        await _deleteProjectFromDb();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                s?.project_deleted_successfully ?? 'Project deleted.',
+              ),
+              backgroundColor: Colors.green,
+            ),
+          );
           Navigator.of(
             context,
-          ).pop(); //({'action': 'no_changes_made'}); // Or simply pop() for null
+          ).pop({'action': 'deleted', 'id': _currentProject.id});
         }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                s?.error_deleting_project(e.toString()) ??
+                    'Error deleting project: $e',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _calculateAzimuth() {
+    final s = S.of(context);
+    if (_currentProject.points.length < 2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            s?.errorAzimuthPointsNotSet ?? 'At least two points are required.',
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+    final startPoint = _currentProject.points.first;
+    final endPoint = _currentProject.points.last;
+    if (startPoint.id == endPoint.id) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            s?.errorAzimuthPointsSame ??
+                'Start and end points must be different.',
+          ),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+    double _degreesToRadians(double degrees) =>
+        degrees * 3.141592653589793 / 180.0;
+    double _radiansToDegrees(double radians) =>
+        radians * 180.0 / 3.141592653589793;
+    double calculateBearingFromPoints(PointModel start, PointModel end) {
+      final double lat1Rad = _degreesToRadians(start.latitude);
+      final double lon1Rad = _degreesToRadians(start.longitude);
+      final double lat2Rad = _degreesToRadians(end.latitude);
+      final double lon2Rad = _degreesToRadians(end.longitude);
+      final double dLon = lon2Rad - lon1Rad;
+      final double y = math.sin(dLon) * math.cos(lat2Rad);
+      final double x =
+          math.cos(lat1Rad) * math.sin(lat2Rad) -
+          math.sin(lat1Rad) * math.cos(lat2Rad) * math.cos(dLon);
+      double bearingRad = math.atan2(y, x);
+      double bearingDeg = _radiansToDegrees(bearingRad);
+      return (bearingDeg + 360) % 360;
+    }
+
+    final double calculatedAzimuth = calculateBearingFromPoints(
+      startPoint,
+      endPoint,
+    );
+    // Update the azimuth in the form via the tab's state
+    _detailsTabKey.currentState?.setAzimuthFromParent(calculatedAzimuth);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          s?.azimuthCalculatedSnackbar(calculatedAzimuth.toStringAsFixed(2)) ??
+              'Azimuth calculated.',
+        ),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  Future<Position> _determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      throw Exception('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        throw Exception('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      throw Exception('Location permissions are permanently denied.');
+    }
+
+    return await Geolocator.getCurrentPosition();
+  }
+
+  Future<int> _getNextOrdinalNumber(String projectId) async {
+    final lastOrdinal = await _dbHelper.getLastPointOrdinal(projectId);
+    return (lastOrdinal ?? -1) + 1;
+  }
+
+  Future<void> _initiateAddPointFromCompass(
+    BuildContext descendantContext,
+    double heading, {
+    bool? setAsEndPoint,
+  }) async {
+    final bool addAsEndPoint = setAsEndPoint ?? false;
+    logger.info(
+      "Initiating add point. Heading: $heading, Project ID: \\${_currentProject.id}, Explicit End Point: $setAsEndPoint",
+    );
+    if (mounted) {
+      setState(() {
+        _isAddingPointFromCompassInProgress = true;
+      });
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(S.of(context)!.infoFetchingLocation),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+    PointModel? currentEndPointModel;
+    int? originalEndPointOrdinal;
+    int newPointOrdinal;
+    try {
+      final position = await _determinePosition();
+      if (!addAsEndPoint && _currentProject.endingPointId != null) {
+        currentEndPointModel = await _dbHelper.getPointById(
+          _currentProject.endingPointId!,
+        );
+        if (currentEndPointModel != null) {
+          originalEndPointOrdinal = currentEndPointModel.ordinalNumber;
+          newPointOrdinal = originalEndPointOrdinal;
+          final int newOrdinalForOldEndPoint = await _getNextOrdinalNumber(
+            _currentProject.id,
+          );
+          PointModel updatedOldEndPoint = currentEndPointModel.copyWith(
+            ordinalNumber: newOrdinalForOldEndPoint,
+          );
+          await _dbHelper.updatePoint(updatedOldEndPoint);
+          logger.info(
+            "Old end point (ID: \\${currentEndPointModel.id})'s ordinal shifted from $originalEndPointOrdinal to $newOrdinalForOldEndPoint.",
+          );
+        } else {
+          logger.warning(
+            "Project's endingPointId \\${_currentProject.endingPointId} not found in DB. Proceeding as if no end point.",
+          );
+          newPointOrdinal = await _getNextOrdinalNumber(_currentProject.id);
+        }
+      } else {
+        newPointOrdinal = await _getNextOrdinalNumber(_currentProject.id);
+      }
+      final pointFromCompass = PointModel(
+        projectId: _currentProject.id,
+        latitude: position.latitude,
+        longitude: position.longitude,
+        altitude: position.altitude,
+        ordinalNumber: newPointOrdinal,
+        note: S
+            .of(context)!
+            .pointFromCompassDefaultNote(heading.toStringAsFixed(1)),
+      );
+      final newPointIdFromCompass = await _dbHelper.insertPoint(
+        pointFromCompass,
+      );
+      logger.info(
+        'Point added via Compass: ID $newPointIdFromCompass, Lat: \\${position.latitude}, Lon: \\${position.longitude}, Heading used for note: $heading, Ordinal: \\${pointFromCompass.ordinalNumber}',
+      );
+      if (addAsEndPoint) {
+        ProjectModel projectToUpdate = _currentProject.copyWith(
+          endingPointId: newPointIdFromCompass,
+        );
+        await _dbHelper.updateProject(projectToUpdate);
+        logger.info(
+          "New point ID $newPointIdFromCompass set as the END point for project \\${_currentProject.id}.",
+        );
+      }
+      await _dbHelper.updateProjectStartEndPoints(_currentProject.id);
+      await _loadProjectDetails();
+      if (mounted) {
+        ScaffoldMessenger.of(context).removeCurrentSnackBar();
+        String baseMessage = S
+            .of(context)!
+            .pointAddedSnackbar(pointFromCompass.ordinalNumber.toString());
+        String suffix = "";
+        if (addAsEndPoint == true) {
+          suffix = " \\${S.of(context)!.pointAddedSetAsEndSnackbarSuffix}";
+        } else if (currentEndPointModel != null) {
+          suffix =
+              " \\${S.of(context)!.pointAddedInsertedBeforeEndSnackbarSuffix}";
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(baseMessage + suffix),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+      _pointsToolViewKey.currentState?.refreshPoints();
+    } catch (e, stackTrace) {
+      logger.severe("Error adding point from compass", e, stackTrace);
+      if (mounted) {
+        ScaffoldMessenger.of(context).removeCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(S.of(context)!.errorAddingPoint(e.toString())),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isAddingPointFromCompassInProgress = false;
+        });
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final s = S.of(context); // Get S instance for localizations
-    if (s == null) {
-      logger.warning(
-        "S.of(context) is null in ProjectPage build. UI may not be localized.",
-      );
-      // Handle fallback if necessary, or proceed with default strings in tooltips/text
-    }
-
-    String formattedProjectDate;
-    if (_projectDate != null) {
-      // Use a common, locale-aware skeleton.
-      // yMMMd() is a good general purpose format (e.g., "Sep 10, 2023" or "10 Sep 2023")
-      // You can explore other skeletons like:
-      // DateFormat.yMd(Localizations.localeOf(context).toString()).format(_projectDate!)
-      // DateFormat.yMEd(Localizations.localeOf(context).toString()).format(_projectDate!) // Includes day of week
-      // DateFormat.MMMMEEEEd(Localizations.localeOf(context).toString()).format(_projectDate!) // Very verbose
-
-      // Get the current locale from the context
-      final locale = Localizations.localeOf(context).toString();
-      formattedProjectDate = DateFormat.yMMMd(locale).format(_projectDate!);
-    } else {
-      formattedProjectDate = s?.tap_to_set_date ?? 'Tap to set date';
-    }
-    String formattedLastUpdate = _lastUpdateTime != null
-        ? DateFormat.yMMMd(
-            Localizations.localeOf(context).toString(),
-          ).add_Hm().format(_lastUpdateTime!)
-        : s?.not_yet_saved_label ?? 'Not yet saved';
-
-    // Determine the title based on whether it's a new project or editing an existing one
-    String appBarTitle;
-    if (_isEffectivelyNew) {
-      appBarTitle = s?.new_project_title ?? 'New Project';
-    } else {
-      appBarTitle =
-          s?.edit_project_title_named(_currentProject.name) ??
-          _currentProject.name;
-    }
-
+    final s = S.of(context);
     final orientation = MediaQuery.of(context).orientation;
+    final saveButtonColor = _hasUnsavedChanges ? Colors.green : null;
     Widget tabBarViewWidget = TabBarView(
       controller: _tabController,
       children: [
@@ -846,14 +563,26 @@ class _ProjectPageState extends State<ProjectPage>
           key: _detailsTabKey,
           project: _currentProject,
           isNew: _isEffectivelyNew,
-          projectDate: _projectDate,
-          lastUpdateTime: _lastUpdateTime,
+          pointsCount: _currentProject.points.length,
           onChanged: _onProjectDetailsChanged,
           onSaveProject: _saveProject,
+          onCalculateAzimuth: _calculateAzimuth,
         ),
         PointsTab(
           project: _currentProject,
-          onPointsChanged: _handlePointsChanged,
+          onPointsChanged: () async {
+            final updatedProject = await _dbHelper.getProjectById(
+              _currentProject.id,
+            );
+            if (updatedProject != null && mounted) {
+              setState(() {
+                _currentProject = updatedProject;
+                realTotalLength = _calculateRealTotalLength(
+                  _currentProject.points,
+                );
+              });
+            }
+          },
         ),
         CompassToolView(
           project: _currentProject,
@@ -862,7 +591,19 @@ class _ProjectPageState extends State<ProjectPage>
         ),
         MapToolView(
           project: _currentProject,
-          onPointsChanged: _handlePointsChanged,
+          onPointsChanged: () async {
+            final updatedProject = await _dbHelper.getProjectById(
+              _currentProject.id,
+            );
+            if (updatedProject != null && mounted) {
+              setState(() {
+                _currentProject = updatedProject;
+                realTotalLength = _calculateRealTotalLength(
+                  _currentProject.points,
+                );
+              });
+            }
+          },
         ),
       ],
     );
@@ -884,115 +625,81 @@ class _ProjectPageState extends State<ProjectPage>
         text: s?.map_tab_label ?? "Map",
       ),
     ];
-
     List<Widget> tabBarActions = [
-      // Only show delete button on the Details tab
-      if (!_isEffectivelyNew &&
-          _tabController.index == ProjectPageTab.details.index)
+      if (!_isEffectivelyNew)
         IconButton(
           icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
           onPressed: _isLoading ? null : _confirmDeleteProject,
           tooltip: s?.delete_project_tooltip ?? 'Delete Project',
         ),
-      if (!_isEffectivelyNew)
-        IconButton(
-          icon: const Icon(
-            Icons.output,
-          ), // Or Icons.ios_share, Icons.file_upload
-          // Using the localized string for the tooltip
-          tooltip: s?.export_project_data_tooltip ?? 'Export Project Data',
-          onPressed: (_isEffectivelyNew || _isLoading)
-              ? null // Disable if project is new and never saved, or if loading
-              : _checkLicenceAndProceedToExport,
-        ),
-      // Only show save button on the Details tab
       if (_tabController.index == ProjectPageTab.details.index)
         IconButton(
-          icon: Icon(_hasUnsavedChanges ? Icons.save : Icons.save_outlined),
-          onPressed: _isLoading
+          icon: Icon(Icons.save, color: saveButtonColor),
+          onPressed: _isLoading || !_hasUnsavedChanges
               ? null
-              : () {
-                  // Only validate if on the details tab, or always if you want
-                  if (_tabController.index == ProjectPageTab.details.index) {
-                    final isValid =
-                        _detailsTabKey.currentState?.validateForm() ?? false;
-                    if (!isValid) {
-                      // Optionally show a message
-                      return;
-                    }
-                  }
-                  _saveProject();
+              : () async {
+                  await _saveProject(_currentProject);
                 },
           tooltip: s?.save_project_tooltip ?? 'Save Project',
-          color: _hasUnsavedChanges
-              ? Theme.of(context).colorScheme.primary
-              : null,
         ),
     ];
-
     if (orientation == Orientation.portrait) {
-      // Portrait layout
       return Scaffold(
         key: _scaffoldKey,
         appBar: AppBar(
-          title: Text(appBarTitle),
+          title: Text(
+            _isEffectivelyNew
+                ? (s?.new_project_title ?? 'New Project')
+                : (s?.edit_project_title_named(_currentProject.name) ??
+                      _currentProject.name),
+          ),
           actions: tabBarActions,
           bottom: TabBar(
             controller: _tabController,
-            isScrollable:
-                false, // Set to true if you have many tabs that don't fit
+            isScrollable: false,
             tabs: tabWidgets,
           ),
         ),
         body: PopScope(
-          // Use PopScope for "are you sure you want to leave" dialog
           canPop: false,
           onPopInvokedWithResult: _handleOnPopInvokedWithResult,
           child: tabBarViewWidget,
         ),
       );
     } else {
-      // Horizontal layout
+      // Horizontal layout (similar logic)
       return Scaffold(
         key: _scaffoldKey,
         appBar: AppBar(
-          title: Text(appBarTitle),
+          title: Text(
+            _isEffectivelyNew
+                ? (s?.new_project_title ?? 'New Project')
+                : (s?.edit_project_title_named(_currentProject.name) ??
+                      _currentProject.name),
+          ),
           actions: tabBarActions,
-          // No bottom TabBar in AppBar for landscape
         ),
         body: PopScope(
-          // Use PopScope for "are you sure you want to leave" dialog
           canPop: false,
           onPopInvokedWithResult: _handleOnPopInvokedWithResult,
           child: Row(
             children: <Widget>[
-              // Vertical TabBar on the side
               Material(
-                // Optional: to provide a background color and elevation
-                elevation: 4.0, // Example elevation
+                elevation: 4.0,
                 child: RotatedBox(
-                  // Use RotatedBox if you want to reuse TabBar, but it can be tricky
-                  // A custom Column of InkWell/GestureDetector widgets might be easier for vertical tabs
-                  quarterTurns: 3, // Rotate a horizontal TabBar to be vertical
-                  // Note: This might not look perfect and might need width constraints
+                  quarterTurns: 3,
                   child: TabBar(
                     controller: _tabController,
-                    isScrollable:
-                        false, // Likely needed for vertical tabs if text is present
-                    indicatorWeight: 2.0, // Adjust as needed
-                    indicatorSize: TabBarIndicatorSize.tab, // Adjust as needed
+                    isScrollable: false,
+                    indicatorWeight: 2.0,
+                    indicatorSize: TabBarIndicatorSize.tab,
                     labelPadding: EdgeInsets.fromLTRB(0.0, 8, 0, 8),
                     tabs: tabWidgets
                         .map((tab) => RotatedBox(quarterTurns: 1, child: tab))
-                        .toList(), // Counter-rotate tab content
-                    // You might need to set a specific width for this vertical TabBar
-                    // e.g., using a SizedBox or ConstrainedBox
+                        .toList(),
                   ),
                 ),
               ),
-
-              // Alternative: A custom vertical tab bar implementation
-              // buildVerticalTabBar(context, _tabController, tabWidgets, s),
               Expanded(child: tabBarViewWidget),
             ],
           ),
@@ -1001,53 +708,29 @@ class _ProjectPageState extends State<ProjectPage>
     }
   }
 
-  void _onProjectDetailsChanged(
-    ProjectModel updatedProject, {
-    bool hasUnsavedChanges = false,
-    DateTime? projectDate,
-    DateTime? lastUpdateTime,
-  }) {
-    // Check if there are actual changes that need to be saved
-    bool hasRealChanges = false;
-
-    // Compare with original project data
-    if (widget.project.name != updatedProject.name ||
-        widget.project.note != updatedProject.note ||
-        widget.project.azimuth != updatedProject.azimuth ||
-        widget.project.date != updatedProject.date) {
-      hasRealChanges = true;
+  double _calculateRealTotalLength(List<PointModel> points) {
+    if (points.length < 2) return 0.0;
+    double total = 0.0;
+    for (int i = 1; i < points.length; i++) {
+      total += _distanceBetween(points[i - 1], points[i]);
     }
-
-    setState(() {
-      if (!hasUnsavedChanges) {
-        // Only update _currentProject when changes are committed (e.g., on save)
-        _currentProject = updatedProject;
-      }
-      _hasUnsavedChanges = hasRealChanges;
-      if (projectDate != null) _projectDate = projectDate;
-      if (lastUpdateTime != null) _lastUpdateTime = lastUpdateTime;
-    });
+    return total;
   }
 
-  Future<void> _handlePointsChanged() async {
-    // Reload the project from the DB to get the latest points
-    final updatedProject = await _dbHelper.getProjectById(_currentProject.id);
-    if (updatedProject != null && mounted) {
-      setState(() {
-        _currentProject = updatedProject;
-      });
-    }
-  }
-
-  void _onCompassAction() {
-    setState(() {
-      // Optionally reload project or update state if needed
-    });
-  }
-
-  void _onMapAction() {
-    setState(() {
-      // Optionally reload project or update state if needed
-    });
+  double _distanceBetween(PointModel a, PointModel b) {
+    const double R = 6371000;
+    final double lat1 = _degreesToRadians(a.latitude);
+    final double lon1 = _degreesToRadians(a.longitude);
+    final double lat2 = _degreesToRadians(b.latitude);
+    final double lon2 = _degreesToRadians(b.longitude);
+    final double dLat = lat2 - lat1;
+    final double dLon = lon2 - lon1;
+    final double h =
+        (math.sin(dLat / 2) * math.sin(dLat / 2)) +
+        math.cos(lat1) *
+            math.cos(lat2) *
+            (math.sin(dLon / 2) * math.sin(dLon / 2));
+    final double c = 2 * math.atan2(math.sqrt(h), math.sqrt(1 - h));
+    return R * c;
   }
 }

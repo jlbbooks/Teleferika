@@ -47,6 +47,9 @@ class SEn extends S {
   String get formFieldLastUpdatedLabel => 'Last Updated';
 
   @override
+  String get formFieldPresumedTotalLengthLabel => 'Presumed Total Length (m)';
+
+  @override
   String get buttonSave => 'Save';
 
   @override
@@ -556,4 +559,7 @@ class SEn extends S {
 
   @override
   String get mapTypeSelector => 'Map Type';
+
+  @override
+  String get must_be_positive_validator => 'Must be positive.';
 }

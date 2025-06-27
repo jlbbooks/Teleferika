@@ -47,6 +47,10 @@ class SIt extends S {
   String get formFieldLastUpdatedLabel => 'Ultimo Aggiornamento';
 
   @override
+  String get formFieldPresumedTotalLengthLabel =>
+      'Lunghezza totale presunta (m)';
+
+  @override
   String get buttonSave => 'Salva';
 
   @override
@@ -559,4 +563,7 @@ class SIt extends S {
 
   @override
   String get mapTypeSelector => 'Tipo Mappa';
+
+  @override
+  String get must_be_positive_validator => 'Deve essere positivo.';
 }

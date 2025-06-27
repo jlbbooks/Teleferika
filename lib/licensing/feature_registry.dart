@@ -99,13 +99,6 @@ class FeatureRegistry {
     _registerCoreFeatures();
   }
 
-  /// Try to register licensed features
-  static Future<void> _tryRegisterLicensedFeatures() async {
-    // This method is no longer needed since licensed features
-    // are registered explicitly in main.dart
-    logger.info('Licensed features registration handled in main.dart');
-  }
-
   /// Register core features that are always available
   static void _registerCoreFeatures() {
     registerPlugin(CoreFeaturesPlugin());

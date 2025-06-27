@@ -169,6 +169,12 @@ abstract class S {
   /// **'Last Updated'**
   String get formFieldLastUpdatedLabel;
 
+  /// No description provided for @formFieldPresumedTotalLengthLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Presumed Total Length (m)'**
+  String get formFieldPresumedTotalLengthLabel;
+
   /// No description provided for @buttonSave.
   ///
   /// In en, this message translates to:
@@ -993,6 +999,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Map Type'**
   String get mapTypeSelector;
+
+  /// No description provided for @must_be_positive_validator.
+  ///
+  /// In en, this message translates to:
+  /// **'Must be positive.'**
+  String get must_be_positive_validator;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {
