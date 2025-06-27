@@ -275,7 +275,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
         return AlertDialog(
           title: const Text('Confirm Deletion'),
           content: Text(
-            'Are you sure you want to delete point P${widget.point.ordinalNumber}? This action cannot be undone.',
+            'Are you sure you want to delete point ${widget.point.name}? This action cannot be undone.',
           ),
           actions: <Widget>[
             TextButton(
@@ -308,7 +308,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
             ..showSnackBar(
               SnackBar(
                 content: Text(
-                  'Point P${widget.point.ordinalNumber} deleted successfully!',
+                  'Point ${widget.point.name} deleted successfully!',
                 ),
                 backgroundColor: Colors.green,
               ),
@@ -325,7 +325,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
             ..showSnackBar(
               SnackBar(
                 content: Text(
-                  'Error: Point P${widget.point.ordinalNumber} could not be found or deleted.',
+                  'Error: Point ${widget.point.name} could not be found or deleted.',
                 ),
                 backgroundColor: Colors.red,
               ),
@@ -334,14 +334,14 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
       } catch (e) {
         if (!mounted) return;
         logger.severe(
-          'Failed to delete point P${widget.point.ordinalNumber}: $e',
+          'Failed to delete point ${widget.point.name}: $e',
         );
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
           ..showSnackBar(
             SnackBar(
               content: Text(
-                'Error deleting point P${widget.point.ordinalNumber}: ${e.toString()}',
+                'Error deleting point ${widget.point.name}: ${e.toString()}',
               ),
               backgroundColor: Colors.red,
             ),
@@ -360,7 +360,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
       onWillPop: _onWillPop,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Edit Point (P${widget.point.ordinalNumber})'),
+          title: Text('Edit Point (${widget.point.name})'),
           leading: IconButton(
             // Custom back button to ensure _onWillPop is always triggered
             icon: Icon(Icons.arrow_back),

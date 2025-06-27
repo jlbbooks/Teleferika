@@ -139,4 +139,7 @@ class PointModel {
       images.length, // Simplified images hash for brevity
     );
   }
+
+  /// Returns the formatted name for this point (e.g., "P1", "P2", etc.)
+  String get name => 'P$ordinalNumber';
 }

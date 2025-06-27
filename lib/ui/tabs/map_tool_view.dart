@@ -76,6 +76,10 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   // Map type selection
   MapType _currentMapType = MapType.openStreetMap;
 
+  // Animation variables for move mode glow
+  Timer? _glowAnimationTimer;
+  double _glowAnimationValue = 0.0;
+
   @override
   void initState() {
     super.initState();
@@ -88,7 +92,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   @override
   void didUpdateWidget(covariant MapToolView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     // Handle project changes
     // this will never happen with the current implementation, but you never know!
     if (widget.project.id != oldWidget.project.id) {
@@ -97,7 +101,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       // If only the heading changed, just recalculate lines
       _recalculateAndDrawLines();
     }
-    
+
     // Handle selectedPointId changes from parent
     if (widget.selectedPointId != oldWidget.selectedPointId) {
       setState(() {
@@ -111,6 +115,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   void dispose() {
     _positionStreamSubscription?.cancel();
     _compassSubscription?.cancel();
+    _glowAnimationTimer?.cancel();
     _mapController.dispose(); // Ensure map controller is disposed
     super.dispose();
   }
@@ -390,20 +395,20 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           // _recalculateHeadingLine();
           _recalculateAndDrawLines();
         });
-        showSuccessStatus('Point P${updatedPoint.ordinalNumber} moved successfully!');
+        showSuccessStatus('Point ${updatedPoint.name} moved successfully!');
         widget.onPointsChanged?.call();
       } else {
         showErrorStatus(
-          'Error: Could not move point P${pointToMove.ordinalNumber}. Point not found or not updated.',
+          'Error: Could not move point ${pointToMove.name}. Point not found or not updated.',
         );
         // TODO: Optional: Revert optimistic UI update if you did one
         widget.onPointsChanged?.call();
       }
     } catch (e) {
-      logger.severe('Failed to move point P${pointToMove.ordinalNumber}: $e');
+      logger.severe('Failed to move point ${pointToMove.name}: $e');
       if (!mounted) return;
       showErrorStatus(
-        'Error moving point P${pointToMove.ordinalNumber}: ${e.toString()}',
+        'Error moving point ${pointToMove.name}: ${e.toString()}',
       );
       // Optional: Revert optimistic UI update
       widget.onPointsChanged?.call();
@@ -423,7 +428,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       );
       return;
     }
-    
+
     if (_projectPoints.isEmpty) {
       // Optionally move to a default location or the project's starting point if available
       // For now, if no points, map stays at its initial or default view
@@ -483,15 +488,12 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         _projectPoints.first.longitude,
       );
     }
-    
+
     // Fallback to current position if available
     if (_currentPosition != null) {
-      return LatLng(
-        _currentPosition!.latitude,
-        _currentPosition!.longitude,
-      );
+      return LatLng(_currentPosition!.latitude, _currentPosition!.longitude);
     }
-    
+
     // Final fallback to default center
     return _defaultCenter;
   }
@@ -504,12 +506,12 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         return 14.0; // Medium zoom for multiple points
       }
     }
-    
+
     // If no points but have current position, use medium zoom
     if (_currentPosition != null) {
       return 12.0;
     }
-    
+
     // Default zoom for no data
     return _defaultZoom;
   }
@@ -541,7 +543,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                 Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                   child: CircularProgressIndicator(
@@ -554,7 +558,8 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                 const SizedBox(height: 24),
                 // Loading text
                 Text(
-                  S.of(context)?.mapLoadingPointsIndicator ?? "Loading points...",
+                  S.of(context)?.mapLoadingPointsIndicator ??
+                      "Loading points...",
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -563,7 +568,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                 Text(
                   "Please wait while we load your project data",
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.7),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant.withOpacity(0.7),
                   ),
                 ),
               ],
@@ -610,9 +617,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         initialMapZoom.isInfinite) {
       return Stack(
         children: [
-          Center(
-            child: Text('Waiting for valid map data...'),
-          ),
+          Center(child: Text('Waiting for valid map data...')),
           Positioned(
             top: 24,
             right: 24,
@@ -630,8 +635,12 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         Scaffold(
           body: Stack(
             children: [
-              _buildFlutterMapWidget(allMapMarkers, polylinePathPoints,
-                  initialMapCenter: initialMapCenter, initialMapZoom: initialMapZoom),
+              _buildFlutterMapWidget(
+                allMapMarkers,
+                polylinePathPoints,
+                initialMapCenter: initialMapCenter,
+                initialMapZoom: initialMapZoom,
+              ),
               _buildPermissionOverlay(),
               _buildPointDetailsPanel(),
               // Floating action buttons positioned on the left
@@ -647,10 +656,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         Positioned(
           top: 24,
           right: 24,
-          child: StatusIndicator(
-            status: currentStatus,
-            onDismiss: hideStatus,
-          ),
+          child: StatusIndicator(status: currentStatus, onDismiss: hideStatus),
         ),
       ],
     );
@@ -689,7 +695,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         width: 60,
         height: 58,
         point: LatLng(point.latitude, point.longitude),
-        child: _buildStandardMarkerView(context, point, isSelected: isSelected),
+        child: _buildMarker(point),
       );
     }).toList();
 
@@ -711,9 +717,11 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   // Helper specifically for the heading label marker
   Marker _buildHeadingLabelMarker() {
     if (_projectPoints.length < 2) {
-      throw StateError('Cannot build heading label marker with less than 2 points');
+      throw StateError(
+        'Cannot build heading label marker with less than 2 points',
+      );
     }
-    
+
     final firstP = _projectPoints.first;
     final lastP = _projectPoints.last;
     final midLat = (firstP.latitude + lastP.latitude) / 2;
@@ -725,7 +733,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       width: 120,
       height: 30,
       child: Transform.rotate(
-        angle: angleForRotation - (math.pi / 2), // Use math.pi instead of hardcoded value
+        angle:
+            angleForRotation -
+            (math.pi / 2), // Use math.pi instead of hardcoded value
         alignment: Alignment.center,
         child: Card(
           elevation: 2.0,
@@ -757,9 +767,11 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   // Helper specifically for the current position marker (crosshair)
   Marker _buildCurrentPositionMarker() {
     if (_currentPosition == null) {
-      throw StateError('Cannot build current position marker with null position');
+      throw StateError(
+        'Cannot build current position marker with null position',
+      );
     }
-    
+
     return Marker(
       width: 30,
       height: 30,
@@ -880,11 +892,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
             polylines: [
               Polyline(
                 points: polylinePathPoints,
-                gradientColors: [
-                  Colors.green,
-                  Colors.yellow,
-                  Colors.red,
-                ],
+                gradientColors: [Colors.green, Colors.yellow, Colors.red],
                 colorsStop: [
                   0.0, // Start with green
                   0.5, // Transition to yellow by the midpoint
@@ -894,10 +902,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
               ),
             ],
           ),
-        if (_headingLine != null)
-          PolylineLayer(
-            polylines: [_headingLine!],
-          ),
+        if (_headingLine != null) PolylineLayer(polylines: [_headingLine!]),
         if (_projectHeadingLine != null)
           PolylineLayer(polylines: [_projectHeadingLine!]),
         MarkerLayer(markers: allMapMarkers),
@@ -960,115 +965,65 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   }
 
   // --- UI Components ---
-  Widget _buildStandardMarkerView(
-    BuildContext context,
-    PointModel point, {
-    required bool isSelected,
-  }) {
+  Widget _buildMarker(PointModel point) {
+    final isSelected = point.id == _selectedPointId;
+    final isInMoveMode = _isMovePointMode && isSelected;
+
+    // Calculate glow color for move mode
+    Color? glowColor;
+    if (isInMoveMode) {
+      final intensity = (math.sin(_glowAnimationValue) + 1) / 2; // 0 to 1
+      glowColor = Color.lerp(
+        Colors.blue, // Selection color
+        Colors.purpleAccent, // Move mode color - more vibrant
+        intensity,
+      );
+    }
+
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          if (_selectedPointId == point.id) {
-            _selectedPointId = null;
-          } else {
-            _selectedPointId = point.id;
-          }
-        });
-      },
+      onTap: () => _handlePointTap(point),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
+          // Marker icon
           Icon(
             Icons.location_pin,
-            color: _getMarkerColor(point, isSelected),
+            color: isInMoveMode
+                ? glowColor ?? Colors.purpleAccent
+                : (isSelected ? Colors.blue : Colors.red),
             size: 30.0,
           ),
           const SizedBox(height: 4),
+          // Point label
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: _getLabelBackgroundColor(point, isSelected),
-              borderRadius: BorderRadius.circular(3),
-              border: _getLabelBorder(point, isSelected),
-              boxShadow: const [
+              color: isSelected ? Colors.blue : Colors.white,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(
+                color: isSelected ? Colors.blue : Colors.grey.shade300,
+                width: 1,
+              ),
+              boxShadow: [
                 BoxShadow(
-                  color: Colors.black26,
+                  color: Colors.black.withOpacity(0.1),
                   blurRadius: 2,
-                  offset: Offset(0, 1),
+                  offset: const Offset(0, 1),
                 ),
               ],
             ),
             child: Text(
-              "P${point.ordinalNumber}",
+              point.name,
               style: TextStyle(
                 fontSize: 10,
-                color: _getLabelTextColor(point, isSelected),
                 fontWeight: FontWeight.bold,
+                color: isSelected ? Colors.white : Colors.black,
               ),
             ),
           ),
         ],
       ),
     );
-  }
-
-  Color _getMarkerColor(PointModel point, bool isSelected) {
-    // If this is the selected point and we're in move mode, show orange
-    if (_isMovePointMode && _selectedPointId == point.id) {
-      return Colors.orange;
-    }
-    // If this point is selected (but not in move mode), show blue
-    else if (isSelected && !_isMovePointMode) {
-      return Colors.blueAccent;
-    }
-    // Default color for unselected points
-    else {
-      return Colors.red;
-    }
-  }
-
-  Color _getLabelBackgroundColor(PointModel point, bool isSelected) {
-    // If this is the selected point and we're in move mode, show orange background
-    if (_isMovePointMode && _selectedPointId == point.id) {
-      return Colors.orange.withAlpha((0.8 * 255).round());
-    }
-    // If this point is selected (but not in move mode), show blue background
-    else if (isSelected && !_isMovePointMode) {
-      return Colors.blue.withAlpha((0.8 * 255).round());
-    }
-    // Default background for unselected points
-    else {
-      return Colors.white.withAlpha(220);
-    }
-  }
-
-  Border? _getLabelBorder(PointModel point, bool isSelected) {
-    // If this is the selected point and we're in move mode, show orange border
-    if (_isMovePointMode && _selectedPointId == point.id) {
-      return Border.all(color: Colors.orange, width: 1.5);
-    }
-    // If this point is selected (but not in move mode), show blue border
-    else if (isSelected && !_isMovePointMode) {
-      return Border.all(color: Colors.blueAccent, width: 1.5);
-    }
-    // No border for unselected points
-    else {
-      return null;
-    }
-  }
-
-  Color _getLabelTextColor(PointModel point, bool isSelected) {
-    // If this is the selected point and we're in move mode, show white text
-    if (_isMovePointMode && _selectedPointId == point.id) {
-      return Colors.white;
-    }
-    // If this point is selected (but not in move mode), show white text
-    else if (isSelected && !_isMovePointMode) {
-      return Colors.white;
-    }
-    // Default text color for unselected points
-    else {
-      return Colors.black;
-    }
   }
 
   Widget _buildCrosshairMarker() {
@@ -1079,16 +1034,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: Colors.blue.shade600.withOpacity(0.1),
-          border: Border.all(
-            color: Colors.blue.shade600,
-            width: 2,
-          ),
+          border: Border.all(color: Colors.blue.shade600, width: 2),
         ),
-        child: const Icon(
-          Icons.gps_fixed,
-          color: Colors.blue,
-          size: 20,
-        ),
+        child: const Icon(Icons.gps_fixed, color: Colors.blue, size: 20),
       ),
     );
   }
@@ -1129,23 +1077,23 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    
+
                     // Title
                     Text(
                       s?.mapPermissionsRequiredTitle ?? "Permissions Required",
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Permission details
                     if (!_hasLocationPermission) ...[
                       _buildPermissionItem(
                         icon: Icons.location_on_outlined,
                         title: 'Location Permission',
-                        description: s?.mapLocationPermissionInfoText ??
+                        description:
+                            s?.mapLocationPermissionInfoText ??
                             "Location permission is needed to show your current position and for some map features.",
                         color: Colors.blue,
                       ),
@@ -1155,15 +1103,16 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                       _buildPermissionItem(
                         icon: Icons.compass_calibration_outlined,
                         title: 'Sensor Permission',
-                        description: s?.mapSensorPermissionInfoText ??
+                        description:
+                            s?.mapSensorPermissionInfoText ??
                             "Sensor (compass) permission is needed for direction-based features.",
                         color: Colors.green,
                       ),
                       const SizedBox(height: 12),
                     ],
-                    
+
                     const SizedBox(height: 24),
-                    
+
                     // Action buttons
                     Column(
                       children: [
@@ -1172,7 +1121,8 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                           child: ElevatedButton.icon(
                             icon: const Icon(Icons.settings),
                             label: Text(
-                              s?.mapButtonOpenAppSettings ?? "Open App Settings",
+                              s?.mapButtonOpenAppSettings ??
+                                  "Open App Settings",
                             ),
                             onPressed: () async {
                               openAppSettings();
@@ -1218,10 +1168,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 1,
-        ),
+        border: Border.all(color: color.withOpacity(0.3), width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1232,11 +1179,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
               color: color.withOpacity(0.2),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
-              icon,
-              size: 20,
-              color: color,
-            ),
+            child: Icon(icon, size: 20, color: color),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1298,13 +1241,18 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      'P${_selectedPointInstance!.ordinalNumber}',
+                      '${_selectedPointInstance!.name}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).colorScheme.primary,
@@ -1321,18 +1269,23 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                       });
                     },
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
+                    ),
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 12),
-              
+
               // Coordinates
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.surfaceVariant.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -1355,14 +1308,16 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                   ],
                 ),
               ),
-              
+
               // Note section
               if (_selectedPointInstance!.note?.isNotEmpty ?? false) ...[
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.3),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.secondaryContainer.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -1371,15 +1326,20 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                       Icon(
                         Icons.note_outlined,
                         size: 16,
-                        color: Theme.of(context).colorScheme.onSecondaryContainer,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSecondaryContainer,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           _selectedPointInstance!.note!,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSecondaryContainer,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSecondaryContainer,
+                              ),
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1388,9 +1348,10 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                   ),
                 ),
               ],
-              
+
               // Move mode indicator
-              if (_isMovePointMode && _selectedPointInstance!.id == _selectedPointId) ...[
+              if (_isMovePointMode &&
+                  _selectedPointInstance!.id == _selectedPointId) ...[
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(8),
@@ -1421,12 +1382,12 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                   ),
                 ),
               ],
-              
+
               const SizedBox(height: 16),
-              
+
               // Action buttons
               _buildPointActionButtons(),
-              
+
               // Loading indicator
               if (_isMovingPointLoading)
                 const Padding(
@@ -1442,21 +1403,22 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
 
   bool _shouldShowPanelAtBottom() {
     if (_selectedPointInstance == null || !_isMapReady) return false;
-    
+
     try {
       // Get the current map bounds
       final bounds = _mapController.camera.visibleBounds;
       if (bounds == null) return false;
-      
+
       // Get the selected point's position
       final pointLatLng = LatLng(
         _selectedPointInstance!.latitude,
         _selectedPointInstance!.longitude,
       );
-      
+
       // Calculate the midpoint of the visible map
-      final mapMidpoint = (bounds.northEast.latitude + bounds.southWest.latitude) / 2;
-      
+      final mapMidpoint =
+          (bounds.northEast.latitude + bounds.southWest.latitude) / 2;
+
       // If the point is in the upper half of the map, show panel at bottom
       return pointLatLng.latitude > mapMidpoint;
     } catch (e) {
@@ -1482,13 +1444,19 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         const SizedBox(width: 8),
         Expanded(
           child: _buildActionButton(
-            icon: _isMovePointMode && _selectedPointInstance!.id == _selectedPointId
+            icon:
+                _isMovePointMode &&
+                    _selectedPointInstance!.id == _selectedPointId
                 ? Icons.cancel_outlined
                 : Icons.open_with,
-            label: _isMovePointMode && _selectedPointInstance!.id == _selectedPointId
+            label:
+                _isMovePointMode &&
+                    _selectedPointInstance!.id == _selectedPointId
                 ? 'Cancel'
                 : 'Move',
-            color: _isMovePointMode && _selectedPointInstance!.id == _selectedPointId
+            color:
+                _isMovePointMode &&
+                    _selectedPointInstance!.id == _selectedPointId
                 ? Colors.orange
                 : Colors.teal,
             onPressed: _isMovingPointLoading ? null : _handleMovePointAction,
@@ -1523,12 +1491,12 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
           decoration: BoxDecoration(
-            color: onPressed != null 
+            color: onPressed != null
                 ? color.withOpacity(0.1)
                 : Colors.grey.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: onPressed != null 
+              color: onPressed != null
                   ? color.withOpacity(0.3)
                   : Colors.grey.withOpacity(0.3),
               width: 1,
@@ -1588,7 +1556,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
             isLoading: isLocationLoading,
             color: Colors.blue,
           ),
-          
+
           // Add new point button
           _buildFloatingActionButton(
             heroTag: 'add_new_point',
@@ -1600,7 +1568,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
             isLoading: isLocationLoading,
             color: Colors.green,
           ),
-          
+
           // Center on Project points button
           _buildFloatingActionButton(
             heroTag: 'center_on_points',
@@ -1650,56 +1618,28 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   Future<void> _handleEditPoint() async {
     if (_selectedPointInstance == null) return;
 
-    logger.info(
-      "Navigating to edit point P${_selectedPointInstance!.ordinalNumber}",
-    );
+    logger.info("Navigating to edit point ${_selectedPointInstance!.name}");
 
-    final result = await Navigator.push<Map<String, dynamic>>(
+    // Navigate to point details page
+    final result = await Navigator.push<PointModel>(
       context,
       MaterialPageRoute(
         builder: (context) => PointDetailsPage(point: _selectedPointInstance!),
       ),
     );
 
-    if (result != null) {
-      final String? action = result['action'] as String?;
-      logger.info("Returned from PointDetailsPage with action: $action");
-
-      if (action == 'updated') {
-        final PointModel? updatedPoint = result['point'] as PointModel?;
-        if (updatedPoint != null) {
-          setState(() {
-            final index = _projectPoints.indexWhere(
-              (p) => p.id == updatedPoint.id,
-            );
-            if (index != -1) {
-              _projectPoints[index] = updatedPoint;
-              logger.info(
-                "Point P${updatedPoint.ordinalNumber} updated in MapToolView.",
-              );
-            }
-          });
-          showSuccessStatus('Point P${updatedPoint.ordinalNumber} details updated!');
-          widget.onPointsChanged?.call();
-        }
-      } else if (action == 'deleted') {
-        final String? deletedPointId = result['pointId'] as String?;
-        if (deletedPointId != null) {
-          setState(() {
-            _projectPoints.removeWhere((p) => p.id == deletedPointId);
-            logger.info("Point ID $deletedPointId removed from MapToolView.");
-            if (_selectedPointId == deletedPointId) {
-              _selectedPointId = null;
-            }
-          });
-          showSuccessStatus('Point deleted.');
-          widget.onPointsChanged?.call();
-        }
+    // Handle the result
+    if (result != null && mounted) {
+      // Update the point in our local list
+      final index = _projectPoints.indexWhere((p) => p.id == result.id);
+      if (index != -1) {
+        setState(() {
+          _projectPoints[index] = result;
+          logger.info("Point ${result.name} updated in MapToolView.");
+        });
+        showSuccessStatus('Point ${result.name} details updated!');
+        widget.onPointsChanged?.call();
       }
-    } else {
-      logger.info(
-        "PointDetailsPage popped without a result (e.g., back button pressed).",
-      );
     }
   }
 
@@ -1709,13 +1649,41 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       setState(() {
         _isMovePointMode = false;
       });
+      _stopGlowAnimation();
     } else if (!_isMovePointMode) {
       // Activate move mode for this point
       setState(() {
         _isMovePointMode = true;
       });
+      _startGlowAnimation();
       showInfoStatus('Move mode activated. Tap map to relocate point.');
     }
+  }
+
+  void _startGlowAnimation() {
+    _glowAnimationTimer?.cancel();
+    _glowAnimationValue = 0.0;
+    _glowAnimationTimer = Timer.periodic(const Duration(milliseconds: 50), (
+      timer,
+    ) {
+      if (mounted && _isMovePointMode && _selectedPointId != null) {
+        setState(() {
+          _glowAnimationValue +=
+              0.3; // Doubled from 0.1 to 0.3 for faster animation
+          if (_glowAnimationValue >= 2 * math.pi) {
+            _glowAnimationValue = 0.0; // Reset to start
+          }
+        });
+      } else {
+        _stopGlowAnimation();
+      }
+    });
+  }
+
+  void _stopGlowAnimation() {
+    _glowAnimationTimer?.cancel();
+    _glowAnimationTimer = null;
+    _glowAnimationValue = 0.0;
   }
 
   Future<void> _handleDeletePoint() async {
@@ -1723,19 +1691,19 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       showErrorStatus('No point selected to delete.');
       return;
     }
-    
-    logger.info(
-      "Delete tapped for point P${_selectedPointInstance!.ordinalNumber}",
-    );
+
+    logger.info("Delete tapped for point ${_selectedPointInstance!.name}");
     await _handleDeletePointFromPanel(_selectedPointInstance!);
   }
 
   void _centerOnCurrentLocation() {
     if (_currentPosition == null) {
-      showInfoStatus('Current location not available. Please wait for GPS signal.');
+      showInfoStatus(
+        'Current location not available. Please wait for GPS signal.',
+      );
       return;
     }
-    
+
     try {
       _mapController.move(
         LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
@@ -1753,77 +1721,70 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       widget.onNavigateToCompassTab!();
       showInfoStatus('Navigating to compass tab to add new point.');
     } else {
-      showInfoStatus('Add point functionality not available. Please use compass tab.');
+      showInfoStatus(
+        'Add point functionality not available. Please use compass tab.',
+      );
     }
   }
 
   // Method to handle deletion triggered from the side panel
   Future<void> _handleDeletePointFromPanel(PointModel pointToDelete) async {
-    final bool? confirmed = await showDialog<bool>(
+    final s = S.of(context);
+    final bool? shouldDelete = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
-        final s = S.of(context);
         return AlertDialog(
-          title: Text(s?.mapDeletePointDialogTitle ?? 'Confirm Deletion'),
+          title: Text(s?.mapDeletePointDialogTitle ?? 'Delete Point'),
           content: Text(
-            s?.mapDeletePointDialogContent(
-                  pointToDelete.ordinalNumber.toString(),
-                ) ??
-                'Are you sure you want to delete point P${pointToDelete.ordinalNumber}?',
+            s?.mapDeletePointDialogContent(pointToDelete.name) ??
+                'Are you sure you want to delete point ${pointToDelete.name}?',
           ),
           actions: <Widget>[
             TextButton(
-              child: Text(s?.mapDeletePointDialogCancelButton ?? 'Cancel'),
               onPressed: () => Navigator.of(context).pop(false),
+              child: Text(s?.buttonCancel ?? 'Cancel'),
             ),
             TextButton(
-              child: Text(
-                s?.mapDeletePointDialogDeleteButton ?? 'Delete',
-                style: const TextStyle(color: Colors.red),
-              ),
               onPressed: () => Navigator.of(context).pop(true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: Text(s?.buttonDelete ?? 'Delete'),
             ),
           ],
         );
       },
     );
 
-    if (confirmed == true) {
+    if (shouldDelete == true && mounted) {
       try {
-        final int count = await _dbHelper.deletePointById(pointToDelete.id);
-
-        if (!mounted) return;
-
-        if (count > 0) {
+        final int deletedCount = await _dbHelper.deletePointById(
+          pointToDelete.id,
+        );
+        if (deletedCount > 0) {
           setState(() {
             _projectPoints.removeWhere((p) => p.id == pointToDelete.id);
             logger.info(
-              "Point P${pointToDelete.ordinalNumber} (ID: ${pointToDelete.id}) removed from MapToolView after panel delete.",
+              "Point ${pointToDelete.name} (ID: ${pointToDelete.id}) removed from MapToolView after panel delete.",
             );
             if (_selectedPointId == pointToDelete.id) {
               _selectedPointId = null;
+              _selectedPointInstance = null;
             }
-            _recalculateHeadingLine();
           });
 
-          showSuccessStatus(
-            'Point P${pointToDelete.ordinalNumber} deleted.',
-          );
+          showSuccessStatus('Point ${pointToDelete.name} deleted.');
           widget.onPointsChanged?.call();
         } else {
           showErrorStatus(
-            'Error: Point P${pointToDelete.ordinalNumber} could not be found or deleted from map view.',
+            'Error: Point ${pointToDelete.name} could not be found or deleted from map view.',
           );
         }
       } catch (e) {
         if (!mounted) return;
         logger.severe(
-          'Failed to delete point P${pointToDelete.ordinalNumber} from panel: $e',
+          'Failed to delete point ${pointToDelete.name} from panel: $e',
         );
 
-        showErrorStatus(
-          'Error deleting point P${pointToDelete.ordinalNumber}: $e',
-        );
+        showErrorStatus('Error deleting point ${pointToDelete.name}: $e');
       }
     }
   }
@@ -1898,14 +1859,19 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
               });
             },
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12.0,
+                vertical: 8.0,
+              ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
                     padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Icon(
@@ -1968,7 +1934,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: isSelected 
+                color: isSelected
                     ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(6),
@@ -2014,5 +1980,17 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       case MapType.terrain:
         return Icons.terrain;
     }
+  }
+
+  void _handlePointTap(PointModel point) {
+    setState(() {
+      if (_selectedPointId == point.id) {
+        _selectedPointId = null;
+        _selectedPointInstance = null;
+      } else {
+        _selectedPointId = point.id;
+        _selectedPointInstance = point;
+      }
+    });
   }
 }

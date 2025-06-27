@@ -423,7 +423,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                     ),
                   ),
             title: Text(
-              'P${point.ordinalNumber}: Alt: ${point.altitude?.toStringAsFixed(2) ?? '---'}\nLat: ${point.latitude.toStringAsFixed(5)}\nLon: ${point.longitude.toStringAsFixed(5)}',
+              '${point.name}: Alt: ${point.altitude?.toStringAsFixed(2) ?? '---'}\nLat: ${point.latitude.toStringAsFixed(5)}\nLon: ${point.longitude.toStringAsFixed(5)}',
             ),
             subtitle: Column(
               // Use Column to add special role text if present
@@ -491,7 +491,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
     } else {
       // Non-selection mode tap: Navigate to detail page
       logger.info(
-        "Tapped on point ID: ${point.id} (P${point.ordinalNumber}). Navigating to details.",
+        "Tapped on point ID: ${point.id} (${point.name}). Navigating to details.",
       );
       if (!mounted) return; // Guard against navigation if widget is disposed
 
