@@ -248,70 +248,19 @@ class _ProjectPageState extends State<ProjectPage>
       return;
     }
 
-    final exportFormats = LicensedFeaturesLoader.getExportFormats();
-    if (exportFormats.isEmpty) {
+    // Check if project is saved
+    if (_isEffectivelyNew || _hasUnsavedChanges) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('No export formats available.'),
+          content: Text('Please save the project before exporting.'),
           backgroundColor: Colors.orange,
         ),
       );
       return;
     }
 
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Row(
-            children: [
-              Icon(Icons.file_download, color: Colors.blue),
-              SizedBox(width: 8),
-              Text('Export Project'),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Choose export format:'),
-              const SizedBox(height: 16),
-              ...exportFormats.map((format) => ListTile(
-                leading: const Icon(Icons.file_download),
-                title: Text(format),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _exportProject(format);
-                },
-              )),
-            ],
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _exportProject(String format) async {
-    try {
-      // Check if project is saved
-      if (_isEffectivelyNew || _hasUnsavedChanges) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please save the project before exporting.'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-        return;
-      }
-
-      // Get project points
-      final points = await _dbHelper.getPointsForProject(_currentProject.id!);
+    // Get project points
+    _dbHelper.getPointsForProject(_currentProject.id!).then((points) {
       if (points.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -322,69 +271,28 @@ class _ProjectPageState extends State<ProjectPage>
         return;
       }
 
-      // Show loading indicator
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return const AlertDialog(
-            content: Row(
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(width: 16),
-                Text('Exporting...'),
-              ],
-            ),
-          );
-        },
-      );
-
-      // Perform export
-      final success = await LicensedFeaturesLoader.exportProject(
-        format,
+      // Use the licensed plugin to show export dialog
+      LicensedFeaturesLoader.showExportDialog(
+        context,
         _currentProject,
         points,
+        onExportComplete: (success) {
+          // Optional: Handle export completion if needed
+          if (success) {
+            logger.info('Project exported successfully');
+          } else {
+            logger.warning('Project export failed');
+          }
+        },
       );
-
-      // Hide loading indicator
-      if (mounted) {
-        Navigator.of(context).pop(); // Close loading dialog
-      }
-
-      if (success) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Project exported successfully in $format format!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Export failed. Please try again.'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      // Hide loading indicator
-      if (mounted) {
-        Navigator.of(context).pop(); // Close loading dialog
-      }
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Export error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
+    }).catchError((e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error loading project points: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    });
   }
 
   void _switchToTab() {

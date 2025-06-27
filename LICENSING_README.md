@@ -16,12 +16,14 @@ The licensing framework consists of several components:
 TeleferiKa supports two build flavors:
 
 ### Full Version (`full`)
+
 - Includes the `teleferika_licensed_features` package
 - Supports premium features
 - Requires a valid licence for premium functionality
 - Uses `licensed_features_loader_full.dart`
 
 ### Opensource Version (`opensource`)
+
 - Does not include licensed features package
 - Basic functionality only
 - No licence required
@@ -207,16 +209,19 @@ if (status['isValid'] == true) {
 ## Troubleshooting
 
 ### Feature Not Available
+
 - Check if you're using the full flavor
 - Verify the feature is listed in `availableFeatures`
 - Ensure the feature is properly implemented in the plugin
 
 ### Licence Issues
+
 - Verify the licence file format is correct
 - Check that the licence hasn't expired
 - Ensure the signature is valid
 
 ### Build Issues
+
 - Run `flutter clean` before switching flavors
 - Ensure all dependencies are properly configured
 - Check that the correct pubspec.yaml is being used

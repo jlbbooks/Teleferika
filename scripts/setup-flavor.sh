@@ -95,7 +95,7 @@ if [ "$CLEAN" = "true" ]; then
     # Optionally remove the licensed package directory
     if [ -d "licensed_features_package" ]; then
         print_status "Removing licensed package directory..."
-        rm -rf licensed_features_package
+    rm -rf licensed_features_package
     fi
 fi
 
@@ -114,9 +114,9 @@ case $FLAVOR in
         print_success "Copied opensource pubspec.yaml"
 
         # Set up stub loader
-        cp lib/licensing/licensed_features_loader_stub.dart lib/licensing/licensed_features_loader.dart
+            cp lib/licensing/licensed_features_loader_stub.dart lib/licensing/licensed_features_loader.dart
         print_success "Copied stub loader"
-        
+      
         print_success "✅ Open Source configuration applied"
         ;;
 

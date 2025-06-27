@@ -64,6 +64,7 @@ lib/
 ## Naming Conventions
 
 ### Files
+
 - **Pages**: `*_page.dart` - Full screen pages that users navigate to
 - **Widgets**: `*_widget.dart` - Reusable UI components
 - **Tabs**: `*_tab.dart` - Tab-specific content views
@@ -73,6 +74,7 @@ lib/
 - **Utils**: `*_utils.dart` - Utility functions and classes
 
 ### Directories
+
 - **core/**: Essential application functionality
 - **ui/**: All user interface components
 - **features/**: Feature-specific functionality

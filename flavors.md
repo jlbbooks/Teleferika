@@ -18,19 +18,19 @@
 
 Phase 4: App Icons (Optional)
 1.Create New App Icon Sets:
+
 * In Xcode, go to ios/Runner/Assets.xcassets.
 * Right-click in the empty space of the left panel (where AppIcon is listed) and choose "New App Icon".
 * Name it AppIcon-OpenSource.
 * Create another one named AppIcon-Full.
 * Drag your respective icon images into these new icon sets.
-* 
-2.Assign Icon Sets per Configuration:
+* 2.Assign Icon Sets per Configuration:
 * Go back to the "Runner" Target > "Build Settings".
 * Search for "Primary App Icon Set Name" (or ASSETCATALOG_COMPILER_APPICON_NAME).
 * Expand it and set the values for your configurations:
- * Debug-opensource: AppIcon-OpenSource
- * Release-opensource: AppIcon-OpenSource
- * Profile-opensource: AppIcon-OpenSource
- * Debug-full: AppIcon-Full
- * Release-full: AppIcon-Full
- * Profile-full: AppIcon-Full
+  * Debug-opensource: AppIcon-OpenSource
+  * Release-opensource: AppIcon-OpenSource
+  * Profile-opensource: AppIcon-OpenSource
+  * Debug-full: AppIcon-Full
+  * Release-full: AppIcon-Full
+  * Profile-full: AppIcon-Full

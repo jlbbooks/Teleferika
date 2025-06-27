@@ -108,7 +108,7 @@ copy "build_configs\pubspec.opensource.yaml" pubspec.yaml >nul
 echo %SUCCESS% Copied opensource pubspec.yaml
 
 :: Set up stub loader
-copy "lib\licensing\licensed_features_loader_stub.dart" "lib\licensing\licensed_features_loader.dart" >nul
+    copy "lib\licensing\licensed_features_loader_stub.dart" "lib\licensing\licensed_features_loader.dart" >nul
 echo %SUCCESS% Copied stub loader
 
 echo %SUCCESS% ✅ Open Source configuration applied
