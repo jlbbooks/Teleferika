@@ -175,7 +175,7 @@ if [ "$COMMAND" = "build" ]; then
     
     case $TYPE in
         apk)
-            if flutter build apk --flavor "$FLAVOR" --mode "$MODE" --target-platform "$PLATFORM"; then
+            if flutter build apk --flavor "$FLAVOR" --$MODE; then
                 print_success "✅ APK built successfully"
                 print_status "APK location: build/app/outputs/flutter-apk/app-$FLAVOR-$MODE.apk"
             else
@@ -184,7 +184,7 @@ if [ "$COMMAND" = "build" ]; then
             fi
             ;;
         appbundle)
-            if flutter build appbundle --flavor "$FLAVOR" --mode "$MODE" --target-platform "$PLATFORM"; then
+            if flutter build appbundle --flavor "$FLAVOR" --$MODE; then
                 print_success "✅ App bundle built successfully"
                 print_status "Bundle location: build/app/outputs/bundle/${FLAVOR}Release/app-$FLAVOR-release.aab"
             else
@@ -193,7 +193,7 @@ if [ "$COMMAND" = "build" ]; then
             fi
             ;;
         ios)
-            if flutter build ios --flavor "$FLAVOR" --mode "$MODE"; then
+            if flutter build ios --flavor "$FLAVOR" --$MODE; then
                 print_success "✅ iOS build completed"
             else
                 print_error "❌ iOS build failed"
@@ -211,7 +211,7 @@ fi
 if [ "$COMMAND" = "run" ]; then
     print_status "Running $FLAVOR flavor in $MODE mode..."
     
-    if flutter run --flavor "$FLAVOR" --mode "$MODE"; then
+    if flutter run --flavor "$FLAVOR" --$MODE; then
         print_success "✅ App started successfully"
     else
         print_error "❌ App failed to start"
