@@ -37,7 +37,7 @@ dependencies:
     sdk: flutter
 
      # Licensed features package
-  teleferika_licensed_features:
+  licensed_features_package:
     path: ./licensed_features_package
 #    git:
 #      url: git@github.com:jlbbooks/teleferika_licenced_packages.git
