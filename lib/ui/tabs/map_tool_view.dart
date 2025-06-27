@@ -501,6 +501,15 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                 hasSensorPermission: _hasSensorPermission,
                 onRetryPermissions: _checkAndRequestPermissions,
               ),
+              MapControls.buildMapTypeSelector(
+                currentMapType: _currentMapType,
+                onMapTypeChanged: (mapType) {
+                  setState(() {
+                    _currentMapType = mapType;
+                  });
+                },
+                context: context,
+              ),
               _buildPointDetailsPanel(),
               Positioned(
                 bottom: 24,
@@ -513,15 +522,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                   onAddPoint: _handleAddPointButtonPressed,
                   onCenterOnPoints: _fitMapToPoints,
                 ),
-              ),
-              MapControls.buildMapTypeSelector(
-                currentMapType: _currentMapType,
-                onMapTypeChanged: (mapType) {
-                  setState(() {
-                    _currentMapType = mapType;
-                  });
-                },
-                context: context,
               ),
             ],
           ),
