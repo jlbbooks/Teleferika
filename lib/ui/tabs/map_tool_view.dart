@@ -975,92 +975,98 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           }
         });
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        child: Column(
-          mainAxisSize: MainAxisSize.min, // Ensure column takes minimum space
-          children: [
-            // Main pin icon
-            Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Icon(
-                Icons.location_pin,
-                color: _getMarkerColor(isSelected),
-                size: isSelected ? 32.0 : 28.0, // Slightly reduced sizes
-              ),
-            ),
-            const SizedBox(height: 2), // Reduced spacing
-            // Point label
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1), // Reduced padding
-              decoration: BoxDecoration(
-                color: _getLabelBackgroundColor(isSelected),
-                borderRadius: BorderRadius.circular(4), // Reduced radius
-                border: _getLabelBorder(isSelected),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 2,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
-              ),
-              child: Text(
-                "P${point.ordinalNumber}",
-                style: TextStyle(
-                  fontSize: 10, // Reduced font size
-                  fontWeight: FontWeight.bold,
-                  color: _getLabelTextColor(isSelected),
+      child: Column(
+        children: [
+          Icon(
+            Icons.location_pin,
+            color: _getMarkerColor(point, isSelected),
+            size: 30.0,
+          ),
+          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+            decoration: BoxDecoration(
+              color: _getLabelBackgroundColor(point, isSelected),
+              borderRadius: BorderRadius.circular(3),
+              border: _getLabelBorder(point, isSelected),
+              boxShadow: const [
+                BoxShadow(
+                  color: Colors.black26,
+                  blurRadius: 2,
+                  offset: Offset(0, 1),
                 ),
+              ],
+            ),
+            child: Text(
+              "P${point.ordinalNumber}",
+              style: TextStyle(
+                fontSize: 10,
+                color: _getLabelTextColor(point, isSelected),
+                fontWeight: FontWeight.bold,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
-  Color _getMarkerColor(bool isSelected) {
-    if (isSelected && !_isMovePointMode) {
-      return Colors.blue.shade600;
-    } else if (_isMovePointMode && _selectedPointId == _selectedPointInstance?.id) {
-      return Colors.orange.shade600;
-    } else {
-      return Colors.red.shade600;
+  Color _getMarkerColor(PointModel point, bool isSelected) {
+    // If this is the selected point and we're in move mode, show orange
+    if (_isMovePointMode && _selectedPointId == point.id) {
+      return Colors.orange;
+    }
+    // If this point is selected (but not in move mode), show blue
+    else if (isSelected && !_isMovePointMode) {
+      return Colors.blueAccent;
+    }
+    // Default color for unselected points
+    else {
+      return Colors.red;
     }
   }
 
-  Color _getLabelBackgroundColor(bool isSelected) {
-    if (isSelected && !_isMovePointMode) {
-      return Colors.blue.shade600;
-    } else {
+  Color _getLabelBackgroundColor(PointModel point, bool isSelected) {
+    // If this is the selected point and we're in move mode, show orange background
+    if (_isMovePointMode && _selectedPointId == point.id) {
+      return Colors.orange.withAlpha((0.8 * 255).round());
+    }
+    // If this point is selected (but not in move mode), show blue background
+    else if (isSelected && !_isMovePointMode) {
+      return Colors.blue.withAlpha((0.8 * 255).round());
+    }
+    // Default background for unselected points
+    else {
+      return Colors.white.withAlpha(220);
+    }
+  }
+
+  Border? _getLabelBorder(PointModel point, bool isSelected) {
+    // If this is the selected point and we're in move mode, show orange border
+    if (_isMovePointMode && _selectedPointId == point.id) {
+      return Border.all(color: Colors.orange, width: 1.5);
+    }
+    // If this point is selected (but not in move mode), show blue border
+    else if (isSelected && !_isMovePointMode) {
+      return Border.all(color: Colors.blueAccent, width: 1.5);
+    }
+    // No border for unselected points
+    else {
+      return null;
+    }
+  }
+
+  Color _getLabelTextColor(PointModel point, bool isSelected) {
+    // If this is the selected point and we're in move mode, show white text
+    if (_isMovePointMode && _selectedPointId == point.id) {
       return Colors.white;
     }
-  }
-
-  Border? _getLabelBorder(bool isSelected) {
-    if (isSelected && !_isMovePointMode) {
-      return Border.all(color: Colors.blue.shade600, width: 1.5);
-    } else if (_isMovePointMode && _selectedPointId == _selectedPointInstance?.id) {
-      return Border.all(color: Colors.orange.shade600, width: 1.5);
-    }
-    return null;
-  }
-
-  Color _getLabelTextColor(bool isSelected) {
-    if (isSelected && !_isMovePointMode) {
+    // If this point is selected (but not in move mode), show white text
+    else if (isSelected && !_isMovePointMode) {
       return Colors.white;
-    } else {
+    }
+    // Default text color for unselected points
+    else {
       return Colors.black;
     }
   }
