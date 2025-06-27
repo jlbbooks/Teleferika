@@ -3,7 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:teleferika/db/models/point_model.dart';
 
-class PointDetailsPanel extends StatelessWidget {
+class PointDetailsPanel extends StatefulWidget {
   final PointModel? selectedPoint;
   final bool isMovePointMode;
   final bool isMovingPointLoading;
@@ -14,6 +14,7 @@ class PointDetailsPanel extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onMove;
   final VoidCallback onDelete;
+  final Function(PointModel)? onPointUpdated;
 
   const PointDetailsPanel({
     super.key,
@@ -27,11 +28,71 @@ class PointDetailsPanel extends StatelessWidget {
     required this.onEdit,
     required this.onMove,
     required this.onDelete,
+    this.onPointUpdated,
   });
 
   @override
+  State<PointDetailsPanel> createState() => _PointDetailsPanelState();
+}
+
+class _PointDetailsPanelState extends State<PointDetailsPanel> {
+  // Editing state
+  bool _isEditingLatitude = false;
+  bool _isEditingLongitude = false;
+  bool _isEditingNote = false;
+  
+  // Controllers for text fields
+  late TextEditingController _latitudeController;
+  late TextEditingController _longitudeController;
+  late TextEditingController _noteController;
+  
+  // Focus nodes for text fields
+  late FocusNode _latitudeFocusNode;
+  late FocusNode _longitudeFocusNode;
+  late FocusNode _noteFocusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _latitudeController = TextEditingController();
+    _longitudeController = TextEditingController();
+    _noteController = TextEditingController();
+    _latitudeFocusNode = FocusNode();
+    _longitudeFocusNode = FocusNode();
+    _noteFocusNode = FocusNode();
+    _updateControllers();
+  }
+
+  @override
+  void didUpdateWidget(PointDetailsPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedPoint?.id != widget.selectedPoint?.id) {
+      _updateControllers();
+    }
+  }
+
+  void _updateControllers() {
+    if (widget.selectedPoint != null) {
+      _latitudeController.text = widget.selectedPoint!.latitude.toStringAsFixed(6);
+      _longitudeController.text = widget.selectedPoint!.longitude.toStringAsFixed(6);
+      _noteController.text = widget.selectedPoint!.note ?? '';
+    }
+  }
+
+  @override
+  void dispose() {
+    _latitudeController.dispose();
+    _longitudeController.dispose();
+    _noteController.dispose();
+    _latitudeFocusNode.dispose();
+    _longitudeFocusNode.dispose();
+    _noteFocusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (selectedPoint == null) return const SizedBox.shrink();
+    if (widget.selectedPoint == null) return const SizedBox.shrink();
 
     // Determine if the panel should appear at the bottom
     final bool shouldShowAtBottom = _shouldShowPanelAtBottom();
@@ -86,7 +147,7 @@ class PointDetailsPanel extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      '${selectedPoint!.name}',
+                      '${widget.selectedPoint!.name}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).colorScheme.primary,
@@ -97,7 +158,7 @@ class PointDetailsPanel extends StatelessWidget {
                   const Spacer(),
                   IconButton(
                     icon: Icon(Icons.close, size: isMobile ? 18 : 20),
-                    onPressed: onClose,
+                    onPressed: widget.onClose,
                     padding: EdgeInsets.zero,
                     constraints: BoxConstraints(
                       minWidth: isMobile ? 28 : 32,
@@ -109,7 +170,7 @@ class PointDetailsPanel extends StatelessWidget {
 
               SizedBox(height: isMobile ? 8 : 12),
 
-              // Coordinates
+              // Coordinates - now editable
               Container(
                 padding: EdgeInsets.all(isMobile ? 6 : 8),
                 decoration: BoxDecoration(
@@ -118,30 +179,57 @@ class PointDetailsPanel extends StatelessWidget {
                   ).colorScheme.surfaceVariant.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      Icons.location_on_outlined,
-                      size: isMobile ? 14 : 16,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                    SizedBox(width: isMobile ? 6 : 8),
-                    Expanded(
-                      child: Text(
-                        '${selectedPoint!.latitude.toStringAsFixed(isMobile ? 5 : 6)}, ${selectedPoint!.longitude.toStringAsFixed(isMobile ? 5 : 6)}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontFamily: 'monospace',
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: isMobile ? 14 : 16,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          fontSize: isMobile ? 11 : null,
                         ),
-                      ),
+                        SizedBox(width: isMobile ? 6 : 8),
+                        Text(
+                          'Coordinates',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            fontSize: isMobile ? 11 : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: isMobile ? 4 : 6),
+                    // Latitude
+                    _buildEditableCoordinate(
+                      label: 'Lat:',
+                      controller: _latitudeController,
+                      focusNode: _latitudeFocusNode,
+                      isEditing: _isEditingLatitude,
+                      onTap: () => _startEditingLatitude(),
+                      onConfirm: () => _confirmLatitudeChange(),
+                      onCancel: () => _cancelLatitudeChange(),
+                      isMobile: isMobile,
+                    ),
+                    SizedBox(height: isMobile ? 2 : 4),
+                    // Longitude
+                    _buildEditableCoordinate(
+                      label: 'Lon:',
+                      controller: _longitudeController,
+                      focusNode: _longitudeFocusNode,
+                      isEditing: _isEditingLongitude,
+                      onTap: () => _startEditingLongitude(),
+                      onConfirm: () => _confirmLongitudeChange(),
+                      onCancel: () => _cancelLongitudeChange(),
+                      isMobile: isMobile,
                     ),
                   ],
                 ),
               ),
 
-              // Note section
-              if (selectedPoint!.note?.isNotEmpty ?? false) ...[
+              // Note section - now editable
+              if (widget.selectedPoint!.note?.isNotEmpty ?? false || _isEditingNote) ...[
                 SizedBox(height: isMobile ? 8 : 12),
                 Container(
                   padding: EdgeInsets.all(isMobile ? 6 : 8),
@@ -151,38 +239,12 @@ class PointDetailsPanel extends StatelessWidget {
                     ).colorScheme.secondaryContainer.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(
-                        Icons.note_outlined,
-                        size: isMobile ? 14 : 16,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSecondaryContainer,
-                      ),
-                      SizedBox(width: isMobile ? 6 : 8),
-                      Expanded(
-                        child: Text(
-                          selectedPoint!.note!,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSecondaryContainer,
-                                fontSize: isMobile ? 11 : null,
-                              ),
-                          maxLines: isMobile ? 2 : 3,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
+                  child: _buildEditableNote(isMobile),
                 ),
               ],
 
               // Move mode indicator
-              if (isMovePointMode && selectedPoint!.id == selectedPointId) ...[
+              if (widget.isMovePointMode && widget.selectedPoint!.id == widget.selectedPointId) ...[
                 SizedBox(height: isMobile ? 8 : 12),
                 Container(
                   padding: EdgeInsets.all(isMobile ? 6 : 8),
@@ -220,7 +282,7 @@ class PointDetailsPanel extends StatelessWidget {
               _buildActionButtons(isMobile),
 
               // Loading indicator
-              if (isMovingPointLoading)
+              if (widget.isMovingPointLoading)
                 Padding(
                   padding: EdgeInsets.only(top: isMobile ? 8.0 : 12.0),
                   child: const Center(child: LinearProgressIndicator()),
@@ -232,18 +294,316 @@ class PointDetailsPanel extends StatelessWidget {
     );
   }
 
+  Widget _buildEditableCoordinate({
+    required String label,
+    required TextEditingController controller,
+    required FocusNode focusNode,
+    required bool isEditing,
+    required VoidCallback onTap,
+    required VoidCallback onConfirm,
+    required VoidCallback onCancel,
+    required bool isMobile,
+  }) {
+    return Row(
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            fontFamily: 'monospace',
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontSize: isMobile ? 10 : null,
+          ),
+        ),
+        SizedBox(width: isMobile ? 4 : 6),
+        Expanded(
+          child: isEditing
+              ? Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: controller,
+                        focusNode: focusNode,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontFamily: 'monospace',
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: isMobile ? 11 : null,
+                        ),
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                          isDense: true,
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        onSubmitted: (_) => onConfirm(),
+                      ),
+                    ),
+                    SizedBox(width: isMobile ? 2 : 4),
+                    // Cancel button
+                    GestureDetector(
+                      onTap: onCancel,
+                      child: Container(
+                        padding: EdgeInsets.all(isMobile ? 2 : 4),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Icon(
+                          Icons.close,
+                          size: isMobile ? 12 : 14,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: isMobile ? 2 : 4),
+                    // Confirm button
+                    GestureDetector(
+                      onTap: onConfirm,
+                      child: Container(
+                        padding: EdgeInsets.all(isMobile ? 2 : 4),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Icon(
+                          Icons.check,
+                          size: isMobile ? 12 : 14,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : GestureDetector(
+                  onTap: onTap,
+                  child: Text(
+                    controller.text,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontFamily: 'monospace',
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: isMobile ? 11 : null,
+                    ),
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEditableNote(bool isMobile) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          Icons.note_outlined,
+          size: isMobile ? 14 : 16,
+          color: Theme.of(
+            context,
+          ).colorScheme.onSecondaryContainer,
+        ),
+        SizedBox(width: isMobile ? 6 : 8),
+        Expanded(
+          child: _isEditingNote
+              ? Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _noteController,
+                        focusNode: _noteFocusNode,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSecondaryContainer,
+                          fontSize: isMobile ? 11 : null,
+                        ),
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                          isDense: true,
+                          hintText: 'Add a note...',
+                        ),
+                        maxLines: isMobile ? 2 : 3,
+                        onSubmitted: (_) => _confirmNoteChange(),
+                      ),
+                    ),
+                    SizedBox(width: isMobile ? 2 : 4),
+                    // Cancel button
+                    GestureDetector(
+                      onTap: _cancelNoteChange,
+                      child: Container(
+                        padding: EdgeInsets.all(isMobile ? 2 : 4),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Icon(
+                          Icons.close,
+                          size: isMobile ? 12 : 14,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: isMobile ? 2 : 4),
+                    // Confirm button
+                    GestureDetector(
+                      onTap: _confirmNoteChange,
+                      child: Container(
+                        padding: EdgeInsets.all(isMobile ? 2 : 4),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Icon(
+                          Icons.check,
+                          size: isMobile ? 12 : 14,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : GestureDetector(
+                  onTap: _startEditingNote,
+                  child: Text(
+                    widget.selectedPoint!.note ?? 'Tap to add note...',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: widget.selectedPoint!.note?.isNotEmpty ?? false
+                          ? Theme.of(context).colorScheme.onSecondaryContainer
+                          : Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
+                      fontSize: isMobile ? 11 : null,
+                      fontStyle: widget.selectedPoint!.note?.isNotEmpty ?? false
+                          ? FontStyle.normal
+                          : FontStyle.italic,
+                    ),
+                    maxLines: isMobile ? 2 : 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+
+  void _startEditingLatitude() {
+    setState(() {
+      _isEditingLatitude = true;
+    });
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _latitudeFocusNode.requestFocus();
+    });
+  }
+
+  void _startEditingLongitude() {
+    setState(() {
+      _isEditingLongitude = true;
+    });
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _longitudeFocusNode.requestFocus();
+    });
+  }
+
+  void _startEditingNote() {
+    setState(() {
+      _isEditingNote = true;
+    });
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _noteFocusNode.requestFocus();
+    });
+  }
+
+  void _confirmLatitudeChange() {
+    final newLatitude = double.tryParse(_latitudeController.text);
+    if (newLatitude != null && newLatitude != widget.selectedPoint!.latitude) {
+      _updatePointCoordinates(newLatitude, widget.selectedPoint!.longitude);
+    }
+    setState(() {
+      _isEditingLatitude = false;
+    });
+    _latitudeFocusNode.unfocus();
+  }
+
+  void _confirmLongitudeChange() {
+    final newLongitude = double.tryParse(_longitudeController.text);
+    if (newLongitude != null && newLongitude != widget.selectedPoint!.longitude) {
+      _updatePointCoordinates(widget.selectedPoint!.latitude, newLongitude);
+    }
+    setState(() {
+      _isEditingLongitude = false;
+    });
+    _longitudeFocusNode.unfocus();
+  }
+
+  void _confirmNoteChange() {
+    final newNote = _noteController.text.trim();
+    if (newNote != widget.selectedPoint!.note) {
+      _updatePointNote(newNote.isEmpty ? null : newNote);
+    }
+    setState(() {
+      _isEditingNote = false;
+    });
+    _noteFocusNode.unfocus();
+  }
+
+  void _cancelLatitudeChange() {
+    _latitudeController.text = widget.selectedPoint!.latitude.toStringAsFixed(6);
+    setState(() {
+      _isEditingLatitude = false;
+    });
+    _latitudeFocusNode.unfocus();
+  }
+
+  void _cancelLongitudeChange() {
+    _longitudeController.text = widget.selectedPoint!.longitude.toStringAsFixed(6);
+    setState(() {
+      _isEditingLongitude = false;
+    });
+    _longitudeFocusNode.unfocus();
+  }
+
+  void _cancelNoteChange() {
+    _noteController.text = widget.selectedPoint!.note ?? '';
+    setState(() {
+      _isEditingNote = false;
+    });
+    _noteFocusNode.unfocus();
+  }
+
+  void _updatePointCoordinates(double newLatitude, double newLongitude) {
+    if (widget.selectedPoint == null) return;
+
+    final updatedPoint = widget.selectedPoint!.copyWith(
+      latitude: newLatitude,
+      longitude: newLongitude,
+    );
+
+    // Update the point in the parent widget
+    widget.onPointUpdated?.call(updatedPoint);
+
+    // Don't center the map - let it stay where it is
+  }
+
+  void _updatePointNote(String? newNote) {
+    if (widget.selectedPoint == null) return;
+
+    final updatedPoint = widget.selectedPoint!.copyWith(
+      note: newNote,
+    );
+
+    // Update the point in the parent widget
+    widget.onPointUpdated?.call(updatedPoint);
+  }
+
   bool _shouldShowPanelAtBottom() {
-    if (selectedPoint == null || !isMapReady) return false;
+    if (widget.selectedPoint == null || !widget.isMapReady) return false;
 
     try {
       // Get the current map bounds
-      final bounds = mapController.camera.visibleBounds;
+      final bounds = widget.mapController.camera.visibleBounds;
       if (bounds == null) return false;
 
       // Get the selected point's position
       final pointLatLng = LatLng(
-        selectedPoint!.latitude,
-        selectedPoint!.longitude,
+        widget.selectedPoint!.latitude,
+        widget.selectedPoint!.longitude,
       );
 
       // Calculate the midpoint of the visible map
@@ -268,23 +628,23 @@ class PointDetailsPanel extends StatelessWidget {
             icon: Icons.edit_outlined,
             label: 'Edit',
             color: Colors.blue,
-            onPressed: isMovePointMode ? null : onEdit,
+            onPressed: widget.isMovePointMode ? null : widget.onEdit,
             isMobile: isMobile,
           ),
         ),
         SizedBox(width: isMobile ? 6 : 8),
         Expanded(
           child: _buildActionButton(
-            icon: isMovePointMode && selectedPoint!.id == selectedPointId
+            icon: widget.isMovePointMode && widget.selectedPoint!.id == widget.selectedPointId
                 ? Icons.cancel_outlined
                 : Icons.open_with,
-            label: isMovePointMode && selectedPoint!.id == selectedPointId
+            label: widget.isMovePointMode && widget.selectedPoint!.id == widget.selectedPointId
                 ? 'Cancel'
                 : 'Move',
-            color: isMovePointMode && selectedPoint!.id == selectedPointId
+            color: widget.isMovePointMode && widget.selectedPoint!.id == widget.selectedPointId
                 ? Colors.orange
                 : Colors.teal,
-            onPressed: isMovingPointLoading ? null : onMove,
+            onPressed: widget.isMovingPointLoading ? null : widget.onMove,
             isMobile: isMobile,
           ),
         ),
@@ -294,9 +654,9 @@ class PointDetailsPanel extends StatelessWidget {
             icon: Icons.delete_outline,
             label: 'Delete',
             color: Colors.red,
-            onPressed: (isMovePointMode || isMovingPointLoading)
+            onPressed: (widget.isMovePointMode || widget.isMovingPointLoading)
                 ? null
-                : onDelete,
+                : widget.onDelete,
             isMobile: isMobile,
           ),
         ),

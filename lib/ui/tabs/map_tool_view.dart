@@ -693,6 +693,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       onEdit: _handleEditPoint,
       onMove: _handleMovePointAction,
       onDelete: _handleDeletePoint,
+      onPointUpdated: _handlePointUpdated,
     );
   }
 
@@ -866,5 +867,38 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         _selectedPointInstance = point;
       }
     });
+  }
+
+  // Handle point updates from inline editing
+  Future<void> _handlePointUpdated(PointModel updatedPoint) async {
+    try {
+      // Save to database
+      final result = await _controller.movePoint(updatedPoint, LatLng(updatedPoint.latitude, updatedPoint.longitude));
+      
+      if (result > 0) {
+        // Update local state
+        setState(() {
+          final index = _projectPoints.indexWhere((p) => p.id == updatedPoint.id);
+          if (index != -1) {
+            _projectPoints[index] = updatedPoint;
+            // Update selected point instance if it's the same point
+            if (_selectedPointInstance?.id == updatedPoint.id) {
+              _selectedPointInstance = updatedPoint;
+            }
+          }
+          _recalculateAndDrawLines();
+        });
+        
+        showSuccessStatus('Point ${updatedPoint.name} updated successfully!');
+        widget.onPointsChanged?.call();
+      } else {
+        showErrorStatus('Error: Could not update point ${updatedPoint.name}.');
+      }
+    } catch (e) {
+      logger.severe('Failed to update point ${updatedPoint.name}: $e');
+      if (mounted) {
+        showErrorStatus('Error updating point ${updatedPoint.name}: ${e.toString()}');
+      }
+    }
   }
 }
