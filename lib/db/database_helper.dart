@@ -451,9 +451,13 @@ class DatabaseHelper {
       orderBy:
           '${ProjectModel.columnLastUpdate} DESC', // Sort by last update, newest first
     );
-    return List.generate(maps.length, (i) {
-      return ProjectModel.fromMap(maps[i]);
-    });
+    List<ProjectModel> projects = [];
+    for (final map in maps) {
+      final String projectId = map[ProjectModel.columnId] as String;
+      final List<PointModel> points = await getPointsForProject(projectId);
+      projects.add(ProjectModel.fromMap(map, points: points));
+    }
+    return projects;
   }
 
   Future<ProjectModel?> getProjectById(String id) async {
@@ -464,7 +468,8 @@ class DatabaseHelper {
       whereArgs: [id],
     );
     if (maps.isNotEmpty) {
-      return ProjectModel.fromMap(maps.first);
+      final List<PointModel> points = await getPointsForProject(id);
+      return ProjectModel.fromMap(maps.first, points: points);
     }
     return null;
   }
@@ -640,12 +645,10 @@ class DatabaseHelper {
   // You might deprecate or rename the old insertPoint if all new points should handle images.
   // Future<String> insertPoint(PointModel point) async { ... OLD ... }
   // Similarly for ProjectModel and ImageModel
-  Future<String> insertProject(ProjectModel project) async {
+  Future<int> insertProject(ProjectModel project) async {
     Database db = await instance.database;
     final projectToInsert = project.copyWith(lastUpdate: DateTime.now());
-    // projectToInsert.id is already a UUID string
-    await db.insert(ProjectModel.tableName, projectToInsert.toMap());
-    return projectToInsert.id;
+    return db.insert(ProjectModel.tableName, projectToInsert.toMap());
   }
 
   Future<int> updatePoint(PointModel point) async {

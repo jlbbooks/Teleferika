@@ -425,7 +425,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
                   child: SizedBox(
                     width: 120, // Fixed width for consistent button size
                     child: ElevatedButton(
-                      onPressed: _azimuthController.text.trim().isEmpty
+                      onPressed: _currentProject.points.length < 2
                           ? null
                           : (_azimuthFieldModified
                                 ? _saveAzimuth
@@ -447,7 +447,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            _azimuthController.text.trim().isEmpty
+                            _currentProject.points.length < 2
                                 ? Icons.calculate_outlined
                                 : (_azimuthFieldModified
                                       ? Icons.save
@@ -456,7 +456,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            _azimuthController.text.trim().isEmpty
+                            _currentProject.points.length < 2
                                 ? (s?.buttonCalculate ?? 'Calculate')
                                 : (_azimuthFieldModified
                                       ? (s?.buttonSave ?? 'Save')

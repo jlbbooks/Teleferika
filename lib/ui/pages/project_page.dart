@@ -203,7 +203,9 @@ class _ProjectPageState extends State<ProjectPage>
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Licence import cancelled or failed.'),
+                              content: Text(
+                                'Licence import cancelled or failed.',
+                              ),
                               backgroundColor: Colors.orange,
                             ),
                           );
@@ -260,39 +262,42 @@ class _ProjectPageState extends State<ProjectPage>
     }
 
     // Get project points
-    _dbHelper.getPointsForProject(_currentProject.id!).then((points) {
-      if (points.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No points to export.'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-        return;
-      }
-
-      // Use the licensed plugin to show export dialog
-      LicensedFeaturesLoader.showExportDialog(
-        context,
-        _currentProject,
-        points,
-        onExportComplete: (success) {
-          // Optional: Handle export completion if needed
-          if (success) {
-            logger.info('Project exported successfully');
-          } else {
-            logger.warning('Project export failed');
+    _dbHelper
+        .getPointsForProject(_currentProject.id!)
+        .then((points) {
+          if (points.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('No points to export.'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+            return;
           }
-        },
-      );
-    }).catchError((e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error loading project points: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    });
+
+          // Use the licensed plugin to show export dialog
+          LicensedFeaturesLoader.showExportDialog(
+            context,
+            _currentProject,
+            points,
+            onExportComplete: (success) {
+              // Optional: Handle export completion if needed
+              if (success) {
+                logger.info('Project exported successfully');
+              } else {
+                logger.warning('Project export failed');
+              }
+            },
+          );
+        })
+        .catchError((e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error loading project points: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        });
   }
 
   void _switchToTab() {
@@ -667,14 +672,8 @@ class _ProjectPageState extends State<ProjectPage>
 
       try {
         if (_isEffectivelyNew) {
-          String newId = await _dbHelper.insertProject(projectToSave);
+          await _dbHelper.insertProject(projectToSave);
           if (mounted) {
-            // Update _currentProject to reflect the saved state (especially lastUpdate from DB if different)
-            // For now, projectToSave is good enough.
-            _currentProject = projectToSave.copyWith(
-              id: newId, // FIXME: no need.. id does not change.. remove
-            ); // Ensure ID consistency if DB generated it differently (not for UUIDs)
-            // For client-generated UUIDs, projectToSave.id is already the ID.
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(S.of(context)!.project_created_successfully),
@@ -946,7 +945,7 @@ class _ProjectPageState extends State<ProjectPage>
         ),
         PointsTab(
           project: _currentProject,
-          onPointsChanged: _onPointsChanged,
+          onPointsChanged: _handlePointsChanged,
           // newlyAddedPointId: _newlyAddedPointId, // Add if you track this
         ),
         CompassToolView(
@@ -1122,13 +1121,14 @@ class _ProjectPageState extends State<ProjectPage>
     });
   }
 
-  void _onPointsChanged() {
-    logger.info(
-      "ProjectDetailsPage: Points changed, reloading project details.",
-    );
-    _loadProjectDetails(); // Reload project details to get new start/end IDs
-    _pointsToolViewKey.currentState
-        ?.refreshPoints(); // Ensure PointsToolView itself also refreshes its internal list
+  Future<void> _handlePointsChanged() async {
+    // Reload the project from the DB to get the latest points
+    final updatedProject = await _dbHelper.getProjectById(_currentProject.id);
+    if (updatedProject != null && mounted) {
+      setState(() {
+        _currentProject = updatedProject;
+      });
+    }
   }
 
   void _onCompassAction() {

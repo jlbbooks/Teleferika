@@ -863,10 +863,36 @@ class MapToolViewState extends State<MapToolView> {
     final List<LatLng> polylinePathPoints = _buildPolylinePathPoints();
     _updateHeadingLine(); // Helper to encapsulate heading line creation logic
 
+    // Defensive: Ensure initial center/zoom are valid
+    LatLng initialMapCenter = _defaultCenter;
+    double initialMapZoom = _defaultZoom;
+
+    if (_projectPoints.isNotEmpty) {
+      initialMapCenter = _getInitialCenter();
+      initialMapZoom = _getInitialZoom();
+    } else if (_currentPosition != null && _hasLocationPermission) {
+      initialMapCenter = LatLng(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+      );
+      initialMapZoom = _defaultZoom;
+    }
+
+    // Check for NaN or infinite values
+    if (initialMapCenter.latitude.isNaN ||
+        initialMapCenter.longitude.isNaN ||
+        initialMapZoom.isNaN ||
+        initialMapZoom.isInfinite) {
+      return Center(
+        child: Text('Waiting for valid map data...'),
+      );
+    }
+
     return Scaffold(
       body: Stack(
         children: [
-          _buildFlutterMapWidget(allMapMarkers, polylinePathPoints),
+          _buildFlutterMapWidget(allMapMarkers, polylinePathPoints,
+              initialMapCenter: initialMapCenter, initialMapZoom: initialMapZoom),
           _buildPermissionOverlay(),
           _buildPointDetailsPanel(),
           // Floating action buttons positioned on the left
@@ -1016,22 +1042,10 @@ class MapToolViewState extends State<MapToolView> {
   // Helper to build the core FlutterMap widget
   Widget _buildFlutterMapWidget(
     List<Marker> allMapMarkers,
-    List<LatLng> polylinePathPoints,
-  ) {
-    LatLng initialMapCenter = _defaultCenter;
-    double initialMapZoom = _defaultZoom;
-
-    if (_projectPoints.isNotEmpty) {
-      initialMapCenter = _getInitialCenter();
-      initialMapZoom = _getInitialZoom();
-    } else if (_currentPosition != null && _hasLocationPermission) {
-      initialMapCenter = LatLng(
-        _currentPosition!.latitude,
-        _currentPosition!.longitude,
-      );
-      initialMapZoom = _defaultZoom;
-    }
-
+    List<LatLng> polylinePathPoints, {
+    required LatLng initialMapCenter,
+    required double initialMapZoom,
+  }) {
     return FlutterMap(
       mapController: _mapController,
       options: MapOptions(

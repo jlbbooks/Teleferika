@@ -1,6 +1,7 @@
 // db/models/project_model.dart
 
 import 'package:teleferika/core/utils/uuid_generator.dart';
+import 'package:teleferika/db/models/point_model.dart';
 
 class ProjectModel {
   static const String tableName = 'projects';
@@ -21,6 +22,8 @@ class ProjectModel {
   final double? azimuth;
   final DateTime? lastUpdate; // Tracks when the record was last modified in DB
   final DateTime? date; // User-settable date for the project
+  final List<PointModel>
+  points; // In-memory list of points for this project (not persisted in DB)
 
   ProjectModel({
     String? id, // Default to generating a UUID if not provided
@@ -31,7 +34,9 @@ class ProjectModel {
     this.azimuth,
     this.lastUpdate,
     this.date,
-  }) : id = id ?? generateUuid(); // Generate UUID if id is null
+    List<PointModel>? points,
+  }) : id = id ?? generateUuid(),
+       points = points ?? const []; // Default to empty list
 
   Map<String, dynamic> toMap() {
     return {
@@ -43,10 +48,14 @@ class ProjectModel {
       columnAzimuth: azimuth,
       columnLastUpdate: lastUpdate?.toIso8601String(),
       columnDate: date?.toIso8601String(),
+      // points is not persisted in DB, so not included here
     };
   }
 
-  factory ProjectModel.fromMap(Map<String, dynamic> map) {
+  factory ProjectModel.fromMap(
+    Map<String, dynamic> map, {
+    List<PointModel>? points,
+  }) {
     return ProjectModel(
       id: map[columnId] as String?,
       name: map[columnName] as String,
@@ -60,6 +69,7 @@ class ProjectModel {
       date: map[columnDate] != null
           ? DateTime.tryParse(map[columnDate] as String)
           : null,
+      points: points,
     );
   }
   ProjectModel copyWith({
@@ -77,6 +87,7 @@ class ProjectModel {
     bool clearLastUpdate = false,
     DateTime? date,
     bool clearDate = false,
+    List<PointModel>? points,
   }) {
     return ProjectModel(
       id: id ?? this.id,
@@ -91,12 +102,13 @@ class ProjectModel {
       azimuth: clearAzimuth ? null : (azimuth ?? this.azimuth),
       lastUpdate: clearLastUpdate ? null : (lastUpdate ?? this.lastUpdate),
       date: clearDate ? null : (date ?? this.date),
+      points: points ?? this.points,
     );
   }
 
   @override
   String toString() {
-    return 'ProjectModel{id: $id, name: $name, note: $note, ..., date: $date, lastUpdate: $lastUpdate}';
+    return 'ProjectModel{id: $id, name: $name, note: $note, ..., date: $date, lastUpdate: $lastUpdate, points: ${points.length} points}';
   }
 
   // In ProjectModel class, corrected == operator for DateTime:
@@ -118,7 +130,16 @@ class ProjectModel {
         ((other.date == null && date == null) ||
             (other.date != null &&
                 date != null &&
-                other.date!.isAtSameMomentAs(date!)));
+                other.date!.isAtSameMomentAs(date!))) &&
+        _listEquals(other.points, points);
+  }
+
+  bool _listEquals(List<PointModel> a, List<PointModel> b) {
+    if (a.length != b.length) return false;
+    for (int i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 
   @override
@@ -131,5 +152,6 @@ class ProjectModel {
     azimuth,
     lastUpdate,
     date,
+    Object.hashAll(points),
   );
 }
