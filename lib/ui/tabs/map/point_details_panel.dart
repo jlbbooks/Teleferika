@@ -35,18 +35,30 @@ class PointDetailsPanel extends StatelessWidget {
 
     // Determine if the panel should appear at the bottom
     final bool shouldShowAtBottom = _shouldShowPanelAtBottom();
+    
+    // Get screen width for responsive design
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+    
+    // Calculate responsive width and positioning - make it narrower
+    final maxWidth = isMobile ? screenWidth * 0.65 : 280.0; // Reduced from 0.85 and 320
+    final horizontalPadding = isMobile ? 8.0 : 16.0;
+    final verticalPadding = isMobile ? 12.0 : 16.0;
+    
+    // Account for floating action buttons - they're on the left side
+    final bottomOffset = 100.0; // Space for floating buttons
 
     return Positioned(
       top: shouldShowAtBottom ? null : 16,
-      bottom: shouldShowAtBottom ? 16 : null,
-      right: 16,
+      bottom: shouldShowAtBottom ? 24.0 : null, // Match floating buttons bottom position
+      right: horizontalPadding,
       child: Material(
         elevation: 8.0,
         borderRadius: BorderRadius.circular(12.0),
         shadowColor: Colors.black26,
         child: Container(
-          constraints: const BoxConstraints(maxWidth: 320),
-          padding: const EdgeInsets.all(16.0),
+          constraints: BoxConstraints(maxWidth: maxWidth),
+          padding: EdgeInsets.all(verticalPadding),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12.0),
@@ -63,9 +75,9 @@ class PointDetailsPanel extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isMobile ? 6 : 8,
+                      vertical: isMobile ? 3 : 4,
                     ),
                     decoration: BoxDecoration(
                       color: Theme.of(
@@ -78,27 +90,28 @@ class PointDetailsPanel extends StatelessWidget {
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).colorScheme.primary,
+                        fontSize: isMobile ? 14 : null,
                       ),
                     ),
                   ),
                   const Spacer(),
                   IconButton(
-                    icon: const Icon(Icons.close, size: 20),
+                    icon: Icon(Icons.close, size: isMobile ? 18 : 20),
                     onPressed: onClose,
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 32,
-                      minHeight: 32,
+                    constraints: BoxConstraints(
+                      minWidth: isMobile ? 28 : 32,
+                      minHeight: isMobile ? 28 : 32,
                     ),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 12),
+              SizedBox(height: isMobile ? 8 : 12),
 
               // Coordinates
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: EdgeInsets.all(isMobile ? 6 : 8),
                 decoration: BoxDecoration(
                   color: Theme.of(
                     context,
@@ -109,16 +122,17 @@ class PointDetailsPanel extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.location_on_outlined,
-                      size: 16,
+                      size: isMobile ? 14 : 16,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: isMobile ? 6 : 8),
                     Expanded(
                       child: Text(
-                        '${selectedPoint!.latitude.toStringAsFixed(6)}, ${selectedPoint!.longitude.toStringAsFixed(6)}',
+                        '${selectedPoint!.latitude.toStringAsFixed(isMobile ? 5 : 6)}, ${selectedPoint!.longitude.toStringAsFixed(isMobile ? 5 : 6)}',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           fontFamily: 'monospace',
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: isMobile ? 11 : null,
                         ),
                       ),
                     ),
@@ -128,9 +142,9 @@ class PointDetailsPanel extends StatelessWidget {
 
               // Note section
               if (selectedPoint!.note?.isNotEmpty ?? false) ...[
-                const SizedBox(height: 12),
+                SizedBox(height: isMobile ? 8 : 12),
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: EdgeInsets.all(isMobile ? 6 : 8),
                   decoration: BoxDecoration(
                     color: Theme.of(
                       context,
@@ -142,12 +156,12 @@ class PointDetailsPanel extends StatelessWidget {
                     children: [
                       Icon(
                         Icons.note_outlined,
-                        size: 16,
+                        size: isMobile ? 14 : 16,
                         color: Theme.of(
                           context,
                         ).colorScheme.onSecondaryContainer,
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: isMobile ? 6 : 8),
                       Expanded(
                         child: Text(
                           selectedPoint!.note!,
@@ -156,8 +170,9 @@ class PointDetailsPanel extends StatelessWidget {
                                 color: Theme.of(
                                   context,
                                 ).colorScheme.onSecondaryContainer,
+                                fontSize: isMobile ? 11 : null,
                               ),
-                          maxLines: 3,
+                          maxLines: isMobile ? 2 : 3,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -168,9 +183,9 @@ class PointDetailsPanel extends StatelessWidget {
 
               // Move mode indicator
               if (isMovePointMode && selectedPoint!.id == selectedPointId) ...[
-                const SizedBox(height: 12),
+                SizedBox(height: isMobile ? 8 : 12),
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: EdgeInsets.all(isMobile ? 6 : 8),
                   decoration: BoxDecoration(
                     color: Colors.orange.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
@@ -180,17 +195,17 @@ class PointDetailsPanel extends StatelessWidget {
                     children: [
                       Icon(
                         Icons.touch_app,
-                        size: 16,
+                        size: isMobile ? 14 : 16,
                         color: Colors.orange.shade700,
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: isMobile ? 6 : 8),
                       Expanded(
                         child: Text(
                           'Tap on the map to set new location',
                           style: TextStyle(
                             color: Colors.orange.shade700,
                             fontStyle: FontStyle.italic,
-                            fontSize: 12,
+                            fontSize: isMobile ? 10 : 12,
                           ),
                         ),
                       ),
@@ -199,16 +214,16 @@ class PointDetailsPanel extends StatelessWidget {
                 ),
               ],
 
-              const SizedBox(height: 16),
+              SizedBox(height: isMobile ? 12 : 16),
 
               // Action buttons
-              _buildActionButtons(),
+              _buildActionButtons(isMobile),
 
               // Loading indicator
               if (isMovingPointLoading)
-                const Padding(
-                  padding: EdgeInsets.only(top: 12.0),
-                  child: Center(child: LinearProgressIndicator()),
+                Padding(
+                  padding: EdgeInsets.only(top: isMobile ? 8.0 : 12.0),
+                  child: const Center(child: LinearProgressIndicator()),
                 ),
             ],
           ),
@@ -243,7 +258,7 @@ class PointDetailsPanel extends StatelessWidget {
     }
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(bool isMobile) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -254,9 +269,10 @@ class PointDetailsPanel extends StatelessWidget {
             label: 'Edit',
             color: Colors.blue,
             onPressed: isMovePointMode ? null : onEdit,
+            isMobile: isMobile,
           ),
         ),
-        const SizedBox(width: 8),
+        SizedBox(width: isMobile ? 6 : 8),
         Expanded(
           child: _buildActionButton(
             icon: isMovePointMode && selectedPoint!.id == selectedPointId
@@ -269,9 +285,10 @@ class PointDetailsPanel extends StatelessWidget {
                 ? Colors.orange
                 : Colors.teal,
             onPressed: isMovingPointLoading ? null : onMove,
+            isMobile: isMobile,
           ),
         ),
-        const SizedBox(width: 8),
+        SizedBox(width: isMobile ? 6 : 8),
         Expanded(
           child: _buildActionButton(
             icon: Icons.delete_outline,
@@ -280,6 +297,7 @@ class PointDetailsPanel extends StatelessWidget {
             onPressed: (isMovePointMode || isMovingPointLoading)
                 ? null
                 : onDelete,
+            isMobile: isMobile,
           ),
         ),
       ],
@@ -291,6 +309,7 @@ class PointDetailsPanel extends StatelessWidget {
     required String label,
     required Color color,
     required VoidCallback? onPressed,
+    required bool isMobile,
   }) {
     return Material(
       color: Colors.transparent,
@@ -298,7 +317,10 @@ class PointDetailsPanel extends StatelessWidget {
         onTap: onPressed,
         borderRadius: BorderRadius.circular(8),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          padding: EdgeInsets.symmetric(
+            vertical: isMobile ? 6 : 8, 
+            horizontal: isMobile ? 2 : 4,
+          ),
           decoration: BoxDecoration(
             color: onPressed != null
                 ? color.withOpacity(0.1)
@@ -316,14 +338,14 @@ class PointDetailsPanel extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                size: 20,
+                size: isMobile ? 16 : 20,
                 color: onPressed != null ? color : Colors.grey,
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: isMobile ? 2 : 4),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: isMobile ? 10 : 11,
                   fontWeight: FontWeight.w500,
                   color: onPressed != null ? color : Colors.grey,
                 ),
