@@ -1,10 +1,10 @@
 // points_tool_view.dart
 import 'package:flutter/material.dart';
+import 'package:teleferika/core/logger.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
-import 'package:teleferika/logger.dart';
-import 'package:teleferika/point_details_page.dart';
+import 'package:teleferika/ui/pages/point_details_page.dart';
 
 class PointsToolView extends StatefulWidget {
   final ProjectModel project;

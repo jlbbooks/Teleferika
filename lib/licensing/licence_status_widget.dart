@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:teleferika/logger.dart';
-import 'package:teleferika/licensing/feature_registry.dart';
+import 'package:teleferika/core/logger.dart';
 import 'package:teleferika/licensing/licensed_features_loader.dart';
+
 import 'licence_service.dart';
 
 /// Widget that displays current licence status
@@ -27,7 +27,7 @@ class _LicenceStatusWidgetState extends State<LicenceStatusWidget> {
     try {
       final status = await LicenceService.instance.getLicenceStatus();
       final features = LicensedFeaturesLoader.licensedFeatures;
-      
+
       if (mounted) {
         setState(() {
           _licenceStatus = status;
@@ -103,10 +103,14 @@ class _LicenceStatusWidgetState extends State<LicenceStatusWidget> {
               const SizedBox(height: 4),
               Wrap(
                 spacing: 4,
-                children: _availableFeatures.map((feature) => Chip(
-                  label: Text(feature),
-                  backgroundColor: Colors.green[100],
-                )).toList(),
+                children: _availableFeatures
+                    .map(
+                      (feature) => Chip(
+                        label: Text(feature),
+                        backgroundColor: Colors.green[100],
+                      ),
+                    )
+                    .toList(),
               ),
             ],
             const SizedBox(height: 8),
@@ -128,7 +132,8 @@ class _LicenceStatusWidgetState extends State<LicenceStatusWidget> {
     final expiresSoon = status['expiresSoon'] as bool;
     final daysRemaining = status['daysRemaining'] as int;
     final email = status['email'] as String?;
-    final features = (status['features'] as List<dynamic>?)?.cast<String>() ?? [];
+    final features =
+        (status['features'] as List<dynamic>?)?.cast<String>() ?? [];
 
     return Card(
       child: Padding(
@@ -152,7 +157,10 @@ class _LicenceStatusWidgetState extends State<LicenceStatusWidget> {
                 const Spacer(),
                 if (expiresSoon)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.orange,
                       borderRadius: BorderRadius.circular(12),
@@ -181,10 +189,14 @@ class _LicenceStatusWidgetState extends State<LicenceStatusWidget> {
               const SizedBox(height: 4),
               Wrap(
                 spacing: 4,
-                children: features.map((feature) => Chip(
-                  label: Text(feature),
-                  backgroundColor: Colors.blue[100],
-                )).toList(),
+                children: features
+                    .map(
+                      (feature) => Chip(
+                        label: Text(feature),
+                        backgroundColor: Colors.blue[100],
+                      ),
+                    )
+                    .toList(),
               ),
             ],
             if (_availableFeatures.isNotEmpty) ...[
@@ -196,10 +208,14 @@ class _LicenceStatusWidgetState extends State<LicenceStatusWidget> {
               const SizedBox(height: 4),
               Wrap(
                 spacing: 4,
-                children: _availableFeatures.map((feature) => Chip(
-                  label: Text(feature),
-                  backgroundColor: Colors.green[100],
-                )).toList(),
+                children: _availableFeatures
+                    .map(
+                      (feature) => Chip(
+                        label: Text(feature),
+                        backgroundColor: Colors.green[100],
+                      ),
+                    )
+                    .toList(),
               ),
             ],
             const SizedBox(height: 8),
@@ -255,7 +271,9 @@ class _LicenceStatusWidgetState extends State<LicenceStatusWidget> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Remove Licence'),
-        content: const Text('Are you sure you want to remove the current licence?'),
+        content: const Text(
+          'Are you sure you want to remove the current licence?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -290,4 +308,4 @@ class _LicenceStatusWidgetState extends State<LicenceStatusWidget> {
       }
     }
   }
-} 
+}

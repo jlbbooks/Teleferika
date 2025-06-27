@@ -1,8 +1,7 @@
 // lib/models/licence_model.dart
 import 'dart:convert';
-import 'dart:math';
 
-import '../logger.dart'; // For @required if using older Flutter, or just for clarity
+import 'package:teleferika/core/logger.dart';
 
 /// Represents a software licence with validation and security features
 class Licence {
@@ -42,7 +41,8 @@ class Licence {
     if (maxDays <= 0) {
       throw FormatException('Max days must be positive: $maxDays');
     }
-    if (maxDays > 36500) { // 100 years
+    if (maxDays > 36500) {
+      // 100 years
       throw FormatException('Max days cannot exceed 36500: $maxDays');
     }
   }
@@ -50,12 +50,12 @@ class Licence {
   /// Check if the licence is currently valid
   bool get isValid {
     final now = DateTime.now();
-    
+
     // Check if current date is before or same as validUntil
     if (now.isAfter(validUntil)) {
       return false;
     }
-    
+
     // Check if importedDate + maxDays hasn't expired
     if (importedDate != null) {
       final maxExpiryDate = importedDate!.add(Duration(days: maxDays));
@@ -63,7 +63,7 @@ class Licence {
         return false;
       }
     }
-    
+
     return true;
   }
 
@@ -154,8 +154,9 @@ class Licence {
   /// Create Licence from a licence file content
   factory Licence.fromLicenceFileContent(String fileContent) {
     try {
-      final Map<String, dynamic> jsonMap = jsonDecode(fileContent) as Map<String, dynamic>;
-      
+      final Map<String, dynamic> jsonMap =
+          jsonDecode(fileContent) as Map<String, dynamic>;
+
       // Validate required fields
       final requiredFields = ['email', 'maxDays', 'validUntil'];
       for (final field in requiredFields) {

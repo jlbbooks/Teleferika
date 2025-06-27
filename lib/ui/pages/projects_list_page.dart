@@ -2,16 +2,15 @@ import 'dart:async'; // For Timer
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:teleferika/licensing/feature_registry.dart';
-import 'package:teleferika/licensing/licensed_features_loader.dart';
+import 'package:teleferika/core/app_config.dart';
+import 'package:teleferika/core/logger.dart';
+import 'package:teleferika/db/database_helper.dart';
+import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/licensing/licence_model.dart';
 import 'package:teleferika/licensing/licence_service.dart';
-import 'package:teleferika/project_page.dart';
+import 'package:teleferika/licensing/licensed_features_loader.dart';
 
-import 'app_config.dart';
-import 'db/database_helper.dart';
-import 'db/models/project_model.dart';
-import 'logger.dart';
+import 'project_page.dart';
 
 class ProjectsListPage extends StatefulWidget {
   final String? appVersion;
@@ -122,7 +121,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
   void _showPremiumFeaturesDialog() {
     final hasLicensedFeatures = LicensedFeaturesLoader.hasLicensedFeatures;
     final availableFeatures = LicensedFeaturesLoader.licensedFeatures;
-    
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -144,21 +143,33 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
               if (hasLicensedFeatures) ...[
                 const Text('Premium features are available in this build!'),
                 const SizedBox(height: 16),
-                const Text('Available Features:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(
+                  'Available Features:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 8),
-                ...availableFeatures.map((feature) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.check_circle, color: Colors.green, size: 16),
-                      const SizedBox(width: 8),
-                      Expanded(child: Text(feature)),
-                    ],
+                ...availableFeatures.map(
+                  (feature) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.check_circle,
+                          color: Colors.green,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text(feature)),
+                      ],
+                    ),
                   ),
-                )),
+                ),
                 const SizedBox(height: 16),
                 // Show a sample premium widget
-                if (LicensedFeaturesLoader.buildLicensedWidget('premium_banner') != null)
+                if (LicensedFeaturesLoader.buildLicensedWidget(
+                      'premium_banner',
+                    ) !=
+                    null)
                   LicensedFeaturesLoader.buildLicensedWidget('premium_banner')!,
               ] else ...[
                 const Text('Premium features are not available in this build.'),

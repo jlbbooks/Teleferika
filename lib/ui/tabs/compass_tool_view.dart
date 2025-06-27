@@ -5,9 +5,9 @@ import 'dart:math' as math; // For PI
 import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:teleferika/core/logger.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
-import 'package:teleferika/logger.dart';
 
 // Define a typedef for the callback function for clarity
 typedef AddPointFromCompassCallback =
@@ -59,7 +59,7 @@ class _CompassToolViewState extends State<CompassToolView> {
     try {
       // Check if compass is available first
       final isCompassAvailable = await FlutterCompass.events?.first != null;
-      
+
       if (!isCompassAvailable) {
         setState(() {
           _isCompassAvailable = false;
@@ -85,7 +85,8 @@ class _CompassToolViewState extends State<CompassToolView> {
         );
         setState(() {
           _hasPermissions = false;
-          _errorMessage = 'Sensor and location permissions are required for compass functionality.';
+          _errorMessage =
+              'Sensor and location permissions are required for compass functionality.';
         });
       }
     } catch (e) {
@@ -145,7 +146,10 @@ class _CompassToolViewState extends State<CompassToolView> {
       final s = S.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(s?.compassHeadingNotAvailable ?? 'Cannot add point: Compass heading not available.'),
+          content: Text(
+            s?.compassHeadingNotAvailable ??
+                'Cannot add point: Compass heading not available.',
+          ),
           backgroundColor: Colors.orange,
         ),
       );
@@ -155,18 +159,25 @@ class _CompassToolViewState extends State<CompassToolView> {
   Widget _buildProjectAzimuthText() {
     final s = S.of(context);
     String azimuthText;
-    Color textColor = Theme.of(context).textTheme.bodySmall?.color ?? Colors.black;
+    Color textColor =
+        Theme.of(context).textTheme.bodySmall?.color ?? Colors.black;
     bool hasCalculatedAzimuth = widget.project.azimuth != null;
 
     if (hasCalculatedAzimuth) {
-      azimuthText = s?.projectAzimuthLabel(widget.project.azimuth!.toStringAsFixed(1)) ?? 
+      azimuthText =
+          s?.projectAzimuthLabel(widget.project.azimuth!.toStringAsFixed(1)) ??
           'Project Azimuth: ${widget.project.azimuth!.toStringAsFixed(1)}°';
     } else {
-      if (widget.project.startingPointId == null || widget.project.endingPointId == null) {
-        azimuthText = s?.projectAzimuthRequiresPoints ?? 'Project Azimuth: (Requires at least 2 points)';
+      if (widget.project.startingPointId == null ||
+          widget.project.endingPointId == null) {
+        azimuthText =
+            s?.projectAzimuthRequiresPoints ??
+            'Project Azimuth: (Requires at least 2 points)';
         textColor = Colors.orange.shade700;
       } else {
-        azimuthText = s?.projectAzimuthNotCalculated ?? 'Project Azimuth: Not yet calculated';
+        azimuthText =
+            s?.projectAzimuthNotCalculated ??
+            'Project Azimuth: Not yet calculated';
         textColor = Colors.grey.shade600;
       }
     }
@@ -175,7 +186,9 @@ class _CompassToolViewState extends State<CompassToolView> {
       padding: const EdgeInsets.only(top: 8.0),
       child: Text(
         azimuthText,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: textColor),
+        style: Theme.of(
+          context,
+        ).textTheme.bodySmall?.copyWith(color: textColor),
         textAlign: TextAlign.center,
       ),
     );
@@ -183,11 +196,11 @@ class _CompassToolViewState extends State<CompassToolView> {
 
   Widget _buildAccuracyIndicator() {
     if (_accuracy == null) return const SizedBox.shrink();
-    
+
     final s = S.of(context);
     Color accuracyColor;
     String accuracyText;
-    
+
     if (_accuracy! < 5) {
       accuracyColor = Colors.green;
       accuracyText = s?.compassAccuracyHigh ?? 'High Accuracy';
@@ -208,10 +221,9 @@ class _CompassToolViewState extends State<CompassToolView> {
           const SizedBox(width: 4),
           Text(
             accuracyText,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: accuracyColor,
-              fontSize: 10,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: accuracyColor, fontSize: 10),
           ),
         ],
       ),
@@ -235,8 +247,9 @@ class _CompassToolViewState extends State<CompassToolView> {
             ),
             const SizedBox(height: 8),
             Text(
-              _errorMessage ?? (s?.compassPermissionsMessage ?? 
-                  "This tool requires sensor and location permissions to function correctly. Please grant them in your device settings."),
+              _errorMessage ??
+                  (s?.compassPermissionsMessage ??
+                      "This tool requires sensor and location permissions to function correctly. Please grant them in your device settings."),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
@@ -264,7 +277,7 @@ class _CompassToolViewState extends State<CompassToolView> {
     }
 
     final s = S.of(context);
-    
+
     // Determine the rotation for the project azimuth arrow
     double projectAzimuthArrowRotationDegrees = 0;
     if (widget.project.azimuth != null && _heading != null) {
@@ -319,12 +332,16 @@ class _CompassToolViewState extends State<CompassToolView> {
                       // 2. Project Azimuth Arrow (Conditionally displayed and rotated)
                       if (widget.project.azimuth != null)
                         Transform.rotate(
-                          angle: (projectAzimuthArrowRotationDegrees * (math.pi / 180)),
+                          angle:
+                              (projectAzimuthArrowRotationDegrees *
+                              (math.pi / 180)),
                           child: Image.asset(
                             'assets/images/direction_arrow.png',
                             width: compassSize * 0.72, // 180/250 = 0.72
                             height: compassSize * 0.72,
-                            color: Colors.blueGrey.withAlpha((0.7 * 255).round()),
+                            color: Colors.blueGrey.withAlpha(
+                              (0.7 * 255).round(),
+                            ),
                           ),
                         ),
                     ],
@@ -333,7 +350,7 @@ class _CompassToolViewState extends State<CompassToolView> {
               },
             ),
             const SizedBox(height: 20),
-            
+
             // --- "Add as END point" Checkbox ---
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -366,9 +383,7 @@ class _CompassToolViewState extends State<CompassToolView> {
                 width: 200, // Fixed width for consistency
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.add_location_alt_outlined),
-                  label: Text(
-                    s?.compassAddPointButton ?? 'Add Point',
-                  ),
+                  label: Text(s?.compassAddPointButton ?? 'Add Point'),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,

@@ -2,9 +2,8 @@
 // when using the Opensource version, upon setting up the project.
 // Do not commit licensed_features_loader.dart
 
-import '../logger.dart';
-import 'feature_registry.dart';
 import 'package:flutter/widgets.dart';
+import 'package:teleferika/core/logger.dart';
 
 /// Stub implementation for licensed features loader
 /// This is used in the opensource version when licensed features are not available
@@ -13,15 +12,17 @@ class LicensedFeaturesLoader {
   /// In the opensource version, this does nothing
   static Future<void> registerLicensedFeatures() async {
     logger.info('Licensed features not available in this build');
-    
+
     // In the full version, this would:
     // 1. Check if a valid licence exists
     // 2. Register premium features based on licence
     // 3. Set up feature availability flags
     // 4. Initialize premium plugins
-    
+
     // For now, we just log that licensed features are not available
-    logger.info('This is the opensource version - premium features are disabled');
+    logger.info(
+      'This is the opensource version - premium features are disabled',
+    );
   }
 
   /// Check if licensed features are available

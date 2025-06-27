@@ -6,19 +6,18 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
+import 'package:teleferika/core/logger.dart';
+import 'package:teleferika/db/database_helper.dart';
+import 'package:teleferika/db/models/point_model.dart';
+import 'package:teleferika/db/models/project_model.dart';
+import 'package:teleferika/features/export/export_page.dart';
+import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/licensing/licence_service.dart';
-import 'package:teleferika/project_tools/compass_tool_view.dart';
-import 'package:teleferika/project_tools/map_tool_view.dart';
-import 'package:teleferika/project_tools/points_tab.dart';
-import 'package:teleferika/project_tools/points_tool_view.dart';
-import 'package:teleferika/project_tools/project_details_tab.dart';
-
-import 'db/database_helper.dart'; // Ensure correct path
-import 'db/models/point_model.dart';
-import 'db/models/project_model.dart'; // Ensure correct path
-import 'export/export_page.dart';
-import 'l10n/app_localizations.dart';
-import 'logger.dart';
+import 'package:teleferika/ui/tabs/compass_tool_view.dart';
+import 'package:teleferika/ui/tabs/map_tool_view.dart';
+import 'package:teleferika/ui/tabs/points_tab.dart';
+import 'package:teleferika/ui/tabs/points_tool_view.dart';
+import 'package:teleferika/ui/tabs/project_details_tab.dart';
 
 enum ProjectPageTab {
   details, // 0
@@ -1021,7 +1020,8 @@ class _ProjectPageState extends State<ProjectPage>
 
     List<Widget> tabBarActions = [
       // Only show delete button on the Details tab
-      if (!_isEffectivelyNew && _tabController.index == ProjectPageTab.details.index)
+      if (!_isEffectivelyNew &&
+          _tabController.index == ProjectPageTab.details.index)
         IconButton(
           icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
           onPressed: _isLoading ? null : _confirmDeleteProject,
@@ -1142,7 +1142,7 @@ class _ProjectPageState extends State<ProjectPage>
   }) {
     // Check if there are actual changes that need to be saved
     bool hasRealChanges = false;
-    
+
     // Compare with original project data
     if (widget.project.name != updatedProject.name ||
         widget.project.note != updatedProject.note ||
@@ -1150,7 +1150,7 @@ class _ProjectPageState extends State<ProjectPage>
         widget.project.date != updatedProject.date) {
       hasRealChanges = true;
     }
-    
+
     setState(() {
       _currentProject = updatedProject;
       _hasUnsavedChanges = hasRealChanges;

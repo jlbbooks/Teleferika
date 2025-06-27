@@ -4,9 +4,9 @@ import 'dart:io';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:teleferika/core/logger.dart';
+import 'package:teleferika/core/utils/uuid_generator.dart';
 
-import '../logger.dart';
-import '../utils/uuid_generator.dart';
 import 'models/image_model.dart';
 import 'models/point_model.dart';
 import 'models/project_model.dart';

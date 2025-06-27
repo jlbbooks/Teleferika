@@ -9,20 +9,15 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:teleferika/core/logger.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
+import 'package:teleferika/ui/pages/point_details_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../logger.dart';
-import '../point_details_page.dart';
-
-enum MapType {
-  openStreetMap,
-  satellite,
-  terrain,
-}
+enum MapType { openStreetMap, satellite, terrain }
 
 class MapToolView extends StatefulWidget {
   final ProjectModel project;
@@ -790,9 +785,10 @@ class MapToolViewState extends State<MapToolView> {
   }
 
   Widget _buildFloatingActionButtons() {
-    final bool isLocationLoading = _hasLocationPermission && _currentPosition == null;
+    final bool isLocationLoading =
+        _hasLocationPermission && _currentPosition == null;
     final s = S.of(context);
-    
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -802,10 +798,10 @@ class MapToolViewState extends State<MapToolView> {
           child: FloatingActionButton(
             heroTag: 'center_on_location',
             onPressed: isLocationLoading ? null : _centerOnCurrentLocation,
-            tooltip: isLocationLoading 
+            tooltip: isLocationLoading
                 ? (s?.mapAcquiringLocation ?? 'Acquiring location...')
                 : (s?.mapCenterOnLocation ?? 'Center on my location'),
-            child: isLocationLoading 
+            child: isLocationLoading
                 ? const SizedBox(
                     width: 20,
                     height: 20,
@@ -823,10 +819,10 @@ class MapToolViewState extends State<MapToolView> {
           child: FloatingActionButton(
             heroTag: 'add_new_point',
             onPressed: isLocationLoading ? null : _handleAddPointButtonPressed,
-            tooltip: isLocationLoading 
+            tooltip: isLocationLoading
                 ? (s?.mapAcquiringLocation ?? 'Acquiring location...')
                 : (s?.mapAddNewPoint ?? 'Add New Point'),
-            child: isLocationLoading 
+            child: isLocationLoading
                 ? const SizedBox(
                     width: 20,
                     height: 20,
@@ -1114,9 +1110,8 @@ class MapToolViewState extends State<MapToolView> {
           attributions: [
             TextSourceAttribution(
               _getTileLayerAttribution(),
-              onTap: () => launchUrl(
-                Uri.parse(_getAttributionUrl()),
-              ), // (external)
+              onTap: () =>
+                  launchUrl(Uri.parse(_getAttributionUrl())), // (external)
             ),
             // Also add images...
           ],
@@ -1480,9 +1475,7 @@ class MapToolViewState extends State<MapToolView> {
       left: 10,
       child: Card(
         elevation: 4.0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.0),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
           child: Row(
@@ -1496,9 +1489,9 @@ class MapToolViewState extends State<MapToolView> {
               const SizedBox(width: 8),
               Text(
                 _getMapTypeDisplayName(),
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
               ),
               const SizedBox(width: 8),
               PopupMenuButton<MapType>(
@@ -1509,9 +1502,21 @@ class MapToolViewState extends State<MapToolView> {
                   });
                 },
                 itemBuilder: (BuildContext context) => [
-                  _buildMapTypeMenuItem(MapType.openStreetMap, s?.mapTypeStreet ?? 'Street', Icons.map),
-                  _buildMapTypeMenuItem(MapType.satellite, s?.mapTypeSatellite ?? 'Satellite', Icons.satellite_alt),
-                  _buildMapTypeMenuItem(MapType.terrain, s?.mapTypeTerrain ?? 'Terrain', Icons.terrain),
+                  _buildMapTypeMenuItem(
+                    MapType.openStreetMap,
+                    s?.mapTypeStreet ?? 'Street',
+                    Icons.map,
+                  ),
+                  _buildMapTypeMenuItem(
+                    MapType.satellite,
+                    s?.mapTypeSatellite ?? 'Satellite',
+                    Icons.satellite_alt,
+                  ),
+                  _buildMapTypeMenuItem(
+                    MapType.terrain,
+                    s?.mapTypeTerrain ?? 'Terrain',
+                    Icons.terrain,
+                  ),
                 ],
               ),
             ],
@@ -1521,7 +1526,11 @@ class MapToolViewState extends State<MapToolView> {
     );
   }
 
-  PopupMenuItem<MapType> _buildMapTypeMenuItem(MapType mapType, String label, IconData icon) {
+  PopupMenuItem<MapType> _buildMapTypeMenuItem(
+    MapType mapType,
+    String label,
+    IconData icon,
+  ) {
     return PopupMenuItem<MapType>(
       value: mapType,
       child: Row(
@@ -1529,17 +1538,19 @@ class MapToolViewState extends State<MapToolView> {
           Icon(
             icon,
             size: 18,
-            color: _currentMapType == mapType 
-                ? Theme.of(context).colorScheme.primary 
+            color: _currentMapType == mapType
+                ? Theme.of(context).colorScheme.primary
                 : null,
           ),
           const SizedBox(width: 8),
           Text(
             label,
             style: TextStyle(
-              fontWeight: _currentMapType == mapType ? FontWeight.bold : FontWeight.normal,
-              color: _currentMapType == mapType 
-                  ? Theme.of(context).colorScheme.primary 
+              fontWeight: _currentMapType == mapType
+                  ? FontWeight.bold
+                  : FontWeight.normal,
+              color: _currentMapType == mapType
+                  ? Theme.of(context).colorScheme.primary
                   : null,
             ),
           ),

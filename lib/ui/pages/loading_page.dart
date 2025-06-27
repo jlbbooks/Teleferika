@@ -1,9 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:teleferika/core/app_config.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/licensing/feature_registry.dart';
-
-import 'app_config.dart';
 
 class LoadingPage extends StatefulWidget {
   final String? appVersion;

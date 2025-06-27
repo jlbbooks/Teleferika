@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:teleferika/db/models/project_model.dart';
-import 'package:teleferika/project_tools/points_tool_view.dart';
+
+import 'points_tool_view.dart';
 
 class PointsTab extends StatefulWidget {
   final ProjectModel project;
@@ -31,4 +32,4 @@ class _PointsTabState extends State<PointsTab> {
       newlyAddedPointId: widget.newlyAddedPointId,
     );
   }
-} 
+}

@@ -1,5 +1,6 @@
 // image_model.dart
-import 'package:teleferika/utils/uuid_generator.dart';
+
+import 'package:teleferika/core/utils/uuid_generator.dart';
 
 class ImageModel {
   static const tableName = 'images';

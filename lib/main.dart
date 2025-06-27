@@ -4,15 +4,15 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:teleferika/core/app_config.dart';
 import 'package:teleferika/licensing/feature_registry.dart';
-import 'package:teleferika/licensing/licensed_features_loader.dart';
 import 'package:teleferika/licensing/licence_service.dart';
+import 'package:teleferika/licensing/licensed_features_loader.dart';
+import 'package:teleferika/ui/pages/loading_page.dart';
 
-import 'app_config.dart';
+import 'core/logger.dart';
 import 'db/database_helper.dart';
-import 'loading_page.dart';
-import 'logger.dart'; // Assuming logger.dart is in the same directory (lib)
-import 'projects_list_page.dart'; // Import your ProjectsListPage
+import 'ui/pages/projects_list_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,19 +28,19 @@ void main() async {
 Future<void> initializeApp() async {
   try {
     logger.info('Starting app initialization...');
-    
+
     // Initialize licence service first
     await LicenceService.instance.initialize();
     logger.info('LicenceService initialized');
-    
+
     // Initialize database
     final dbHelper = DatabaseHelper.instance;
     await dbHelper.database;
     logger.info('Database initialized');
-    
+
     // Initialize features (including licensed features)
     await initializeFeatures();
-    
+
     logger.info('App initialization complete');
   } catch (e, stackTrace) {
     logger.severe('Failed to initialize app', e, stackTrace);

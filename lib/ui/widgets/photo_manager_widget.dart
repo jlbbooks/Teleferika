@@ -4,12 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p; // For p.basename, p.join
 import 'package:path_provider/path_provider.dart';
-import 'package:teleferika/utils/uuid_generator.dart';
-
-import 'db/database_helper.dart';
-import 'db/models/image_model.dart';
-import 'db/models/point_model.dart';
-import 'logger.dart';
+import 'package:teleferika/core/logger.dart';
+import 'package:teleferika/core/utils/uuid_generator.dart';
+import 'package:teleferika/db/database_helper.dart';
+import 'package:teleferika/db/models/image_model.dart';
+import 'package:teleferika/db/models/point_model.dart';
 
 // import 'package:teleferika/utils/uuid_generator.dart'; // Assuming ImageModel handles this
 

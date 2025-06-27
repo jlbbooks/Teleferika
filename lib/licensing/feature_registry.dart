@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-
-import '../logger.dart';
-import 'licensed_features_loader.dart';
+import 'package:teleferika/core/logger.dart';
 
 /// Represents a feature that can be enabled/disabled based on licensing
 enum FeatureType {
@@ -96,7 +94,7 @@ class FeatureRegistry {
   static Future<void> _discoverPlugins() async {
     // Licensed features are now registered explicitly in main.dart
     // so we don't need to auto-discover them here
-    
+
     // Register core features
     _registerCoreFeatures();
   }

@@ -1,6 +1,7 @@
 // point_model.dart
 // ... other imports
-import 'package:teleferika/utils/uuid_generator.dart';
+
+import 'package:teleferika/core/utils/uuid_generator.dart';
 
 import 'image_model.dart'; // Ensure ImageModel is imported if not already
 

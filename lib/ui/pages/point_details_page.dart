@@ -1,11 +1,10 @@
 // lib/point_details_page.dart
 import 'package:flutter/material.dart';
+import 'package:teleferika/core/logger.dart';
 import 'package:teleferika/db/database_helper.dart';
+import 'package:teleferika/db/models/image_model.dart';
 import 'package:teleferika/db/models/point_model.dart';
-import 'package:teleferika/logger.dart';
-import 'package:teleferika/photo_manager_widget.dart';
-
-import 'db/models/image_model.dart';
+import 'package:teleferika/ui/widgets/photo_manager_widget.dart';
 
 class PointDetailsPage extends StatefulWidget {
   final PointModel point;

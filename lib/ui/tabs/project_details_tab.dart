@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
-import '../db/models/project_model.dart';
-import '../l10n/app_localizations.dart';
+import 'package:teleferika/db/models/project_model.dart';
+import 'package:teleferika/l10n/app_localizations.dart';
 
 class ProjectDetailsTab extends StatefulWidget {
   final ProjectModel project;
@@ -60,13 +59,13 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
     _currentProject = widget.project;
     _projectDate = widget.projectDate;
     _lastUpdateTime = widget.lastUpdateTime;
-    
+
     // Store original values
     _originalName = _currentProject.name;
     _originalNote = _currentProject.note ?? '';
     _originalAzimuth = _currentProject.azimuth;
     _originalDate = _currentProject.date;
-    
+
     _nameController = TextEditingController(text: _currentProject.name);
     _noteController = TextEditingController(text: _currentProject.note ?? '');
     _azimuthController = TextEditingController(
@@ -101,7 +100,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
       // Only update azimuth field if the actual azimuth value changed (not just widget update)
       final newAzimuthValue = _currentProject.azimuth?.toStringAsFixed(2) ?? '';
       final currentFieldValue = _azimuthController.text;
-      
+
       // Only update if the actual azimuth value is different from what's in the field
       // AND the field hasn't been manually modified by the user
       if (newAzimuthValue != currentFieldValue && !_azimuthFieldModified) {
@@ -117,7 +116,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
         _isUpdatingFromParent = false;
         _azimuthController.addListener(_onAzimuthChanged);
       }
-      
+
       // Reset unsaved changes flag when project is updated from parent (e.g., after save)
       // This indicates the project was saved externally
       if (_hasUnsavedChanges) {
@@ -128,7 +127,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
           _originalAzimuthValue = _azimuthController.text;
         });
       }
-      
+
       // Update original values to reflect the new "saved" state
       // This prevents the form from thinking it's modified when fields are interacted with
       _originalName = _currentProject.name;
@@ -145,8 +144,8 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
     final currentName = _nameController.text.trim();
     final currentNote = _noteController.text.trim();
     final currentAzimuth = double.tryParse(_azimuthController.text);
-    
-    bool hasContentChanged = 
+
+    bool hasContentChanged =
         currentName != _originalName ||
         currentNote != _originalNote ||
         currentAzimuth != _originalAzimuth ||
@@ -161,7 +160,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
           azimuth: currentAzimuth,
         );
       });
-      
+
       // Use WidgetsBinding.instance.addPostFrameCallback to avoid setState during build
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
@@ -241,11 +240,11 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
       );
       return;
     }
-    
+
     // Temporarily remove listener to prevent circular updates
     _azimuthController.removeListener(_onAzimuthChanged);
     _isUpdatingFromParent = true;
-    
+
     setState(() {
       _currentProject = _currentProject.copyWith(azimuth: num);
       _hasUnsavedChanges = true;
@@ -255,11 +254,11 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
       _originalAzimuth = num;
       _azimuthFieldModified = false;
     });
-    
+
     // Re-add listener after update
     _isUpdatingFromParent = false;
     _azimuthController.addListener(_onAzimuthChanged);
-    
+
     widget.onChanged(
       _currentProject,
       hasUnsavedChanges: _hasUnsavedChanges,
