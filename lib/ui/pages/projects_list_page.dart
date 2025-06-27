@@ -744,7 +744,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
                   Expanded(
                     child: Text(titleText),
                   ),
-                  IconButton(
+                  PopupMenuButton<String>(
                     icon: Icon(
                       _activeLicence != null && _activeLicence!.isValid
                           ? Icons.verified_user
@@ -758,22 +758,74 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
                     tooltip: "Licence Status / Import\n"
                         "License: ${_activeLicence?.email ?? 'None'}\n"
                         "Valid: ${_activeLicence?.isValid ?? 'Unknown'}",
-                    onPressed: _showLicenceInfoDialog,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.star),
-                    tooltip: "Premium Features",
-                    onPressed: _showPremiumFeaturesDialog,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.bug_report),
-                    tooltip: "Test License Import",
-                    onPressed: _testImportExampleLicence,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.clear),
-                    tooltip: "Clear License",
-                    onPressed: _clearLicense,
+                    onSelected: (String value) {
+                      switch (value) {
+                        case 'license_info':
+                          _showLicenceInfoDialog();
+                          break;
+                        case 'premium_features':
+                          _showPremiumFeaturesDialog();
+                          break;
+                        case 'test_license':
+                          _testImportExampleLicence();
+                          break;
+                        case 'clear_license':
+                          _clearLicense();
+                          break;
+                      }
+                    },
+                    itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                      PopupMenuItem<String>(
+                        value: 'license_info',
+                        child: Row(
+                          children: [
+                            Icon(
+                              _activeLicence != null && _activeLicence!.isValid
+                                  ? Icons.verified_user
+                                  : Icons.security,
+                              color: _activeLicence != null && _activeLicence!.isValid
+                                  ? Colors.green
+                                  : (_activeLicence != null && !_activeLicence!.isValid
+                                        ? Colors.red
+                                        : Colors.grey),
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            const Text('License Status'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'premium_features',
+                        child: Row(
+                          children: [
+                            Icon(Icons.star, size: 20),
+                            SizedBox(width: 8),
+                            Text('Premium Features'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'test_license',
+                        child: Row(
+                          children: [
+                            Icon(Icons.bug_report, size: 20),
+                            SizedBox(width: 8),
+                            Text('Test License Import'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'clear_license',
+                        child: Row(
+                          children: [
+                            Icon(Icons.clear, size: 20),
+                            SizedBox(width: 8),
+                            Text('Clear License'),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
