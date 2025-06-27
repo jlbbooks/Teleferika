@@ -195,6 +195,40 @@
   "@export_project_data_tooltip": {
     "description": "Tooltip for the export button/icon in the project page app bar."
   },
+  "export_project_tooltip": "Export Project",
+  "@export_project_tooltip": {
+    "description": "Tooltip for the export button in the project page app bar."
+  },
+  "errorExportNoPoints": "No points to export",
+  "@errorExportNoPoints": {
+    "description": "Error message when trying to export a project with no points."
+  },
+  "infoExporting": "Exporting...",
+  "@infoExporting": {
+    "description": "Loading message shown during export process."
+  },
+  "exportSuccess": "Project exported successfully",
+  "@exportSuccess": {
+    "description": "Success message when export completes successfully."
+  },
+  "exportError": "Export failed",
+  "@exportError": {
+    "description": "Generic error message when export fails."
+  },
+  "exportErrorWithDetails": "Export error: {errorMessage}",
+  "@exportErrorWithDetails": {
+    "description": "Error message when export fails with specific error details.",
+    "placeholders": {
+      "errorMessage": {
+        "type": "String",
+        "example": "Permission denied"
+      }
+    }
+  },
+  "exportRequiresValidLicence": "Valid licence required for export",
+  "@exportRequiresValidLicence": {
+    "description": "Error message when export is attempted without a valid licence."
+  },
   "unsaved_changes_title": "Unsaved Changes",
   "@unsaved_changes_title": {
     "description": "Title for the dialog warning about unsaved changes."

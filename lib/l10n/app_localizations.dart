@@ -439,6 +439,48 @@ abstract class S {
   /// **'Export Project Data'**
   String get export_project_data_tooltip;
 
+  /// Tooltip for the export button in the project page app bar.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Project'**
+  String get export_project_tooltip;
+
+  /// Error message when trying to export a project with no points.
+  ///
+  /// In en, this message translates to:
+  /// **'No points to export'**
+  String get errorExportNoPoints;
+
+  /// Loading message shown during export process.
+  ///
+  /// In en, this message translates to:
+  /// **'Exporting...'**
+  String get infoExporting;
+
+  /// Success message when export completes successfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Project exported successfully'**
+  String get exportSuccess;
+
+  /// Generic error message when export fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Export failed'**
+  String get exportError;
+
+  /// Error message when export fails with specific error details.
+  ///
+  /// In en, this message translates to:
+  /// **'Export error: {errorMessage}'**
+  String exportErrorWithDetails(String errorMessage);
+
+  /// Error message when export is attempted without a valid licence.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid licence required for export'**
+  String get exportRequiresValidLicence;
+
   /// Title for the dialog warning about unsaved changes.
   ///
   /// In en, this message translates to:

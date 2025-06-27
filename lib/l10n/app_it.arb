@@ -193,7 +193,41 @@
   },
   "export_project_data_tooltip": "Esporta dati progetto",
   "@export_project_data_tooltip": {
-    "description": "Tooltip per il pulsante/icona di esportazione nella barra dell'app della pagina progetto."
+    "description": "Tooltip for the export button/icon in the project page app bar."
+  },
+  "export_project_tooltip": "Esporta progetto",
+  "@export_project_tooltip": {
+    "description": "Tooltip for the export button in the project page app bar."
+  },
+  "errorExportNoPoints": "Nessun punto da esportare",
+  "@errorExportNoPoints": {
+    "description": "Error message when trying to export a project with no points."
+  },
+  "infoExporting": "Esportazione in corso...",
+  "@infoExporting": {
+    "description": "Loading message shown during export process."
+  },
+  "exportSuccess": "Progetto esportato con successo",
+  "@exportSuccess": {
+    "description": "Success message when export completes successfully."
+  },
+  "exportError": "Esportazione fallita",
+  "@exportError": {
+    "description": "Generic error message when export fails."
+  },
+  "exportErrorWithDetails": "Errore di esportazione: {errorMessage}",
+  "@exportErrorWithDetails": {
+    "description": "Error message when export fails with specific error details.",
+    "placeholders": {
+      "errorMessage": {
+        "type": "String",
+        "example": "Permesso negato"
+      }
+    }
+  },
+  "exportRequiresValidLicence": "Licenza valida richiesta per l'esportazione",
+  "@exportRequiresValidLicence": {
+    "description": "Error message when export is attempted without a valid licence."
   },
   "unsaved_changes_title": "Modifiche non salvate",
   "@unsaved_changes_title": {

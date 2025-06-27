@@ -12,6 +12,7 @@ import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/licensing/licence_service.dart';
+import 'package:teleferika/licensing/licensed_features_loader.dart';
 import 'package:teleferika/ui/tabs/compass_tool_view.dart';
 import 'package:teleferika/ui/tabs/map_tool_view.dart';
 import 'package:teleferika/ui/tabs/points_tab.dart';
@@ -381,6 +382,60 @@ class _ProjectPageState extends State<ProjectPage>
     );
   }
 
+  Future<void> _handleExport() async {
+    final s = S.of(context);
+    
+    // Check if export feature is available
+    if (!LicensedFeaturesLoader.hasLicensedFeature('export_widget')) {
+      // Show upgrade dialog for opensource version
+      LicensedFeaturesLoader.showExportUpgradeDialog(context);
+      return;
+    }
+
+    // Check if licence is valid
+    final licenceStatus = await _licenceService.getLicenceStatus();
+    if (!licenceStatus['isValid']) {
+      showErrorStatus(
+        s?.exportRequiresValidLicence ?? 'Valid licence required for export',
+      );
+      return;
+    }
+
+    // Check if project has points to export
+    if (_currentProject.points.isEmpty) {
+      showErrorStatus(s?.errorExportNoPoints ?? 'No points to export');
+      return;
+    }
+
+    try {
+      showLoadingStatus(s?.infoExporting ?? 'Exporting...');
+      
+      final success = await LicensedFeaturesLoader.showExportDialog(
+        context,
+        _currentProject,
+        _currentProject.points,
+        onExportComplete: (bool success) {
+          if (success) {
+            showSuccessStatus(
+              s?.exportSuccess ?? 'Project exported successfully',
+            );
+          } else {
+            showErrorStatus(s?.exportError ?? 'Export error');
+          }
+        },
+      );
+
+      if (!success) {
+        hideStatus();
+      }
+    } catch (e) {
+      hideStatus();
+      showErrorStatus(
+        s?.exportErrorWithDetails(e.toString()) ?? 'Export error: $e',
+      );
+    }
+  }
+
   Future<Position> _determinePosition() async {
     bool serviceEnabled;
     LocationPermission permission;
@@ -594,6 +649,12 @@ class _ProjectPageState extends State<ProjectPage>
           icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
           onPressed: _isLoading ? null : _confirmDeleteProject,
           tooltip: s?.delete_project_tooltip ?? 'Delete Project',
+        ),
+      if (!_isEffectivelyNew && _currentProject.points.isNotEmpty)
+        IconButton(
+          icon: const Icon(Icons.file_download, color: Colors.blue),
+          onPressed: _isLoading ? null : _handleExport,
+          tooltip: s?.export_project_tooltip ?? 'Export Project',
         ),
       if (_tabController.index == ProjectPageTab.details.index)
         IconButton(

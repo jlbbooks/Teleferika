@@ -225,6 +225,29 @@ class SEn extends S {
   String get export_project_data_tooltip => 'Export Project Data';
 
   @override
+  String get export_project_tooltip => 'Export Project';
+
+  @override
+  String get errorExportNoPoints => 'No points to export';
+
+  @override
+  String get infoExporting => 'Exporting...';
+
+  @override
+  String get exportSuccess => 'Project exported successfully';
+
+  @override
+  String get exportError => 'Export failed';
+
+  @override
+  String exportErrorWithDetails(String errorMessage) {
+    return 'Export error: $errorMessage';
+  }
+
+  @override
+  String get exportRequiresValidLicence => 'Valid licence required for export';
+
+  @override
   String get unsaved_changes_title => 'Unsaved Changes';
 
   @override

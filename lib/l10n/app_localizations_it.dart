@@ -227,6 +227,30 @@ class SIt extends S {
   String get export_project_data_tooltip => 'Esporta dati progetto';
 
   @override
+  String get export_project_tooltip => 'Esporta progetto';
+
+  @override
+  String get errorExportNoPoints => 'Nessun punto da esportare';
+
+  @override
+  String get infoExporting => 'Esportazione in corso...';
+
+  @override
+  String get exportSuccess => 'Progetto esportato con successo';
+
+  @override
+  String get exportError => 'Esportazione fallita';
+
+  @override
+  String exportErrorWithDetails(String errorMessage) {
+    return 'Errore di esportazione: $errorMessage';
+  }
+
+  @override
+  String get exportRequiresValidLicence =>
+      'Licenza valida richiesta per l\'esportazione';
+
+  @override
   String get unsaved_changes_title => 'Modifiche non salvate';
 
   @override
