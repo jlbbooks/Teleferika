@@ -6,6 +6,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:teleferika/core/logger.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
@@ -85,6 +86,10 @@ class _ProjectPageState extends State<ProjectPage>
   bool _hasUnsavedChanges = false;
   bool _isEffectivelyNew = true;
 
+  // Undo functionality
+  List<PointModel>? _originalPointsBackup;
+  bool _hasPointsChanges = false;
+
   final GlobalKey<PointsToolViewState> _pointsToolViewKey =
       GlobalKey<PointsToolViewState>();
 
@@ -100,6 +105,9 @@ class _ProjectPageState extends State<ProjectPage>
   // Add a GlobalKey to access the ProjectDetailsTab state
   final GlobalKey<ProjectDetailsTabState> _detailsTabKey =
       GlobalKey<ProjectDetailsTabState>();
+
+  // Add a GlobalKey to access the PointsTab state
+  final GlobalKey<PointsTabState> _pointsTabKey = GlobalKey<PointsTabState>();
 
   @override
   void initState() {
@@ -192,6 +200,9 @@ class _ProjectPageState extends State<ProjectPage>
           _hasUnsavedChanges = false;
           _currentProject = projectToSave;
         });
+        // Clear undo backup in PointsToolView
+        _pointsTabKey.currentState?.onProjectSaved();
+        _clearPointsBackup();
         showSuccessStatus('Project saved successfully');
       } else {
         int updatedRows = await _dbHelper.updateProject(projectToSave);
@@ -202,6 +213,9 @@ class _ProjectPageState extends State<ProjectPage>
             _hasUnsavedChanges = false;
             _projectWasSuccessfullySaved = true;
           });
+          // Clear undo backup in PointsToolView
+          _pointsTabKey.currentState?.onProjectSaved();
+          _clearPointsBackup();
           showSuccessStatus('Project updated successfully');
         }
       }
@@ -220,13 +234,92 @@ class _ProjectPageState extends State<ProjectPage>
     ProjectModel updated, {
     bool hasUnsavedChanges = false,
   }) {
-    logger.info("_onProjectDetailsChanged called with hasUnsavedChanges: $hasUnsavedChanges");
+    logger.info(
+      "_onProjectDetailsChanged called with hasUnsavedChanges: $hasUnsavedChanges",
+    );
     logger.info("Previous _hasUnsavedChanges: $_hasUnsavedChanges");
     setState(() {
       _currentProject = updated;
       _hasUnsavedChanges = hasUnsavedChanges;
     });
     logger.info("New _hasUnsavedChanges: $_hasUnsavedChanges");
+  }
+
+  /// Creates a backup of the current points list for undo functionality
+  void _createPointsBackup() {
+    if (_originalPointsBackup == null) {
+      _originalPointsBackup = List.from(_currentProject.points);
+      _hasPointsChanges = true;
+      logger.info("Created backup of ${_originalPointsBackup!.length} points for undo");
+    }
+  }
+
+  /// Restores the original points list and clears the backup
+  Future<void> _undoPointsChanges() async {
+    if (_originalPointsBackup != null) {
+      logger.info("Undoing points changes - restoring ${_originalPointsBackup!.length} points");
+      
+      try {
+        // Restore the original points in the database
+        final db = await _dbHelper.database;
+        await db.transaction((txn) async {
+          // Clear all current points for this project
+          await txn.delete(
+            'points',
+            where: 'project_id = ?',
+            whereArgs: [_currentProject.id],
+          );
+          
+          // Insert the original points back
+          for (int i = 0; i < _originalPointsBackup!.length; i++) {
+            final point = _originalPointsBackup![i];
+            await txn.insert(
+              'points',
+              point.toMap(),
+              conflictAlgorithm: ConflictAlgorithm.replace,
+            );
+          }
+          
+          // Update project start/end points
+          await _dbHelper.updateProjectStartEndPoints(_currentProject.id!, txn: txn);
+        });
+        
+        // Reload project data from database
+        final updatedProject = await _dbHelper.getProjectById(_currentProject.id!);
+        if (updatedProject != null) {
+          setState(() {
+            _currentProject = updatedProject;
+            _hasPointsChanges = false;
+            _hasUnsavedChanges = false;
+          });
+        }
+        
+        // Clear the backup
+        _originalPointsBackup = null;
+        
+        // Refresh the PointsToolView to show the restored points and update colors
+        _pointsTabKey.currentState?.refreshPoints();
+        
+        // Also update the PointsToolView's local project state to reflect the restored start/end points
+        _pointsTabKey.currentState?.updateLocalProject(updatedProject!);
+        
+        logger.info("Points changes undone successfully");
+      } catch (e, stackTrace) {
+        logger.severe("Error undoing points changes", e, stackTrace);
+        if (mounted) {
+          showErrorStatus('Error undoing changes: $e');
+        }
+      }
+    }
+  }
+
+  /// Clears the backup when project is saved
+  void _clearPointsBackup() {
+    if (_originalPointsBackup != null) {
+      _originalPointsBackup = null;
+      _hasPointsChanges = false;
+      logger.info("Cleared points backup after project save");
+    }
   }
 
   void _handleOnPopInvokedWithResult(bool didPop, Object? result) async {
@@ -387,7 +480,7 @@ class _ProjectPageState extends State<ProjectPage>
 
   Future<void> _handleExport() async {
     final s = S.of(context);
-    
+
     // Check if export feature is available
     if (!LicensedFeaturesLoader.hasLicensedFeature('export_widget')) {
       // Show upgrade dialog for opensource version
@@ -412,7 +505,7 @@ class _ProjectPageState extends State<ProjectPage>
 
     try {
       showLoadingStatus(s?.infoExporting ?? 'Exporting...');
-      
+
       final success = await LicensedFeaturesLoader.showExportDialog(
         context,
         _currentProject,
@@ -497,7 +590,7 @@ class _ProjectPageState extends State<ProjectPage>
       );
 
       String newPointIdFromCompass;
-      
+
       // Use OrdinalManager to handle the complex ordinal logic
       if (!addAsEndPoint && _currentProject.endingPointId != null) {
         // Insert before end point
@@ -508,21 +601,26 @@ class _ProjectPageState extends State<ProjectPage>
         // Get the inserted point ID (we need to query for it)
         final points = await _dbHelper.getPointsForProject(_currentProject.id);
         final insertedPoint = points.firstWhere(
-          (p) => p.latitude == position.latitude && 
-                 p.longitude == position.longitude &&
-                 p.note == pointFromCompass.note,
+          (p) =>
+              p.latitude == position.latitude &&
+              p.longitude == position.longitude &&
+              p.note == pointFromCompass.note,
           orElse: () => throw Exception('Inserted point not found'),
         );
         newPointIdFromCompass = insertedPoint.id;
       } else {
         // Append to end
-        await _dbHelper.ordinalManager.insertPointAtOrdinal(pointFromCompass, null);
+        await _dbHelper.ordinalManager.insertPointAtOrdinal(
+          pointFromCompass,
+          null,
+        );
         // Get the inserted point ID
         final points = await _dbHelper.getPointsForProject(_currentProject.id);
         final insertedPoint = points.firstWhere(
-          (p) => p.latitude == position.latitude && 
-                 p.longitude == position.longitude &&
-                 p.note == pointFromCompass.note,
+          (p) =>
+              p.latitude == position.latitude &&
+              p.longitude == position.longitude &&
+              p.note == pointFromCompass.note,
           orElse: () => throw Exception('Inserted point not found'),
         );
         newPointIdFromCompass = insertedPoint.id;
@@ -531,7 +629,7 @@ class _ProjectPageState extends State<ProjectPage>
       logger.info(
         'Point added via Compass: ID $newPointIdFromCompass, Lat: ${position.latitude}, Lon: ${position.longitude}, Heading used for note: $heading',
       );
-      
+
       if (addAsEndPoint) {
         ProjectModel projectToUpdate = _currentProject.copyWith(
           endingPointId: newPointIdFromCompass,
@@ -541,10 +639,10 @@ class _ProjectPageState extends State<ProjectPage>
           "New point ID $newPointIdFromCompass set as the END point for project ${_currentProject.id}.",
         );
       }
-      
+
       await _dbHelper.updateProjectStartEndPoints(_currentProject.id);
       await _loadProjectDetails();
-      
+
       if (mounted) {
         hideStatus();
         // Get the final point to get the correct ordinal
@@ -556,7 +654,8 @@ class _ProjectPageState extends State<ProjectPage>
         if (addAsEndPoint == true) {
           suffix = " ${S.of(context)!.pointAddedSetAsEndSnackbarSuffix}";
         } else if (_currentProject.endingPointId != null) {
-          suffix = " ${S.of(context)!.pointAddedInsertedBeforeEndSnackbarSuffix}";
+          suffix =
+              " ${S.of(context)!.pointAddedInsertedBeforeEndSnackbarSuffix}";
         }
         showSuccessStatus(baseMessage + suffix);
       }
@@ -594,6 +693,7 @@ class _ProjectPageState extends State<ProjectPage>
           onCalculateAzimuth: _calculateAzimuth,
         ),
         PointsTab(
+          key: _pointsTabKey,
           project: _currentProject,
           onPointsChanged: () async {
             final updatedProject = await _dbHelper.getProjectById(
@@ -608,11 +708,17 @@ class _ProjectPageState extends State<ProjectPage>
               });
             }
           },
-          onProjectChanged: (ProjectModel updatedProject, {bool hasUnsavedChanges = false}) {
-            if (mounted) {
-              _onProjectDetailsChanged(updatedProject, hasUnsavedChanges: hasUnsavedChanges);
-            }
-          },
+          onProjectChanged:
+              (ProjectModel updatedProject, {bool hasUnsavedChanges = false}) {
+                if (mounted) {
+                  // Create backup when points are changed
+                  _createPointsBackup();
+                  _onProjectDetailsChanged(
+                    updatedProject,
+                    hasUnsavedChanges: hasUnsavedChanges,
+                  );
+                }
+              },
         ),
         CompassToolView(
           project: _currentProject,
@@ -667,6 +773,12 @@ class _ProjectPageState extends State<ProjectPage>
           icon: const Icon(Icons.file_download, color: Colors.blue),
           onPressed: _isLoading ? null : _handleExport,
           tooltip: s?.export_project_tooltip ?? 'Export Project',
+        ),
+      if (_hasPointsChanges)
+        IconButton(
+          icon: const Icon(Icons.undo, color: Colors.orange),
+          onPressed: _isLoading ? null : _undoPointsChanges,
+          tooltip: 'Undo Points Changes',
         ),
       if (_hasUnsavedChanges)
         IconButton(
