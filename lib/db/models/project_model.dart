@@ -2,6 +2,7 @@
 
 import 'package:teleferika/core/utils/uuid_generator.dart';
 import 'package:teleferika/db/models/point_model.dart';
+import 'dart:math' as math;
 
 class ProjectModel {
   static const String tableName = 'projects';
@@ -164,4 +165,108 @@ class ProjectModel {
     presumedTotalLength,
     Object.hashAll(points),
   );
+
+  /// Calculates the total 3D distance between consecutive points in the project.
+  /// Handles missing altitude data by interpolating between available altitudes.
+  /// Returns 0 if no points or only one point exists.
+  double get currentRopeLength {
+    if (points.isEmpty || points.length == 1) {
+      return 0.0;
+    }
+
+    double totalLength = 0.0;
+    
+    for (int i = 0; i < points.length - 1; i++) {
+      final point1 = points[i];
+      final point2 = points[i + 1];
+      
+      // Get altitudes with interpolation for missing values
+      final altitude1 = _getInterpolatedAltitude(i);
+      final altitude2 = _getInterpolatedAltitude(i + 1);
+      
+      // Calculate 3D distance between points
+      final distance = _calculate3DDistance(
+        point1.latitude, point1.longitude, altitude1,
+        point2.latitude, point2.longitude, altitude2,
+      );
+      
+      totalLength += distance;
+    }
+    
+    return totalLength;
+  }
+
+  /// Gets the altitude for a point, interpolating if missing
+  double _getInterpolatedAltitude(int pointIndex) {
+    final point = points[pointIndex];
+    
+    // If the point has altitude data, use it
+    if (point.altitude != null) {
+      return point.altitude!;
+    }
+    
+    // Try to interpolate from surrounding points
+    double? prevAltitude;
+    double? nextAltitude;
+    
+    // Find previous altitude
+    for (int i = pointIndex - 1; i >= 0; i--) {
+      if (points[i].altitude != null) {
+        prevAltitude = points[i].altitude;
+        break;
+      }
+    }
+    
+    // Find next altitude
+    for (int i = pointIndex + 1; i < points.length; i++) {
+      if (points[i].altitude != null) {
+        nextAltitude = points[i].altitude;
+        break;
+      }
+    }
+    
+    // If we have both previous and next altitudes, interpolate
+    if (prevAltitude != null && nextAltitude != null) {
+      return (prevAltitude + nextAltitude) / 2.0;
+    }
+    
+    // If we only have one of them, use that
+    if (prevAltitude != null) {
+      return prevAltitude;
+    }
+    if (nextAltitude != null) {
+      return nextAltitude;
+    }
+    
+    // If no altitude data available anywhere, assume 0
+    return 0.0;
+  }
+
+  /// Calculates 3D distance between two points using the Haversine formula for horizontal distance
+  /// and Pythagorean theorem for the vertical component
+  double _calculate3DDistance(
+    double lat1, double lon1, double alt1,
+    double lat2, double lon2, double alt2,
+  ) {
+    // Calculate horizontal distance using Haversine formula
+    const R = 6371000.0; // Earth's radius in meters
+    final lat1Rad = _degreesToRadians(lat1);
+    final lat2Rad = _degreesToRadians(lat2);
+    final deltaLat = _degreesToRadians(lat2 - lat1);
+    final deltaLon = _degreesToRadians(lon2 - lon1);
+    
+    final a = math.sin(deltaLat / 2) * math.sin(deltaLat / 2) +
+        math.cos(lat1Rad) * math.cos(lat2Rad) *
+        math.sin(deltaLon / 2) * math.sin(deltaLon / 2);
+    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+    final horizontalDistance = R * c;
+    
+    // Calculate vertical distance
+    final verticalDistance = (alt2 - alt1).abs();
+    
+    // Calculate 3D distance using Pythagorean theorem
+    return math.sqrt(horizontalDistance * horizontalDistance + verticalDistance * verticalDistance);
+  }
+
+  double _degreesToRadians(double degrees) => degrees * math.pi / 180.0;
 }
