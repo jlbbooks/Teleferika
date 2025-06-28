@@ -2,6 +2,7 @@ import 'dart:async'; // For Timer
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:logging/logging.dart';
 import 'package:teleferika/core/app_config.dart';
 import 'package:teleferika/core/logger.dart';
 import 'package:teleferika/core/project_provider.dart';
@@ -10,6 +11,7 @@ import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/licensing/licence_model.dart';
 import 'package:teleferika/licensing/licence_service.dart';
 import 'package:teleferika/licensing/licensed_features_loader.dart';
+import 'package:teleferika/ui/widgets/status_indicator.dart';
 
 import 'project_page.dart';
 
@@ -22,7 +24,8 @@ class ProjectsListPage extends StatefulWidget {
   State<ProjectsListPage> createState() => _ProjectsListPageState();
 }
 
-class _ProjectsListPageState extends State<ProjectsListPage> {
+class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
+  final Logger logger = Logger('ProjectsListPage');
   late Future<List<ProjectModel>> _projectsFuture;
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
@@ -245,20 +248,10 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
     try {
       final licenceInfo = LicensedFeaturesLoader.getLicenceStatus();
       if (licenceInfo != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Licence Status: ${licenceInfo['status']}'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        showSuccessStatus('Licence Status: ${licenceInfo['status']}');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Feature demonstration failed: $e'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      showErrorStatus('Feature demonstration failed: $e');
     }
   }
 
@@ -270,41 +263,22 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
           setState(() {
             _activeLicence = importedLicence; // Update local state
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Licence for ${importedLicence.email} imported successfully!',
-              ),
-              backgroundColor: Colors.green,
-            ),
-          );
+          showSuccessStatus('Licence for ${importedLicence.email} imported successfully!');
           _showLicenceInfoDialog(); // Show updated info
         } else {
           // User cancelled or import failed without throwing a specific format exception handled below
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Licence import cancelled or failed.'),
-              backgroundColor: Colors.orange,
-            ),
-          );
+          showInfoStatus('Licence import cancelled or failed.');
         }
       }
     } on FormatException catch (e) {
       // Catch specific format exception
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message), backgroundColor: Colors.red),
-        );
+        showErrorStatus(e.message);
       }
     } catch (e) {
       // Catch general exceptions from importLicenceFromFile
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error importing licence: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        showErrorStatus('Error importing licence: $e');
       }
     }
   }
@@ -378,6 +352,10 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
       setState(() {
         _highlightedProjectId = null;
       });
+      
+      // Clear global state to ensure fresh data
+      context.projectState.clearProject();
+      
       final result = await Navigator.push(
         context,
         MaterialPageRoute(
@@ -399,6 +377,8 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
         // For now, let's assume a full refresh might be safest if something non-specific happened.
         // _refreshProjectsListFromDb();
         logger.info("ProjectPage returned with no specific ID or action.");
+        // Clear global state to ensure fresh data for next navigation
+        context.projectState.clearProject();
         return;
       }
 
@@ -425,20 +405,17 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
           _highlightedProjectId = null; // Ensure no highlight on a deleted item
           // No need to call _dbHelper.getAllProjects() here if we manually update _currentProjects
         });
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Project deleted.'),
-              backgroundColor: Colors.orange, // Or your preferred color
-            ),
-          );
-        }
+        // Clear global state after deletion
+        context.projectState.clearProject();
+        showInfoStatus('Project deleted.');
       } else if (action == 'navigated_back') {
         // User just came back, potentially from viewing an existing project. Highlight it.
         logger.info("ProjectPage returned: navigated back from project $id.");
         setState(() {
           _highlightedProjectId = id;
         });
+        // Clear global state to ensure fresh data for next navigation
+        context.projectState.clearProject();
       } else if (result['action'] == "created" && result['id'] != null) {
         // This is your existing logic path from _onItemTap, let's integrate it.
         logger.info(
@@ -448,6 +425,8 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
         setState(() {
           _highlightedProjectId = result['id'];
         });
+        // Clear global state after creation
+        context.projectState.clearProject();
       } else {
         // Fallback for your existing conditions, or new unhandled ones
         logger.info(
@@ -460,15 +439,21 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
             _highlightedProjectId = result['id'];
           });
         }
+        // Clear global state for fallback cases
+        context.projectState.clearProject();
       }
     } else if (result is bool && result == true) {
       // Generic true, refresh list. Maybe highlight if a context can be inferred.
       logger.info("ProjectPage returned generic true. Refreshing list.");
       _refreshProjectsListFromDb();
+      // Clear global state for generic success
+      context.projectState.clearProject();
     } else if (result == null) {
       logger.info(
         "ProjectPage returned null (e.g. back press without action). No specific action taken on list.",
       );
+      // Clear global state when user just navigates back without action
+      context.projectState.clearProject();
       // Optionally clear highlight or leave as is
       // setState(() {
       //   _highlightedProjectId = null;
@@ -486,6 +471,9 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
     setState(() {
       _highlightedProjectId = null;
     });
+
+    // Clear global state to ensure fresh data for new project
+    context.projectState.clearProject();
 
     final result = await Navigator.push(
       context,
@@ -553,24 +541,10 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
           _highlightedProjectId = null;
         });
         logger.info("${idsToDelete.length} project(s) deleted.");
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${idsToDelete.length} project(s) deleted.'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
+        showSuccessStatus('${idsToDelete.length} project(s) deleted.');
       } catch (e, stackTrace) {
         logger.severe("Error deleting projects", e, stackTrace);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error deleting projects: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+        showErrorStatus('Error deleting projects: $e');
       }
     }
   }
@@ -593,23 +567,11 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
         setState(() {
           _activeLicence = demoLicence;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Demo license imported successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        showSuccessStatus('Demo license imported successfully!');
       }
     } catch (e, stackTrace) {
       logger.severe('Error testing demo license import', e, stackTrace);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error importing demo license: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      showErrorStatus('Error importing demo license: $e');
     }
   }
 
@@ -623,23 +585,11 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
         setState(() {
           _activeLicence = null;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('License cleared successfully!'),
-            backgroundColor: Colors.orange,
-          ),
-        );
+        showInfoStatus('License cleared successfully!');
       }
     } catch (e, stackTrace) {
       logger.severe('Error clearing license', e, stackTrace);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error clearing license: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      showErrorStatus('Error clearing license: $e');
     }
   }
 
@@ -847,36 +797,48 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
                     )
                   : null,
             ),
-      body: FutureBuilder<List<ProjectModel>>(
-        future: _projectsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting &&
-              _currentProjects.isEmpty) {
-            // Show loader only if _currentProjects is empty (initial load)
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError && _currentProjects.isEmpty) {
-            logger.severe(
-              "Error loading projects",
-              snapshot.error,
-              snapshot.stackTrace,
-            );
-            return Center(child: Text("Error: ${snapshot.error}"));
-          } else if (_currentProjects.isEmpty) {
-            // Use _currentProjects to determine if the list is empty
-            return const Center(
-              child: Text("No projects yet. Tap '+' to add one!"),
-            );
-          }
+      body: Stack(
+        children: [
+          FutureBuilder<List<ProjectModel>>(
+            future: _projectsFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting &&
+                  _currentProjects.isEmpty) {
+                // Show loader only if _currentProjects is empty (initial load)
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError && _currentProjects.isEmpty) {
+                logger.severe(
+                  "Error loading projects",
+                  snapshot.error,
+                  snapshot.stackTrace,
+                );
+                return Center(child: Text("Error: ${snapshot.error}"));
+              } else if (_currentProjects.isEmpty) {
+                // Use _currentProjects to determine if the list is empty
+                return const Center(
+                  child: Text("No projects yet. Tap '+' to add one!"),
+                );
+              }
 
-          // Use _currentProjects for building the list for instant UI updates
-          return ListView.builder(
-            itemCount: _currentProjects.length,
-            itemBuilder: (context, index) {
-              final project = _currentProjects[index];
-              return _buildProjectItem(project);
+              // Use _currentProjects for building the list for instant UI updates
+              return ListView.builder(
+                itemCount: _currentProjects.length,
+                itemBuilder: (context, index) {
+                  final project = _currentProjects[index];
+                  return _buildProjectItem(project);
+                },
+              );
             },
-          );
-        },
+          ),
+          Positioned(
+            top: 24,
+            right: 24,
+            child: StatusIndicator(
+              status: currentStatus,
+              onDismiss: hideStatus,
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         heroTag: 'projectPageFAB',
