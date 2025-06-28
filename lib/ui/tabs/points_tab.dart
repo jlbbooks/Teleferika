@@ -70,7 +70,6 @@ class PointsTabState extends State<PointsTab> with StatusMixin {
     }
 
     return Container(
-      padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -85,82 +84,83 @@ class PointsTabState extends State<PointsTab> with StatusMixin {
           color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.analytics,
-                color: Theme.of(context).colorScheme.primary,
-                size: 24,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Project Statistics',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-              ),
-              IconButton(
-                onPressed: _addNewPoint,
-                icon: Icon(
-                  Icons.add_location_alt,
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 24,
-                ),
-                tooltip: s?.compassAddPointButton ?? 'Add Point',
-                style: IconButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatCard(
-                  icon: Icons.location_on,
-                  title: 'Points',
-                  value: '${points.length}',
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildStatCard(
-                  icon: Icons.photo,
-                  title: 'Images',
-                  value: '$totalImages',
-                  color: Theme.of(context).colorScheme.secondary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          if (currentProject.presumedTotalLength != null)
-            _buildStatCard(
-              icon: Icons.straighten,
-              title: 'Presumed Length',
-              value: '${currentProject.presumedTotalLength!.toStringAsFixed(1)} m',
-              color: Theme.of(context).colorScheme.tertiary,
-              fullWidth: true,
-            ),
-          if (currentProject.currentRopeLength > 0)
-            _buildStatCard(
-              icon: Icons.calculate,
-              title: 'Current Length',
-              value: '${currentProject.currentRopeLength.toStringAsFixed(1)} m',
+      child: ExpansionTile(
+        initiallyExpanded: false, // Start folded
+        backgroundColor: Colors.transparent,
+        collapsedBackgroundColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        collapsedShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.0),
+        ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.analytics,
               color: Theme.of(context).colorScheme.primary,
-              fullWidth: true,
+              size: 24,
             ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Project Statistics',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ),
+          ],
+        ),
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16.0, 0.0, 16.0, 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatCard(
+                        icon: Icons.location_on,
+                        title: 'Points',
+                        value: '${points.length}',
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildStatCard(
+                        icon: Icons.photo,
+                        title: 'Images',
+                        value: '$totalImages',
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (currentProject.presumedTotalLength != null)
+                  _buildStatCard(
+                    icon: Icons.straighten,
+                    title: 'Presumed Length',
+                    value: '${currentProject.presumedTotalLength!.toStringAsFixed(1)} m',
+                    color: Theme.of(context).colorScheme.tertiary,
+                    fullWidth: true,
+                  ),
+                if (currentProject.currentRopeLength > 0)
+                  _buildStatCard(
+                    icon: Icons.calculate,
+                    title: 'Current Length',
+                    value: '${currentProject.currentRopeLength.toStringAsFixed(1)} m',
+                    color: Theme.of(context).colorScheme.primary,
+                    fullWidth: true,
+                  ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -240,7 +240,7 @@ class PointsTabState extends State<PointsTab> with StatusMixin {
         
         return Stack(
           children: [
-            SingleChildScrollView(
+            Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -250,52 +250,69 @@ class PointsTabState extends State<PointsTab> with StatusMixin {
                   const SizedBox(height: 20),
                   
                   // Points List Section
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface,
-                      borderRadius: BorderRadius.circular(12.0),
-                      border: Border.all(
-                        color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(12.0),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.list_alt,
-                                color: Theme.of(context).colorScheme.primary,
-                                size: 24,
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                'Points List',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: Theme.of(context).colorScheme.onSurface,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.list_alt,
+                                  color: Theme.of(context).colorScheme.primary,
+                                  size: 24,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 12),
+                                Text(
+                                  'Points List',
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: Theme.of(context).colorScheme.onSurface,
+                                  ),
+                                ),
+                                const Spacer(),
+                                IconButton(
+                                  onPressed: _addNewPoint,
+                                  icon: Icon(
+                                    Icons.add_location_alt,
+                                    color: Theme.of(context).colorScheme.primary,
+                                    size: 24,
+                                  ),
+                                  tooltip: s?.compassAddPointButton ?? 'Add Point',
+                                  style: IconButton.styleFrom(
+                                    backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        SizedBox(
-                          height: 400, // Fixed height for the points list
-                          child: PointsToolView(
-                            key: _pointsToolViewKey,
-                            project: widget.project,
+                          Expanded(
+                            child: PointsToolView(
+                              key: _pointsToolViewKey,
+                              project: widget.project,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ],
