@@ -28,15 +28,12 @@ class MapToolView extends StatefulWidget {
   final ProjectModel project;
   final String? selectedPointId;
   final VoidCallback? onNavigateToCompassTab;
-  final Function(BuildContext, double, {bool? setAsEndPoint})?
-  onAddPointFromCompass;
 
   const MapToolView({
     super.key,
     required this.project,
     this.selectedPointId,
     this.onNavigateToCompassTab,
-    this.onAddPointFromCompass,
   });
 
   @override

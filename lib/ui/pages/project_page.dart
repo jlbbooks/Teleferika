@@ -91,7 +91,6 @@ class _ProjectPageState extends State<ProjectPage>
   final GlobalKey<PointsToolViewState> _pointsToolViewKey =
       GlobalKey<PointsToolViewState>();
 
-  bool _isAddingPointFromCompassInProgress = false;
   bool _projectWasSuccessfullySaved = false;
 
   final LicenceService _licenceService =
@@ -496,147 +495,6 @@ class _ProjectPageState extends State<ProjectPage>
     }
   }
 
-  Future<Position> _determinePosition() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      throw Exception('Location services are disabled.');
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        throw Exception('Location permissions are denied');
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      throw Exception('Location permissions are permanently denied.');
-    }
-
-    return await Geolocator.getCurrentPosition();
-  }
-
-  Future<void> _initiateAddPointFromCompass(
-    BuildContext descendantContext,
-    double heading, {
-    bool? setAsEndPoint,
-  }) async {
-    final bool addAsEndPoint = setAsEndPoint ?? false;
-    final currentProject = context.projectState.currentProject;
-    logger.info(
-      "Initiating add point. Heading: $heading, Project ID: ${widget.project.id}, Explicit End Point: $setAsEndPoint",
-    );
-    if (mounted) {
-      setState(() {
-        _isAddingPointFromCompassInProgress = true;
-      });
-    }
-    showLoadingStatus(S.of(context)!.infoFetchingLocation);
-
-    try {
-      final position = await _determinePosition();
-      final pointFromCompass = PointModel(
-        projectId: widget.project.id,
-        latitude: position.latitude,
-        longitude: position.longitude,
-        altitude: position.altitude,
-        ordinalNumber: 0, // Will be set by OrdinalManager
-        note: S
-            .of(context)!
-            .pointFromCompassDefaultNote(heading.toStringAsFixed(1)),
-      );
-
-      String newPointIdFromCompass;
-      final dbHelper = DatabaseHelper.instance;
-
-      // Use OrdinalManager to handle the complex ordinal logic
-      if (!addAsEndPoint && currentProject?.endingPointId != null) {
-        // Insert before end point
-        await dbHelper.ordinalManager.insertPointBeforeEndPoint(
-          pointFromCompass,
-          currentProject!.endingPointId!,
-        );
-        // Get the inserted point ID (we need to query for it)
-        final points = await dbHelper.getPointsForProject(widget.project.id);
-        final insertedPoint = points.firstWhere(
-          (p) =>
-              p.latitude == position.latitude &&
-              p.longitude == position.longitude &&
-              p.note == pointFromCompass.note,
-          orElse: () => throw Exception('Inserted point not found'),
-        );
-        newPointIdFromCompass = insertedPoint.id;
-      } else {
-        // Append to end
-        await dbHelper.ordinalManager.insertPointAtOrdinal(
-          pointFromCompass,
-          null,
-        );
-        // Get the inserted point ID
-        final points = await dbHelper.getPointsForProject(widget.project.id);
-        final insertedPoint = points.firstWhere(
-          (p) =>
-              p.latitude == position.latitude &&
-              p.longitude == position.longitude &&
-              p.note == pointFromCompass.note,
-          orElse: () => throw Exception('Inserted point not found'),
-        );
-        newPointIdFromCompass = insertedPoint.id;
-      }
-
-      logger.info(
-        'Point added via Compass: ID $newPointIdFromCompass, Lat: ${position.latitude}, Lon: ${position.longitude}, Heading used for note: $heading',
-      );
-
-      if (addAsEndPoint) {
-        ProjectModel projectToUpdate = (currentProject ?? widget.project)
-            .copyWith(endingPointId: newPointIdFromCompass);
-        await context.projectState.updateProject(projectToUpdate);
-        logger.info(
-          "New point ID $newPointIdFromCompass set as the END point for project ${widget.project.id}.",
-        );
-      }
-
-      await dbHelper.updateProjectStartEndPoints(widget.project.id);
-      // Refresh global state instead of loading project details
-      await context.projectState.refreshPoints();
-
-      if (mounted) {
-        hideStatus();
-        // Get the final point to get the correct ordinal
-        final finalPoint = await dbHelper.getPointById(newPointIdFromCompass);
-        String baseMessage = S
-            .of(context)!
-            .pointAddedSnackbar(finalPoint?.ordinalNumber.toString() ?? '?');
-        String suffix = "";
-        if (addAsEndPoint == true) {
-          suffix = " ${S.of(context)!.pointAddedSetAsEndSnackbarSuffix}";
-        } else if (currentProject?.endingPointId != null) {
-          suffix =
-              " ${S.of(context)!.pointAddedInsertedBeforeEndSnackbarSuffix}";
-        }
-        showSuccessStatus(baseMessage + suffix);
-      }
-      _pointsToolViewKey.currentState?.refreshPoints();
-    } catch (e, stackTrace) {
-      logger.severe("Error adding point from compass", e, stackTrace);
-      if (mounted) {
-        hideStatus();
-        showErrorStatus(S.of(context)!.errorAddingPoint(e.toString()));
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isAddingPointFromCompassInProgress = false;
-        });
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
@@ -666,11 +524,7 @@ class _ProjectPageState extends State<ProjectPage>
           key: _pointsTabKey,
           project: currentProject ?? widget.project,
         ),
-        CompassToolView(
-          project: currentProject ?? widget.project,
-          onAddPointFromCompass: _initiateAddPointFromCompass,
-          isAddingPoint: _isAddingPointFromCompassInProgress,
-        ),
+        CompassToolView(),
         MapToolView(key: _mapTabKey, project: currentProject ?? widget.project),
       ],
     );
