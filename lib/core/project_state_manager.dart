@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
+import 'package:logging/logging.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:teleferika/core/logger.dart';
+import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
@@ -9,6 +11,7 @@ import 'package:teleferika/db/models/project_model.dart';
 /// This ensures all widgets have access to the same project data
 /// and are automatically notified when changes occur.
 class ProjectStateManager extends ChangeNotifier {
+  final Logger logger = Logger('ProjectStateManager');
   static final ProjectStateManager _instance = ProjectStateManager._internal();
   factory ProjectStateManager() => _instance;
   ProjectStateManager._internal();

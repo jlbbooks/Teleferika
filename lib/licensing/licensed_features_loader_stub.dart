@@ -2,15 +2,26 @@
 // when using the Opensource version, upon setting up the project.
 // Do not commit licensed_features_loader.dart
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:teleferika/core/logger.dart';
+import 'package:logging/logging.dart';
 
 /// Stub implementation for licensed features loader
 /// This is used in the opensource version when licensed features are not available
-class LicensedFeaturesLoader {
+class LicensedFeaturesLoaderStub {
+  final Logger logger = Logger('LicensedFeaturesLoaderStub');
+  static final LicensedFeaturesLoaderStub _instance =
+      LicensedFeaturesLoaderStub._internal();
+  factory LicensedFeaturesLoaderStub() => _instance;
+  LicensedFeaturesLoaderStub._internal();
+
+  static LicensedFeaturesLoaderStub get instance => _instance;
+
   /// Register licensed features with the feature registry
   /// In the opensource version, this does nothing
   static Future<void> registerLicensedFeatures() async {
+    final logger = Logger('LicensedFeaturesLoaderStub');
     logger.info('Licensed features not available in this build');
 
     // In the full version, this would:
@@ -23,6 +34,11 @@ class LicensedFeaturesLoader {
     logger.info(
       'This is the opensource version - premium features are disabled',
     );
+  }
+
+  /// Load features for the stub implementation
+  Future<void> loadFeatures() async {
+    logger.info('Licensed features not available in this build');
   }
 
   /// Check if licensed features are available

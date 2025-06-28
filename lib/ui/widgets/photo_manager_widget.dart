@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p; // For p.basename, p.join
 import 'package:path_provider/path_provider.dart';
+import 'package:logging/logging.dart';
 import 'package:teleferika/core/logger.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/core/utils/uuid_generator.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/image_model.dart';
 import 'package:teleferika/db/models/point_model.dart';
+import 'package:teleferika/ui/widgets/status_indicator.dart';
 
 // import 'package:teleferika/utils/uuid_generator.dart'; // Assuming ImageModel handles this
 
@@ -30,7 +32,8 @@ class PhotoManagerWidget extends StatefulWidget {
   State<PhotoManagerWidget> createState() => _PhotoManagerWidgetState();
 }
 
-class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
+class _PhotoManagerWidgetState extends State<PhotoManagerWidget> with StatusMixin {
+  final Logger logger = Logger('PhotoManagerWidget');
   late List<ImageModel> _images;
   final ImagePicker _picker = ImagePicker();
   bool _isSavingPhotos = false;

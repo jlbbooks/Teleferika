@@ -8,6 +8,7 @@ import 'package:flutter_map_compass/flutter_map_compass.dart';
 import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:teleferika/core/logger.dart';
 import 'package:teleferika/core/project_provider.dart';
@@ -42,6 +43,7 @@ class MapToolView extends StatefulWidget {
 }
 
 class MapToolViewState extends State<MapToolView> with StatusMixin {
+  final Logger logger = Logger('MapToolView');
   // Controller for business logic
   late MapControllerLogic _controller;
 

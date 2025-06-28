@@ -57,12 +57,6 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
     
     if (_previousProject?.startingPointId != currentProject.startingPointId ||
         _previousProject?.endingPointId != currentProject.endingPointId) {
-      logger.info(
-        "Parent project start/end points changed, refreshing from global state",
-      );
-      logger.info(
-        "Parent: start=${currentProject.startingPointId}, end=${currentProject.endingPointId}",
-      );
       // Refresh from global state
       _loadPoints();
     }
@@ -100,7 +94,6 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
 
   // Make _loadPoints public or create a new public refresh method
   void refreshPoints() {
-    logger.info("PointsToolView: External refresh requested.");
     _loadPoints();
   }
 
@@ -142,9 +135,6 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
 
     // 2. Validate indices
     if (!_isValidReorder(oldIndex, adjustedNewIndex)) {
-      logger.fine(
-        "Reorder attempt with invalid indices or no change: old $oldIndex, new $adjustedNewIndex (adjusted from $newIndex)",
-      );
       return;
     }
 
@@ -163,10 +153,6 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
           oldIndex,
           adjustedNewIndex,
         );
-
-    logger.info(
-      "Reordered point from index $oldIndex to $adjustedNewIndex. Updating ordinals.",
-    );
 
     // 5. Persist changes to the database using global state
     await _updatePointOrdinalsInDatabase(reorderedPointsWithNewOrdinals);
@@ -230,7 +216,6 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       final projectState = Provider.of<ProjectStateManager>(context, listen: false);
       await projectState.refreshPoints();
 
-      logger.info("Successfully updated point ordinals in database");
     } catch (e, stackTrace) {
       logger.severe("Error updating point ordinals in database", e, stackTrace);
       showErrorStatus('Error updating point order: ${e.toString()}');
@@ -365,7 +350,6 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
         await projectState.deletePoint(pointId);
       }
 
-      logger.info('Successfully deleted ${_selectedPointIds.length} points.');
       if (mounted) {
         showSuccessStatus('${_selectedPointIds.length} point(s) deleted.');
       }
@@ -434,7 +418,6 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                     ),
                     tooltip: 'Edit Point',
                     onPressed: () {
-                      logger.info("Edit tapped for point ID: ${point.id}");
                       _handlePointTap(point);
                     },
                   )
@@ -470,9 +453,6 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       }
     } else {
       // Non-selection mode tap: Navigate to detail page
-      logger.info(
-        "Tapped on point ID: ${point.id} (${point.name}). Navigating to details.",
-      );
       if (!mounted) return; // Guard against navigation if widget is disposed
 
       // Navigate to PointDetailsPage and wait for a result
@@ -484,9 +464,6 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       if (result != null && mounted) {
         final String? action = result['action'] as String?;
         if (action == 'deleted' || action == 'updated') {
-          logger.info(
-            "PointDetailsPage returned action: $action. Refreshing points list.",
-          );
           // Refresh both points and project data
           await _loadPoints();
         }
@@ -500,15 +477,9 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
         // If not in selection mode, enter it and select the current item
         _isSelectionMode = true;
         _selectedPointIds.add(point.id);
-        logger.fine(
-          "Long press initiated selection mode for point ID: ${point.id}",
-        );
       } else {
         // If already in selection mode, just toggle the selection of the current item
         _togglePointSelection(point.id);
-        logger.fine(
-          "Long press in selection mode, toggled point ID: ${point.id}",
-        );
       }
     });
   }
@@ -520,10 +491,6 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       builder: (context, projectState, child) {
         // Get current project data from global state
         final currentProject = projectState.currentProject ?? widget.project;
-        
-        logger.fine(
-          "PointsToolView Consumer rebuild - Project start: ${currentProject.startingPointId}, end: ${currentProject.endingPointId}",
-        );
         
         return Stack(
           children: [
@@ -552,9 +519,6 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
     // Get points from global state
     final points = context.projectStateListen.currentPoints;
 
-    logger.finest(
-      "PointsToolView build method called. Selection mode: $_isSelectionMode, Points count: ${points.length}",
-    );
     return points.isEmpty
         ? const Center(
             child: Padding(

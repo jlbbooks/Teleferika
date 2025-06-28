@@ -10,6 +10,11 @@ import 'package:teleferika/licensing/licence_service.dart';
 import 'package:teleferika/licensing/licensed_features_loader.dart';
 import 'package:teleferika/ui/pages/loading_page.dart';
 import 'package:teleferika/core/project_provider.dart';
+import 'package:flutter/services.dart';
+import 'package:logging/logging.dart';
+import 'package:provider/provider.dart';
+import 'package:teleferika/core/project_state_manager.dart';
+import 'package:teleferika/licensing/licensed_features_loader_stub.dart';
 
 import 'core/logger.dart';
 import 'db/database_helper.dart';
@@ -20,47 +25,38 @@ void main() async {
   // Call the setupLogging function from logger.dart
   setupLogging();
 
-  // Initialize licensing and features
-  await initializeApp();
-
-  runApp(const MyAppRoot());
-}
-
-Future<void> initializeApp() async {
+  final Logger logger = Logger('MainApp');
+  
   try {
     logger.info('Starting app initialization...');
-
-    // Initialize licence service first
+    
+    // Initialize licence service
     await LicenceService.instance.initialize();
     logger.info('LicenceService initialized');
-
+    
     // Initialize database
-    final dbHelper = DatabaseHelper.instance;
-    await dbHelper.database;
+    await DatabaseHelper.instance.database;
     logger.info('Database initialized');
-
-    // Initialize features (including licensed features)
-    await initializeFeatures();
-
+    
     logger.info('App initialization complete');
   } catch (e, stackTrace) {
     logger.severe('Failed to initialize app', e, stackTrace);
     rethrow;
   }
-}
 
-Future<void> initializeFeatures() async {
+  // Load licensed features
   try {
-    // Try to register licensed features
-    await LicensedFeaturesLoader.registerLicensedFeatures();
+    await LicensedFeaturesLoaderStub.instance.loadFeatures();
     logger.info('Licensed features loader completed');
   } catch (e) {
     logger.info('Could not load licensed features: $e');
   }
 
-  // Initialize the feature registry
-  await FeatureRegistry.initialize();
+  // Initialize feature registry
+  FeatureRegistry.initialize();
   logger.info('Feature registry initialized');
+
+  runApp(const MyAppRoot());
 }
 
 class MyAppRoot extends StatefulWidget {
@@ -71,9 +67,10 @@ class MyAppRoot extends StatefulWidget {
 }
 
 class _MyAppRootState extends State<MyAppRoot> {
-  bool _isLoading = true;
-  final int _minimumSplashTimeSeconds = 3;
-  String _appVersion = ''; // State variable to hold the app version
+  final Logger logger = Logger('MyAppRoot');
+  bool _isInitialized = false;
+  String? _versionInfo;
+  String? _buildNumber;
 
   @override
   void initState() {
@@ -88,77 +85,62 @@ class _MyAppRootState extends State<MyAppRoot> {
     logger.fine("Initialization started at $startTime");
 
     try {
-      _loadVersionInfo();
+      // Load version info
+      final packageInfo = await PackageInfo.fromPlatform();
+      _versionInfo = packageInfo.version;
+      _buildNumber = packageInfo.buildNumber;
       logger.info("Version info loaded successfully.");
 
-      // Simulate other checks (e.g., remote config, analytics)
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Simulate other essential checks
+      await Future.delayed(const Duration(milliseconds: 100));
       logger.config("Other essential checks simulated successfully.");
     } catch (e, stackTrace) {
       logger.severe("Error during app initialization", e, stackTrace);
-      // In a real app, you might want to display an error to the user
     }
 
-    final elapsedTime = DateTime.now().difference(startTime);
+    final endTime = DateTime.now();
+    final duration = endTime.difference(startTime);
     logger.fine(
-      "Core initialization tasks took ${elapsedTime.inMilliseconds}ms.",
+      "Initialization completed in ${duration.inMilliseconds}ms",
+    );
+    logger.fine(
+      "Version: $_versionInfo, Build: $_buildNumber",
     );
 
-    final remainingTime =
-        Duration(seconds: _minimumSplashTimeSeconds) - elapsedTime;
-
-    if (remainingTime > Duration.zero) {
-      logger.fine(
-        "Waiting for an additional ${remainingTime.inMilliseconds}ms to meet minimum splash time.",
-      );
-      await Future.delayed(remainingTime);
-    }
-
     if (mounted) {
-      // Check if the widget is still in the tree
       setState(() {
-        _isLoading = false;
+        _isInitialized = true;
       });
       logger.info("Initialization complete. Navigating to main app.");
     } else {
       logger.warning(
-        "Attempted to setState on an unmounted MyAppRoot widget after initialization.",
+        "Widget was disposed during initialization, cannot navigate to main app.",
       );
-    }
-  }
-
-  Future<void> _loadVersionInfo() async {
-    try {
-      final PackageInfo packageInfo = await PackageInfo.fromPlatform();
-      if (mounted) {
-        // Check if the widget is still in the tree
-        setState(() {
-          // You can choose to display version, buildNumber, or both
-          _appVersion = 'v${packageInfo.version} (${packageInfo.buildNumber})';
-          // _appVersion = 'v${packageInfo.version}'; // Just version
-        });
-      }
-    } catch (e, stackTrace) {
-      logger.warning("Could not get package info: $e", e, stackTrace);
-      if (mounted) {
-        setState(() {
-          _appVersion = 'v?.?.?'; // Fallback version display
-        });
-      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final hasLicensedFeatures = FeatureRegistry.hasPlugin('licensed_features');
-
-    if (_isLoading) {
+    if (!_isInitialized) {
       logger.finest("Building LoadingPage.");
-      return LoadingPage(appVersion: _appVersion);
-    } else {
-      logger.finest("Building MyApp (which now loads ProjectsListPage).");
-      return TeleferiKa(appVersion: _appVersion);
+      return const LoadingPage();
     }
+
+    logger.finest("Building MyApp (which now loads ProjectsListPage).");
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ProjectStateManager()),
+        Provider<LicenceService>.value(value: LicenceService.instance),
+      ],
+      child: MaterialApp(
+        title: 'Teleferika',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+          useMaterial3: true,
+        ),
+        home: const ProjectsListPage(),
+      ),
+    );
   }
 }
 

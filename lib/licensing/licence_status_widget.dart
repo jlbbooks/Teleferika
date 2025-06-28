@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
 import 'package:teleferika/core/logger.dart';
 import 'package:teleferika/licensing/licensed_features_loader.dart';
 
@@ -13,6 +14,7 @@ class LicenceStatusWidget extends StatefulWidget {
 }
 
 class _LicenceStatusWidgetState extends State<LicenceStatusWidget> {
+  final Logger logger = Logger('LicenceStatusWidget');
   Map<String, dynamic>? _licenceStatus;
   bool _isLoading = true;
   List<String> _availableFeatures = [];

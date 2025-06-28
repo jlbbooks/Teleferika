@@ -1,5 +1,6 @@
 // lib/point_details_page.dart
 import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
 import 'package:teleferika/core/logger.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/db/database_helper.dart';
@@ -18,6 +19,7 @@ class PointDetailsPage extends StatefulWidget {
 }
 
 class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
+  final Logger logger = Logger('PointDetailsPage');
   final _pointFormKey = GlobalKey<FormState>();
   late TextEditingController _latitudeController;
   late TextEditingController _longitudeController;

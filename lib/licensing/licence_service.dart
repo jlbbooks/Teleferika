@@ -5,11 +5,14 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:teleferika/core/logger.dart';
-
-import 'licence_model.dart';
+import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
+import 'package:teleferika/licensing/licence_model.dart';
+import 'package:teleferika/licensing/licensed_features_loader_stub.dart';
 
 /// Service for managing software licences
 class LicenceService {
+  final Logger logger = Logger('LicenceService');
   static const String _licenceKey = 'app_licence_key';
   static const String _licenceHashKey = 'app_licence_hash';
 
@@ -17,9 +20,11 @@ class LicenceService {
   Licence? _currentLicence;
   bool _isInitialized = false;
 
-  // Singleton pattern
-  LicenceService._privateConstructor();
-  static final LicenceService instance = LicenceService._privateConstructor();
+  static final LicenceService _instance = LicenceService._internal();
+  factory LicenceService() => _instance;
+  LicenceService._internal();
+  
+  static LicenceService get instance => _instance;
 
   /// Initialize the service
   Future<void> initialize() async {

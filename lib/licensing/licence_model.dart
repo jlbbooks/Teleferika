@@ -1,10 +1,12 @@
 // lib/models/licence_model.dart
 import 'dart:convert';
 
+import 'package:logging/logging.dart';
 import 'package:teleferika/core/logger.dart';
 
 /// Represents a software licence with validation and security features
 class Licence {
+  static final Logger logger = Logger('LicenceModel');
   final String email;
   final int maxDays;
   final DateTime validUntil;

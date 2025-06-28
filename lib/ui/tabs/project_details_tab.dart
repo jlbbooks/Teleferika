@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/core/project_state_manager.dart';
@@ -27,6 +28,7 @@ class ProjectDetailsTab extends StatefulWidget {
 }
 
 class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
+  final Logger logger = Logger('ProjectDetailsTab');
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _noteController;

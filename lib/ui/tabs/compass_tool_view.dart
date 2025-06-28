@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:logging/logging.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import 'package:teleferika/core/logger.dart';
@@ -28,6 +29,7 @@ class CompassToolView extends StatefulWidget {
 }
 
 class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
+  final Logger logger = Logger('CompassToolView');
   double? _heading; // Current heading from the compass
   double? _accuracy; // Compass accuracy
   StreamSubscription<CompassEvent>? _compassSubscription;
@@ -42,7 +44,6 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
   @override
   void initState() {
     super.initState();
-    logger.info("CompassToolView initialized");
     // Check if compass is available
     _checkCompassAvailability();
   }
@@ -60,8 +61,6 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
 
       if (!isCompassAvailable) {
         showErrorStatus('Compass sensor not available on this device.');
-      } else {
-        logger.info("Compass is available on this device");
       }
     } catch (e) {
       logger.severe("Error checking compass availability", e);
@@ -79,8 +78,6 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
     final hasLocation = permissions[PermissionType.location] ?? false;
     final hasSensor = permissions[PermissionType.sensor] ?? false;
 
-    logger.info("Permission results - Location: $hasLocation, Sensor: $hasSensor");
-
     setState(() {
       _hasLocationPermission = hasLocation;
       _hasSensorPermission = hasSensor;
@@ -90,7 +87,6 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
     _compassSubscription?.cancel();
 
     if (hasSensor && _isCompassAvailable) {
-      logger.info("Starting compass listener");
       _listenToCompass();
     } else if (!hasSensor) {
       showInfoStatus('Sensor permission denied. Compass features will be unavailable.');
@@ -111,10 +107,8 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
         return;
       }
 
-      logger.info("Setting up compass listener");
       _compassSubscription = FlutterCompass.events!.listen(
         (CompassEvent event) {
-          logger.fine("Compass event received - Heading: ${event.heading}, Accuracy: ${event.accuracy}");
           if (mounted) {
             setState(() {
               _heading = event.heading;
@@ -129,7 +123,6 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
           }
         },
       );
-      logger.info("Compass listener set up successfully");
     } catch (e) {
       logger.severe("Error setting up compass listener", e);
       showErrorStatus('Error setting up compass: $e');
@@ -138,7 +131,6 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
 
   // Manual retry method for compass setup
   void _retryCompassSetup() {
-    logger.info("Manual retry of compass setup");
     _compassSubscription?.cancel();
     
     if (_hasSensorPermission && _isCompassAvailable) {
@@ -146,18 +138,6 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
     } else {
       showInfoStatus('Cannot retry: Sensor permission or compass not available');
     }
-  }
-
-  // Debug method to log current state
-  void _logCompassState() {
-    logger.info("Compass State Debug:");
-    logger.info("  - Has Location Permission: $_hasLocationPermission");
-    logger.info("  - Has Sensor Permission: $_hasSensorPermission");
-    logger.info("  - Is Compass Available: $_isCompassAvailable");
-    logger.info("  - Current Heading: $_heading");
-    logger.info("  - Current Accuracy: $_accuracy");
-    logger.info("  - Compass Subscription Active: ${_compassSubscription != null}");
-    logger.info("  - FlutterCompass.events null: ${FlutterCompass.events == null}");
   }
 
   @override
@@ -168,9 +148,6 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
 
   void _handleAddPointPressed(BuildContext context, ProjectStateManager projectState) {
     if (_heading != null) {
-      logger.info(
-        "Add Point button tapped. Current Heading: ${_heading!.toStringAsFixed(1)}°, Set as End Point: $_setAsEndPoint. Using global state.",
-      );
       // Use global state to add point directly
       _addPointFromCompass(context, projectState, _heading!, setAsEndPoint: _setAsEndPoint);
     } else {
@@ -196,15 +173,12 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
       return;
     }
     
-    logger.info(
-      "Adding point from compass. Heading: $heading, Project ID: ${currentProject.id}, Set as End Point: $addAsEndPoint",
-    );
-    
     setState(() {
       _isAddingPoint = true;
     });
     
-    showLoadingStatus(S.of(context)!.infoFetchingLocation);
+    final s = S.of(context);
+    showLoadingStatus(s?.infoFetchingLocation ?? 'Fetching location...');
 
     try {
       final position = await _determinePosition();
@@ -214,9 +188,8 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
         longitude: position.longitude,
         altitude: position.altitude,
         ordinalNumber: 0, // Will be set by OrdinalManager
-        note: S
-            .of(context)!
-            .pointFromCompassDefaultNote(heading.toStringAsFixed(1)),
+        note: s?.pointFromCompassDefaultNote(heading.toStringAsFixed(1)) ??
+            'Point from compass at ${heading.toStringAsFixed(1)}°',
       );
 
       String newPointIdFromCompass;
@@ -257,17 +230,10 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
         newPointIdFromCompass = insertedPoint.id;
       }
 
-      logger.info(
-        'Point added via Compass: ID $newPointIdFromCompass, Lat: ${position.latitude}, Lon: ${position.longitude}, Heading used for note: $heading',
-      );
-
       if (addAsEndPoint) {
         ProjectModel projectToUpdate = currentProject
             .copyWith(endingPointId: newPointIdFromCompass);
         await projectState.updateProject(projectToUpdate);
-        logger.info(
-          "New point ID $newPointIdFromCompass set as the END point for project ${currentProject.id}.",
-        );
       }
 
       await dbHelper.updateProjectStartEndPoints(currentProject.id);
@@ -278,15 +244,13 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
         hideStatus();
         // Get the final point to get the correct ordinal
         final finalPoint = await dbHelper.getPointById(newPointIdFromCompass);
-        String baseMessage = S
-            .of(context)!
-            .pointAddedSnackbar(finalPoint?.ordinalNumber.toString() ?? '?');
+        String baseMessage = s?.pointAddedSnackbar(finalPoint?.ordinalNumber.toString() ?? '?') ??
+            'Point ${finalPoint?.ordinalNumber.toString() ?? '?'} added';
         String suffix = "";
         if (addAsEndPoint == true) {
-          suffix = " ${S.of(context)!.pointAddedSetAsEndSnackbarSuffix}";
+          suffix = " ${s?.pointAddedSetAsEndSnackbarSuffix ?? '(set as end point)'}";
         } else if (currentProject.endingPointId != null) {
-          suffix =
-              " ${S.of(context)!.pointAddedInsertedBeforeEndSnackbarSuffix}";
+          suffix = " ${s?.pointAddedInsertedBeforeEndSnackbarSuffix ?? '(inserted before end point)'}";
         }
         showSuccessStatus(baseMessage + suffix);
       }
@@ -294,7 +258,7 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
       logger.severe("Error adding point from compass", e, stackTrace);
       if (mounted) {
         hideStatus();
-        showErrorStatus(S.of(context)!.errorAddingPoint(e.toString()));
+        showErrorStatus(s?.errorAddingPoint(e.toString()) ?? 'Error adding point: $e');
       }
     } finally {
       if (mounted) {
