@@ -14,7 +14,6 @@ import 'package:flutter/services.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:teleferika/core/project_state_manager.dart';
-import 'package:teleferika/licensing/licensed_features_loader_stub.dart';
 
 import 'core/logger.dart';
 import 'db/database_helper.dart';
@@ -46,8 +45,8 @@ void main() async {
 
   // Load licensed features
   try {
-    await LicensedFeaturesLoaderStub.instance.loadFeatures();
-    logger.info('Licensed features loader completed');
+    await LicensedFeaturesLoader.registerLicensedFeatures();
+    logger.info('Licensed features registered successfully');
   } catch (e) {
     logger.info('Could not load licensed features: $e');
   }
