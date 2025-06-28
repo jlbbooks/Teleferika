@@ -336,7 +336,6 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                               s?.formFieldNameLabel ?? 'Project Name',
                               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w600,
-                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                           ),
@@ -446,7 +445,6 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                             s?.formFieldProjectDateLabel ?? 'Project Date',
                             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                         ],
@@ -533,7 +531,6 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                             s?.formFieldNoteLabel ?? 'Notes',
                             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                         ],
@@ -613,7 +610,6 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                             'Measurements',
                             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                         ],

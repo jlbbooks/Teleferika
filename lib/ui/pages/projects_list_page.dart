@@ -670,8 +670,20 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
     return Scaffold(
       appBar: _isSelectionMode
           ? AppBar(
-              title: Text(
-                "${_selectedProjectIdsForMultiSelect.length} selected",
+              title: Row(
+                children: [
+                  Icon(
+                    Icons.select_all,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    "${_selectedProjectIdsForMultiSelect.length} selected",
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
               leading: IconButton(
                 icon: const Icon(Icons.close),
@@ -687,9 +699,20 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
             )
           : AppBar(
               title: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(child: Text(titleText)),
+                  Icon(
+                    Icons.folder_open,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      titleText,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
                   PopupMenuButton<String>(
                     icon: Icon(
                       _activeLicence != null && _activeLicence!.isValid

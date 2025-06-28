@@ -307,7 +307,6 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
             children: [
               Icon(
                 Icons.edit_location,
-                color: Theme.of(context).colorScheme.onPrimary,
                 size: 24,
               ),
               const SizedBox(width: 12),
@@ -315,7 +314,6 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                 'Edit Point',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onPrimary,
                 ),
               ),
             ],

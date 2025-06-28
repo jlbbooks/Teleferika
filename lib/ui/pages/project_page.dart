@@ -495,14 +495,28 @@ class _ProjectPageState extends State<ProjectPage>
       return Scaffold(
         key: _scaffoldKey,
         appBar: AppBar(
-          title: Text(
-            _isEffectivelyNew
-                ? (s?.new_project_title ?? 'New Project')
-                : (s?.edit_project_title_named(
-                        currentProject?.name ?? widget.project.name,
-                      ) ??
-                      currentProject?.name ??
-                      widget.project.name),
+          title: Row(
+            children: [
+              Icon(
+                _isEffectivelyNew ? Icons.add_circle_outline : Icons.edit_note,
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  _isEffectivelyNew
+                      ? (s?.new_project_title ?? 'New Project')
+                      : (s?.edit_project_title_named(
+                              currentProject?.name ?? widget.project.name,
+                            ) ??
+                              currentProject?.name ??
+                              widget.project.name),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
           actions: tabBarActions,
           bottom: TabBar(
@@ -534,14 +548,28 @@ class _ProjectPageState extends State<ProjectPage>
       return Scaffold(
         key: _scaffoldKey,
         appBar: AppBar(
-          title: Text(
-            _isEffectivelyNew
-                ? (s?.new_project_title ?? 'New Project')
-                : (s?.edit_project_title_named(
-                        currentProject?.name ?? widget.project.name,
-                      ) ??
-                      currentProject?.name ??
-                      widget.project.name),
+          title: Row(
+            children: [
+              Icon(
+                _isEffectivelyNew ? Icons.add_circle_outline : Icons.edit_note,
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  _isEffectivelyNew
+                      ? (s?.new_project_title ?? 'New Project')
+                      : (s?.edit_project_title_named(
+                              currentProject?.name ?? widget.project.name,
+                            ) ??
+                              currentProject?.name ??
+                              widget.project.name),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
           actions: tabBarActions,
         ),
