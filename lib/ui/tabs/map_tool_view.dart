@@ -65,13 +65,11 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   double? _currentDeviceHeading;
   bool _hasLocationPermission = false;
   bool _hasSensorPermission = false;
+  bool _isCheckingPermissions = true; // Add loading state for permissions
   double? _headingFromFirstToLast;
   Polyline? _projectHeadingLine;
   MapType _currentMapType = MapType.openStreetMap;
   double _glowAnimationValue = 0.0;
-
-  // Animation timer
-  Timer? _glowAnimationTimer;
 
   // Location stream for CurrentLocationLayer
   final StreamController<LocationMarkerPosition> _locationStreamController =
@@ -82,7 +80,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     super.initState();
     _selectedPointId = widget.selectedPointId;
     _loadProjectPoints();
-    _checkAndRequestPermissions();
+    // Permission check moved to didChangeDependencies after controller initialization
   }
 
   @override
@@ -91,6 +89,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     // Initialize controller with current project from global state
     final currentProject = context.projectStateListen.currentProject ?? widget.project;
     _controller = MapControllerLogic(project: currentProject);
+
+    // Permission handling
+    _checkAndRequestPermissions();
   }
 
   @override
@@ -124,7 +125,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
 
   @override
   void dispose() {
-    _glowAnimationTimer?.cancel();
     _locationStreamController.close();
     _controller.dispose();
     _mapController.dispose();
@@ -140,6 +140,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         setState(() {
           _hasLocationPermission = permissions['location'] ?? false;
           _hasSensorPermission = permissions['sensor'] ?? false;
+          _isCheckingPermissions = false;
         });
       }
 
@@ -157,6 +158,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     } catch (e) {
       logger.severe("Error checking permissions", e);
       if (mounted) {
+        setState(() {
+          _isCheckingPermissions = false;
+        });
         showErrorStatus('Error checking permissions: $e');
       }
     }
@@ -553,6 +557,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                     context: context,
                     hasLocationPermission: _hasLocationPermission,
                     hasSensorPermission: _hasSensorPermission,
+                    isCheckingPermissions: _isCheckingPermissions,
                     onRetryPermissions: _checkAndRequestPermissions,
                   ),
                   MapControls.buildMapTypeSelector(

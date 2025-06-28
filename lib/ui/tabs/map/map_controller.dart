@@ -61,6 +61,21 @@ class MapControllerLogic {
     };
   }
 
+  // Check current permission status without requesting
+  Future<Map<String, bool>> checkCurrentPermissions() async {
+    // Location Permission
+    LocationPermission locationPermission = await Geolocator.checkPermission();
+
+    // Sensor (Compass) Permission
+    PermissionStatus sensorStatus = await Permission.sensors.status;
+
+    return {
+      'location': locationPermission == LocationPermission.whileInUse ||
+          locationPermission == LocationPermission.always,
+      'sensor': sensorStatus.isGranted,
+    };
+  }
+
   // Location listening
   void startListeningToLocation(
     Function(Position) onPositionUpdate,

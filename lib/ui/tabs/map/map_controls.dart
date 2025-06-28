@@ -279,9 +279,11 @@ class MapControls {
     required BuildContext context,
     required bool hasLocationPermission,
     required bool hasSensorPermission,
+    bool isCheckingPermissions = false,
     required VoidCallback onRetryPermissions,
   }) {
-    if (hasLocationPermission && hasSensorPermission) {
+    // Don't show overlay while checking permissions or if all permissions are granted
+    if (isCheckingPermissions || (hasLocationPermission && hasSensorPermission)) {
       return const SizedBox.shrink();
     }
 
