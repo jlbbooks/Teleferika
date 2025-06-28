@@ -40,7 +40,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
     _longitudeController = TextEditingController(
       text: widget.point.longitude.toString(),
     );
-    _noteController = TextEditingController(text: widget.point.note ?? '');
+    _noteController = TextEditingController(text: widget.point.note);
     _altitudeController = TextEditingController(
       text:
           widget.point.altitude?.toStringAsFixed(2) ??
@@ -150,7 +150,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
     PointModel pointToSave = widget.point.copyWith(
       latitude: latitude,
       longitude: longitude,
-      note: _noteController.text.isNotEmpty ? _noteController.text : null,
+      note: _noteController.text.trim(),
       altitude: altitudeValue,
       timestamp: DateTime.now(), // Or update timestamp logic
       images: _currentImages, // *** Include the current list of images ***
@@ -297,41 +297,27 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
       setState(() => _isDeleting = true); // UI feedback
 
       try {
-        final int count = await _dbHelper.deletePointById(
-          widget.point.id,
-        ); // USE THE SHARED METHOD
+        // Use global state to delete the point
+        await context.projectState.deletePoint(widget.point.id);
 
         if (!mounted) return;
 
-        if (count > 0) {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Point ${widget.point.name} deleted successfully!',
-                ),
-                backgroundColor: Colors.green,
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                'Point ${widget.point.name} deleted successfully!',
               ),
-            );
-          // Pop with structured result
-          Navigator.pop(context, {
-            'action': 'deleted',
-            'pointId': widget.point.id,
-            'ordinalNumber': widget.point.ordinalNumber,
-          });
-        } else {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Error: Point ${widget.point.name} could not be found or deleted.',
-                ),
-                backgroundColor: Colors.red,
-              ),
-            );
-        }
+              backgroundColor: Colors.green,
+            ),
+          );
+        // Pop with structured result
+        Navigator.pop(context, {
+          'action': 'deleted',
+          'pointId': widget.point.id,
+          'ordinalNumber': widget.point.ordinalNumber,
+        });
       } catch (e) {
         if (!mounted) return;
         logger.severe('Failed to delete point ${widget.point.name}: $e');

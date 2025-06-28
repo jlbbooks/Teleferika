@@ -70,7 +70,9 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
   @override
   void didUpdateWidget(PointDetailsPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.selectedPoint?.id != widget.selectedPoint?.id) {
+    // Update controllers if point ID changes OR if point data changes (for edits)
+    if (oldWidget.selectedPoint?.id != widget.selectedPoint?.id ||
+        oldWidget.selectedPoint != widget.selectedPoint) {
       _updateControllers();
     }
   }
@@ -79,7 +81,7 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
     if (widget.selectedPoint != null) {
       _latitudeController.text = widget.selectedPoint!.latitude.toStringAsFixed(6);
       _longitudeController.text = widget.selectedPoint!.longitude.toStringAsFixed(6);
-      _noteController.text = widget.selectedPoint!.note ?? '';
+      _noteController.text = widget.selectedPoint!.note;
     }
   }
 
@@ -466,13 +468,13 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
               : GestureDetector(
                   onTap: _startEditingNote,
                   child: Text(
-                    widget.selectedPoint!.note ?? 'Tap to add note...',
+                    widget.selectedPoint!.note.isEmpty ? 'Tap to add note...' : widget.selectedPoint!.note,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: widget.selectedPoint!.note?.isNotEmpty ?? false
+                      color: widget.selectedPoint!.note.isNotEmpty
                           ? Theme.of(context).colorScheme.onSecondaryContainer
                           : Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
                       fontSize: isMobile ? 11 : null,
-                      fontStyle: widget.selectedPoint!.note?.isNotEmpty ?? false
+                      fontStyle: widget.selectedPoint!.note.isNotEmpty
                           ? FontStyle.normal
                           : FontStyle.italic,
                     ),
@@ -537,7 +539,7 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
   void _confirmNoteChange() {
     final newNote = _noteController.text.trim();
     if (newNote != widget.selectedPoint!.note) {
-      _updatePointNote(newNote.isEmpty ? null : newNote);
+      _updatePointNote(newNote);
     }
     setState(() {
       _isEditingNote = false;
@@ -562,7 +564,7 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
   }
 
   void _cancelNoteChange() {
-    _noteController.text = widget.selectedPoint!.note ?? '';
+    _noteController.text = widget.selectedPoint!.note;
     setState(() {
       _isEditingNote = false;
     });
@@ -583,7 +585,7 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
     // Don't center the map - let it stay where it is
   }
 
-  void _updatePointNote(String? newNote) {
+  void _updatePointNote(String newNote) {
     if (widget.selectedPoint == null) return;
 
     final updatedPoint = widget.selectedPoint!.copyWith(

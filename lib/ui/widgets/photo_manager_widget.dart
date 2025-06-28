@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p; // For p.basename, p.join
 import 'package:path_provider/path_provider.dart';
 import 'package:teleferika/core/logger.dart';
+import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/core/utils/uuid_generator.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/image_model.dart';
@@ -66,7 +67,9 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
         // Optionally update a 'lastModified' timestamp on the point itself here if desired
         timestamp: DateTime.now(),
       );
-      await _dbHelper.updatePoint(pointToSave);
+      
+      // Use global state to update the point
+      await context.projectState.updatePoint(pointToSave);
 
       logger.info(
         'Successfully auto-saved image changes for point ID: ${widget.point.id}. Image count: ${_images.length}',

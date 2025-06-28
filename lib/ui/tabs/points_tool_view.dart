@@ -532,7 +532,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
             title: Text(
               '${point.name}: Alt: ${point.altitude?.toStringAsFixed(2) ?? '---'}\nLat: ${point.latitude.toStringAsFixed(5)}\nLon: ${point.longitude.toStringAsFixed(5)}',
             ),
-            subtitle: Text(point.note ?? 'No note'),
+            subtitle: Text(point.note.isEmpty ? 'No note' : point.note),
             trailing: !_isSelectionMode
                 ? IconButton(
                     icon: const Icon(

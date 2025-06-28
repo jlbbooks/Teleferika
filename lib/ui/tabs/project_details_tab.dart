@@ -43,7 +43,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
     _currentProject = widget.project;
     _projectDate = widget.project.date;
     _nameController = TextEditingController(text: _currentProject.name);
-    _noteController = TextEditingController(text: _currentProject.note ?? '');
+    _noteController = TextEditingController(text: _currentProject.note);
     _presumedTotalLengthController = TextEditingController(
       text: _currentProject.presumedTotalLength?.toStringAsFixed(2) ?? '',
     );
@@ -73,7 +73,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
     final azimuth = double.tryParse(_azimuthController.text);
     final dirty =
         name != widget.project.name ||
-        note != (widget.project.note ?? '') ||
+        note != widget.project.note ||
         presumed != widget.project.presumedTotalLength ||
         azimuth != widget.project.azimuth ||
         _projectDate != widget.project.date;
@@ -81,7 +81,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
       _dirty = dirty;
       _currentProject = _currentProject.copyWith(
         name: name,
-        note: note.isEmpty ? null : note,
+        note: note,
         presumedTotalLength: _presumedTotalLengthController.text.trim().isEmpty
             ? null
             : presumed,

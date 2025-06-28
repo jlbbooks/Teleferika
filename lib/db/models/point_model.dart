@@ -18,12 +18,12 @@ class PointModel {
   bool isUnsaved; // Track if this is an unsaved new point
 
   // Getter for note
-  String? get note => _note;
+  String get note => _note ?? '';
 
   // Setter for note that automatically removes trailing blank lines
-  set note(String? value) {
-    if (value == null) {
-      _note = null;
+  set note(String value) {
+    if (value.trim().isEmpty) {
+      _note = '';
     } else {
       // Remove trailing blank lines and trim whitespace
       _note = value.trim().replaceAll(RegExp(r'\n\s*$'), '');
@@ -56,7 +56,7 @@ class PointModel {
   }) : this.id = id ?? generateUuid(),
        this.images = images ?? [] {
     // Use the setter to ensure note is cleaned up
-    this.note = note;
+    this.note = note ?? '';
   }
 
   PointModel copyWith({
@@ -91,7 +91,7 @@ class PointModel {
     
     // Use the setter to ensure note is cleaned up
     if (clearNote) {
-      result.note = null;
+      result.note = '';
     } else if (note != null) {
       result.note = note;
     } else {
@@ -109,7 +109,7 @@ class PointModel {
       columnLongitude: longitude,
       columnAltitude: altitude, // Add to toMap
       columnOrdinalNumber: ordinalNumber,
-      columnNote: note,
+      columnNote: note.isEmpty ? null : note, // Store null in DB for empty strings
       columnTimestamp: timestamp?.toIso8601String(),
     };
   }
@@ -134,7 +134,7 @@ class PointModel {
     );
     
     // Use the setter to ensure note is cleaned up
-    result.note = map[columnNote] as String?;
+    result.note = map[columnNote] as String? ?? '';
     
     return result;
   }

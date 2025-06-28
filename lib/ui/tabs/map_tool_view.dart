@@ -829,10 +829,8 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           await projectState.updatePoint(updatedPoint);
           
           setState(() {
-            // Update selected point instance if it's the same point
-            if (_selectedPointInstance?.id == updatedPoint.id) {
-              _selectedPointInstance = updatedPoint;
-            }
+            // Update the selected point instance to get the latest data from global state
+            _updateSelectedPointInstance();
             _recalculateAndDrawLines();
           });
           
@@ -1102,20 +1100,32 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   // Handle point updates from inline editing
   Future<void> _handlePointUpdated(PointModel updatedPoint) async {
     try {
-      // Use global state to update the point
-      final projectState = Provider.of<ProjectStateManager>(context, listen: false);
-      await projectState.updatePoint(updatedPoint);
+      // Check if this is a new unsaved point
+      if (updatedPoint.isUnsaved) {
+        // Update the local new point instance
+        setState(() {
+          _newPoint = updatedPoint;
+          if (_selectedPointInstance?.id == updatedPoint.id) {
+            _selectedPointInstance = updatedPoint;
+          }
+        });
+        showSuccessStatus('Point ${updatedPoint.name} updated!');
+      } else {
+        // Use global state to update the point in database
+        final projectState = Provider.of<ProjectStateManager>(context, listen: false);
+        await projectState.updatePoint(updatedPoint);
 
-      // Update selected point instance if it's the same point
-      setState(() {
-        if (_selectedPointInstance?.id == updatedPoint.id) {
-          _selectedPointInstance = updatedPoint;
-        }
-        _recalculateAndDrawLines();
-      });
+        // Update selected point instance if it's the same point
+        setState(() {
+          if (_selectedPointInstance?.id == updatedPoint.id) {
+            _selectedPointInstance = updatedPoint;
+          }
+          _recalculateAndDrawLines();
+        });
 
-      showSuccessStatus('Point ${updatedPoint.name} updated successfully!');
-      widget.onPointsChanged?.call();
+        showSuccessStatus('Point ${updatedPoint.name} updated successfully!');
+        widget.onPointsChanged?.call();
+      }
     } catch (e) {
       logger.severe('Failed to update point ${updatedPoint.name}: $e');
       if (mounted) {

@@ -18,7 +18,7 @@ class ProjectModel {
 
   final String id;
   final String name;
-  final String? note;
+  final String note;
   final String? startingPointId;
   final String? endingPointId;
   final double? azimuth;
@@ -31,7 +31,7 @@ class ProjectModel {
   ProjectModel({
     String? id, // Default to generating a UUID if not provided
     required this.name,
-    this.note,
+    required this.note,
     this.startingPointId,
     this.endingPointId,
     this.azimuth,
@@ -46,7 +46,7 @@ class ProjectModel {
     return {
       columnId: id,
       columnName: name,
-      columnNote: note,
+      columnNote: note.isEmpty ? null : note,
       columnStartingPointId: startingPointId,
       columnEndingPointId: endingPointId,
       columnAzimuth: azimuth,
@@ -64,7 +64,7 @@ class ProjectModel {
     return ProjectModel(
       id: map[columnId] as String?,
       name: map[columnName] as String,
-      note: map[columnNote] as String?,
+      note: map[columnNote] as String? ?? '', // Convert null to empty string
       startingPointId: map[columnStartingPointId] as String?,
       endingPointId: map[columnEndingPointId] as String?,
       azimuth: map[columnAzimuth] as double?,
@@ -82,7 +82,7 @@ class ProjectModel {
     String? id, // Allow id to be explicitly part of copyWith if needed
     String? name,
     String? note,
-    bool clearNote = false, // To explicitly set note to null
+    bool clearNote = false, // To explicitly set note to empty string
     String? startingPointId,
     bool clearStartingPointId = false,
     String? endingPointId,
@@ -100,7 +100,7 @@ class ProjectModel {
     return ProjectModel(
       id: id ?? this.id,
       name: name ?? this.name,
-      note: clearNote ? null : (note ?? this.note),
+      note: clearNote ? '' : (note ?? this.note),
       startingPointId: clearStartingPointId
           ? null
           : (startingPointId ?? this.startingPointId),
