@@ -61,9 +61,16 @@ class ProjectStateManager extends ChangeNotifier {
     if (_currentProject == null) return;
     
     try {
+      // Refresh both points and project data to get updated start/end point IDs
       final points = await _dbHelper.getPointsForProject(_currentProject!.id);
+      final project = await _dbHelper.getProjectById(_currentProject!.id);
+      
       _currentPoints = points;
-      logger.info("ProjectStateManager: Refreshed ${points.length} points");
+      if (project != null) {
+        _currentProject = project;
+      }
+      
+      logger.info("ProjectStateManager: Refreshed ${points.length} points and project data");
       notifyListeners();
     } catch (e, stackTrace) {
       logger.severe("ProjectStateManager: Error refreshing points", e, stackTrace);
@@ -189,6 +196,13 @@ class ProjectStateManager extends ChangeNotifier {
     
     try {
       await _dbHelper.updateProjectStartEndPoints(_currentProject!.id);
+      
+      // Refresh project data to get updated start/end point IDs
+      final project = await _dbHelper.getProjectById(_currentProject!.id);
+      if (project != null) {
+        _currentProject = project;
+        logger.info("ProjectStateManager: Updated project start/end points and refreshed project data");
+      }
     } catch (e, stackTrace) {
       logger.severe("ProjectStateManager: Error updating project start/end points", e, stackTrace);
     }

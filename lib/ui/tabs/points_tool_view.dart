@@ -1,6 +1,10 @@
 // points_tool_view.dart
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
+import 'package:provider/provider.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:teleferika/core/project_provider.dart';
+import 'package:teleferika/core/project_state_manager.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
@@ -28,54 +32,53 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
   final Logger logger = Logger('PointsToolView');
 
-  List<PointModel> _points = [];
   bool _isLoading = true;
   bool _isSelectionMode = false;
   Set<String> _selectedPointIds = {};
 
-  // Local project state to manage start/end points independently
-  late ProjectModel _currentProject;
-
   // Undo functionality
   List<PointModel>? _originalPointsBackup;
   bool _hasUnsavedChanges = false;
+  
+  // Store previous project data for comparison
+  ProjectModel? _previousProject;
 
   @override
   void initState() {
     super.initState();
-    _currentProject = widget.project;
     _loadPoints();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Initialize previous project data after dependencies are available
+    if (_previousProject == null) {
+      _previousProject = context.projectStateListen.currentProject ?? widget.project;
+    }
   }
 
   @override
   void didUpdateWidget(PointsToolView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Check if parent project start/end points changed
-    if (oldWidget.project.startingPointId != widget.project.startingPointId ||
-        oldWidget.project.endingPointId != widget.project.endingPointId) {
+    // Check if parent project start/end points changed using global state
+    final currentProject = context.projectStateListen.currentProject ?? widget.project;
+    
+    if (_previousProject?.startingPointId != currentProject.startingPointId ||
+        _previousProject?.endingPointId != currentProject.endingPointId) {
       logger.info(
-        "Parent project start/end points changed, but keeping local state",
+        "Parent project start/end points changed, refreshing from global state",
       );
       logger.info(
-        "Parent: start=${widget.project.startingPointId}, end=${widget.project.endingPointId}",
+        "Parent: start=${currentProject.startingPointId}, end=${currentProject.endingPointId}",
       );
-      logger.info(
-        "Local: start=${_currentProject.startingPointId}, end=${_currentProject.endingPointId}",
-      );
+      // Refresh from global state
+      _loadPoints();
     }
+    
+    // Update stored project data
+    _previousProject = currentProject;
   }
-
-  // @override
-  // void didUpdateWidget(PointsToolView oldWidget) {
-  //   super.didUpdateWidget(oldWidget);
-  //   // If the project ID changes, refetch points (might not be necessary if project instance is the same
-  //   // and only its internal start/end IDs change, then a simple setState in parent might be enough)
-  //   if (widget.project.id != oldWidget.project.id) {
-  //     _loadPoints();
-  //   }
-  //   // If start/end points change on the *same* project, we might need a way to just rebuild
-  //   // This is often handled by the parent calling setState which causes this child to rebuild.
-  // }
 
   // Make _loadPoints return Future<void> and update _points
   Future<void> _loadPoints() async {
@@ -84,13 +87,12 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
         _isLoading = true;
       });
 
-      final pointsFromDb = await _dbHelper.getPointsForProject(
-        widget.project.id!,
-      );
+      // Use global state to get points
+      final projectState = Provider.of<ProjectStateManager>(context, listen: false);
+      await projectState.refreshPoints();
 
       if (mounted) {
         setState(() {
-          _points = pointsFromDb;
           _isLoading = false;
         });
 
@@ -103,7 +105,6 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       logger.severe("Error loading points in PointsToolView", e, stackTrace);
       if (mounted) {
         setState(() {
-          _points = [];
           _isLoading = false;
         });
         showErrorStatus('Error loading points: ${e.toString()}');
@@ -162,30 +163,34 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       return;
     }
 
-    // 3. Notify parent to create backup before making changes
-    widget.onProjectChanged?.call(_currentProject, hasUnsavedChanges: true);
+    // 3. Get current project from global state and notify parent to create backup before making changes
+    final projectState = Provider.of<ProjectStateManager>(context, listen: false);
+    final currentProject = projectState.currentProject ?? widget.project;
+    widget.onProjectChanged?.call(currentProject, hasUnsavedChanges: true);
 
-    // 4. Update local list and prepare points with new ordinals
+    // 4. Get current points from global state
+    final currentPoints = projectState.currentPoints;
     final List<PointModel> reorderedPointsWithNewOrdinals =
-        _getReorderedPointsWithNewOrdinals(oldIndex, adjustedNewIndex);
-
-    // 5. Update UI state
-    setState(() {
-      _points = reorderedPointsWithNewOrdinals;
-    });
+        _getReorderedPointsWithNewOrdinals(
+          currentPoints,
+          oldIndex,
+          adjustedNewIndex,
+        );
 
     logger.info(
       "Reordered point from index $oldIndex to $adjustedNewIndex. Updating ordinals.",
     );
 
-    // 6. Persist changes to the database
+    // 5. Persist changes to the database using global state
     await _updatePointOrdinalsInDatabase(reorderedPointsWithNewOrdinals);
     widget.onPointsChanged?.call(); // Notify parent after reorder
   }
 
   /// Validates if the reorder operation is valid.
   bool _isValidReorder(int oldIndex, int newIndex) {
-    if (newIndex < 0 || newIndex >= _points.length || oldIndex == newIndex) {
+    final projectState = Provider.of<ProjectStateManager>(context, listen: false);
+    final points = projectState.currentPoints;
+    if (newIndex < 0 || newIndex >= points.length || oldIndex == newIndex) {
       return false;
     }
     return true;
@@ -194,11 +199,12 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
   /// Reorders the local `_points` list and returns a new list
   /// where each `PointModel` has its `ordinalNumber` updated to match its new position.
   List<PointModel> _getReorderedPointsWithNewOrdinals(
+    List<PointModel> points,
     int oldIndex,
     int newIndex,
   ) {
     // Create a mutable copy to perform reorder operations
-    List<PointModel> tempList = List.from(_points);
+    List<PointModel> tempList = List.from(points);
 
     final PointModel itemMoved = tempList.removeAt(oldIndex);
     tempList.insert(newIndex, itemMoved);
@@ -221,7 +227,9 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
   Future<void> _updatePointOrdinalsInDatabase(
     List<PointModel> pointsToUpdate,
   ) async {
-    if (widget.project.id == null) {
+    final projectState = Provider.of<ProjectStateManager>(context, listen: false);
+    final currentProject = projectState.currentProject ?? widget.project;
+    if (currentProject.id == null) {
       return; // Should already be checked, but defensive
     }
 
@@ -245,7 +253,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
         // Second: Update start/end points within the SAME transaction
         // This ensures it sees the updated ordinals
         await _dbHelper.updateProjectStartEndPoints(
-          widget.project.id!,
+          currentProject.id!,
           txn: txn,
         );
       });
@@ -254,13 +262,13 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
         "Successfully updated ordinals and project start/end points after reorder.",
       );
 
-      // Refresh project data to get updated start/end point IDs
-      await _refreshProjectData();
+      // Refresh global state to get updated project data with new start/end points
+      await projectState.refreshPoints();
 
       widget.onPointsChanged?.call(); // Notify parent
     } catch (e, stackTrace) {
       logger.severe(
-        "Error updating database after reorder for project ${widget.project.id}",
+        "Error updating database after reorder for project ${currentProject.id}",
         e,
         stackTrace,
       );
@@ -273,46 +281,10 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
     }
   }
 
-  /// Refreshes project data from the database and updates local state
-  Future<void> _refreshProjectData() async {
-    try {
-      // Load updated project data
-      final updatedProject = await _dbHelper.getProjectById(widget.project.id!);
-      if (updatedProject != null && mounted) {
-        logger.info(
-          "Refreshing project data - Old start: ${_currentProject.startingPointId}, end: ${_currentProject.endingPointId}",
-        );
-        logger.info(
-          "Refreshing project data - New start: ${updatedProject.startingPointId}, end: ${updatedProject.endingPointId}",
-        );
-
-        setState(() {
-          _currentProject = updatedProject;
-        });
-
-        // Notify parent of project changes with unsaved changes flag
-        logger.info(
-          "Calling onProjectChanged callback with hasUnsavedChanges: true",
-        );
-        logger.info(
-          "onProjectChanged callback is null: ${widget.onProjectChanged == null}",
-        );
-        widget.onProjectChanged?.call(updatedProject, hasUnsavedChanges: true);
-        logger.info("onProjectChanged callback called successfully");
-      }
-    } catch (e, stackTrace) {
-      logger.severe(
-        "Error refreshing project data after reorder",
-        e,
-        stackTrace,
-      );
-    }
-  }
-
   /// Creates a backup of the current points list for undo functionality
   void _createBackup() {
     if (_originalPointsBackup == null) {
-      _originalPointsBackup = List.from(_points);
+      _originalPointsBackup = List.from(context.projectState.currentPoints);
       _hasUnsavedChanges = true;
       logger.info(
         "Created backup of ${_originalPointsBackup!.length} points for undo",
@@ -327,8 +299,40 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
         "Undoing changes - restoring ${_originalPointsBackup!.length} points",
       );
 
+      final projectState = Provider.of<ProjectStateManager>(context, listen: false);
+      final currentProject = projectState.currentProject ?? widget.project;
+
+      // Restore the original points in the database
+      final db = await _dbHelper.database;
+      await db.transaction((txn) async {
+        // Clear all current points for this project
+        await txn.delete(
+          'points',
+          where: 'project_id = ?',
+          whereArgs: [currentProject.id],
+        );
+
+        // Insert the original points back
+        for (int i = 0; i < _originalPointsBackup!.length; i++) {
+          final point = _originalPointsBackup![i];
+          await txn.insert(
+            'points',
+            point.toMap(),
+            conflictAlgorithm: ConflictAlgorithm.replace,
+          );
+        }
+
+        // Update project start/end points
+        await _dbHelper.updateProjectStartEndPoints(
+          currentProject.id!,
+          txn: txn,
+        );
+      });
+
+      // Refresh global state
+      await projectState.refreshPoints();
+
       setState(() {
-        _points = List.from(_originalPointsBackup!);
         _hasUnsavedChanges = false;
       });
 
@@ -336,7 +340,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       _originalPointsBackup = null;
 
       // Notify parent that changes have been undone
-      widget.onProjectChanged?.call(_currentProject, hasUnsavedChanges: false);
+      widget.onProjectChanged?.call(currentProject, hasUnsavedChanges: false);
 
       logger.info("Changes undone successfully");
     }
@@ -359,16 +363,6 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
   /// Public method to create backup (called from parent)
   void createBackup() {
     _createBackup();
-  }
-
-  /// Public method to update local project state
-  void updateLocalProject(ProjectModel project) {
-    if (mounted) {
-      setState(() {
-        _currentProject = project;
-      });
-      logger.info("Updated local project state - start: ${project.startingPointId}, end: ${project.endingPointId}");
-    }
   }
 
   // --- Action Bar for Normal and Selection Mode ---
@@ -465,20 +459,22 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
   Future<void> _deleteSelectedPoints() async {
     if (_selectedPointIds.isEmpty) return;
 
-    // Notify parent to create backup before deletion
-    widget.onProjectChanged?.call(_currentProject, hasUnsavedChanges: true);
+    // Get current project from global state and notify parent to create backup before deletion
+    final projectState = Provider.of<ProjectStateManager>(context, listen: false);
+    final currentProject = projectState.currentProject ?? widget.project;
+    widget.onProjectChanged?.call(currentProject, hasUnsavedChanges: true);
 
     try {
-      final count = await _dbHelper.deletePointsByIds(
-        _selectedPointIds.toList(),
-      );
-      logger.info('Successfully deleted $count points.');
+      // Delete points using global state
+      for (String pointId in _selectedPointIds) {
+        await projectState.deletePoint(pointId);
+      }
+
+      logger.info('Successfully deleted ${_selectedPointIds.length} points.');
       if (mounted) {
-        showSuccessStatus('$count point(s) deleted.');
+        showSuccessStatus('${_selectedPointIds.length} point(s) deleted.');
       }
       _clearSelection();
-      await _loadPoints(); // Reload points to reflect deletions and re-sequencing
-      await _refreshProjectData(); // Also refresh project data
       widget.onPointsChanged?.call(); // Notify parent after deletion
     } catch (error, stackTrace) {
       logger.severe('Error deleting points', error, stackTrace);
@@ -491,80 +487,25 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
   // --- End Delete Logic ---
 
   /// Builds a single point item Card for the ListView.
-  Widget _buildPointItem(BuildContext context, PointModel point, int index) {
-    // Debug: Log current project state for first few points
-    if (index < 3) {
-      logger.fine(
-        "Building point $index (${point.id}) - Project start: ${_currentProject.startingPointId}, end: ${_currentProject.endingPointId}",
-      );
-    }
-
+  Widget _buildPointItem(BuildContext context, PointModel point, int index, ProjectModel project) {
     // index needed for Key
     final bool isSelectedForDelete = _selectedPointIds.contains(point.id);
     final Color baseSelectionColor = Theme.of(context).primaryColorLight;
     const double selectedOpacity = 0.3;
 
-    // --- Determine if it's a start or end point ---
-    final bool isProjectStartPoint =
-        point.id != null && point.id == _currentProject.startingPointId;
-    final bool isProjectEndPoint =
-        point.id != null && point.id == _currentProject.endingPointId;
-
-    // Debug logging for start/end point detection
-    if (point.id != null && (isProjectStartPoint || isProjectEndPoint)) {
-      logger.fine(
-        "Point ${point.id} (${point.name}) - Start: $isProjectStartPoint, End: $isProjectEndPoint",
-      );
-      logger.fine(
-        "Current project start: ${_currentProject.startingPointId}, end: ${_currentProject.endingPointId}",
-      );
-    }
-    String? specialRoleText;
-    Color? specialRoleColor;
-    Color cardHighlightColor = Theme.of(context).cardColor; // Default
-    BorderSide cardBorder = BorderSide.none;
-
-    if (isProjectStartPoint && isProjectEndPoint) {
-      specialRoleText = "Start & End Point";
-      specialRoleColor = Colors.purpleAccent.shade700;
-      cardHighlightColor = Colors.purple.shade50.withAlpha(
-        ((1 - selectedOpacity) * 255).round(),
-      );
-      cardBorder = BorderSide(color: Colors.purpleAccent.shade400, width: 2.0);
-    } else if (isProjectStartPoint) {
-      specialRoleText = "Start Point";
-      specialRoleColor = Colors.green.shade700;
-      cardHighlightColor = Colors.green.shade50.withAlpha(
-        ((1 - selectedOpacity) * 255).round(),
-      );
-      cardBorder = BorderSide(color: Colors.green.shade400, width: 2.0);
-    } else if (isProjectEndPoint) {
-      specialRoleText = "End Point";
-      specialRoleColor = Colors.red.shade700;
-      cardHighlightColor = Colors.red.shade50.withAlpha(
-        ((1 - selectedOpacity) * 255).round(),
-      );
-      cardBorder = BorderSide(color: Colors.red.shade400, width: 2.0);
-    }
-    // --- MODIFICATION END ---
-
     return Card(
       key: ValueKey(point.id ?? index), // Crucial for ReorderableListView
       margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
-      elevation: _isSelectionMode && isSelectedForDelete
-          ? 4.0
-          : (isProjectStartPoint || isProjectEndPoint ? 3.0 : 1.0),
+      elevation: _isSelectionMode && isSelectedForDelete ? 4.0 : 1.0,
       shape: RoundedRectangleBorder(
         side: _isSelectionMode && isSelectedForDelete
             ? BorderSide(color: Theme.of(context).primaryColor, width: 1.5)
-            : cardBorder, // Apply special border if start/end point
+            : BorderSide.none,
         borderRadius: BorderRadius.circular(8.0),
       ),
       color: _isSelectionMode && isSelectedForDelete
           ? baseSelectionColor.withAlpha((selectedOpacity * 255).round())
-          : (isProjectStartPoint || isProjectEndPoint
-                ? cardHighlightColor
-                : null), // Apply special background
+          : null,
       child: Stack(
         // Use Stack to overlay the "New" badge
         children: [
@@ -591,27 +532,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
             title: Text(
               '${point.name}: Alt: ${point.altitude?.toStringAsFixed(2) ?? '---'}\nLat: ${point.latitude.toStringAsFixed(5)}\nLon: ${point.longitude.toStringAsFixed(5)}',
             ),
-            subtitle: Column(
-              // Use Column to add special role text if present
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(point.note ?? 'No note'),
-                if (specialRoleText != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4.0),
-                    child: Text(
-                      specialRoleText,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color:
-                            specialRoleColor ??
-                            Theme.of(context).colorScheme.primary,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+            subtitle: Text(point.note ?? 'No note'),
             trailing: !_isSelectionMode
                 ? IconButton(
                     icon: const Icon(
@@ -675,8 +596,6 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
           );
           // Refresh both points and project data
           await _loadPoints();
-          await _refreshProjectData();
-          // Optionally, if you want to notify the overall project page too:
           widget.onPointsChanged?.call();
         }
       }
@@ -705,49 +624,68 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
 
   @override
   Widget build(BuildContext context) {
-    logger.finest(
-      "PointsToolView build method called. Selection mode: $_isSelectionMode, Points count: ${_points.length}",
-    );
-    return Stack(
-      children: [
-        Column(
-          mainAxisSize: MainAxisSize.max,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Consumer<ProjectStateManager>(
+      builder: (context, projectState, child) {
+        // Get current project data from global state
+        final currentProject = projectState.currentProject ?? widget.project;
+        
+        logger.fine(
+          "PointsToolView Consumer rebuild - Project start: ${currentProject.startingPointId}, end: ${currentProject.endingPointId}",
+        );
+        
+        return Stack(
           children: [
-            _buildTopBar(context),
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _points.isEmpty
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 24.0),
-                        child: Text(
-                          'No points added to this project yet.\nTap "Add Point" to get started!',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 16.0),
-                        ),
-                      ),
-                    )
-                  : ReorderableListView.builder(
-                      itemCount: _points.length,
-                      itemBuilder: (context, index) {
-                        final point = _points[index];
-                        return _buildPointItem(context, point, index);
-                      },
-                      onReorder: _isSelectionMode
-                          ? (int oldI, int newI) {}
-                          : _handleReorder,
-                    ),
+            Column(
+              children: [
+                _buildTopBar(context),
+                Expanded(
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _buildPointsList(context, currentProject),
+                ),
+              ],
+            ),
+            Positioned(
+              top: 24,
+              right: 24,
+              child: StatusIndicator(status: currentStatus, onDismiss: hideStatus),
             ),
           ],
-        ),
-        Positioned(
-          top: 24,
-          right: 24,
-          child: StatusIndicator(status: currentStatus, onDismiss: hideStatus),
-        ),
-      ],
+        );
+      },
     );
+  }
+
+  Widget _buildPointsList(BuildContext context, ProjectModel project) {
+    // Get points from global state
+    final points = context.projectStateListen.currentPoints;
+
+    logger.finest(
+      "PointsToolView build method called. Selection mode: $_isSelectionMode, Points count: ${points.length}",
+    );
+    return points.isEmpty
+        ? const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                'No points added yet.\nTap "Add Point" to get started.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+          )
+        : ReorderableListView.builder(
+            itemCount: points.length,
+            onReorder: _isSelectionMode
+                ? (int oldI, int newI) {}
+                : _handleReorder,
+            itemBuilder: (context, index) {
+              final point = points[index];
+              return _buildPointItem(context, point, index, project);
+            },
+          );
   }
 }

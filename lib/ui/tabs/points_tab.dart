@@ -48,9 +48,4 @@ class PointsTabState extends State<PointsTab> {
   void createBackup() {
     _pointsToolViewKey.currentState?.createBackup();
   }
-
-  /// Public method to update local project state in PointsToolView
-  void updateLocalProject(ProjectModel project) {
-    _pointsToolViewKey.currentState?.updateLocalProject(project);
-  }
 }
