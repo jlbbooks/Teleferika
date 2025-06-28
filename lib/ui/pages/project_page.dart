@@ -6,7 +6,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:teleferika/core/logger.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/core/project_state_manager.dart';
@@ -87,7 +86,6 @@ class _ProjectPageState extends State<ProjectPage>
   bool _isEffectivelyNew = true;
 
   // Undo functionality
-  List<PointModel>? _originalPointsBackup;
   bool _hasPointsChanges = false;
 
   final GlobalKey<PointsToolViewState> _pointsToolViewKey =
@@ -98,9 +96,6 @@ class _ProjectPageState extends State<ProjectPage>
 
   final LicenceService _licenceService =
       LicenceService.instance; // Get instance
-
-  double? realTotalLength;
-  bool _pendingDeleteOnPop = false;
 
   // Store the updated project data from ProjectDetailsTab
   ProjectModel? _updatedProjectData;
@@ -132,7 +127,6 @@ class _ProjectPageState extends State<ProjectPage>
     _projectDate =
         widget.project.date ?? (widget.isNew ? DateTime.now() : null);
     _lastUpdateTime = widget.project.lastUpdate;
-    realTotalLength = _calculateRealTotalLength(widget.project.points);
 
     _tabController = TabController(
       length: ProjectPageTab.values.length,
@@ -189,9 +183,6 @@ class _ProjectPageState extends State<ProjectPage>
         setState(() {
           _projectDate = context.projectState.currentProject?.date;
           _lastUpdateTime = context.projectState.currentProject?.lastUpdate;
-          realTotalLength = _calculateRealTotalLength(
-            context.projectState.currentPoints,
-          );
         });
       }
     } finally {
@@ -232,8 +223,8 @@ class _ProjectPageState extends State<ProjectPage>
         _projectWasSuccessfullySaved = true;
         _hasUnsavedChanges = false;
         _lastUpdateTime = projectToSave.lastUpdate;
-        realTotalLength = _calculateRealTotalLength(context.projectState.currentPoints);
-        _updatedProjectData = null; // Clear the updated project data after saving
+        _updatedProjectData =
+            null; // Clear the updated project data after saving
       });
 
       // Clear undo backup in PointsToolView
@@ -269,85 +260,29 @@ class _ProjectPageState extends State<ProjectPage>
 
   /// Creates a backup of the current points list for undo functionality
   void _createPointsBackup() {
-    if (_originalPointsBackup == null) {
-      _originalPointsBackup = List.from(context.projectState.currentPoints);
-      _hasPointsChanges = true;
-      logger.info(
-        "Created backup of ${_originalPointsBackup!.length} points for undo",
-      );
-    }
+    // Delegate to PointsTab which has access to the current points
+    _pointsTabKey.currentState?.createBackup();
+    _hasPointsChanges = true;
   }
 
   /// Restores the original points list and clears the backup
   Future<void> _undoPointsChanges() async {
-    if (_originalPointsBackup != null) {
-      logger.info(
-        "Undoing points changes - restoring ${_originalPointsBackup!.length} points",
-      );
+    // Delegate to PointsTab which handles the backup and restore
+    await _pointsTabKey.currentState?.undoChanges();
 
-      try {
-        // Restore the original points in the database
-        final dbHelper = DatabaseHelper.instance;
-        final db = await dbHelper.database;
-        await db.transaction((txn) async {
-          // Clear all current points for this project
-          await txn.delete(
-            'points',
-            where: 'project_id = ?',
-            whereArgs: [widget.project.id],
-          );
-
-          // Insert the original points back
-          for (int i = 0; i < _originalPointsBackup!.length; i++) {
-            final point = _originalPointsBackup![i];
-            await txn.insert(
-              'points',
-              point.toMap(),
-              conflictAlgorithm: ConflictAlgorithm.replace,
-            );
-          }
-
-          // Update project start/end points
-          await dbHelper.updateProjectStartEndPoints(
-            widget.project.id!,
-            txn: txn,
-          );
-        });
-
-        // Refresh global state
-        await context.projectState.refreshPoints();
-
-        setState(() {
-          _hasPointsChanges = false;
-          _hasUnsavedChanges = false;
-          realTotalLength = _calculateRealTotalLength(
-            context.projectState.currentPoints,
-          );
-        });
-
-        // Clear the backup
-        _originalPointsBackup = null;
-
-        // Refresh the PointsToolView to show the restored points and update colors
-        _pointsTabKey.currentState?.refreshPoints();
-
-        logger.info("Points changes undone successfully");
-      } catch (e, stackTrace) {
-        logger.severe("Error undoing points changes", e, stackTrace);
-        if (mounted) {
-          showErrorStatus('Error undoing changes: $e');
-        }
-      }
+    if (mounted) {
+      setState(() {
+        _hasPointsChanges = false;
+        _hasUnsavedChanges = false;
+      });
     }
   }
 
   /// Clears the backup when project is saved
   void _clearPointsBackup() {
-    if (_originalPointsBackup != null) {
-      _originalPointsBackup = null;
-      _hasPointsChanges = false;
-      logger.info("Cleared points backup after project save");
-    }
+    // Delegate to PointsTab which handles the backup
+    _pointsTabKey.currentState?.clearBackup();
+    _hasPointsChanges = false;
   }
 
   void _handleOnPopInvokedWithResult(bool didPop, Object? result) async {
@@ -712,6 +647,9 @@ class _ProjectPageState extends State<ProjectPage>
     final currentProject = context.projectStateListen.currentProject;
     final currentPoints = context.projectStateListen.currentPoints;
 
+    // Calculate real total length directly from global state
+    final currentRealTotalLength = _calculateRealTotalLength(currentPoints);
+
     Widget tabBarViewWidget = TabBarView(
       controller: _tabController,
       children: [
@@ -727,51 +665,13 @@ class _ProjectPageState extends State<ProjectPage>
         PointsTab(
           key: _pointsTabKey,
           project: currentProject ?? widget.project,
-          onPointsChanged: () async {
-            // Refresh global state
-            await context.projectState.refreshPoints();
-            if (mounted) {
-              setState(() {
-                realTotalLength = _calculateRealTotalLength(
-                  context.projectState.currentPoints,
-                );
-              });
-            }
-          },
-          onProjectChanged:
-              (ProjectModel updatedProject, {bool hasUnsavedChanges = false}) {
-                if (mounted) {
-                  // Create backup when points are changed
-                  _createPointsBackup();
-                  _onProjectDetailsChanged(
-                    updatedProject,
-                    hasUnsavedChanges: hasUnsavedChanges,
-                  );
-                }
-              },
         ),
         CompassToolView(
           project: currentProject ?? widget.project,
           onAddPointFromCompass: _initiateAddPointFromCompass,
           isAddingPoint: _isAddingPointFromCompassInProgress,
         ),
-        MapToolView(
-          key: _mapTabKey,
-          project: currentProject ?? widget.project,
-          onPointsChanged: () async {
-            // Refresh global state
-            await context.projectState.refreshPoints();
-            if (mounted) {
-              setState(() {
-                realTotalLength = _calculateRealTotalLength(
-                  context.projectState.currentPoints,
-                );
-              });
-              // Refresh the map points to reflect any reordering
-              _mapTabKey.currentState?.refreshPoints();
-            }
-          },
-        ),
+        MapToolView(key: _mapTabKey, project: currentProject ?? widget.project),
       ],
     );
     List<Widget> tabWidgets = [
@@ -831,7 +731,8 @@ class _ProjectPageState extends State<ProjectPage>
               ? null
               : () async {
                   // Use updated project data if available, otherwise use global state
-                  final projectToSave = _updatedProjectData ?? currentProject ?? widget.project;
+                  final projectToSave =
+                      _updatedProjectData ?? currentProject ?? widget.project;
                   await _saveProject(projectToSave);
                 },
           tooltip: s?.save_project_tooltip ?? 'Save Project',

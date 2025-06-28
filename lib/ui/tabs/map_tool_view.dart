@@ -30,7 +30,6 @@ class MapToolView extends StatefulWidget {
   final VoidCallback? onNavigateToCompassTab;
   final Function(BuildContext, double, {bool? setAsEndPoint})?
   onAddPointFromCompass;
-  final VoidCallback? onPointsChanged;
 
   const MapToolView({
     super.key,
@@ -38,7 +37,6 @@ class MapToolView extends StatefulWidget {
     this.selectedPointId,
     this.onNavigateToCompassTab,
     this.onAddPointFromCompass,
-    this.onPointsChanged,
   });
 
   @override
@@ -286,7 +284,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         
         // Only call the callback if this is not an external refresh
         if (!_isExternalRefresh) {
-          widget.onPointsChanged?.call();
+          // No callback needed - global state will notify listeners automatically
         }
       }
       
@@ -303,7 +301,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           s?.mapErrorLoadingPoints(e.toString()) ??
               "Error loading points for map: $e",
         );
-        widget.onPointsChanged?.call();
       }
     }
   }
@@ -342,14 +339,12 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       });
       
       showSuccessStatus('Point ${pointToMove.name} moved successfully!');
-      widget.onPointsChanged?.call();
     } catch (e) {
       logger.severe('Failed to move point ${pointToMove.name}: $e');
       if (!mounted) return;
       showErrorStatus(
         'Error moving point ${pointToMove.name}: ${e.toString()}',
       );
-      widget.onPointsChanged?.call();
     } finally {
       if (mounted) {
         setState(() {
@@ -836,7 +831,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           
           logger.info("Point ${updatedPoint.name} updated in MapToolView.");
           showSuccessStatus('Point ${updatedPoint.name} details updated!');
-          widget.onPointsChanged?.call();
         }
       } else if (action == 'deleted') {
         final pointId = result['pointId'] as String?;
@@ -855,7 +849,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           
           logger.info("Point deleted from MapToolView.");
           showSuccessStatus('Point deleted successfully!');
-          widget.onPointsChanged?.call();
         }
       }
     }
@@ -1003,7 +996,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         showSuccessStatus(
           s?.mapNewPointSaved ?? 'New point saved successfully!',
         );
-        widget.onPointsChanged?.call();
       }
     } catch (e) {
       logger.severe('Failed to save new point: $e');
@@ -1073,7 +1065,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         });
 
         showSuccessStatus('Point ${pointToDelete.name} deleted.');
-        widget.onPointsChanged?.call();
       } catch (e) {
         if (!mounted) return;
         logger.severe(
@@ -1124,7 +1115,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         });
 
         showSuccessStatus('Point ${updatedPoint.name} updated successfully!');
-        widget.onPointsChanged?.call();
       }
     } catch (e) {
       logger.severe('Failed to update point ${updatedPoint.name}: $e');

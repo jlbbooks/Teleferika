@@ -13,15 +13,10 @@ import 'package:teleferika/ui/widgets/status_indicator.dart';
 
 class PointsToolView extends StatefulWidget {
   final ProjectModel project;
-  final Function()? onPointsChanged; // Callback for when points list changes
-  final Function(ProjectModel, {bool hasUnsavedChanges})?
-  onProjectChanged; // Callback for when project data changes
 
   const PointsToolView({
     super.key,
     required this.project,
-    this.onPointsChanged,
-    this.onProjectChanged, // Add callback for project changes
   });
 
   @override
@@ -97,9 +92,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
         });
 
         // Clear any existing backup when loading fresh data
-        _clearBackup();
-
-        widget.onPointsChanged?.call();
+        clearBackup();
       }
     } catch (e, stackTrace) {
       logger.severe("Error loading points in PointsToolView", e, stackTrace);
@@ -108,7 +101,6 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
           _isLoading = false;
         });
         showErrorStatus('Error loading points: ${e.toString()}');
-        widget.onPointsChanged?.call();
       }
     }
   }
@@ -163,10 +155,12 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       return;
     }
 
-    // 3. Get current project from global state and notify parent to create backup before making changes
+    // 3. Get current project from global state and create backup before making changes
     final projectState = Provider.of<ProjectStateManager>(context, listen: false);
     final currentProject = projectState.currentProject ?? widget.project;
-    widget.onProjectChanged?.call(currentProject, hasUnsavedChanges: true);
+    
+    // Create backup before making changes
+    createBackup();
 
     // 4. Get current points from global state
     final currentPoints = projectState.currentPoints;
@@ -183,7 +177,6 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
 
     // 5. Persist changes to the database using global state
     await _updatePointOrdinalsInDatabase(reorderedPointsWithNewOrdinals);
-    widget.onPointsChanged?.call(); // Notify parent after reorder
   }
 
   /// Validates if the reorder operation is valid.
@@ -264,8 +257,6 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
 
       // Refresh global state to get updated project data with new start/end points
       await projectState.refreshPoints();
-
-      widget.onPointsChanged?.call(); // Notify parent
     } catch (e, stackTrace) {
       logger.severe(
         "Error updating database after reorder for project ${currentProject.id}",
@@ -277,12 +268,11 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       }
       // If DB update fails, revert the list in UI to previous state (reload from DB)
       await _loadPoints();
-      widget.onPointsChanged?.call(); // Notify parent even on error
     }
   }
 
   /// Creates a backup of the current points list for undo functionality
-  void _createBackup() {
+  void createBackup() {
     if (_originalPointsBackup == null) {
       _originalPointsBackup = List.from(context.projectState.currentPoints);
       _hasUnsavedChanges = true;
@@ -293,7 +283,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
   }
 
   /// Restores the original points list and clears the backup
-  Future<void> _undoChanges() async {
+  Future<void> undoChanges() async {
     if (_originalPointsBackup != null) {
       logger.info(
         "Undoing changes - restoring ${_originalPointsBackup!.length} points",
@@ -339,15 +329,12 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       // Clear the backup
       _originalPointsBackup = null;
 
-      // Notify parent that changes have been undone
-      widget.onProjectChanged?.call(currentProject, hasUnsavedChanges: false);
-
       logger.info("Changes undone successfully");
     }
   }
 
   /// Clears the backup when project is saved
-  void _clearBackup() {
+  void clearBackup() {
     if (_originalPointsBackup != null) {
       _originalPointsBackup = null;
       _hasUnsavedChanges = false;
@@ -357,12 +344,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
 
   /// Public method to clear backup when project is saved
   void onProjectSaved() {
-    _clearBackup();
-  }
-
-  /// Public method to create backup (called from parent)
-  void createBackup() {
-    _createBackup();
+    clearBackup();
   }
 
   // --- Action Bar for Normal and Selection Mode ---
@@ -459,10 +441,12 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
   Future<void> _deleteSelectedPoints() async {
     if (_selectedPointIds.isEmpty) return;
 
-    // Get current project from global state and notify parent to create backup before deletion
+    // Get current project from global state and create backup before deletion
     final projectState = Provider.of<ProjectStateManager>(context, listen: false);
     final currentProject = projectState.currentProject ?? widget.project;
-    widget.onProjectChanged?.call(currentProject, hasUnsavedChanges: true);
+    
+    // Create backup before making changes
+    createBackup();
 
     try {
       // Delete points using global state
@@ -475,13 +459,11 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
         showSuccessStatus('${_selectedPointIds.length} point(s) deleted.');
       }
       _clearSelection();
-      widget.onPointsChanged?.call(); // Notify parent after deletion
     } catch (error, stackTrace) {
       logger.severe('Error deleting points', error, stackTrace);
       if (mounted) {
         showErrorStatus('Error deleting points: $error');
       }
-      widget.onPointsChanged?.call(); // Notify parent on error
     }
   }
   // --- End Delete Logic ---
@@ -596,7 +578,6 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
           );
           // Refresh both points and project data
           await _loadPoints();
-          widget.onPointsChanged?.call();
         }
       }
     }

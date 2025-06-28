@@ -5,14 +5,10 @@ import 'points_tool_view.dart';
 
 class PointsTab extends StatefulWidget {
   final ProjectModel project;
-  final Function()? onPointsChanged;
-  final Function(ProjectModel, {bool hasUnsavedChanges})? onProjectChanged;
 
   const PointsTab({
     super.key,
     required this.project,
-    this.onPointsChanged,
-    this.onProjectChanged,
   });
 
   @override
@@ -29,8 +25,6 @@ class PointsTabState extends State<PointsTab> {
     return PointsToolView(
       key: _pointsToolViewKey,
       project: widget.project,
-      onPointsChanged: widget.onPointsChanged,
-      onProjectChanged: widget.onProjectChanged,
     );
   }
 
@@ -47,5 +41,15 @@ class PointsTabState extends State<PointsTab> {
   /// Public method to create backup in PointsToolView
   void createBackup() {
     _pointsToolViewKey.currentState?.createBackup();
+  }
+
+  /// Public method to undo changes in PointsToolView
+  Future<void> undoChanges() async {
+    await _pointsToolViewKey.currentState?.undoChanges();
+  }
+
+  /// Public method to clear backup in PointsToolView
+  void clearBackup() {
+    _pointsToolViewKey.currentState?.clearBackup();
   }
 }
