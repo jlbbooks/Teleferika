@@ -35,6 +35,7 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
   Map<PermissionType, bool> _permissionStatus = {};
   bool _isCheckingPermissions = true;
   bool _hasShownDialog = false;
+  bool _isRetrying = false;
 
   @override
   void initState() {
@@ -50,6 +51,7 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
         setState(() {
           _permissionStatus = permissions;
           _isCheckingPermissions = false;
+          _isRetrying = false;
         });
         
         widget.onPermissionsResult(permissions);
@@ -58,6 +60,7 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
       if (mounted) {
         setState(() {
           _isCheckingPermissions = false;
+          _isRetrying = false;
         });
       }
     }
@@ -95,42 +98,52 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
 
   Future<bool> _requestLocationPermission() async {
     LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
+    
+    if (_isRetrying || permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
     }
+    
     return permission == LocationPermission.whileInUse ||
            permission == LocationPermission.always;
   }
 
   Future<bool> _requestSensorPermission() async {
     PermissionStatus status = await Permission.sensors.status;
-    if (status.isDenied) {
+    
+    if (_isRetrying || status.isDenied || status.isRestricted) {
       status = await Permission.sensors.request();
     }
+    
     return status.isGranted;
   }
 
   Future<bool> _requestCameraPermission() async {
     PermissionStatus status = await Permission.camera.status;
-    if (status.isDenied) {
+    
+    if (_isRetrying || status.isDenied || status.isRestricted) {
       status = await Permission.camera.request();
     }
+    
     return status.isGranted;
   }
 
   Future<bool> _requestMicrophonePermission() async {
     PermissionStatus status = await Permission.microphone.status;
-    if (status.isDenied) {
+    
+    if (_isRetrying || status.isDenied || status.isRestricted) {
       status = await Permission.microphone.request();
     }
+    
     return status.isGranted;
   }
 
   Future<bool> _requestStoragePermission() async {
     PermissionStatus status = await Permission.storage.status;
-    if (status.isDenied) {
+    
+    if (_isRetrying || status.isDenied || status.isRestricted) {
       status = await Permission.storage.request();
     }
+    
     return status.isGranted;
   }
 
@@ -140,7 +153,6 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // Show loading widget while checking permissions
     if (_isCheckingPermissions) {
       return widget.loadingWidget ?? 
         const Center(
@@ -148,12 +160,10 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
         );
     }
 
-    // If all permissions are granted, show the child widget
     if (_allPermissionsGranted) {
       return widget.child;
     }
 
-    // If permissions are missing and overlay is enabled, show permission dialog
     if (widget.showOverlay) {
       return Stack(
         children: [
@@ -163,7 +173,6 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
       );
     }
 
-    // If overlay is disabled, show permission dialog as full screen
     return _buildPermissionOverlay();
   }
 
@@ -189,7 +198,6 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Header icon
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -204,7 +212,6 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Title
                   Text(
                     s?.mapPermissionsRequiredTitle ?? "Permissions Required",
                     style: const TextStyle(
@@ -215,14 +222,12 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Permission details
                   ...missingPermissions.map((permission) => 
                     _buildPermissionItem(permission, s)
                   ).expand((widget) => [widget, const SizedBox(height: 12)]),
 
                   const SizedBox(height: 24),
 
-                  // Action buttons
                   Column(
                     children: [
                       SizedBox(
@@ -251,6 +256,7 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
                         onPressed: () {
                           setState(() {
                             _isCheckingPermissions = true;
+                            _isRetrying = true;
                           });
                           _checkPermissions();
                         },

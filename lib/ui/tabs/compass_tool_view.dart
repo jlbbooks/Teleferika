@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:math' as math; // For PI
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:geolocator/geolocator.dart';
@@ -48,7 +49,8 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
 
   Future<void> _checkCompassAvailability() async {
     try {
-      final isCompassAvailable = await FlutterCompass.events?.first != null;
+      // Check if FlutterCompass.events is not null (this indicates compass is available)
+      final isCompassAvailable = FlutterCompass.events != null;
       
       if (mounted) {
         setState(() {
@@ -58,10 +60,15 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
 
       if (!isCompassAvailable) {
         showErrorStatus('Compass sensor not available on this device.');
+      } else {
+        logger.info("Compass is available on this device");
       }
     } catch (e) {
       logger.severe("Error checking compass availability", e);
       if (mounted) {
+        setState(() {
+          _isCompassAvailable = false;
+        });
         showErrorStatus('Error checking compass availability: $e');
       }
     }
@@ -72,15 +79,23 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
     final hasLocation = permissions[PermissionType.location] ?? false;
     final hasSensor = permissions[PermissionType.sensor] ?? false;
 
+    logger.info("Permission results - Location: $hasLocation, Sensor: $hasSensor");
+
     setState(() {
       _hasLocationPermission = hasLocation;
       _hasSensorPermission = hasSensor;
     });
 
+    // Cancel any existing subscription before setting up a new one
+    _compassSubscription?.cancel();
+
     if (hasSensor && _isCompassAvailable) {
+      logger.info("Starting compass listener");
       _listenToCompass();
     } else if (!hasSensor) {
       showInfoStatus('Sensor permission denied. Compass features will be unavailable.');
+    } else if (!_isCompassAvailable) {
+      showInfoStatus('Compass sensor not available on this device.');
     }
 
     if (!hasLocation) {
@@ -90,8 +105,16 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
 
   void _listenToCompass() {
     try {
-      _compassSubscription = FlutterCompass.events?.listen(
+      if (FlutterCompass.events == null) {
+        logger.warning("FlutterCompass.events is null, cannot listen to compass");
+        showErrorStatus('Compass events stream is not available');
+        return;
+      }
+
+      logger.info("Setting up compass listener");
+      _compassSubscription = FlutterCompass.events!.listen(
         (CompassEvent event) {
+          logger.fine("Compass event received - Heading: ${event.heading}, Accuracy: ${event.accuracy}");
           if (mounted) {
             setState(() {
               _heading = event.heading;
@@ -106,10 +129,35 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
           }
         },
       );
+      logger.info("Compass listener set up successfully");
     } catch (e) {
       logger.severe("Error setting up compass listener", e);
       showErrorStatus('Error setting up compass: $e');
     }
+  }
+
+  // Manual retry method for compass setup
+  void _retryCompassSetup() {
+    logger.info("Manual retry of compass setup");
+    _compassSubscription?.cancel();
+    
+    if (_hasSensorPermission && _isCompassAvailable) {
+      _listenToCompass();
+    } else {
+      showInfoStatus('Cannot retry: Sensor permission or compass not available');
+    }
+  }
+
+  // Debug method to log current state
+  void _logCompassState() {
+    logger.info("Compass State Debug:");
+    logger.info("  - Has Location Permission: $_hasLocationPermission");
+    logger.info("  - Has Sensor Permission: $_hasSensorPermission");
+    logger.info("  - Is Compass Available: $_isCompassAvailable");
+    logger.info("  - Current Heading: $_heading");
+    logger.info("  - Current Accuracy: $_accuracy");
+    logger.info("  - Compass Subscription Active: ${_compassSubscription != null}");
+    logger.info("  - FlutterCompass.events null: ${FlutterCompass.events == null}");
   }
 
   @override
@@ -371,7 +419,7 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
         return PermissionHandlerWidget(
           requiredPermissions: [PermissionType.location, PermissionType.sensor],
           onPermissionsResult: _handlePermissionResults,
-          showOverlay: false, // Full screen for compass
+          showOverlay: true, // Use overlay instead of full screen
           child: _buildCompassContent(currentProject, projectState),
         );
       },
@@ -402,6 +450,13 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
                     color: Colors.grey.shade500,
                   ),
                 ),
+                const SizedBox(height: 16),
+                if (_hasLocationPermission && _hasSensorPermission && _isCompassAvailable)
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry Compass'),
+                    onPressed: _retryCompassSetup,
+                  ),
               ],
             ),
           ),
@@ -452,6 +507,19 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
                       ),
                     ),
                     _buildAccuracyIndicator(),
+                    // Add retry button if heading is null but permissions are granted
+                    if (_heading == null && _hasSensorPermission && _isCompassAvailable)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.refresh, size: 16),
+                          label: const Text('Retry Compass', style: TextStyle(fontSize: 12)),
+                          onPressed: _retryCompassSetup,
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 20),
