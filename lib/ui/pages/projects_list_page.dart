@@ -2,8 +2,11 @@ import 'dart:async'; // For Timer
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:teleferika/core/app_config.dart';
 import 'package:teleferika/core/logger.dart';
+import 'package:teleferika/core/project_provider.dart';
+import 'package:teleferika/core/project_state_manager.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/licensing/licence_model.dart';
@@ -403,15 +406,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
 
       if (action == 'saved') {
         logger.info("ProjectPage returned: project $id was saved.");
-        // Option 1: Full refresh to get the latest data.
-        // _refreshProjectsListFromDb();
-        // setState(() {
-        //   _highlightedProjectId = id;
-        // });
-
-        // Option 2: More targeted update (if you have the updated project data or can fetch it)
-        // For now, let's refresh the list and then highlight.
-        // We need to ensure the list is rebuilt *before* we try to scroll or ensure visibility.
+        // Refresh from both database and global state to ensure consistency
         _projectsFuture = _dbHelper.getAllProjects();
         _projectsFuture.then((projects) {
           if (mounted) {
@@ -422,6 +417,9 @@ class _ProjectsListPageState extends State<ProjectsListPage> {
             // TODO: Optionally, scroll to the highlighted item
           }
         });
+        
+        // Also clear any global state to ensure fresh data on next load
+        context.projectState.clearProject();
       } else if (action == 'deleted') {
         logger.info("ProjectPage returned: project $id was deleted.");
         setState(() {

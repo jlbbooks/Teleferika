@@ -1,6 +1,7 @@
 // lib/point_details_page.dart
 import 'package:flutter/material.dart';
 import 'package:teleferika/core/logger.dart';
+import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/image_model.dart';
 import 'package:teleferika/db/models/point_model.dart';
@@ -156,7 +157,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
     );
 
     try {
-      await _dbHelper.updatePoint(pointToSave);
+      await context.projectState.updatePoint(pointToSave);
       logger.info(
         "Point ID ${widget.point.id} and its images updated successfully. Image count: ${_currentImages.length}",
       );
@@ -333,9 +334,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
         }
       } catch (e) {
         if (!mounted) return;
-        logger.severe(
-          'Failed to delete point ${widget.point.name}: $e',
-        );
+        logger.severe('Failed to delete point ${widget.point.name}: $e');
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
           ..showSnackBar(

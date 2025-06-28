@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:teleferika/core/logger.dart';
+import 'package:teleferika/core/project_provider.dart';
+import 'package:teleferika/core/project_state_manager.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
@@ -19,8 +21,8 @@ import 'package:teleferika/ui/tabs/map_tool_view.dart';
 import 'package:teleferika/ui/tabs/points_tab.dart';
 import 'package:teleferika/ui/tabs/points_tool_view.dart';
 import 'package:teleferika/ui/tabs/project_details_tab.dart';
-import 'package:teleferika/ui/widgets/status_indicator.dart';
 import 'package:teleferika/ui/test/project_state_test_widget.dart';
+import 'package:teleferika/ui/widgets/status_indicator.dart';
 
 enum ProjectPageTab {
   details, // 0
@@ -76,12 +78,9 @@ class _ProjectPageState extends State<ProjectPage>
     with SingleTickerProviderStateMixin, StatusMixin {
   late TabController _tabController;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
   late DateTime? _projectDate;
   late DateTime? _lastUpdateTime;
-
-  late ProjectModel _currentProject;
 
   bool _isLoading = false;
   bool _hasUnsavedChanges = false;
@@ -103,6 +102,9 @@ class _ProjectPageState extends State<ProjectPage>
   double? realTotalLength;
   bool _pendingDeleteOnPop = false;
 
+  // Store the updated project data from ProjectDetailsTab
+  ProjectModel? _updatedProjectData;
+
   // Add a GlobalKey to access the ProjectDetailsTab state
   final GlobalKey<ProjectDetailsTabState> _detailsTabKey =
       GlobalKey<ProjectDetailsTabState>();
@@ -113,20 +115,24 @@ class _ProjectPageState extends State<ProjectPage>
   // GlobalKey to access MapToolView methods
   final GlobalKey<MapToolViewState> _mapTabKey = GlobalKey<MapToolViewState>();
 
+  // Store reference to ProjectStateManager for safe disposal
+  ProjectStateManager? _projectStateManager;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Store reference to ProjectStateManager for safe disposal
+    _projectStateManager = context.projectState;
+  }
+
   @override
   void initState() {
     super.initState();
-    _currentProject = widget.project;
     _isEffectivelyNew = widget.isNew;
     _projectDate =
-        _currentProject.date ?? (widget.isNew ? DateTime.now() : null);
-    _lastUpdateTime = _currentProject.lastUpdate;
-    realTotalLength = _calculateRealTotalLength(_currentProject.points);
-    if (widget.isNew) {
-      _insertNewProjectToDb();
-    } else {
-      _loadProjectDetails();
-    }
+        widget.project.date ?? (widget.isNew ? DateTime.now() : null);
+    _lastUpdateTime = widget.project.lastUpdate;
+    realTotalLength = _calculateRealTotalLength(widget.project.points);
 
     _tabController = TabController(
       length: ProjectPageTab.values.length,
@@ -145,37 +151,47 @@ class _ProjectPageState extends State<ProjectPage>
         setState(() {});
       }
     });
+
+    // Defer global state loading until after build is complete
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.isNew) {
+        _insertNewProjectToDb();
+      } else {
+        _loadProjectIntoGlobalState();
+      }
+    });
   }
 
   Future<void> _insertNewProjectToDb() async {
     // Insert the new project into the DB so points can be added
-    await _dbHelper.insertProject(_currentProject);
+    final dbHelper = DatabaseHelper.instance;
+    await dbHelper.insertProject(widget.project);
     // Optionally reload from DB to get any DB-generated fields
-    final dbProject = await _dbHelper.getProjectById(_currentProject.id);
+    final dbProject = await dbHelper.getProjectById(widget.project.id);
     if (dbProject != null && mounted) {
       setState(() {
-        _currentProject = dbProject;
         _isEffectivelyNew = true;
+      });
+      // Load into global state after build is complete
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _loadProjectIntoGlobalState();
+        }
       });
     }
   }
 
-  Future<void> _deleteProjectFromDb() async {
-    await _dbHelper.deleteProject(_currentProject.id);
-  }
-
-  Future<void> _loadProjectDetails() async {
+  Future<void> _loadProjectIntoGlobalState() async {
     setState(() => _isLoading = true);
     try {
-      final projectDataFromDb = await _dbHelper.getProjectById(
-        _currentProject.id,
-      );
-      if (projectDataFromDb != null && mounted) {
+      await context.projectState.loadProject(widget.project.id);
+      if (mounted) {
         setState(() {
-          _currentProject = projectDataFromDb;
-          _projectDate = _currentProject.date;
-          _lastUpdateTime = _currentProject.lastUpdate;
-          realTotalLength = _calculateRealTotalLength(_currentProject.points);
+          _projectDate = context.projectState.currentProject?.date;
+          _lastUpdateTime = context.projectState.currentProject?.lastUpdate;
+          realTotalLength = _calculateRealTotalLength(
+            context.projectState.currentPoints,
+          );
         });
       }
     } finally {
@@ -183,8 +199,16 @@ class _ProjectPageState extends State<ProjectPage>
     }
   }
 
+  Future<void> _deleteProjectFromDb() async {
+    final dbHelper = DatabaseHelper.instance;
+    await dbHelper.deleteProject(widget.project.id);
+  }
+
   @override
   void dispose() {
+    // Don't clear global state here - it will be automatically updated
+    // when the next project is loaded, and clearing during dispose causes
+    // widget tree lock issues
     super.dispose();
   }
 
@@ -196,33 +220,27 @@ class _ProjectPageState extends State<ProjectPage>
         date: _projectDate,
         lastUpdate: DateTime.now(),
       );
-      if (_isEffectivelyNew) {
-        await _dbHelper.updateProject(projectToSave);
-        setState(() {
-          _isEffectivelyNew = false;
-          _projectWasSuccessfullySaved = true;
-          _hasUnsavedChanges = false;
-          _currentProject = projectToSave;
-        });
-        // Clear undo backup in PointsToolView
-        _pointsTabKey.currentState?.onProjectSaved();
-        _clearPointsBackup();
-        showSuccessStatus('Project saved successfully');
-      } else {
-        int updatedRows = await _dbHelper.updateProject(projectToSave);
-        if (updatedRows > 0) {
-          setState(() {
-            _currentProject = projectToSave;
-            _lastUpdateTime = _currentProject.lastUpdate;
-            _hasUnsavedChanges = false;
-            _projectWasSuccessfullySaved = true;
-          });
-          // Clear undo backup in PointsToolView
-          _pointsTabKey.currentState?.onProjectSaved();
-          _clearPointsBackup();
-          showSuccessStatus('Project updated successfully');
-        }
-      }
+
+      // Use global state to update the project
+      await context.projectState.updateProject(projectToSave);
+
+      // Refresh points to ensure any changes from other parts of the app are reflected
+      await context.projectState.refreshPoints();
+
+      setState(() {
+        _isEffectivelyNew = false;
+        _projectWasSuccessfullySaved = true;
+        _hasUnsavedChanges = false;
+        _lastUpdateTime = projectToSave.lastUpdate;
+        realTotalLength = _calculateRealTotalLength(context.projectState.currentPoints);
+        _updatedProjectData = null; // Clear the updated project data after saving
+      });
+
+      // Clear undo backup in PointsToolView
+      _pointsTabKey.currentState?.onProjectSaved();
+      _clearPointsBackup();
+      showSuccessStatus('Project saved successfully');
+
       return true;
     } catch (e) {
       if (mounted) {
@@ -243,8 +261,8 @@ class _ProjectPageState extends State<ProjectPage>
     );
     logger.info("Previous _hasUnsavedChanges: $_hasUnsavedChanges");
     setState(() {
-      _currentProject = updated;
       _hasUnsavedChanges = hasUnsavedChanges;
+      _updatedProjectData = updated; // Store the updated project data
     });
     logger.info("New _hasUnsavedChanges: $_hasUnsavedChanges");
   }
@@ -252,28 +270,33 @@ class _ProjectPageState extends State<ProjectPage>
   /// Creates a backup of the current points list for undo functionality
   void _createPointsBackup() {
     if (_originalPointsBackup == null) {
-      _originalPointsBackup = List.from(_currentProject.points);
+      _originalPointsBackup = List.from(context.projectState.currentPoints);
       _hasPointsChanges = true;
-      logger.info("Created backup of ${_originalPointsBackup!.length} points for undo");
+      logger.info(
+        "Created backup of ${_originalPointsBackup!.length} points for undo",
+      );
     }
   }
 
   /// Restores the original points list and clears the backup
   Future<void> _undoPointsChanges() async {
     if (_originalPointsBackup != null) {
-      logger.info("Undoing points changes - restoring ${_originalPointsBackup!.length} points");
-      
+      logger.info(
+        "Undoing points changes - restoring ${_originalPointsBackup!.length} points",
+      );
+
       try {
         // Restore the original points in the database
-        final db = await _dbHelper.database;
+        final dbHelper = DatabaseHelper.instance;
+        final db = await dbHelper.database;
         await db.transaction((txn) async {
           // Clear all current points for this project
           await txn.delete(
             'points',
             where: 'project_id = ?',
-            whereArgs: [_currentProject.id],
+            whereArgs: [widget.project.id],
           );
-          
+
           // Insert the original points back
           for (int i = 0; i < _originalPointsBackup!.length; i++) {
             final point = _originalPointsBackup![i];
@@ -283,30 +306,31 @@ class _ProjectPageState extends State<ProjectPage>
               conflictAlgorithm: ConflictAlgorithm.replace,
             );
           }
-          
+
           // Update project start/end points
-          await _dbHelper.updateProjectStartEndPoints(_currentProject.id!, txn: txn);
+          await dbHelper.updateProjectStartEndPoints(
+            widget.project.id!,
+            txn: txn,
+          );
         });
-        
-        // Reload project data from database
-        final updatedProject = await _dbHelper.getProjectById(_currentProject.id!);
-        if (updatedProject != null) {
-          setState(() {
-            _currentProject = updatedProject;
-            _hasPointsChanges = false;
-            _hasUnsavedChanges = false;
-          });
-        }
-        
+
+        // Refresh global state
+        await context.projectState.refreshPoints();
+
+        setState(() {
+          _hasPointsChanges = false;
+          _hasUnsavedChanges = false;
+          realTotalLength = _calculateRealTotalLength(
+            context.projectState.currentPoints,
+          );
+        });
+
         // Clear the backup
         _originalPointsBackup = null;
-        
+
         // Refresh the PointsToolView to show the restored points and update colors
         _pointsTabKey.currentState?.refreshPoints();
-        
-        // Also update the PointsToolView's local project state to reflect the restored start/end points
-        _pointsTabKey.currentState?.updateLocalProject(updatedProject!);
-        
+
         logger.info("Points changes undone successfully");
       } catch (e, stackTrace) {
         logger.severe("Error undoing points changes", e, stackTrace);
@@ -361,7 +385,7 @@ class _ProjectPageState extends State<ProjectPage>
           if (_projectWasSuccessfullySaved) {
             Navigator.of(
               context,
-            ).pop({'action': 'saved', 'id': _currentProject.id});
+            ).pop({'action': 'saved', 'id': widget.project.id});
           } else {
             Navigator.of(context).pop();
           }
@@ -370,14 +394,12 @@ class _ProjectPageState extends State<ProjectPage>
     } else {
       // Pop with 'saved' if project was ever saved, otherwise 'navigated_back'
       if (mounted && _projectWasSuccessfullySaved) {
-        Navigator.of(
-          context,
-        ).pop({'action': 'saved', 'id': _currentProject.id});
+        Navigator.of(context).pop({'action': 'saved', 'id': widget.project.id});
       } else if (mounted && !_isEffectivelyNew) {
         Navigator.of(
           context,
-        ).pop({'action': 'navigated_back', 'id': _currentProject.id});
-      } else if (mounted) {
+        ).pop({'action': 'navigated_back', 'id': widget.project.id});
+      } else {
         Navigator.of(context).pop();
       }
     }
@@ -391,8 +413,8 @@ class _ProjectPageState extends State<ProjectPage>
         return AlertDialog(
           title: Text(s?.delete_project_tooltip ?? 'Delete Project'),
           content: Text(
-            s?.confirm_delete_project_content(_currentProject.name) ??
-                'Are you sure you want to delete the project "${_currentProject.name}"? This action cannot be undone.',
+            s?.confirm_delete_project_content(widget.project.name) ??
+                'Are you sure you want to delete the project "${widget.project.name}"? This action cannot be undone.',
           ),
           actions: <Widget>[
             TextButton(
@@ -420,7 +442,7 @@ class _ProjectPageState extends State<ProjectPage>
           );
           Navigator.of(
             context,
-          ).pop({'action': 'deleted', 'id': _currentProject.id});
+          ).pop({'action': 'deleted', 'id': widget.project.id});
         }
       } catch (e) {
         if (mounted) {
@@ -437,14 +459,15 @@ class _ProjectPageState extends State<ProjectPage>
 
   void _calculateAzimuth() {
     final s = S.of(context);
-    if (_currentProject.points.length < 2) {
+    final currentPoints = context.projectState.currentPoints;
+    if (currentPoints.length < 2) {
       showErrorStatus(
         s?.errorAzimuthPointsNotSet ?? 'At least two points are required',
       );
       return;
     }
-    final startPoint = _currentProject.points.first;
-    final endPoint = _currentProject.points.last;
+    final startPoint = currentPoints.first;
+    final endPoint = currentPoints.last;
     if (startPoint.id == endPoint.id) {
       showErrorStatus(
         s?.errorAzimuthPointsSame ?? 'Start and end points must be different',
@@ -484,6 +507,8 @@ class _ProjectPageState extends State<ProjectPage>
 
   Future<void> _handleExport() async {
     final s = S.of(context);
+    final currentProject = context.projectState.currentProject;
+    final currentPoints = context.projectState.currentPoints;
 
     // Check if export feature is available
     if (!LicensedFeaturesLoader.hasLicensedFeature('export_widget')) {
@@ -502,7 +527,7 @@ class _ProjectPageState extends State<ProjectPage>
     }
 
     // Check if project has points to export
-    if (_currentProject.points.isEmpty) {
+    if (currentPoints.isEmpty) {
       showErrorStatus(s?.errorExportNoPoints ?? 'No points to export');
       return;
     }
@@ -512,8 +537,8 @@ class _ProjectPageState extends State<ProjectPage>
 
       final success = await LicensedFeaturesLoader.showExportDialog(
         context,
-        _currentProject,
-        _currentProject.points,
+        currentProject ?? widget.project,
+        currentPoints,
         onExportComplete: (bool success) {
           if (success) {
             showSuccessStatus(
@@ -560,18 +585,15 @@ class _ProjectPageState extends State<ProjectPage>
     return await Geolocator.getCurrentPosition();
   }
 
-  Future<int> _getNextOrdinalNumber(String projectId) async {
-    return await _dbHelper.ordinalManager.getNextOrdinal(projectId);
-  }
-
   Future<void> _initiateAddPointFromCompass(
     BuildContext descendantContext,
     double heading, {
     bool? setAsEndPoint,
   }) async {
     final bool addAsEndPoint = setAsEndPoint ?? false;
+    final currentProject = context.projectState.currentProject;
     logger.info(
-      "Initiating add point. Heading: $heading, Project ID: ${_currentProject.id}, Explicit End Point: $setAsEndPoint",
+      "Initiating add point. Heading: $heading, Project ID: ${widget.project.id}, Explicit End Point: $setAsEndPoint",
     );
     if (mounted) {
       setState(() {
@@ -583,7 +605,7 @@ class _ProjectPageState extends State<ProjectPage>
     try {
       final position = await _determinePosition();
       final pointFromCompass = PointModel(
-        projectId: _currentProject.id,
+        projectId: widget.project.id,
         latitude: position.latitude,
         longitude: position.longitude,
         altitude: position.altitude,
@@ -594,16 +616,17 @@ class _ProjectPageState extends State<ProjectPage>
       );
 
       String newPointIdFromCompass;
+      final dbHelper = DatabaseHelper.instance;
 
       // Use OrdinalManager to handle the complex ordinal logic
-      if (!addAsEndPoint && _currentProject.endingPointId != null) {
+      if (!addAsEndPoint && currentProject?.endingPointId != null) {
         // Insert before end point
-        await _dbHelper.ordinalManager.insertPointBeforeEndPoint(
+        await dbHelper.ordinalManager.insertPointBeforeEndPoint(
           pointFromCompass,
-          _currentProject.endingPointId!,
+          currentProject!.endingPointId!,
         );
         // Get the inserted point ID (we need to query for it)
-        final points = await _dbHelper.getPointsForProject(_currentProject.id);
+        final points = await dbHelper.getPointsForProject(widget.project.id);
         final insertedPoint = points.firstWhere(
           (p) =>
               p.latitude == position.latitude &&
@@ -614,12 +637,12 @@ class _ProjectPageState extends State<ProjectPage>
         newPointIdFromCompass = insertedPoint.id;
       } else {
         // Append to end
-        await _dbHelper.ordinalManager.insertPointAtOrdinal(
+        await dbHelper.ordinalManager.insertPointAtOrdinal(
           pointFromCompass,
           null,
         );
         // Get the inserted point ID
-        final points = await _dbHelper.getPointsForProject(_currentProject.id);
+        final points = await dbHelper.getPointsForProject(widget.project.id);
         final insertedPoint = points.firstWhere(
           (p) =>
               p.latitude == position.latitude &&
@@ -635,29 +658,29 @@ class _ProjectPageState extends State<ProjectPage>
       );
 
       if (addAsEndPoint) {
-        ProjectModel projectToUpdate = _currentProject.copyWith(
-          endingPointId: newPointIdFromCompass,
-        );
-        await _dbHelper.updateProject(projectToUpdate);
+        ProjectModel projectToUpdate = (currentProject ?? widget.project)
+            .copyWith(endingPointId: newPointIdFromCompass);
+        await context.projectState.updateProject(projectToUpdate);
         logger.info(
-          "New point ID $newPointIdFromCompass set as the END point for project ${_currentProject.id}.",
+          "New point ID $newPointIdFromCompass set as the END point for project ${widget.project.id}.",
         );
       }
 
-      await _dbHelper.updateProjectStartEndPoints(_currentProject.id);
-      await _loadProjectDetails();
+      await dbHelper.updateProjectStartEndPoints(widget.project.id);
+      // Refresh global state instead of loading project details
+      await context.projectState.refreshPoints();
 
       if (mounted) {
         hideStatus();
         // Get the final point to get the correct ordinal
-        final finalPoint = await _dbHelper.getPointById(newPointIdFromCompass);
+        final finalPoint = await dbHelper.getPointById(newPointIdFromCompass);
         String baseMessage = S
             .of(context)!
             .pointAddedSnackbar(finalPoint?.ordinalNumber.toString() ?? '?');
         String suffix = "";
         if (addAsEndPoint == true) {
           suffix = " ${S.of(context)!.pointAddedSetAsEndSnackbarSuffix}";
-        } else if (_currentProject.endingPointId != null) {
+        } else if (currentProject?.endingPointId != null) {
           suffix =
               " ${S.of(context)!.pointAddedInsertedBeforeEndSnackbarSuffix}";
         }
@@ -684,30 +707,33 @@ class _ProjectPageState extends State<ProjectPage>
     final s = S.of(context);
     final orientation = MediaQuery.of(context).orientation;
     final saveButtonColor = _hasUnsavedChanges ? Colors.green : null;
+
+    // Use global state for project data
+    final currentProject = context.projectStateListen.currentProject;
+    final currentPoints = context.projectStateListen.currentPoints;
+
     Widget tabBarViewWidget = TabBarView(
       controller: _tabController,
       children: [
         ProjectDetailsTab(
           key: _detailsTabKey,
-          project: _currentProject,
+          project: currentProject ?? widget.project,
           isNew: _isEffectivelyNew,
-          pointsCount: _currentProject.points.length,
+          pointsCount: currentPoints.length,
           onChanged: _onProjectDetailsChanged,
           onSaveProject: _saveProject,
           onCalculateAzimuth: _calculateAzimuth,
         ),
         PointsTab(
           key: _pointsTabKey,
-          project: _currentProject,
+          project: currentProject ?? widget.project,
           onPointsChanged: () async {
-            final updatedProject = await _dbHelper.getProjectById(
-              _currentProject.id,
-            );
-            if (updatedProject != null && mounted) {
+            // Refresh global state
+            await context.projectState.refreshPoints();
+            if (mounted) {
               setState(() {
-                _currentProject = updatedProject;
                 realTotalLength = _calculateRealTotalLength(
-                  _currentProject.points,
+                  context.projectState.currentPoints,
                 );
               });
             }
@@ -725,22 +751,20 @@ class _ProjectPageState extends State<ProjectPage>
               },
         ),
         CompassToolView(
-          project: _currentProject,
+          project: currentProject ?? widget.project,
           onAddPointFromCompass: _initiateAddPointFromCompass,
           isAddingPoint: _isAddingPointFromCompassInProgress,
         ),
         MapToolView(
           key: _mapTabKey,
-          project: _currentProject,
+          project: currentProject ?? widget.project,
           onPointsChanged: () async {
-            final updatedProject = await _dbHelper.getProjectById(
-              _currentProject.id,
-            );
-            if (updatedProject != null && mounted) {
+            // Refresh global state
+            await context.projectState.refreshPoints();
+            if (mounted) {
               setState(() {
-                _currentProject = updatedProject;
                 realTotalLength = _calculateRealTotalLength(
-                  _currentProject.points,
+                  context.projectState.currentPoints,
                 );
               });
               // Refresh the map points to reflect any reordering
@@ -788,7 +812,7 @@ class _ProjectPageState extends State<ProjectPage>
           onPressed: _isLoading ? null : _confirmDeleteProject,
           tooltip: s?.delete_project_tooltip ?? 'Delete Project',
         ),
-      if (!_isEffectivelyNew && _currentProject.points.isNotEmpty)
+      if (!_isEffectivelyNew && currentPoints.isNotEmpty)
         IconButton(
           icon: const Icon(Icons.file_download, color: Colors.blue),
           onPressed: _isLoading ? null : _handleExport,
@@ -806,7 +830,9 @@ class _ProjectPageState extends State<ProjectPage>
           onPressed: _isLoading
               ? null
               : () async {
-                  await _saveProject(_currentProject);
+                  // Use updated project data if available, otherwise use global state
+                  final projectToSave = _updatedProjectData ?? currentProject ?? widget.project;
+                  await _saveProject(projectToSave);
                 },
           tooltip: s?.save_project_tooltip ?? 'Save Project',
         ),
@@ -818,8 +844,11 @@ class _ProjectPageState extends State<ProjectPage>
           title: Text(
             _isEffectivelyNew
                 ? (s?.new_project_title ?? 'New Project')
-                : (s?.edit_project_title_named(_currentProject.name) ??
-                      _currentProject.name),
+                : (s?.edit_project_title_named(
+                        currentProject?.name ?? widget.project.name,
+                      ) ??
+                      currentProject?.name ??
+                      widget.project.name),
           ),
           actions: tabBarActions,
           bottom: TabBar(
@@ -854,8 +883,11 @@ class _ProjectPageState extends State<ProjectPage>
           title: Text(
             _isEffectivelyNew
                 ? (s?.new_project_title ?? 'New Project')
-                : (s?.edit_project_title_named(_currentProject.name) ??
-                      _currentProject.name),
+                : (s?.edit_project_title_named(
+                        currentProject?.name ?? widget.project.name,
+                      ) ??
+                      currentProject?.name ??
+                      widget.project.name),
           ),
           actions: tabBarActions,
         ),
