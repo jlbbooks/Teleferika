@@ -53,6 +53,10 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   bool _isMovingPointLoading = false;
   PointModel? _selectedPointInstance;
 
+  // New point functionality
+  PointModel? _newPoint; // The unsaved new point
+  bool _isAddingNewPoint = false; // Whether we're in the process of adding a new point
+
   // Data from controller
   List<PointModel> _projectPoints = [];
   Position? _currentPosition;
@@ -84,6 +88,10 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       _loadProjectPoints();
     } else if (widget.project.azimuth != oldWidget.project.azimuth) {
       _recalculateAndDrawLines();
+    } else if (widget.project.startingPointId != oldWidget.project.startingPointId ||
+               widget.project.endingPointId != oldWidget.project.endingPointId) {
+      // Project start/end points changed, reload points to get updated data
+      _loadProjectPoints();
     }
 
     if (widget.selectedPointId != oldWidget.selectedPointId) {
@@ -442,8 +450,15 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     }
 
     _updateSelectedPointInstance();
+    
+    // Combine project points with new point if it exists
+    final allPoints = [..._projectPoints];
+    if (_newPoint != null) {
+      allPoints.add(_newPoint!);
+    }
+    
     final List<Marker> allMapMarkers = MapMarkers.buildAllMapMarkers(
-      projectPoints: _projectPoints,
+      projectPoints: allPoints,
       selectedPointId: _selectedPointId,
       isMovePointMode: _isMovePointMode,
       glowAnimationValue: _glowAnimationValue,
@@ -521,6 +536,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                   onCenterOnLocation: _centerOnCurrentLocation,
                   onAddPoint: _handleAddPointButtonPressed,
                   onCenterOnPoints: _fitMapToPoints,
+                  isAddingNewPoint: _isAddingNewPoint,
                 ),
               ),
             ],
@@ -537,23 +553,32 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
 
   void _updateSelectedPointInstance() {
     _selectedPointInstance = null;
-    if (_selectedPointId != null && _projectPoints.isNotEmpty) {
-      try {
-        _selectedPointInstance = _projectPoints.firstWhere(
-          (p) => p.id == _selectedPointId,
-        );
-      } catch (e) {
-        logger.warning(
-          "Selected point ID $_selectedPointId not found in project points. Deselecting.",
-        );
-        Future.microtask(() {
-          if (mounted) {
-            setState(() {
-              _selectedPointId = null;
-              _selectedPointInstance = null;
-            });
-          }
-        });
+    if (_selectedPointId != null) {
+      // First check if it's the new point
+      if (_newPoint != null && _newPoint!.id == _selectedPointId) {
+        _selectedPointInstance = _newPoint;
+        return;
+      }
+      
+      // Then check in project points
+      if (_projectPoints.isNotEmpty) {
+        try {
+          _selectedPointInstance = _projectPoints.firstWhere(
+            (p) => p.id == _selectedPointId,
+          );
+        } catch (e) {
+          logger.warning(
+            "Selected point ID $_selectedPointId not found in project points. Deselecting.",
+          );
+          Future.microtask(() {
+            if (mounted) {
+              setState(() {
+                _selectedPointId = null;
+                _selectedPointInstance = null;
+              });
+            }
+          });
+        }
       }
     }
   }
@@ -621,7 +646,8 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
               );
             }
           } else {
-            if (_selectedPointId != null) {
+            // Only deselect if we're not dealing with a new point
+            if (_selectedPointId != null && _newPoint == null) {
               setState(() {
                 _selectedPointId = null;
                 _selectedPointInstance = null;
@@ -694,6 +720,8 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       onMove: _handleMovePointAction,
       onDelete: _handleDeletePoint,
       onPointUpdated: _handlePointUpdated,
+      onSaveNewPoint: _newPoint != null ? _handleSaveNewPoint : null,
+      onDiscardNewPoint: _newPoint != null ? _handleDiscardNewPoint : null,
     );
   }
 
@@ -785,15 +813,99 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     }
   }
 
-  void _handleAddPointButtonPressed() {
-    if (widget.onNavigateToCompassTab != null) {
-      widget.onNavigateToCompassTab!();
-      showInfoStatus('Navigating to compass tab to add new point.');
-    } else {
-      showInfoStatus(
-        'Add point functionality not available. Please use compass tab.',
-      );
+  void _handleAddPointButtonPressed() async {
+    // Check if there's already an unsaved point
+    if (_newPoint != null) {
+      final s = S.of(context);
+      showInfoStatus(s?.mapUnsavedPointExists ?? 'You have an unsaved point. Please save or discard it before adding another.');
+      return;
     }
+
+    setState(() {
+      _isAddingNewPoint = true;
+    });
+
+    try {
+      // Try to get current location with maximum accuracy
+      LatLng newPointLocation;
+      
+      if (_hasLocationPermission && _currentPosition != null) {
+        // Use current GPS location
+        newPointLocation = LatLng(_currentPosition!.latitude, _currentPosition!.longitude);
+      } else {
+        // Use map center as fallback
+        final mapCenter = _mapController.camera.center;
+        newPointLocation = mapCenter;
+      }
+
+      // Create new point
+      final newPoint = await _controller.createNewPoint(newPointLocation);
+      
+      if (mounted) {
+        setState(() {
+          _newPoint = newPoint;
+          _selectedPointId = newPoint.id;
+          _selectedPointInstance = newPoint;
+          _isAddingNewPoint = false;
+        });
+        
+        showInfoStatus('New point created. Tap "Save" to add it to your project.');
+      }
+    } catch (e) {
+      logger.severe('Failed to create new point: $e');
+      if (mounted) {
+        setState(() {
+          _isAddingNewPoint = false;
+        });
+        showErrorStatus('Error creating new point: ${e.toString()}');
+      }
+    }
+  }
+
+  Future<void> _handleSaveNewPoint() async {
+    if (_newPoint == null) return;
+
+    try {
+      // Save the point to database
+      final pointId = await _controller.saveNewPoint(_newPoint!);
+      
+      if (mounted) {
+        // Create a new instance with isUnsaved: false for the saved point
+        final savedPoint = _newPoint!.copyWith(isUnsaved: false);
+        
+        // Add to project points list
+        setState(() {
+          _projectPoints.add(savedPoint);
+          _newPoint = null;
+          _selectedPointId = null;
+          _selectedPointInstance = null;
+          _recalculateAndDrawLines();
+        });
+        
+        // Update project start/end points in the database
+        await _controller.updateProjectStartEndPoints();
+        
+        final s = S.of(context);
+        showSuccessStatus(s?.mapNewPointSaved ?? 'New point saved successfully!');
+        widget.onPointsChanged?.call();
+      }
+    } catch (e) {
+      logger.severe('Failed to save new point: $e');
+      if (mounted) {
+        final s = S.of(context);
+        showErrorStatus(s?.mapErrorSavingNewPoint(e.toString()) ?? 'Error saving new point: $e');
+      }
+    }
+  }
+
+  void _handleDiscardNewPoint() {
+    setState(() {
+      _newPoint = null;
+      _selectedPointId = null;
+      _selectedPointInstance = null;
+    });
+    
+    showInfoStatus('New point discarded.');
   }
 
   Future<void> _handleDeletePointFromPanel(PointModel pointToDelete) async {
@@ -838,6 +950,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
               _selectedPointInstance = null;
             }
           });
+
+          // Update project start/end points in the database
+          await _controller.updateProjectStartEndPoints();
 
           showSuccessStatus('Point ${pointToDelete.name} deleted.');
           widget.onPointsChanged?.call();
@@ -900,5 +1015,14 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         showErrorStatus('Error updating point ${updatedPoint.name}: ${e.toString()}');
       }
     }
+  }
+
+  // Method to update the project model when it changes from parent
+  void _updateProjectModel(ProjectModel updatedProject) {
+    // Update the controller with the new project
+    _controller = MapControllerLogic(project: updatedProject);
+    
+    // Reload points to get the latest data
+    _loadProjectPoints();
   }
 }

@@ -65,6 +65,18 @@ class MapMarkers {
       );
     }
 
+    // Determine marker color based on point state
+    Color markerColor;
+    if (point.isUnsaved) {
+      markerColor = Colors.orange; // Orange for new unsaved points
+    } else if (isInMoveMode) {
+      markerColor = glowColor ?? Colors.purpleAccent;
+    } else if (isSelected) {
+      markerColor = Colors.blue;
+    } else {
+      markerColor = Colors.red;
+    }
+
     return GestureDetector(
       onTap: () => onTap(point),
       child: Column(
@@ -73,9 +85,7 @@ class MapMarkers {
           // Marker icon
           Icon(
             Icons.location_pin,
-            color: isInMoveMode
-                ? glowColor ?? Colors.purpleAccent
-                : (isSelected ? Colors.blue : Colors.red),
+            color: markerColor,
             size: 30.0,
           ),
           const SizedBox(height: 4),
@@ -83,16 +93,16 @@ class MapMarkers {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: isSelected ? Colors.blue : Colors.white,
+              color: point.isUnsaved ? Colors.orange : (isSelected ? Colors.blue : Colors.white),
               borderRadius: BorderRadius.circular(4),
               border: Border.all(
-                color: isSelected ? Colors.blue : Colors.grey.shade300,
-                width: 1,
+                color: point.isUnsaved ? Colors.orange : (isSelected ? Colors.blue : Colors.grey.shade300),
+                width: point.isUnsaved ? 2 : 1, // Thicker border for new points
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 2,
+                  color: Colors.black.withOpacity(point.isUnsaved ? 0.2 : 0.1),
+                  blurRadius: point.isUnsaved ? 4 : 2,
                   offset: const Offset(0, 1),
                 ),
               ],
@@ -102,7 +112,7 @@ class MapMarkers {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: isSelected ? Colors.white : Colors.black,
+                color: point.isUnsaved ? Colors.white : (isSelected ? Colors.white : Colors.black),
               ),
             ),
           ),

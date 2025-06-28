@@ -300,4 +300,30 @@ class MapControllerLogic {
 
     return LatLng(_radiansToDegrees(lat2), _radiansToDegrees(lon2));
   }
+
+  // Create a new point at the specified location
+  Future<PointModel> createNewPoint(LatLng location) async {
+    final nextOrdinal = await _dbHelper.ordinalManager.getNextOrdinal(project.id);
+    
+    return PointModel(
+      projectId: project.id,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      ordinalNumber: nextOrdinal,
+      timestamp: DateTime.now(),
+      isUnsaved: true, // Mark as unsaved
+    );
+  }
+
+  // Save a new point to the database
+  Future<String> saveNewPoint(PointModel point) async {
+    // Mark the point as saved before inserting
+    final savedPoint = point.copyWith(isUnsaved: false);
+    return await _dbHelper.insertPoint(savedPoint);
+  }
+
+  // Update project start/end points
+  Future<void> updateProjectStartEndPoints() async {
+    await _dbHelper.updateProjectStartEndPoints(project.id);
+  }
 } 

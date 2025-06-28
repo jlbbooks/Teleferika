@@ -597,4 +597,25 @@ class SIt extends S {
 
   @override
   String get must_be_positive_validator => 'Deve essere positivo.';
+
+  @override
+  String get mapNewPointLabel => 'NUOVO';
+
+  @override
+  String get mapSaveNewPoint => 'Salva';
+
+  @override
+  String get mapDiscardNewPoint => 'Scarta';
+
+  @override
+  String get mapNewPointSaved => 'Nuovo punto salvato con successo!';
+
+  @override
+  String mapErrorSavingNewPoint(String errorMessage) {
+    return 'Errore durante il salvataggio del nuovo punto: $errorMessage';
+  }
+
+  @override
+  String get mapUnsavedPointExists =>
+      'Hai un punto non salvato. Salvalo o scartalo prima di aggiungerne un altro.';
 }

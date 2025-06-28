@@ -15,6 +15,8 @@ class PointDetailsPanel extends StatefulWidget {
   final VoidCallback onMove;
   final VoidCallback onDelete;
   final Function(PointModel)? onPointUpdated;
+  final VoidCallback? onSaveNewPoint;
+  final VoidCallback? onDiscardNewPoint;
 
   const PointDetailsPanel({
     super.key,
@@ -29,6 +31,8 @@ class PointDetailsPanel extends StatefulWidget {
     required this.onMove,
     required this.onDelete,
     this.onPointUpdated,
+    this.onSaveNewPoint,
+    this.onDiscardNewPoint,
   });
 
   @override
@@ -619,6 +623,36 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
   }
 
   Widget _buildActionButtons(bool isMobile) {
+    // If this is a new unsaved point, show Save/Discard buttons
+    if (widget.selectedPoint?.isUnsaved == true) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Expanded(
+            child: _buildActionButton(
+              icon: Icons.save,
+              label: 'Save',
+              color: Colors.green,
+              onPressed: widget.onSaveNewPoint,
+              isMobile: isMobile,
+            ),
+          ),
+          SizedBox(width: isMobile ? 6 : 8),
+          Expanded(
+            child: _buildActionButton(
+              icon: Icons.delete_outline,
+              label: 'Discard',
+              color: Colors.red,
+              onPressed: widget.onDiscardNewPoint,
+              isMobile: isMobile,
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Regular buttons for existing points
     return Row(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,

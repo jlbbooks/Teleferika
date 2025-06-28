@@ -592,4 +592,25 @@ class SEn extends S {
 
   @override
   String get must_be_positive_validator => 'Must be positive.';
+
+  @override
+  String get mapNewPointLabel => 'NEW';
+
+  @override
+  String get mapSaveNewPoint => 'Save';
+
+  @override
+  String get mapDiscardNewPoint => 'Discard';
+
+  @override
+  String get mapNewPointSaved => 'New point saved successfully!';
+
+  @override
+  String mapErrorSavingNewPoint(String errorMessage) {
+    return 'Error saving new point: $errorMessage';
+  }
+
+  @override
+  String get mapUnsavedPointExists =>
+      'You have an unsaved point. Please save or discard it before adding another.';
 }

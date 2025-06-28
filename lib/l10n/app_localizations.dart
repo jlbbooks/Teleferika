@@ -1059,6 +1059,42 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Must be positive.'**
   String get must_be_positive_validator;
+
+  /// Label for a new unsaved point on the map.
+  ///
+  /// In en, this message translates to:
+  /// **'NEW'**
+  String get mapNewPointLabel;
+
+  /// Button text to save a new point.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get mapSaveNewPoint;
+
+  /// Button text to discard a new unsaved point.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get mapDiscardNewPoint;
+
+  /// Success message when a new point is saved.
+  ///
+  /// In en, this message translates to:
+  /// **'New point saved successfully!'**
+  String get mapNewPointSaved;
+
+  /// Error message when saving a new point fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Error saving new point: {errorMessage}'**
+  String mapErrorSavingNewPoint(String errorMessage);
+
+  /// Message shown when trying to add a new point while one is already unsaved.
+  ///
+  /// In en, this message translates to:
+  /// **'You have an unsaved point. Please save or discard it before adding another.'**
+  String get mapUnsavedPointExists;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

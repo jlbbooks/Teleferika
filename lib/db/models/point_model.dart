@@ -15,6 +15,7 @@ class PointModel {
   String? note;
   DateTime? timestamp;
   List<ImageModel> images;
+  bool isUnsaved; // Track if this is an unsaved new point
 
   // Database table and column names
   static const String tableName = 'points';
@@ -38,6 +39,7 @@ class PointModel {
     this.note,
     this.timestamp,
     List<ImageModel>? images,
+    this.isUnsaved = false, // Default to false for existing points
   }) : this.id = id ?? generateUuid(),
        this.images = images ?? [];
 
@@ -54,6 +56,7 @@ class PointModel {
     DateTime? timestamp,
     bool clearTimestamp = false,
     List<ImageModel>? images,
+    bool? isUnsaved,
   }) {
     return PointModel(
       id: id ?? this.id,
@@ -67,6 +70,7 @@ class PointModel {
       note: clearNote ? null : note ?? this.note,
       timestamp: clearTimestamp ? null : timestamp ?? this.timestamp,
       images: images ?? this.images,
+      isUnsaved: isUnsaved ?? this.isUnsaved,
     );
   }
 
@@ -99,6 +103,7 @@ class PointModel {
           ? DateTime.tryParse(map[columnTimestamp] as String)
           : null,
       images: images ?? [],
+      isUnsaved: false,
     );
   }
 
@@ -141,5 +146,6 @@ class PointModel {
   }
 
   /// Returns the formatted name for this point (e.g., "P1", "P2", etc.)
-  String get name => 'P$ordinalNumber';
+  /// For unsaved points, returns "NEW"
+  String get name => isUnsaved ? 'NEW' : 'P$ordinalNumber';
 }

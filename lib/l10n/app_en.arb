@@ -614,5 +614,34 @@
   "@mapTypeSelector": {
     "description": "Label for the map type selector."
   },
-  "must_be_positive_validator": "Must be positive."
+  "must_be_positive_validator": "Must be positive.",
+  "mapNewPointLabel": "NEW",
+  "@mapNewPointLabel": {
+    "description": "Label for a new unsaved point on the map."
+  },
+  "mapSaveNewPoint": "Save",
+  "@mapSaveNewPoint": {
+    "description": "Button text to save a new point."
+  },
+  "mapDiscardNewPoint": "Discard",
+  "@mapDiscardNewPoint": {
+    "description": "Button text to discard a new unsaved point."
+  },
+  "mapNewPointSaved": "New point saved successfully!",
+  "@mapNewPointSaved": {
+    "description": "Success message when a new point is saved."
+  },
+  "mapErrorSavingNewPoint": "Error saving new point: {errorMessage}",
+  "@mapErrorSavingNewPoint": {
+    "description": "Error message when saving a new point fails.",
+    "placeholders": {
+      "errorMessage": {
+        "type": "String"
+      }
+    }
+  },
+  "mapUnsavedPointExists": "You have an unsaved point. Please save or discard it before adding another.",
+  "@mapUnsavedPointExists": {
+    "description": "Message shown when trying to add a new point while one is already unsaved."
+  }
 }

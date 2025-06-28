@@ -688,5 +688,34 @@
   "@mapTypeSelector": {
     "description": "Etichetta per il selettore del tipo di mappa."
   },
-  "must_be_positive_validator": "Deve essere positivo."
+  "must_be_positive_validator": "Deve essere positivo.",
+  "mapNewPointLabel": "NUOVO",
+  "@mapNewPointLabel": {
+    "description": "Etichetta per un nuovo punto non salvato sulla mappa."
+  },
+  "mapSaveNewPoint": "Salva",
+  "@mapSaveNewPoint": {
+    "description": "Testo del pulsante per salvare un nuovo punto."
+  },
+  "mapDiscardNewPoint": "Scarta",
+  "@mapDiscardNewPoint": {
+    "description": "Testo del pulsante per scartare un nuovo punto non salvato."
+  },
+  "mapNewPointSaved": "Nuovo punto salvato con successo!",
+  "@mapNewPointSaved": {
+    "description": "Messaggio di successo quando un nuovo punto viene salvato."
+  },
+  "mapErrorSavingNewPoint": "Errore durante il salvataggio del nuovo punto: {errorMessage}",
+  "@mapErrorSavingNewPoint": {
+    "description": "Messaggio di errore quando il salvataggio di un nuovo punto fallisce.",
+    "placeholders": {
+      "errorMessage": {
+        "type": "String"
+      }
+    }
+  },
+  "mapUnsavedPointExists": "Hai un punto non salvato. Salvalo o scartalo prima di aggiungerne un altro.",
+  "@mapUnsavedPointExists": {
+    "description": "Messaggio mostrato quando si tenta di aggiungere un nuovo punto mentre uno è già non salvato."
+  }
 }

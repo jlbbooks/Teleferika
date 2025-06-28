@@ -12,6 +12,7 @@ class MapControls {
     required VoidCallback onCenterOnLocation,
     required VoidCallback onAddPoint,
     required VoidCallback onCenterOnPoints,
+    bool isAddingNewPoint = false,
   }) {
     final bool isLocationLoading = hasLocationPermission && currentPosition == null;
     final s = S.of(context);
@@ -46,11 +47,11 @@ class MapControls {
           _buildFloatingActionButton(
             heroTag: 'add_new_point',
             icon: Icons.add_location_alt_outlined,
-            tooltip: isLocationLoading
+            tooltip: isLocationLoading || isAddingNewPoint
                 ? (s?.mapAcquiringLocation ?? 'Acquiring location...')
                 : (s?.mapAddNewPoint ?? 'Add New Point'),
-            onPressed: isLocationLoading ? null : onAddPoint,
-            isLoading: isLocationLoading,
+            onPressed: (isLocationLoading || isAddingNewPoint) ? null : onAddPoint,
+            isLoading: isLocationLoading || isAddingNewPoint,
             color: Colors.green,
           ),
 
