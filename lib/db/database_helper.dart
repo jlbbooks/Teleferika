@@ -16,7 +16,7 @@ class DatabaseHelper {
   static const _databaseName = "Photogrammetry.db";
 
   static const _databaseVersion =
-      9; // Incremented due to schema change and presumed_total_length
+      10; // Incremented due to adding note column to images table
 
   DatabaseHelper._privateConstructor();
   static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
@@ -91,6 +91,7 @@ class DatabaseHelper {
         ${ImageModel.columnPointId} TEXT NOT NULL,
         ${ImageModel.columnOrdinalNumber} INTEGER NOT NULL,
         ${ImageModel.columnImagePath} TEXT NOT NULL,
+        ${ImageModel.columnNote} TEXT,
         FOREIGN KEY (${ImageModel.columnPointId}) REFERENCES ${PointModel.tableName} (${PointModel.columnId}) ON DELETE CASCADE
       )
     ''');
@@ -459,6 +460,15 @@ class DatabaseHelper {
         );
       }
     }
+    if (oldVersion < 10) {
+      // Add note column to images table
+      await db.execute(
+        'ALTER TABLE ${ImageModel.tableName} ADD COLUMN ${ImageModel.columnNote} TEXT',
+      );
+      logger.info(
+        "Applied migration for version 10: Added ${ImageModel.columnNote} column",
+      );
+    }
     logger.info("Database upgrade process complete.");
   }
 
@@ -782,10 +792,7 @@ class DatabaseHelper {
   // --- Image Methods ---
   Future<String> insertImage(ImageModel image) async {
     Database db = await instance.database;
-    // image.id is already a UUID string
-    if (image.id == null) {
-      throw ArgumentError("ImageModel must have a UUID id before insertion.");
-    }
+    // image.id is now non-nullable, so no need to check for null
     PointModel? point = await getPointById(
       image.pointId,
     ); // pointId is now String
@@ -805,7 +812,7 @@ class DatabaseHelper {
       image.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
-    return image.id!;
+    return image.id; // Return the non-nullable ID
   }
 
   Future<int> updateImage(ImageModel image) async {

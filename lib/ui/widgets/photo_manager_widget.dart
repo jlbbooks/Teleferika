@@ -447,7 +447,7 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
                       'Building item for ReorderableListView at index $index, image ID: ${imageModel.id}',
                     );
                     return Card(
-                      key: ValueKey(imageModel.id ?? imageModel.imagePath),
+                      key: ValueKey(imageModel.id),
                       // Use unique ID from ImageModel
                       elevation: 2.0,
                       margin: const EdgeInsets.symmetric(
