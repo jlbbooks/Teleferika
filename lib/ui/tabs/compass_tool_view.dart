@@ -14,7 +14,7 @@ import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
-import 'package:teleferika/ui/tabs/map/map_controls.dart';
+import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 
 class CompassToolView extends StatefulWidget {
@@ -32,7 +32,6 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
   StreamSubscription<CompassEvent>? _compassSubscription;
   bool _hasLocationPermission = false;
   bool _hasSensorPermission = false;
-  bool _isCheckingPermissions = true;
   bool _isCompassAvailable = false;
   bool _isAddingPoint = false; // Internal loading state
 
@@ -43,62 +42,49 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
   void initState() {
     super.initState();
     logger.info("CompassToolView initialized");
-    _checkPermissionsAndListen();
+    // Check if compass is available
+    _checkCompassAvailability();
   }
 
-  Future<void> _checkPermissionsAndListen() async {
+  Future<void> _checkCompassAvailability() async {
     try {
-      // Check if compass is available first
       final isCompassAvailable = await FlutterCompass.events?.first != null;
-
-      if (!isCompassAvailable) {
-        setState(() {
-          _isCompassAvailable = false;
-          _isCheckingPermissions = false;
-        });
-        showErrorStatus('Compass sensor not available on this device.');
-        return;
-      }
-
-      // Check current permissions
-      final motionStatus = await Permission.sensors.status;
-      final locationStatus = await Permission.locationWhenInUse.status;
-
-      // Request permissions if not granted
-      final finalMotionStatus = motionStatus.isDenied 
-          ? await Permission.sensors.request() 
-          : motionStatus;
-      final finalLocationStatus = locationStatus.isDenied 
-          ? await Permission.locationWhenInUse.request() 
-          : locationStatus;
-
+      
       if (mounted) {
         setState(() {
-          _hasSensorPermission = finalMotionStatus.isGranted;
-          _hasLocationPermission = finalLocationStatus.isGranted;
-          _isCompassAvailable = true;
-          _isCheckingPermissions = false;
+          _isCompassAvailable = isCompassAvailable;
         });
       }
 
-      if (_hasSensorPermission && _hasLocationPermission) {
-        _listenToCompass();
-      } else {
-        if (!_hasSensorPermission) {
-          showInfoStatus('Sensor permission denied. Compass features will be unavailable.');
-        }
-        if (!_hasLocationPermission) {
-          showInfoStatus('Location permission denied. Location features will be limited.');
-        }
+      if (!isCompassAvailable) {
+        showErrorStatus('Compass sensor not available on this device.');
       }
     } catch (e) {
       logger.severe("Error checking compass availability", e);
       if (mounted) {
-        setState(() {
-          _isCheckingPermissions = false;
-        });
-        showErrorStatus('Error initializing compass: $e');
+        showErrorStatus('Error checking compass availability: $e');
       }
+    }
+  }
+
+  // Handle permission results from the PermissionHandlerWidget
+  void _handlePermissionResults(Map<PermissionType, bool> permissions) {
+    final hasLocation = permissions[PermissionType.location] ?? false;
+    final hasSensor = permissions[PermissionType.sensor] ?? false;
+
+    setState(() {
+      _hasLocationPermission = hasLocation;
+      _hasSensorPermission = hasSensor;
+    });
+
+    if (hasSensor && _isCompassAvailable) {
+      _listenToCompass();
+    } else if (!hasSensor) {
+      showInfoStatus('Sensor permission denied. Compass features will be unavailable.');
+    }
+
+    if (!hasLocation) {
+      showInfoStatus('Location permission denied. Location features will be limited.');
     }
   }
 
@@ -381,190 +367,191 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
             child: CircularProgressIndicator(),
           );
         }
-        
-        // Show permission overlay if permissions are missing
-        if (!_hasLocationPermission || !_hasSensorPermission || !_isCompassAvailable) {
-          return Stack(
-            children: [
-              // Show a basic compass background when permissions are missing
-              Container(
-                padding: const EdgeInsets.all(16.0),
-                alignment: Alignment.center,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.compass_calibration_outlined,
-                      size: 100,
-                      color: Colors.grey.shade300,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Compass Tool',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Permission overlay
-              MapControls.buildFullScreenPermissionOverlay(
-                context: context,
-                hasLocationPermission: _hasLocationPermission,
-                hasSensorPermission: _hasSensorPermission,
-                isCheckingPermissions: _isCheckingPermissions,
-                onRetryPermissions: _checkPermissionsAndListen,
-              ),
-              // Status indicator
-              Positioned(
-                top: 24,
-                right: 24,
-                child: StatusIndicator(
-                  status: currentStatus,
-                  onDismiss: hideStatus,
-                ),
-              ),
-            ],
-          );
-        }
 
-        final s = S.of(context);
-
-        // Determine the rotation for the project azimuth arrow
-        double projectAzimuthArrowRotationDegrees = 0;
-        if (currentProject.azimuth != null && _heading != null) {
-          projectAzimuthArrowRotationDegrees = currentProject.azimuth! - _heading!;
-        } else if (currentProject.azimuth != null && _heading == null) {
-          projectAzimuthArrowRotationDegrees = currentProject.azimuth!;
-        }
-
-        return Stack(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              alignment: Alignment.center,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    // --- Heading Display ---
-                    Column(
-                      children: [
-                        Text(
-                          _heading == null
-                              ? '---°'
-                              : '${_heading!.toStringAsFixed(1)}° ${getDirectionLetter(_heading!)}',
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blueAccent,
-                          ),
-                        ),
-                        _buildAccuracyIndicator(),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
-                    // --- Compass Rose and Project Azimuth Arrow ---
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final compassSize = math.min(constraints.maxWidth - 32, 250.0);
-                        return SizedBox(
-                          width: compassSize,
-                          height: compassSize,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              // 1. Compass Rose (Rotates to keep North up)
-                              Transform.rotate(
-                                angle: (_heading != null)
-                                    ? (-(_heading!) * (math.pi / 180))
-                                    : 0,
-                                child: Image.asset('assets/images/compass_rose.png'),
-                              ),
-                              // 2. Project Azimuth Arrow (Conditionally displayed and rotated)
-                              if (currentProject.azimuth != null)
-                                Transform.rotate(
-                                  angle:
-                                      (projectAzimuthArrowRotationDegrees *
-                                      (math.pi / 180)),
-                                  child: Image.asset(
-                                    'assets/images/direction_arrow.png',
-                                    width: compassSize * 0.72, // 180/250 = 0.72
-                                    height: compassSize * 0.72,
-                                    color: Colors.blueGrey.withAlpha(
-                                      (0.7 * 255).round(),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 20),
-
-                    // --- "Add as END point" Checkbox ---
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: CheckboxListTile(
-                        title: Text(
-                          s?.compassAddAsEndPointButton ?? "Add as END point",
-                        ),
-                        value: _setAsEndPoint,
-                        onChanged: (bool? value) {
-                          if (mounted) {
-                            setState(() {
-                              _setAsEndPoint = value ?? false;
-                            });
-                          }
-                        },
-                        controlAffinity: ListTileControlAffinity.leading,
-                        dense: true,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-
-                    // --- Add Point Button ---
-                    if (_isAddingPoint)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 20.0),
-                        child: CircularProgressIndicator(),
-                      )
-                    else
-                      SizedBox(
-                        width: 200, // Fixed width for consistency
-                        child: ElevatedButton.icon(
-                          icon: const Icon(Icons.add_location_alt_outlined),
-                          label: Text(s?.compassAddPointButton ?? 'Add Point'),
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
-                            ),
-                            textStyle: const TextStyle(fontSize: 16),
-                          ),
-                          onPressed: () => _handleAddPointPressed(context, projectState),
-                        ),
-                      ),
-                    _buildProjectAzimuthText(currentProject),
-                  ],
-                ),
-              ),
-            ),
-            Positioned(
-              top: 24,
-              right: 24,
-              child: StatusIndicator(
-                status: currentStatus,
-                onDismiss: hideStatus,
-              ),
-            ),
-          ],
+        return PermissionHandlerWidget(
+          requiredPermissions: [PermissionType.location, PermissionType.sensor],
+          onPermissionsResult: _handlePermissionResults,
+          showOverlay: false, // Full screen for compass
+          child: _buildCompassContent(currentProject, projectState),
         );
       },
+    );
+  }
+
+  Widget _buildCompassContent(ProjectModel currentProject, ProjectStateManager projectState) {
+    // Show basic compass background when permissions are missing or compass unavailable
+    if (!_hasLocationPermission || !_hasSensorPermission || !_isCompassAvailable) {
+      return Stack(
+        children: [
+          // Show a basic compass background when permissions are missing
+          Container(
+            padding: const EdgeInsets.all(16.0),
+            alignment: Alignment.center,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.compass_calibration_outlined,
+                  size: 100,
+                  color: Colors.grey.shade300,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Compass Tool',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: Colors.grey.shade500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Status indicator
+          Positioned(
+            top: 24,
+            right: 24,
+            child: StatusIndicator(
+              status: currentStatus,
+              onDismiss: hideStatus,
+            ),
+          ),
+        ],
+      );
+    }
+
+    final s = S.of(context);
+
+    // Determine the rotation for the project azimuth arrow
+    double projectAzimuthArrowRotationDegrees = 0;
+    if (currentProject.azimuth != null && _heading != null) {
+      projectAzimuthArrowRotationDegrees = currentProject.azimuth! - _heading!;
+    } else if (currentProject.azimuth != null && _heading == null) {
+      projectAzimuthArrowRotationDegrees = currentProject.azimuth!;
+    }
+
+    return Stack(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16.0),
+          alignment: Alignment.center,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                // --- Heading Display ---
+                Column(
+                  children: [
+                    Text(
+                      _heading == null
+                          ? '---°'
+                          : '${_heading!.toStringAsFixed(1)}° ${getDirectionLetter(_heading!)}',
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blueAccent,
+                      ),
+                    ),
+                    _buildAccuracyIndicator(),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // --- Compass Rose and Project Azimuth Arrow ---
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final compassSize = math.min(constraints.maxWidth - 32, 250.0);
+                    return SizedBox(
+                      width: compassSize,
+                      height: compassSize,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // 1. Compass Rose (Rotates to keep North up)
+                          Transform.rotate(
+                            angle: (_heading != null)
+                                ? (-(_heading!) * (math.pi / 180))
+                                : 0,
+                            child: Image.asset('assets/images/compass_rose.png'),
+                          ),
+                          // 2. Project Azimuth Arrow (Conditionally displayed and rotated)
+                          if (currentProject.azimuth != null)
+                            Transform.rotate(
+                              angle:
+                                  (projectAzimuthArrowRotationDegrees *
+                                  (math.pi / 180)),
+                              child: Image.asset(
+                                'assets/images/direction_arrow.png',
+                                width: compassSize * 0.72, // 180/250 = 0.72
+                                height: compassSize * 0.72,
+                                color: Colors.blueGrey.withAlpha(
+                                  (0.7 * 255).round(),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 20),
+
+                // --- "Add as END point" Checkbox ---
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: CheckboxListTile(
+                    title: Text(
+                      s?.compassAddAsEndPointButton ?? "Add as END point",
+                    ),
+                    value: _setAsEndPoint,
+                    onChanged: (bool? value) {
+                      if (mounted) {
+                        setState(() {
+                          _setAsEndPoint = value ?? false;
+                        });
+                      }
+                    },
+                    controlAffinity: ListTileControlAffinity.leading,
+                    dense: true,
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                // --- Add Point Button ---
+                if (_isAddingPoint)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 20.0),
+                    child: CircularProgressIndicator(),
+                  )
+                else
+                  SizedBox(
+                    width: 200, // Fixed width for consistency
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.add_location_alt_outlined),
+                      label: Text(s?.compassAddPointButton ?? 'Add Point'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        textStyle: const TextStyle(fontSize: 16),
+                      ),
+                      onPressed: () => _handleAddPointPressed(context, projectState),
+                    ),
+                  ),
+                _buildProjectAzimuthText(currentProject),
+              ],
+            ),
+          ),
+        ),
+        Positioned(
+          top: 24,
+          right: 24,
+          child: StatusIndicator(
+            status: currentStatus,
+            onDismiss: hideStatus,
+          ),
+        ),
+      ],
     );
   }
 

@@ -17,6 +17,7 @@ import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/pages/point_details_page.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
+import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'map/map_controller.dart';
@@ -80,7 +81,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     super.initState();
     _selectedPointId = widget.selectedPointId;
     _loadProjectPoints();
-    // Permission check moved to didChangeDependencies after controller initialization
   }
 
   @override
@@ -89,9 +89,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     // Initialize controller with current project from global state
     final currentProject = context.projectStateListen.currentProject ?? widget.project;
     _controller = MapControllerLogic(project: currentProject);
-
-    // Permission handling
-    _checkAndRequestPermissions();
   }
 
   @override
@@ -131,62 +128,26 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     super.dispose();
   }
 
-  // Permission handling
-  Future<void> _checkAndRequestPermissions() async {
-    try {
-      final permissions = await _controller.checkAndRequestPermissions();
+  // Handle permission results from the PermissionHandlerWidget
+  void _handlePermissionResults(Map<PermissionType, bool> permissions) {
+    final hasLocation = permissions[PermissionType.location] ?? false;
+    final hasSensor = permissions[PermissionType.sensor] ?? false;
 
-      if (mounted) {
-        setState(() {
-          _hasLocationPermission = permissions['location'] ?? false;
-          _hasSensorPermission = permissions['sensor'] ?? false;
-          _isCheckingPermissions = false;
-        });
-      }
+    setState(() {
+      _hasLocationPermission = hasLocation;
+      _hasSensorPermission = hasSensor;
+    });
 
-      if (_hasLocationPermission) {
-        _startListeningToLocation();
-      } else {
-        _showPermissionWarning('location');
-      }
-
-      if (_hasSensorPermission) {
-        _startListeningToCompass();
-      } else {
-        _showPermissionWarning('sensor');
-      }
-    } catch (e) {
-      logger.severe("Error checking permissions", e);
-      if (mounted) {
-        setState(() {
-          _isCheckingPermissions = false;
-        });
-        showErrorStatus('Error checking permissions: $e');
-      }
-    }
-  }
-
-  void _showPermissionWarning(String permissionType) {
-    final s = S.of(context);
-    String message;
-
-    switch (permissionType) {
-      case 'location':
-        message =
-            s?.mapLocationPermissionDenied ??
-            'Location permission denied. Map features requiring location will be limited.';
-        break;
-      case 'sensor':
-        message =
-            s?.mapSensorPermissionDenied ??
-            'Sensor (compass) permission denied. Device orientation features will be unavailable.';
-        break;
-      default:
-        message = 'Permission denied.';
+    if (hasLocation) {
+      _startListeningToLocation();
+    } else {
+      showInfoStatus('Location permission denied. Map features requiring location will be limited.');
     }
 
-    if (mounted) {
-      showInfoStatus(message);
+    if (hasSensor) {
+      _startListeningToCompass();
+    } else {
+      showInfoStatus('Sensor permission denied. Device orientation features will be unavailable.');
     }
   }
 
@@ -541,57 +502,55 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           );
         }
 
-        return Stack(
-          children: [
-            Scaffold(
-              body: Stack(
-                children: [
-                  _buildFlutterMapWidget(
-                    allMapMarkers,
-                    polylinePathPoints,
-                    headingLine,
-                    initialMapCenter: initialMapCenter,
-                    initialMapZoom: initialMapZoom,
-                  ),
-                  MapControls.buildPermissionOverlay(
-                    context: context,
-                    hasLocationPermission: _hasLocationPermission,
-                    hasSensorPermission: _hasSensorPermission,
-                    isCheckingPermissions: _isCheckingPermissions,
-                    onRetryPermissions: _checkAndRequestPermissions,
-                  ),
-                  MapControls.buildMapTypeSelector(
-                    currentMapType: _currentMapType,
-                    onMapTypeChanged: (mapType) {
-                      setState(() {
-                        _currentMapType = mapType;
-                      });
-                    },
-                    context: context,
-                  ),
-                  _buildPointDetailsPanel(),
-                  Positioned(
-                    bottom: 24,
-                    left: 24,
-                    child: MapControls.buildFloatingActionButtons(
-                      context: context,
-                      hasLocationPermission: _hasLocationPermission,
-                      currentPosition: _currentPosition,
-                      onCenterOnLocation: _centerOnCurrentLocation,
-                      onAddPoint: _handleAddPointButtonPressed,
-                      onCenterOnPoints: _fitMapToPoints,
-                      isAddingNewPoint: _isAddingNewPoint,
+        return PermissionHandlerWidget(
+          requiredPermissions: [PermissionType.location, PermissionType.sensor],
+          onPermissionsResult: _handlePermissionResults,
+          showOverlay: true,
+          child: Stack(
+            children: [
+              Scaffold(
+                body: Stack(
+                  children: [
+                    _buildFlutterMapWidget(
+                      allMapMarkers,
+                      polylinePathPoints,
+                      headingLine,
+                      initialMapCenter: initialMapCenter,
+                      initialMapZoom: initialMapZoom,
                     ),
-                  ),
-                ],
+                    MapControls.buildMapTypeSelector(
+                      currentMapType: _currentMapType,
+                      onMapTypeChanged: (mapType) {
+                        setState(() {
+                          _currentMapType = mapType;
+                        });
+                      },
+                      context: context,
+                    ),
+                    _buildPointDetailsPanel(),
+                    Positioned(
+                      bottom: 24,
+                      left: 24,
+                      child: MapControls.buildFloatingActionButtons(
+                        context: context,
+                        hasLocationPermission: _hasLocationPermission,
+                        currentPosition: _currentPosition,
+                        onCenterOnLocation: _centerOnCurrentLocation,
+                        onAddPoint: _handleAddPointButtonPressed,
+                        onCenterOnPoints: _fitMapToPoints,
+                        isAddingNewPoint: _isAddingNewPoint,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            Positioned(
-              top: 24,
-              right: 24,
-              child: StatusIndicator(status: currentStatus, onDismiss: hideStatus),
-            ),
-          ],
+              Positioned(
+                top: 24,
+                right: 24,
+                child: StatusIndicator(status: currentStatus, onDismiss: hideStatus),
+              ),
+            ],
+          ),
         );
       },
     );
