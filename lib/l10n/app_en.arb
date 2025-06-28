@@ -643,5 +643,13 @@
   "mapUnsavedPointExists": "You have an unsaved point. Please save or discard it before adding another.",
   "@mapUnsavedPointExists": {
     "description": "Message shown when trying to add a new point while one is already unsaved."
+  },
+  "mapCompassDirectionTooltip": "Compass Direction",
+  "@mapCompassDirectionTooltip": {
+    "description": "Tooltip for the compass direction arrow on the map."
+  },
+  "mapCompassNorthIndicator": "North",
+  "@mapCompassNorthIndicator": {
+    "description": "Label for the north indicator on the compass arrow."
   }
 }

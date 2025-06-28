@@ -717,5 +717,13 @@
   "mapUnsavedPointExists": "Hai un punto non salvato. Salvalo o scartalo prima di aggiungerne un altro.",
   "@mapUnsavedPointExists": {
     "description": "Messaggio mostrato quando si tenta di aggiungere un nuovo punto mentre uno è già non salvato."
+  },
+  "mapCompassDirectionTooltip": "Direzione Bussola",
+  "@mapCompassDirectionTooltip": {
+    "description": "Tooltip per la freccia della direzione bussola sulla mappa."
+  },
+  "mapCompassNorthIndicator": "Nord",
+  "@mapCompassNorthIndicator": {
+    "description": "Etichetta per l'indicatore nord sulla freccia della bussola."
   }
 }

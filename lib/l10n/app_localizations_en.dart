@@ -613,4 +613,10 @@ class SEn extends S {
   @override
   String get mapUnsavedPointExists =>
       'You have an unsaved point. Please save or discard it before adding another.';
+
+  @override
+  String get mapCompassDirectionTooltip => 'Compass Direction';
+
+  @override
+  String get mapCompassNorthIndicator => 'North';
 }

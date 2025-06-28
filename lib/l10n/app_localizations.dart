@@ -1095,6 +1095,18 @@ abstract class S {
   /// In en, this message translates to:
   /// **'You have an unsaved point. Please save or discard it before adding another.'**
   String get mapUnsavedPointExists;
+
+  /// Tooltip for the compass direction arrow on the map.
+  ///
+  /// In en, this message translates to:
+  /// **'Compass Direction'**
+  String get mapCompassDirectionTooltip;
+
+  /// Label for the north indicator on the compass arrow.
+  ///
+  /// In en, this message translates to:
+  /// **'North'**
+  String get mapCompassNorthIndicator;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

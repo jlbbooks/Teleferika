@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -16,6 +17,7 @@ class MapMarkers {
     required bool hasLocationPermission,
     required double? headingFromFirstToLast,
     required Function(PointModel) onPointTap,
+    double? currentDeviceHeading,
   }) {
     List<Marker> projectPointMarkers = projectPoints.map((point) {
       return Marker(
@@ -36,12 +38,25 @@ class MapMarkers {
 
     // Add heading label marker
     if (headingFromFirstToLast != null && projectPoints.length >= 2) {
-      allMarkers.add(_buildHeadingLabelMarker(projectPoints, headingFromFirstToLast));
+      allMarkers.add(
+        _buildHeadingLabelMarker(projectPoints, headingFromFirstToLast),
+      );
     }
 
     // Add current position crosshair marker
     if (currentPosition != null && hasLocationPermission) {
       allMarkers.add(_buildCurrentPositionMarker(currentPosition));
+
+      // Add compass direction marker if heading is available
+      if (currentDeviceHeading != null) {
+        final compassMarker = _buildCompassDirectionMarker(
+          currentPosition,
+          currentDeviceHeading,
+        );
+        if (compassMarker != null) {
+          allMarkers.add(compassMarker);
+        }
+      }
     }
 
     return allMarkers;
@@ -83,20 +98,20 @@ class MapMarkers {
         mainAxisSize: MainAxisSize.min,
         children: [
           // Marker icon
-          Icon(
-            Icons.location_pin,
-            color: markerColor,
-            size: 30.0,
-          ),
+          Icon(Icons.location_pin, color: markerColor, size: 30.0),
           const SizedBox(height: 4),
           // Point label
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
             decoration: BoxDecoration(
-              color: point.isUnsaved ? Colors.orange : (isSelected ? Colors.blue : Colors.white),
+              color: point.isUnsaved
+                  ? Colors.orange
+                  : (isSelected ? Colors.blue : Colors.white),
               borderRadius: BorderRadius.circular(4),
               border: Border.all(
-                color: point.isUnsaved ? Colors.orange : (isSelected ? Colors.blue : Colors.grey.shade300),
+                color: point.isUnsaved
+                    ? Colors.orange
+                    : (isSelected ? Colors.blue : Colors.grey.shade300),
                 width: point.isUnsaved ? 2 : 1, // Thicker border for new points
               ),
               boxShadow: [
@@ -112,7 +127,9 @@ class MapMarkers {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: point.isUnsaved ? Colors.white : (isSelected ? Colors.white : Colors.black),
+                color: point.isUnsaved
+                    ? Colors.white
+                    : (isSelected ? Colors.white : Colors.black),
               ),
             ),
           ),
@@ -121,9 +138,14 @@ class MapMarkers {
     );
   }
 
-  static Marker _buildHeadingLabelMarker(List<PointModel> points, double heading) {
+  static Marker _buildHeadingLabelMarker(
+    List<PointModel> points,
+    double heading,
+  ) {
     if (points.length < 2) {
-      throw StateError('Cannot build heading label marker with less than 2 points');
+      throw StateError(
+        'Cannot build heading label marker with less than 2 points',
+      );
     }
 
     final firstP = points.first;
@@ -175,6 +197,74 @@ class MapMarkers {
     );
   }
 
+  static Marker? _buildCompassDirectionMarker(
+    Position position,
+    double heading,
+  ) {
+    return Marker(
+      width: 40,
+      height: 40,
+      point: LatLng(position.latitude, position.longitude),
+      child: _buildCompassArrow(heading),
+    );
+  }
+
+  static Widget _buildCompassArrow(double heading) {
+    return IgnorePointer(
+      child: Transform.rotate(
+        angle: _degreesToRadians(-heading),
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.blue.shade600.withOpacity(0.1),
+            border: Border.all(color: Colors.blue.shade600, width: 2),
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // North indicator (red arrow)
+              Container(
+                width: 0,
+                height: 0,
+                decoration: const BoxDecoration(color: Colors.transparent),
+                child: CustomPaint(
+                  painter: CompassArrowPainter(),
+                  size: const Size(40, 40),
+                ),
+              ),
+              // Center dot
+              Container(
+                width: 4,
+                height: 4,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.blue.shade600,
+                ),
+              ),
+              // North label
+              Positioned(
+                top: 2,
+                left: 0,
+                right: 0,
+                child: Text(
+                  'N',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontSize: 8,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   static Widget _buildCrosshairMarker() {
     return IgnorePointer(
       child: Container(
@@ -189,4 +279,33 @@ class MapMarkers {
   }
 
   static double _degreesToRadians(double degrees) => degrees * math.pi / 180.0;
-} 
+}
+
+// Custom painter for the compass arrow
+class CompassArrowPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.red
+      ..style = PaintingStyle.fill;
+
+    final path = ui.Path();
+
+    // Draw a north-pointing arrow
+    final centerX = size.width / 2;
+    final centerY = size.height / 2;
+    final arrowLength = size.width * 0.35;
+    final arrowWidth = size.width * 0.15;
+
+    // Arrow head (pointing north)
+    path.moveTo(centerX, centerY - arrowLength);
+    path.lineTo(centerX - arrowWidth, centerY - arrowLength * 0.3);
+    path.lineTo(centerX + arrowWidth, centerY - arrowLength * 0.3);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}

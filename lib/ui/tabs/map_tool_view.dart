@@ -466,6 +466,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       hasLocationPermission: _hasLocationPermission,
       headingFromFirstToLast: _headingFromFirstToLast,
       onPointTap: _handlePointTap,
+      currentDeviceHeading: _currentDeviceHeading,
     );
     final List<LatLng> polylinePathPoints = _buildPolylinePathPoints();
     final headingLine = _buildHeadingLine();

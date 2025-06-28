@@ -618,4 +618,10 @@ class SIt extends S {
   @override
   String get mapUnsavedPointExists =>
       'Hai un punto non salvato. Salvalo o scartalo prima di aggiungerne un altro.';
+
+  @override
+  String get mapCompassDirectionTooltip => 'Direzione Bussola';
+
+  @override
+  String get mapCompassNorthIndicator => 'Nord';
 }
