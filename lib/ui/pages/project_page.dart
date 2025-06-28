@@ -5,8 +5,6 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:teleferika/core/logger.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/core/project_state_manager.dart';
 import 'package:teleferika/db/database_helper.dart';
@@ -20,7 +18,6 @@ import 'package:teleferika/ui/tabs/map_tool_view.dart';
 import 'package:teleferika/ui/tabs/points_tab.dart';
 import 'package:teleferika/ui/tabs/points_tool_view.dart';
 import 'package:teleferika/ui/tabs/project_details_tab.dart';
-import 'package:teleferika/ui/test/project_state_test_widget.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 
 enum ProjectPageTab {
@@ -74,7 +71,7 @@ class ProjectPage extends StatefulWidget {
 }
 
 class _ProjectPageState extends State<ProjectPage>
-    with SingleTickerProviderStateMixin, StatusMixin {
+    with TickerProviderStateMixin, StatusMixin {
   late TabController _tabController;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -82,11 +79,7 @@ class _ProjectPageState extends State<ProjectPage>
   late DateTime? _lastUpdateTime;
 
   bool _isLoading = false;
-  bool _hasUnsavedChanges = false;
   bool _isEffectivelyNew = true;
-
-  // Undo functionality
-  bool _hasPointsChanges = false;
 
   final GlobalKey<PointsToolViewState> _pointsToolViewKey =
       GlobalKey<PointsToolViewState>();
@@ -95,9 +88,6 @@ class _ProjectPageState extends State<ProjectPage>
 
   final LicenceService _licenceService =
       LicenceService.instance; // Get instance
-
-  // Store the updated project data from ProjectDetailsTab
-  ProjectModel? _updatedProjectData;
 
   // Add a GlobalKey to access the ProjectDetailsTab state
   final GlobalKey<ProjectDetailsTabState> _detailsTabKey =
@@ -202,36 +192,25 @@ class _ProjectPageState extends State<ProjectPage>
     super.dispose();
   }
 
-  Future<bool?> _saveProject(ProjectModel updated) async {
+  Future<bool?> _saveProject() async {
     if (_isLoading) return null;
     setState(() => _isLoading = true);
     try {
-      final projectToSave = updated.copyWith(
-        date: _projectDate,
-        lastUpdate: DateTime.now(),
-      );
+      final saved = await context.projectState.saveProject();
 
-      // Use global state to update the project
-      await context.projectState.updateProject(projectToSave);
+      if (saved) {
+        setState(() {
+          _isEffectivelyNew = false;
+          _projectWasSuccessfullySaved = true;
+          _lastUpdateTime = context.projectState.currentProject?.lastUpdate;
+        });
 
-      // Refresh points to ensure any changes from other parts of the app are reflected
-      await context.projectState.refreshPoints();
-
-      setState(() {
-        _isEffectivelyNew = false;
-        _projectWasSuccessfullySaved = true;
-        _hasUnsavedChanges = false;
-        _lastUpdateTime = projectToSave.lastUpdate;
-        _updatedProjectData =
-            null; // Clear the updated project data after saving
-      });
-
-      // Clear undo backup in PointsToolView
-      _pointsTabKey.currentState?.onProjectSaved();
-      _clearPointsBackup();
-      showSuccessStatus('Project saved successfully');
-
-      return true;
+        showSuccessStatus('Project saved successfully');
+        return true;
+      } else {
+        showErrorStatus('Error saving project');
+        return false;
+      }
     } catch (e) {
       if (mounted) {
         showErrorStatus('Error saving project: $e');
@@ -242,46 +221,19 @@ class _ProjectPageState extends State<ProjectPage>
     }
   }
 
-  void _onProjectDetailsChanged(
-    ProjectModel updated, {
-    bool hasUnsavedChanges = false,
-  }) {
-    logger.info(
-      "_onProjectDetailsChanged called with hasUnsavedChanges: $hasUnsavedChanges",
-    );
-    logger.info("Previous _hasUnsavedChanges: $_hasUnsavedChanges");
-    setState(() {
-      _hasUnsavedChanges = hasUnsavedChanges;
-      _updatedProjectData = updated; // Store the updated project data
-    });
-    logger.info("New _hasUnsavedChanges: $_hasUnsavedChanges");
-  }
-
   /// Creates a backup of the current points list for undo functionality
   void _createPointsBackup() {
-    // Delegate to PointsTab which has access to the current points
-    _pointsTabKey.currentState?.createBackup();
-    _hasPointsChanges = true;
+    context.projectState.createPointsBackup();
   }
 
   /// Restores the original points list and clears the backup
   Future<void> _undoPointsChanges() async {
-    // Delegate to PointsTab which handles the backup and restore
-    await _pointsTabKey.currentState?.undoChanges();
-
-    if (mounted) {
-      setState(() {
-        _hasPointsChanges = false;
-        _hasUnsavedChanges = false;
-      });
-    }
+    await context.projectState.undoPointsChanges();
   }
 
   /// Clears the backup when project is saved
   void _clearPointsBackup() {
-    // Delegate to PointsTab which handles the backup
-    _pointsTabKey.currentState?.clearBackup();
-    _hasPointsChanges = false;
+    context.projectState.clearPointsBackup();
   }
 
   void _handleOnPopInvokedWithResult(bool didPop, Object? result) async {
@@ -292,7 +244,7 @@ class _ProjectPageState extends State<ProjectPage>
       if (mounted) Navigator.of(context).pop();
       return;
     }
-    if (_hasUnsavedChanges) {
+    if (context.projectState.hasUnsavedChanges) {
       final s = S.of(context);
       final bool? shouldPop = await showDialog<bool>(
         context: context,
@@ -391,54 +343,6 @@ class _ProjectPageState extends State<ProjectPage>
     }
   }
 
-  void _calculateAzimuth() {
-    final s = S.of(context);
-    final currentPoints = context.projectState.currentPoints;
-    if (currentPoints.length < 2) {
-      showErrorStatus(
-        s?.errorAzimuthPointsNotSet ?? 'At least two points are required',
-      );
-      return;
-    }
-    final startPoint = currentPoints.first;
-    final endPoint = currentPoints.last;
-    if (startPoint.id == endPoint.id) {
-      showErrorStatus(
-        s?.errorAzimuthPointsSame ?? 'Start and end points must be different',
-      );
-      return;
-    }
-    double _degreesToRadians(double degrees) =>
-        degrees * 3.141592653589793 / 180.0;
-    double _radiansToDegrees(double radians) =>
-        radians * 180.0 / 3.141592653589793;
-    double calculateBearingFromPoints(PointModel start, PointModel end) {
-      final double lat1Rad = _degreesToRadians(start.latitude);
-      final double lon1Rad = _degreesToRadians(start.longitude);
-      final double lat2Rad = _degreesToRadians(end.latitude);
-      final double lon2Rad = _degreesToRadians(end.longitude);
-      final double dLon = lon2Rad - lon1Rad;
-      final double y = math.sin(dLon) * math.cos(lat2Rad);
-      final double x =
-          math.cos(lat1Rad) * math.sin(lat2Rad) -
-          math.sin(lat1Rad) * math.cos(lat2Rad) * math.cos(dLon);
-      double bearingRad = math.atan2(y, x);
-      double bearingDeg = _radiansToDegrees(bearingRad);
-      return (bearingDeg + 360) % 360;
-    }
-
-    final double calculatedAzimuth = calculateBearingFromPoints(
-      startPoint,
-      endPoint,
-    );
-    // Update the azimuth in the form via the tab's state
-    _detailsTabKey.currentState?.setAzimuthFromParent(calculatedAzimuth);
-    showSuccessStatus(
-      s?.azimuthCalculatedSnackbar(calculatedAzimuth.toStringAsFixed(2)) ??
-          'Azimuth calculated',
-    );
-  }
-
   Future<void> _handleExport() async {
     final s = S.of(context);
     final currentProject = context.projectState.currentProject;
@@ -499,7 +403,9 @@ class _ProjectPageState extends State<ProjectPage>
   Widget build(BuildContext context) {
     final s = S.of(context);
     final orientation = MediaQuery.of(context).orientation;
-    final saveButtonColor = _hasUnsavedChanges ? Colors.green : null;
+    final saveButtonColor = context.projectState.hasUnsavedChanges
+        ? Colors.green
+        : null;
 
     // Use global state for project data
     final currentProject = context.projectStateListen.currentProject;
@@ -516,9 +422,6 @@ class _ProjectPageState extends State<ProjectPage>
           project: currentProject ?? widget.project,
           isNew: _isEffectivelyNew,
           pointsCount: currentPoints.length,
-          onChanged: _onProjectDetailsChanged,
-          onSaveProject: _saveProject,
-          onCalculateAzimuth: _calculateAzimuth,
         ),
         PointsTab(
           key: _pointsTabKey,
@@ -547,19 +450,6 @@ class _ProjectPageState extends State<ProjectPage>
       ),
     ];
     List<Widget> tabBarActions = [
-      // Temporary test button
-      IconButton(
-        icon: const Icon(Icons.science, color: Colors.purple),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const ProjectStateTestWidget(),
-            ),
-          );
-        },
-        tooltip: 'Test Global State',
-      ),
       if (!_isEffectivelyNew)
         IconButton(
           icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
@@ -572,22 +462,19 @@ class _ProjectPageState extends State<ProjectPage>
           onPressed: _isLoading ? null : _handleExport,
           tooltip: s?.export_project_tooltip ?? 'Export Project',
         ),
-      if (_hasPointsChanges)
+      if (context.projectState.hasPointsChanges)
         IconButton(
           icon: const Icon(Icons.undo, color: Colors.orange),
           onPressed: _isLoading ? null : _undoPointsChanges,
           tooltip: 'Undo Points Changes',
         ),
-      if (_hasUnsavedChanges)
+      if (context.projectState.hasUnsavedChanges)
         IconButton(
           icon: Icon(Icons.save, color: saveButtonColor),
           onPressed: _isLoading
               ? null
               : () async {
-                  // Use updated project data if available, otherwise use global state
-                  final projectToSave =
-                      _updatedProjectData ?? currentProject ?? widget.project;
-                  await _saveProject(projectToSave);
+                  await _saveProject();
                 },
           tooltip: s?.save_project_tooltip ?? 'Save Project',
         ),

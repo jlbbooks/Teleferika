@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:sqflite/sqflite.dart';
 import 'package:teleferika/core/logger.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
@@ -17,12 +18,21 @@ class ProjectStateManager extends ChangeNotifier {
   ProjectModel? _currentProject;
   List<PointModel> _currentPoints = [];
   bool _isLoading = false;
+  
+  // Project editing state
+  bool _hasUnsavedChanges = false;
+  ProjectModel? _editingProject; // Working copy for editing
+  List<PointModel>? _originalPointsBackup; // For undo functionality
+  bool _hasPointsChanges = false;
 
   // Getters
   ProjectModel? get currentProject => _currentProject;
   List<PointModel> get currentPoints => List.unmodifiable(_currentPoints);
   bool get isLoading => _isLoading;
   bool get hasProject => _currentProject != null;
+  bool get hasUnsavedChanges => _hasUnsavedChanges;
+  ProjectModel? get editingProject => _editingProject;
+  bool get hasPointsChanges => _hasPointsChanges;
 
   /// Load a project and its points into global state
   Future<void> loadProject(String projectId) async {
@@ -35,6 +45,10 @@ class ProjectStateManager extends ChangeNotifier {
       if (project != null) {
         _currentProject = project;
         _currentPoints = project.points;
+        _editingProject = project; // Initialize editing copy
+        _hasUnsavedChanges = false;
+        _hasPointsChanges = false;
+        _clearPointsBackup();
         logger.info("ProjectStateManager: Loaded project ${project.name} with ${_currentPoints.length} points");
         notifyListeners();
       } else {
@@ -52,8 +66,113 @@ class ProjectStateManager extends ChangeNotifier {
   void clearProject() {
     _currentProject = null;
     _currentPoints = [];
+    _editingProject = null;
+    _hasUnsavedChanges = false;
+    _hasPointsChanges = false;
+    _clearPointsBackup();
     logger.info("ProjectStateManager: Cleared current project");
     notifyListeners();
+  }
+
+  /// Update the editing project (for form changes)
+  void updateEditingProject(ProjectModel project, {bool hasUnsavedChanges = false}) {
+    _editingProject = project;
+    _hasUnsavedChanges = hasUnsavedChanges;
+    logger.info("ProjectStateManager: Updated editing project, hasUnsavedChanges: $hasUnsavedChanges");
+    notifyListeners();
+  }
+
+  /// Save the current editing project to database
+  Future<bool> saveProject() async {
+    if (_editingProject == null) return false;
+    
+    try {
+      final projectToSave = _editingProject!.copyWith(
+        lastUpdate: DateTime.now(),
+      );
+      
+      await updateProject(projectToSave);
+      _hasUnsavedChanges = false;
+      _hasPointsChanges = false;
+      _clearPointsBackup();
+      logger.info("ProjectStateManager: Project saved successfully");
+      return true;
+    } catch (e, stackTrace) {
+      logger.severe("ProjectStateManager: Error saving project", e, stackTrace);
+      return false;
+    }
+  }
+
+  /// Create backup of current points for undo functionality
+  void createPointsBackup() {
+    if (_originalPointsBackup == null) {
+      _originalPointsBackup = List.from(_currentPoints);
+      _hasPointsChanges = true;
+      logger.info("ProjectStateManager: Created backup of ${_originalPointsBackup!.length} points for undo");
+      notifyListeners();
+    }
+  }
+
+  /// Restore points from backup
+  Future<void> undoPointsChanges() async {
+    if (_originalPointsBackup != null) {
+      logger.info("ProjectStateManager: Undoing changes - restoring ${_originalPointsBackup!.length} points");
+      
+      try {
+        final db = await _dbHelper.database;
+        await db.transaction((txn) async {
+          // Clear all current points for this project
+          await txn.delete(
+            'points',
+            where: 'project_id = ?',
+            whereArgs: [_currentProject!.id],
+          );
+
+          // Insert the original points back
+          for (int i = 0; i < _originalPointsBackup!.length; i++) {
+            final point = _originalPointsBackup![i];
+            await txn.insert(
+              'points',
+              point.toMap(),
+              conflictAlgorithm: ConflictAlgorithm.replace,
+            );
+          }
+
+          // Update project start/end points
+          await _dbHelper.updateProjectStartEndPoints(
+            _currentProject!.id!,
+            txn: txn,
+          );
+        });
+
+        // Refresh global state
+        await refreshPoints();
+        _hasPointsChanges = false;
+        _hasUnsavedChanges = false;
+        _clearPointsBackup();
+        
+        logger.info("ProjectStateManager: Changes undone successfully");
+      } catch (e, stackTrace) {
+        logger.severe("ProjectStateManager: Error undoing points changes", e, stackTrace);
+        rethrow;
+      }
+    }
+  }
+
+  /// Clear points backup
+  void clearPointsBackup() {
+    if (_originalPointsBackup != null) {
+      _originalPointsBackup = null;
+      _hasPointsChanges = false;
+      logger.info("ProjectStateManager: Cleared points backup");
+      notifyListeners();
+    }
+  }
+
+  /// Clear points backup (private method)
+  void _clearPointsBackup() {
+    _originalPointsBackup = null;
+    _hasPointsChanges = false;
   }
 
   /// Refresh points from database

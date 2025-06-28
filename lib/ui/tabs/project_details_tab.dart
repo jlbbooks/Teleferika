@@ -1,5 +1,9 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:teleferika/core/project_provider.dart';
+import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 
@@ -7,18 +11,12 @@ class ProjectDetailsTab extends StatefulWidget {
   final ProjectModel project;
   final bool isNew;
   final int pointsCount;
-  final void Function(ProjectModel updated, {bool hasUnsavedChanges}) onChanged;
-  final Future<bool?> Function(ProjectModel updated)? onSaveProject;
-  final void Function()? onCalculateAzimuth;
 
   const ProjectDetailsTab({
     super.key,
     required this.project,
     required this.isNew,
     required this.pointsCount,
-    required this.onChanged,
-    this.onSaveProject,
-    this.onCalculateAzimuth,
   });
 
   @override
@@ -26,31 +24,35 @@ class ProjectDetailsTab extends StatefulWidget {
 }
 
 class ProjectDetailsTabState extends State<ProjectDetailsTab> {
+  final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _noteController;
   late TextEditingController _presumedTotalLengthController;
   late TextEditingController _azimuthController;
-  late DateTime? _projectDate;
+
   late ProjectModel _currentProject;
+  late DateTime? _projectDate;
   bool _dirty = false;
+  String _originalAzimuthValue = '';
   bool _azimuthFieldModified = false;
-  String? _originalAzimuthValue;
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
     _currentProject = widget.project;
-    _projectDate = widget.project.date;
-    _nameController = TextEditingController(text: _currentProject.name);
-    _noteController = TextEditingController(text: _currentProject.note);
+    _projectDate =
+        widget.project.date ?? (widget.isNew ? DateTime.now() : null);
+
+    _nameController = TextEditingController(text: widget.project.name);
+    _noteController = TextEditingController(text: widget.project.note ?? '');
     _presumedTotalLengthController = TextEditingController(
-      text: _currentProject.presumedTotalLength?.toStringAsFixed(2) ?? '',
+      text: widget.project.presumedTotalLength?.toString() ?? '',
     );
     _azimuthController = TextEditingController(
-      text: _currentProject.azimuth?.toStringAsFixed(2) ?? '',
+      text: widget.project.azimuth?.toString() ?? '',
     );
     _originalAzimuthValue = _azimuthController.text;
+
     _nameController.addListener(_onChanged);
     _noteController.addListener(_onChanged);
     _presumedTotalLengthController.addListener(_onChanged);
@@ -77,6 +79,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
         presumed != widget.project.presumedTotalLength ||
         azimuth != widget.project.azimuth ||
         _projectDate != widget.project.date;
+
     setState(() {
       _dirty = dirty;
       _currentProject = _currentProject.copyWith(
@@ -89,7 +92,12 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
         date: _projectDate,
       );
     });
-    widget.onChanged(_currentProject, hasUnsavedChanges: _dirty);
+
+    // Update global state
+    context.projectState.updateEditingProject(
+      _currentProject,
+      hasUnsavedChanges: _dirty,
+    );
   }
 
   void _onAzimuthChanged() {
@@ -119,15 +127,13 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
 
   Future<void> _handleSave() async {
     if (_formKey.currentState?.validate() ?? false) {
-      if (widget.onSaveProject != null) {
-        final saved = await widget.onSaveProject!(_currentProject);
-        if (saved == true) {
-          setState(() {
-            _dirty = false;
-            _originalAzimuthValue = _azimuthController.text;
-            _azimuthFieldModified = false;
-          });
-        }
+      final saved = await context.projectState.saveProject();
+      if (saved) {
+        setState(() {
+          _dirty = false;
+          _originalAzimuthValue = _azimuthController.text;
+          _azimuthFieldModified = false;
+        });
       }
     }
   }
@@ -142,9 +148,10 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
   Future<void> _handleAzimuthCalculation() async {
     final s = S.of(context);
     final currentAzimuthValue = _azimuthController.text.trim();
-    
+
     // Check if there's already a value in the azimuth field
-    if (currentAzimuthValue.isNotEmpty && double.tryParse(currentAzimuthValue) != null) {
+    if (currentAzimuthValue.isNotEmpty &&
+        double.tryParse(currentAzimuthValue) != null) {
       // Show confirmation dialog
       final bool? shouldOverwrite = await showDialog<bool>(
         context: context,
@@ -152,8 +159,8 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
           return AlertDialog(
             title: Text(s?.azimuthOverwriteTitle ?? 'Overwrite Azimuth?'),
             content: Text(
-              s?.azimuthOverwriteMessage ?? 
-              'The azimuth field already has a value. The new calculated value will overwrite the current value. Do you want to continue?'
+              s?.azimuthOverwriteMessage ??
+                  'The azimuth field already has a value. The new calculated value will overwrite the current value. Do you want to continue?',
             ),
             actions: <Widget>[
               TextButton(
@@ -171,17 +178,81 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
           );
         },
       );
-      
+
       // If user cancels, return early
       if (shouldOverwrite != true) {
         return;
       }
     }
-    
+
     // Proceed with azimuth calculation
-    if (widget.onCalculateAzimuth != null) {
-      widget.onCalculateAzimuth!();
+    _calculateAzimuth();
+  }
+
+  void _calculateAzimuth() {
+    final s = S.of(context);
+    final currentPoints = context.projectState.currentPoints;
+    if (currentPoints.length < 2) {
+      // Show error status - we'll need to implement this
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            s?.errorAzimuthPointsNotSet ?? 'At least two points are required',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
     }
+    final startPoint = currentPoints.first;
+    final endPoint = currentPoints.last;
+    if (startPoint.id == endPoint.id) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            s?.errorAzimuthPointsSame ??
+                'Start and end points must be different',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    double _degreesToRadians(double degrees) =>
+        degrees * 3.141592653589793 / 180.0;
+    double _radiansToDegrees(double radians) =>
+        radians * 180.0 / 3.141592653589793;
+    double calculateBearingFromPoints(PointModel start, PointModel end) {
+      final double lat1Rad = _degreesToRadians(start.latitude);
+      final double lon1Rad = _degreesToRadians(start.longitude);
+      final double lat2Rad = _degreesToRadians(end.latitude);
+      final double lon2Rad = _degreesToRadians(end.longitude);
+      final double dLon = lon2Rad - lon1Rad;
+      final double y = math.sin(dLon) * math.cos(lat2Rad);
+      final double x =
+          math.cos(lat1Rad) * math.sin(lat2Rad) -
+          math.sin(lat1Rad) * math.cos(lat2Rad) * math.cos(dLon);
+      double bearingRad = math.atan2(y, x);
+      double bearingDeg = _radiansToDegrees(bearingRad);
+      return (bearingDeg + 360) % 360;
+    }
+
+    final double calculatedAzimuth = calculateBearingFromPoints(
+      startPoint,
+      endPoint,
+    );
+
+    setAzimuthFromParent(calculatedAzimuth);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          s?.azimuthCalculatedSnackbar(calculatedAzimuth.toStringAsFixed(2)) ??
+              'Azimuth calculated: ${calculatedAzimuth.toStringAsFixed(2)}°',
+        ),
+        backgroundColor: Colors.green,
+      ),
+    );
   }
 
   @override
@@ -275,7 +346,9 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
             Container(
               padding: const EdgeInsets.all(12.0),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                color: Theme.of(
+                  context,
+                ).colorScheme.surfaceVariant.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(8.0),
                 border: Border.all(
                   color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
@@ -295,18 +368,22 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
                       children: [
                         Text(
                           'Current Rope Length',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w500,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w500,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           '${_currentProject.currentRopeLength.toStringAsFixed(2)} m',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'monospace',
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'monospace',
+                              ),
                         ),
                       ],
                     ),

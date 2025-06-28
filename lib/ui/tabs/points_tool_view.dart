@@ -31,10 +31,6 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
   bool _isSelectionMode = false;
   Set<String> _selectedPointIds = {};
 
-  // Undo functionality
-  List<PointModel>? _originalPointsBackup;
-  bool _hasUnsavedChanges = false;
-  
   // Store previous project data for comparison
   ProjectModel? _previousProject;
 
@@ -90,9 +86,6 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
         setState(() {
           _isLoading = false;
         });
-
-        // Clear any existing backup when loading fresh data
-        clearBackup();
       }
     } catch (e, stackTrace) {
       logger.severe("Error loading points in PointsToolView", e, stackTrace);
@@ -160,7 +153,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
     final currentProject = projectState.currentProject ?? widget.project;
     
     // Create backup before making changes
-    createBackup();
+    projectState.createPointsBackup();
 
     // 4. Get current points from global state
     final currentPoints = projectState.currentPoints;
@@ -196,123 +189,37 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
     int oldIndex,
     int newIndex,
   ) {
-    // Create a mutable copy to perform reorder operations
-    List<PointModel> tempList = List.from(points);
+    final List<PointModel> reorderedPoints = List.from(points);
+    final PointModel movedPoint = reorderedPoints.removeAt(oldIndex);
+    reorderedPoints.insert(newIndex, movedPoint);
 
-    final PointModel itemMoved = tempList.removeAt(oldIndex);
-    tempList.insert(newIndex, itemMoved);
-
-    // Create the final list with updated ordinals
-    List<PointModel> resultList = [];
-    for (int i = 0; i < tempList.length; i++) {
-      PointModel currentPoint = tempList[i];
-      if (currentPoint.ordinalNumber != i) {
-        resultList.add(currentPoint.copyWith(ordinalNumber: i));
-      } else {
-        resultList.add(currentPoint); // No change needed, use original instance
-      }
+    // Update ordinal numbers to match new positions
+    for (int i = 0; i < reorderedPoints.length; i++) {
+      reorderedPoints[i] = reorderedPoints[i].copyWith(ordinalNumber: i + 1);
     }
-    return resultList;
+
+    return reorderedPoints;
   }
 
-  /// Updates the ordinal numbers of the given points in the database
-  /// within a transaction and also updates the project's start/end points.
+  /// Updates the ordinal numbers of points in the database
   Future<void> _updatePointOrdinalsInDatabase(
-    List<PointModel> pointsToUpdate,
+    List<PointModel> pointsWithNewOrdinals,
   ) async {
-    final projectState = Provider.of<ProjectStateManager>(context, listen: false);
-    final currentProject = projectState.currentProject ?? widget.project;
-    if (currentProject.id == null) {
-      return; // Should already be checked, but defensive
-    }
-
     try {
       final db = await _dbHelper.database;
-
-      // Single transaction: Update ordinals based on the reordered points AND update start/end points
       await db.transaction((txn) async {
-        // First: Update ordinals based on the actual reordered points
-        for (int i = 0; i < pointsToUpdate.length; i++) {
-          final point = pointsToUpdate[i];
-          logger.info("Updating point ${point.id} to ordinal $i");
+        for (final point in pointsWithNewOrdinals) {
           await txn.update(
-            PointModel.tableName,
-            {PointModel.columnOrdinalNumber: i},
-            where: '${PointModel.columnId} = ?',
+            'points',
+            point.toMap(),
+            where: 'id = ?',
             whereArgs: [point.id],
           );
         }
 
-        // Second: Update start/end points within the SAME transaction
-        // This ensures it sees the updated ordinals
-        await _dbHelper.updateProjectStartEndPoints(
-          currentProject.id!,
-          txn: txn,
-        );
-      });
-
-      logger.info(
-        "Successfully updated ordinals and project start/end points after reorder.",
-      );
-
-      // Refresh global state to get updated project data with new start/end points
-      await projectState.refreshPoints();
-    } catch (e, stackTrace) {
-      logger.severe(
-        "Error updating database after reorder for project ${currentProject.id}",
-        e,
-        stackTrace,
-      );
-      if (mounted) {
-        showErrorStatus('Error saving new point order: ${e.toString()}');
-      }
-      // If DB update fails, revert the list in UI to previous state (reload from DB)
-      await _loadPoints();
-    }
-  }
-
-  /// Creates a backup of the current points list for undo functionality
-  void createBackup() {
-    if (_originalPointsBackup == null) {
-      _originalPointsBackup = List.from(context.projectState.currentPoints);
-      _hasUnsavedChanges = true;
-      logger.info(
-        "Created backup of ${_originalPointsBackup!.length} points for undo",
-      );
-    }
-  }
-
-  /// Restores the original points list and clears the backup
-  Future<void> undoChanges() async {
-    if (_originalPointsBackup != null) {
-      logger.info(
-        "Undoing changes - restoring ${_originalPointsBackup!.length} points",
-      );
-
-      final projectState = Provider.of<ProjectStateManager>(context, listen: false);
-      final currentProject = projectState.currentProject ?? widget.project;
-
-      // Restore the original points in the database
-      final db = await _dbHelper.database;
-      await db.transaction((txn) async {
-        // Clear all current points for this project
-        await txn.delete(
-          'points',
-          where: 'project_id = ?',
-          whereArgs: [currentProject.id],
-        );
-
-        // Insert the original points back
-        for (int i = 0; i < _originalPointsBackup!.length; i++) {
-          final point = _originalPointsBackup![i];
-          await txn.insert(
-            'points',
-            point.toMap(),
-            conflictAlgorithm: ConflictAlgorithm.replace,
-          );
-        }
-
         // Update project start/end points
+        final projectState = Provider.of<ProjectStateManager>(context, listen: false);
+        final currentProject = projectState.currentProject ?? widget.project;
         await _dbHelper.updateProjectStartEndPoints(
           currentProject.id!,
           txn: txn,
@@ -320,31 +227,35 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       });
 
       // Refresh global state
+      final projectState = Provider.of<ProjectStateManager>(context, listen: false);
       await projectState.refreshPoints();
 
-      setState(() {
-        _hasUnsavedChanges = false;
-      });
-
-      // Clear the backup
-      _originalPointsBackup = null;
-
-      logger.info("Changes undone successfully");
+      logger.info("Successfully updated point ordinals in database");
+    } catch (e, stackTrace) {
+      logger.severe("Error updating point ordinals in database", e, stackTrace);
+      showErrorStatus('Error updating point order: ${e.toString()}');
+      rethrow;
     }
   }
 
-  /// Clears the backup when project is saved
+  /// Public method to access backup functionality from parent
+  void createBackup() {
+    context.projectState.createPointsBackup();
+  }
+
+  /// Public method to access undo functionality from parent
+  Future<void> undoChanges() async {
+    await context.projectState.undoPointsChanges();
+  }
+
+  /// Public method to access clear backup functionality from parent
   void clearBackup() {
-    if (_originalPointsBackup != null) {
-      _originalPointsBackup = null;
-      _hasUnsavedChanges = false;
-      logger.info("Cleared backup after project save");
-    }
+    context.projectState.clearPointsBackup();
   }
 
-  /// Public method to clear backup when project is saved
+  /// Public method to access onProjectSaved functionality from parent
   void onProjectSaved() {
-    clearBackup();
+    context.projectState.clearPointsBackup();
   }
 
   // --- Action Bar for Normal and Selection Mode ---
