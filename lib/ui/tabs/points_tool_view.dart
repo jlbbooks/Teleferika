@@ -9,12 +9,14 @@ import 'package:teleferika/ui/widgets/status_indicator.dart';
 
 class PointsToolView extends StatefulWidget {
   final ProjectModel project;
-  final VoidCallback? onPointsChanged; // Callback for when points are modified
+  final Function()? onPointsChanged; // Callback for when points list changes
+  final Function(ProjectModel, {bool hasUnsavedChanges})? onProjectChanged; // Callback for when project data changes
 
   const PointsToolView({
     super.key,
     required this.project,
-    this.onPointsChanged, // Add to constructor
+    this.onPointsChanged,
+    this.onProjectChanged, // Add callback for project changes
   });
 
   @override
@@ -26,6 +28,9 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
   List<PointModel> _points = []; // Holds the current list of points
   Future<void>? _loadPointsFuture; // To manage the initial loading state
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  
+  // Local project state to manage independently from parent
+  late ProjectModel _currentProject;
 
   // --- State for Selection Mode ---
   bool _isSelectionMode = false;
@@ -35,6 +40,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
   @override
   void initState() {
     super.initState();
+    _currentProject = widget.project; // Initialize with the passed project
     _loadPointsFuture =
         _loadPoints(); // Initialize the future for FutureBuilder
   }
@@ -42,6 +48,20 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
   @override
   void didUpdateWidget(covariant PointsToolView oldWidget) {
     super.didUpdateWidget(oldWidget);
+    
+    // Only update local project if the project ID changes (different project)
+    // Don't update if just start/end points change, as we manage those locally
+    if (widget.project.id != oldWidget.project.id) {
+      logger.info("Project ID changed, updating local project state");
+      setState(() {
+        _currentProject = widget.project;
+      });
+    } else if (widget.project.startingPointId != oldWidget.project.startingPointId ||
+               widget.project.endingPointId != oldWidget.project.endingPointId) {
+      logger.info("Parent project start/end points changed, but keeping local state");
+      logger.info("Parent: start=${widget.project.startingPointId}, end=${widget.project.endingPointId}");
+      logger.info("Local: start=${_currentProject.startingPointId}, end=${_currentProject.endingPointId}");
+    }
   }
 
   // @override
@@ -192,16 +212,23 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
 
     try {
       final db = await _dbHelper.database;
+      
+      // Single transaction: Update ordinals based on the reordered points AND update start/end points
       await db.transaction((txn) async {
-        for (PointModel pointToUpdate in pointsToUpdate) {
+        // First: Update ordinals based on the actual reordered points
+        for (int i = 0; i < pointsToUpdate.length; i++) {
+          final point = pointsToUpdate[i];
+          logger.info("Updating point ${point.id} to ordinal $i");
           await txn.update(
             PointModel.tableName,
-            {PointModel.columnOrdinalNumber: pointToUpdate.ordinalNumber},
+            {PointModel.columnOrdinalNumber: i},
             where: '${PointModel.columnId} = ?',
-            whereArgs: [pointToUpdate.id],
+            whereArgs: [point.id],
           );
         }
-        // After updating all point ordinals, update the project's start and end points
+        
+        // Second: Update start/end points within the SAME transaction
+        // This ensures it sees the updated ordinals
         await _dbHelper.updateProjectStartEndPoints(
           widget.project.id!,
           txn: txn,
@@ -211,6 +238,10 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       logger.info(
         "Successfully updated ordinals and project start/end points after reorder.",
       );
+      
+      // Refresh project data to get updated start/end point IDs
+      await _refreshProjectData();
+      
       widget.onPointsChanged?.call(); // Notify parent
     } catch (e, stackTrace) {
       logger.severe(
@@ -224,6 +255,30 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       // If DB update fails, revert the list in UI to previous state (reload from DB)
       await _loadPoints();
       widget.onPointsChanged?.call(); // Notify parent even on error
+    }
+  }
+
+  /// Refreshes project data from the database and updates local state
+  Future<void> _refreshProjectData() async {
+    try {
+      // Load updated project data
+      final updatedProject = await _dbHelper.getProjectById(widget.project.id!);
+      if (updatedProject != null && mounted) {
+        logger.info("Refreshing project data - Old start: ${_currentProject.startingPointId}, end: ${_currentProject.endingPointId}");
+        logger.info("Refreshing project data - New start: ${updatedProject.startingPointId}, end: ${updatedProject.endingPointId}");
+        
+        setState(() {
+          _currentProject = updatedProject;
+        });
+        
+        // Notify parent of project changes with unsaved changes flag
+        logger.info("Calling onProjectChanged callback with hasUnsavedChanges: true");
+        logger.info("onProjectChanged callback is null: ${widget.onProjectChanged == null}");
+        widget.onProjectChanged?.call(updatedProject, hasUnsavedChanges: true);
+        logger.info("onProjectChanged callback called successfully");
+      }
+    } catch (e, stackTrace) {
+      logger.severe("Error refreshing project data after reorder", e, stackTrace);
     }
   }
 
@@ -330,6 +385,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       }
       _clearSelection();
       await _loadPoints(); // Reload points to reflect deletions and re-sequencing
+      await _refreshProjectData(); // Also refresh project data
       widget.onPointsChanged?.call(); // Notify parent after deletion
     } catch (error, stackTrace) {
       logger.severe('Error deleting points', error, stackTrace);
@@ -343,6 +399,11 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
 
   /// Builds a single point item Card for the ListView.
   Widget _buildPointItem(BuildContext context, PointModel point, int index) {
+    // Debug: Log current project state for first few points
+    if (index < 3) {
+      logger.fine("Building point $index (${point.id}) - Project start: ${_currentProject.startingPointId}, end: ${_currentProject.endingPointId}");
+    }
+    
     // index needed for Key
     final bool isSelectedForDelete = _selectedPointIds.contains(point.id);
     final Color baseSelectionColor = Theme.of(context).primaryColorLight;
@@ -350,9 +411,15 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
 
     // --- Determine if it's a start or end point ---
     final bool isProjectStartPoint =
-        point.id != null && point.id == widget.project.startingPointId;
+        point.id != null && point.id == _currentProject.startingPointId;
     final bool isProjectEndPoint =
-        point.id != null && point.id == widget.project.endingPointId;
+        point.id != null && point.id == _currentProject.endingPointId;
+    
+    // Debug logging for start/end point detection
+    if (point.id != null && (isProjectStartPoint || isProjectEndPoint)) {
+      logger.fine("Point ${point.id} (${point.name}) - Start: $isProjectStartPoint, End: $isProjectEndPoint");
+      logger.fine("Current project start: ${_currentProject.startingPointId}, end: ${_currentProject.endingPointId}");
+    }
     String? specialRoleText;
     Color? specialRoleColor;
     Color cardHighlightColor = Theme.of(context).cardColor; // Default
@@ -507,11 +574,9 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
           logger.info(
             "PointDetailsPage returned action: $action. Refreshing points list.",
           );
-          // Refresh the points list
-          // You might have a more specific way to update if 'updated' returns the point
-          // For simplicity, just refresh the whole list for now.
-          // TODO: only act on the updated point
-          _loadPoints();
+          // Refresh both points and project data
+          await _loadPoints();
+          await _refreshProjectData();
           // Optionally, if you want to notify the overall project page too:
           widget.onPointsChanged?.call();
         }

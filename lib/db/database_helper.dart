@@ -1,6 +1,7 @@
 // database_helper.dart
 import 'dart:io';
 
+import 'package:logging/logging.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
@@ -14,11 +15,13 @@ import 'models/project_model.dart';
 class DatabaseHelper {
   static const _databaseName = "Photogrammetry.db";
 
-  static const _databaseVersion = 9; // Incremented due to schema change and presumed_total_length
+  static const _databaseVersion =
+      9; // Incremented due to schema change and presumed_total_length
 
   DatabaseHelper._privateConstructor();
   static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
   static Database? _database;
+  final Logger logger = Logger('DatabaseHelper');
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -522,6 +525,8 @@ class DatabaseHelper {
     String projectId, {
     Transaction? txn,
   }) async {
+    logger.info("updateProjectStartEndPoints called for project $projectId");
+
     final dbOrTxn =
         txn ?? await instance.database; // Use transaction if provided
 
@@ -536,6 +541,16 @@ class DatabaseHelper {
       orderBy: '${PointModel.columnOrdinalNumber} ASC',
     );
 
+    logger.info("Found ${pointsMaps.length} points for project $projectId");
+    
+    // Log each point with its ordinal for debugging
+    for (int i = 0; i < pointsMaps.length; i++) {
+      final point = pointsMaps[i];
+      final pointId = point[PointModel.columnId] as String;
+      final ordinal = point[PointModel.columnOrdinalNumber] as int;
+      logger.info("Point $i: ID=$pointId, Ordinal=$ordinal");
+    }
+
     String? newStartingPointId;
     String? newEndingPointId;
 
@@ -546,6 +561,10 @@ class DatabaseHelper {
       newEndingPointId =
           pointsMaps.last[PointModel.columnId]
               as String?; // Last point (highest ordinal)
+
+      logger.info(
+        "Calculated new start/end points - Start: $newStartingPointId, End: $newEndingPointId",
+      );
     }
     // If pointsMaps is empty, both will remain null, effectively clearing them.
 
@@ -567,9 +586,16 @@ class DatabaseHelper {
               as String?;
       final currentEndId =
           currentProjectMaps.first[ProjectModel.columnEndingPointId] as String?;
+      
+      logger.info("Current project start/end - Start: $currentStartId, End: $currentEndId");
+      logger.info("New calculated start/end - Start: $newStartingPointId, End: $newEndingPointId");
+      
       if (currentStartId != newStartingPointId ||
           currentEndId != newEndingPointId) {
         needsUpdate = true;
+        logger.info("Start/end points need update: currentStartId=$currentStartId, newStartingPointId=$newStartingPointId, currentEndId=$currentEndId, newEndingPointId=$newEndingPointId");
+      } else {
+        logger.info("Start/end points are the same, no update needed");
       }
     } else {
       // Project not found, should not happen if projectId is valid
@@ -707,63 +733,24 @@ class DatabaseHelper {
 
     // Use a transaction to ensure atomicity
     await db.transaction((txn) async {
-      // 1. Get the point's details BEFORE deleting
-      PointModel? pointToDelete = await _getPointByIdWithTransaction(
-        txn,
+      count = await ordinalManager.deletePointAndResequence(
         pointIdToDelete,
-      );
-
-      if (pointToDelete == null) {
-        logger.warning(
-          "Point with ID $pointIdToDelete not found for deletion.",
-        );
-        return; // Exit transaction if point not found
-      }
-
-      String projectId = pointToDelete.projectId;
-      int deletedOrdinal = pointToDelete.ordinalNumber;
-
-      // 2. Delete the point
-      count = await txn.delete(
-        PointModel.tableName,
-        where: '${PointModel.columnId} = ?',
-        whereArgs: [pointIdToDelete],
+        txn: txn,
       );
 
       if (count > 0) {
-        // 3. Decrement ordinal numbers of subsequent points in the same project
-        await txn.rawUpdate(
-          '''
-        UPDATE ${PointModel.tableName}
-        SET ${PointModel.columnOrdinalNumber} = ${PointModel.columnOrdinalNumber} - 1
-        WHERE ${PointModel.columnProjectId} = ? AND ${PointModel.columnOrdinalNumber} > ?
-        ''',
-          [projectId, deletedOrdinal],
+        // Get the project ID to update start/end points
+        final point = await ordinalManager.getPointByIdWithTxn(
+          txn,
+          pointIdToDelete,
         );
-        logger.info(
-          "Point ID $pointIdToDelete (Ordinal $deletedOrdinal, Project $projectId) deleted and ordinals re-sequenced.",
-        );
-        // AFTER re-sequencing, update the project's start and end points
-        await updateProjectStartEndPoints(projectId, txn: txn);
+        if (point != null) {
+          // AFTER re-sequencing, update the project's start and end points
+          await updateProjectStartEndPoints(point.projectId, txn: txn);
+        }
       }
     });
     return count;
-  }
-
-  /// Helper to get a point by ID within a transaction.
-  Future<PointModel?> _getPointByIdWithTransaction(
-    Transaction txn,
-    String id,
-  ) async {
-    final List<Map<String, dynamic>> maps = await txn.query(
-      PointModel.tableName,
-      where: '${PointModel.columnId} = ?',
-      whereArgs: [id],
-    );
-    if (maps.isNotEmpty) {
-      return PointModel.fromMap(maps.first);
-    }
-    return null;
   }
 
   // getPointById without transaction (for external use)
@@ -783,22 +770,8 @@ class DatabaseHelper {
   }
 
   Future<int?> getLastPointOrdinal(String projectId) async {
-    final db = await instance.database;
-    final List<Map<String, dynamic>> result = await db.query(
-      PointModel.tableName,
-      columns: [
-        'MAX(${PointModel.columnOrdinalNumber}) as max_ordinal',
-      ], // Use constant
-      where: '${PointModel.columnProjectId} = ?', // Use constant
-      whereArgs: [projectId],
-    );
-
-    if (result.isNotEmpty && result.first['max_ordinal'] != null) {
-      return result.first['max_ordinal'] as int?;
-    }
-    return null;
+    return await ordinalManager.getLastPointOrdinal(projectId);
   }
-  // --- End Point Methods ---
 
   // --- Image Methods ---
   Future<String> insertImage(ImageModel image) async {
@@ -928,7 +901,7 @@ class DatabaseHelper {
       // 1. Collect all points to be deleted to find affected project IDs
       List<PointModel> pointsToDelete = [];
       for (String id in ids) {
-        PointModel? p = await _getPointByIdWithTransaction(txn, id);
+        PointModel? p = await ordinalManager.getPointByIdWithTxn(txn, id);
         if (p != null) {
           pointsToDelete.add(p);
         }
@@ -956,33 +929,9 @@ class DatabaseHelper {
       );
 
       if (totalDeletedCount > 0) {
-        // 4. For each affected project, re-sequence the remaining points
+        // 4. For each affected project, re-sequence the remaining points using OrdinalManager
         for (String projectId in pointsByProject.keys) {
-          final List<Map<String, dynamic>>
-          remainingPointsMaps = await txn.query(
-            PointModel.tableName,
-            where: '${PointModel.columnProjectId} = ?',
-            whereArgs: [projectId],
-            orderBy:
-                '${PointModel.columnOrdinalNumber} ASC', // Order by current (potentially gappy) ordinal
-          );
-
-          List<PointModel> remainingPoints = remainingPointsMaps
-              .map((map) => PointModel.fromMap(map))
-              .toList();
-
-          // Re-assign ordinal numbers
-          for (int i = 0; i < remainingPoints.length; i++) {
-            if (remainingPoints[i].ordinalNumber != i) {
-              // Only update if necessary
-              await txn.update(
-                PointModel.tableName,
-                {PointModel.columnOrdinalNumber: i},
-                where: '${PointModel.columnId} = ?',
-                whereArgs: [remainingPoints[i].id],
-              );
-            }
-          }
+          await ordinalManager.resequenceProjectOrdinals(projectId, txn: txn);
           logger.info("Re-sequenced ordinals for project ID $projectId.");
           // AFTER re-sequencing for this project, update its start and end points
           await updateProjectStartEndPoints(projectId, txn: txn);
@@ -1037,5 +986,221 @@ class DatabaseHelper {
   Future close() async {
     final db = await instance.database;
     db.close();
+  }
+
+  /// Get the OrdinalManager instance for this database helper
+  OrdinalManager get ordinalManager => OrdinalManager(this);
+}
+
+/// Centralized ordinal number management for points within projects.
+/// This class provides consistent methods for handling ordinal numbers
+/// and reduces code duplication across the application.
+class OrdinalManager {
+  final DatabaseHelper _dbHelper;
+
+  OrdinalManager(this._dbHelper);
+
+  /// Gets the next available ordinal number for a project.
+  /// Returns 0 if no points exist, otherwise returns max + 1.
+  Future<int> getNextOrdinal(String projectId) async {
+    final lastOrdinal = await getLastPointOrdinal(projectId);
+    return (lastOrdinal ?? -1) + 1;
+  }
+
+  /// Gets the last (maximum) ordinal number for a project.
+  /// Returns null if no points exist.
+  Future<int?> getLastPointOrdinal(String projectId) async {
+    final db = await DatabaseHelper.instance.database;
+    final List<Map<String, dynamic>> result = await db.query(
+      PointModel.tableName,
+      columns: ['MAX(${PointModel.columnOrdinalNumber}) as max_ordinal'],
+      where: '${PointModel.columnProjectId} = ?',
+      whereArgs: [projectId],
+    );
+
+    if (result.isNotEmpty && result.first['max_ordinal'] != null) {
+      return result.first['max_ordinal'] as int?;
+    }
+    return null;
+  }
+
+  /// Re-sequences all points in a project to have consecutive ordinals starting from 0.
+  /// This is useful after bulk operations or when ordinals become inconsistent.
+  Future<void> resequenceProjectOrdinals(
+    String projectId, {
+    dynamic txn,
+  }) async {
+    logger.info("resequenceProjectOrdinals called for project $projectId");
+
+    final db = await DatabaseHelper.instance.database;
+    final dbOrTxn = txn ?? db;
+
+    final List<Map<String, dynamic>> pointsMaps = await dbOrTxn.query(
+      PointModel.tableName,
+      where: '${PointModel.columnProjectId} = ?',
+      whereArgs: [projectId],
+      orderBy: '${PointModel.columnOrdinalNumber} ASC',
+    );
+
+    logger.info("Found ${pointsMaps.length} points to resequence");
+    
+    // Log the current state before resequencing
+    logger.info("Current ordinals before resequencing:");
+    for (int i = 0; i < pointsMaps.length; i++) {
+      final point = pointsMaps[i];
+      final pointId = point[PointModel.columnId] as String;
+      final ordinal = point[PointModel.columnOrdinalNumber] as int;
+      logger.info("  Point $i: ID=$pointId, Current Ordinal=$ordinal");
+    }
+
+    // Update ordinals to be consecutive starting from 0
+    for (int i = 0; i < pointsMaps.length; i++) {
+      final pointId = pointsMaps[i][PointModel.columnId] as String;
+      final currentOrdinal =
+          pointsMaps[i][PointModel.columnOrdinalNumber] as int;
+
+      if (currentOrdinal != i) {
+        logger.info(
+          "Updating point $pointId ordinal from $currentOrdinal to $i",
+        );
+        await dbOrTxn.update(
+          PointModel.tableName,
+          {PointModel.columnOrdinalNumber: i},
+          where: '${PointModel.columnId} = ?',
+          whereArgs: [pointId],
+        );
+      } else {
+        logger.info("Point $pointId already has correct ordinal $i, no update needed");
+      }
+    }
+
+    logger.info("Finished resequencing project $projectId");
+  }
+
+  /// Inserts a point at a specific ordinal position, shifting existing points as needed.
+  /// If ordinal is null, appends to the end.
+  Future<void> insertPointAtOrdinal(
+    PointModel point,
+    int? ordinal, {
+    dynamic txn,
+  }) async {
+    final db = await DatabaseHelper.instance.database;
+    final dbOrTxn = txn ?? db;
+
+    if (ordinal == null) {
+      // Append to end
+      final nextOrdinal = await getNextOrdinal(point.projectId);
+      final pointWithOrdinal = point.copyWith(ordinalNumber: nextOrdinal);
+      await dbOrTxn.insert(
+        PointModel.tableName,
+        pointWithOrdinal.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    } else {
+      // Insert at specific position, shifting others
+      await dbOrTxn.rawUpdate(
+        '''
+        UPDATE ${PointModel.tableName}
+        SET ${PointModel.columnOrdinalNumber} = ${PointModel.columnOrdinalNumber} + 1
+        WHERE ${PointModel.columnProjectId} = ? AND ${PointModel.columnOrdinalNumber} >= ?
+        ''',
+        [point.projectId, ordinal],
+      );
+
+      final pointWithOrdinal = point.copyWith(ordinalNumber: ordinal);
+      await dbOrTxn.insert(
+        PointModel.tableName,
+        pointWithOrdinal.toMap(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+  }
+
+  /// Handles the complex case of inserting a point before the end point.
+  /// This method manages the ordinal shifting when inserting a point that should
+  /// become the new end point, moving the current end point to a new ordinal.
+  Future<void> insertPointBeforeEndPoint(
+    PointModel newPoint,
+    String currentEndPointId, {
+    dynamic txn,
+  }) async {
+    final db = await DatabaseHelper.instance.database;
+    final dbOrTxn = txn ?? db;
+
+    // Get the current end point
+    final currentEndPoint = await _getPointByIdWithTransaction(
+      dbOrTxn,
+      currentEndPointId,
+    );
+    if (currentEndPoint == null) {
+      // If end point not found, just append to end
+      await insertPointAtOrdinal(newPoint, null, txn: dbOrTxn);
+      return;
+    }
+
+    final endPointOrdinal = currentEndPoint.ordinalNumber;
+
+    // Shift the current end point to the next available ordinal
+    final nextOrdinal = await getNextOrdinal(newPoint.projectId);
+    await dbOrTxn.update(
+      PointModel.tableName,
+      {PointModel.columnOrdinalNumber: nextOrdinal},
+      where: '${PointModel.columnId} = ?',
+      whereArgs: [currentEndPointId],
+    );
+
+    // Insert the new point at the end point's original position
+    final pointWithOrdinal = newPoint.copyWith(ordinalNumber: endPointOrdinal);
+    await dbOrTxn.insert(
+      PointModel.tableName,
+      pointWithOrdinal.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  /// Helper to get a point by ID within a transaction.
+  Future<PointModel?> _getPointByIdWithTransaction(
+    dynamic txn,
+    String id,
+  ) async {
+    final List<Map<String, dynamic>> maps = await txn.query(
+      PointModel.tableName,
+      where: '${PointModel.columnId} = ?',
+      whereArgs: [id],
+    );
+    if (maps.isNotEmpty) {
+      return PointModel.fromMap(maps.first);
+    }
+    return null;
+  }
+
+  /// Public method to get a point by ID within a transaction.
+  Future<PointModel?> getPointByIdWithTxn(dynamic txn, String id) async {
+    return await _getPointByIdWithTransaction(txn, id);
+  }
+
+  /// Deletes a point and re-sequences remaining points.
+  /// This is more efficient than the current approach for single point deletion.
+  Future<int> deletePointAndResequence(String pointId, {dynamic txn}) async {
+    final db = await DatabaseHelper.instance.database;
+    final dbOrTxn = txn ?? db;
+
+    // Get point details before deletion
+    final point = await this._getPointByIdWithTransaction(dbOrTxn, pointId);
+    if (point == null) return 0;
+
+    // Delete the point
+    final count = await dbOrTxn.delete(
+      PointModel.tableName,
+      where: '${PointModel.columnId} = ?',
+      whereArgs: [pointId],
+    );
+
+    if (count > 0) {
+      // Re-sequence remaining points
+      await resequenceProjectOrdinals(point.projectId, txn: dbOrTxn);
+    }
+
+    return count;
   }
 }

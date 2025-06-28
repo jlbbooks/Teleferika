@@ -220,10 +220,13 @@ class _ProjectPageState extends State<ProjectPage>
     ProjectModel updated, {
     bool hasUnsavedChanges = false,
   }) {
+    logger.info("_onProjectDetailsChanged called with hasUnsavedChanges: $hasUnsavedChanges");
+    logger.info("Previous _hasUnsavedChanges: $_hasUnsavedChanges");
     setState(() {
       _currentProject = updated;
       _hasUnsavedChanges = hasUnsavedChanges;
     });
+    logger.info("New _hasUnsavedChanges: $_hasUnsavedChanges");
   }
 
   void _handleOnPopInvokedWithResult(bool didPop, Object? result) async {
@@ -461,8 +464,7 @@ class _ProjectPageState extends State<ProjectPage>
   }
 
   Future<int> _getNextOrdinalNumber(String projectId) async {
-    final lastOrdinal = await _dbHelper.getLastPointOrdinal(projectId);
-    return (lastOrdinal ?? -1) + 1;
+    return await _dbHelper.ordinalManager.getNextOrdinal(projectId);
   }
 
   Future<void> _initiateAddPointFromCompass(
@@ -481,53 +483,55 @@ class _ProjectPageState extends State<ProjectPage>
     }
     showLoadingStatus(S.of(context)!.infoFetchingLocation);
 
-    PointModel? currentEndPointModel;
-    int? originalEndPointOrdinal;
-    int newPointOrdinal;
     try {
       final position = await _determinePosition();
-      if (!addAsEndPoint && _currentProject.endingPointId != null) {
-        currentEndPointModel = await _dbHelper.getPointById(
-          _currentProject.endingPointId!,
-        );
-        if (currentEndPointModel != null) {
-          originalEndPointOrdinal = currentEndPointModel.ordinalNumber;
-          newPointOrdinal = originalEndPointOrdinal;
-          final int newOrdinalForOldEndPoint = await _getNextOrdinalNumber(
-            _currentProject.id,
-          );
-          PointModel updatedOldEndPoint = currentEndPointModel.copyWith(
-            ordinalNumber: newOrdinalForOldEndPoint,
-          );
-          await _dbHelper.updatePoint(updatedOldEndPoint);
-          logger.info(
-            "Old end point (ID: ${currentEndPointModel.id})'s ordinal shifted from $originalEndPointOrdinal to $newOrdinalForOldEndPoint.",
-          );
-        } else {
-          logger.warning(
-            "Project's endingPointId ${_currentProject.endingPointId} not found in DB. Proceeding as if no end point.",
-          );
-          newPointOrdinal = await _getNextOrdinalNumber(_currentProject.id);
-        }
-      } else {
-        newPointOrdinal = await _getNextOrdinalNumber(_currentProject.id);
-      }
       final pointFromCompass = PointModel(
         projectId: _currentProject.id,
         latitude: position.latitude,
         longitude: position.longitude,
         altitude: position.altitude,
-        ordinalNumber: newPointOrdinal,
+        ordinalNumber: 0, // Will be set by OrdinalManager
         note: S
             .of(context)!
             .pointFromCompassDefaultNote(heading.toStringAsFixed(1)),
       );
-      final newPointIdFromCompass = await _dbHelper.insertPoint(
-        pointFromCompass,
-      );
+
+      String newPointIdFromCompass;
+      
+      // Use OrdinalManager to handle the complex ordinal logic
+      if (!addAsEndPoint && _currentProject.endingPointId != null) {
+        // Insert before end point
+        await _dbHelper.ordinalManager.insertPointBeforeEndPoint(
+          pointFromCompass,
+          _currentProject.endingPointId!,
+        );
+        // Get the inserted point ID (we need to query for it)
+        final points = await _dbHelper.getPointsForProject(_currentProject.id);
+        final insertedPoint = points.firstWhere(
+          (p) => p.latitude == position.latitude && 
+                 p.longitude == position.longitude &&
+                 p.note == pointFromCompass.note,
+          orElse: () => throw Exception('Inserted point not found'),
+        );
+        newPointIdFromCompass = insertedPoint.id;
+      } else {
+        // Append to end
+        await _dbHelper.ordinalManager.insertPointAtOrdinal(pointFromCompass, null);
+        // Get the inserted point ID
+        final points = await _dbHelper.getPointsForProject(_currentProject.id);
+        final insertedPoint = points.firstWhere(
+          (p) => p.latitude == position.latitude && 
+                 p.longitude == position.longitude &&
+                 p.note == pointFromCompass.note,
+          orElse: () => throw Exception('Inserted point not found'),
+        );
+        newPointIdFromCompass = insertedPoint.id;
+      }
+
       logger.info(
-        'Point added via Compass: ID $newPointIdFromCompass, Lat: ${position.latitude}, Lon: ${position.longitude}, Heading used for note: $heading, Ordinal: ${pointFromCompass.ordinalNumber}',
+        'Point added via Compass: ID $newPointIdFromCompass, Lat: ${position.latitude}, Lon: ${position.longitude}, Heading used for note: $heading',
       );
+      
       if (addAsEndPoint) {
         ProjectModel projectToUpdate = _currentProject.copyWith(
           endingPointId: newPointIdFromCompass,
@@ -537,19 +541,22 @@ class _ProjectPageState extends State<ProjectPage>
           "New point ID $newPointIdFromCompass set as the END point for project ${_currentProject.id}.",
         );
       }
+      
       await _dbHelper.updateProjectStartEndPoints(_currentProject.id);
       await _loadProjectDetails();
+      
       if (mounted) {
         hideStatus();
+        // Get the final point to get the correct ordinal
+        final finalPoint = await _dbHelper.getPointById(newPointIdFromCompass);
         String baseMessage = S
             .of(context)!
-            .pointAddedSnackbar(pointFromCompass.ordinalNumber.toString());
+            .pointAddedSnackbar(finalPoint?.ordinalNumber.toString() ?? '?');
         String suffix = "";
         if (addAsEndPoint == true) {
           suffix = " ${S.of(context)!.pointAddedSetAsEndSnackbarSuffix}";
-        } else if (currentEndPointModel != null) {
-          suffix =
-              " ${S.of(context)!.pointAddedInsertedBeforeEndSnackbarSuffix}";
+        } else if (_currentProject.endingPointId != null) {
+          suffix = " ${S.of(context)!.pointAddedInsertedBeforeEndSnackbarSuffix}";
         }
         showSuccessStatus(baseMessage + suffix);
       }
@@ -599,6 +606,11 @@ class _ProjectPageState extends State<ProjectPage>
                   _currentProject.points,
                 );
               });
+            }
+          },
+          onProjectChanged: (ProjectModel updatedProject, {bool hasUnsavedChanges = false}) {
+            if (mounted) {
+              _onProjectDetailsChanged(updatedProject, hasUnsavedChanges: hasUnsavedChanges);
             }
           },
         ),
@@ -656,10 +668,10 @@ class _ProjectPageState extends State<ProjectPage>
           onPressed: _isLoading ? null : _handleExport,
           tooltip: s?.export_project_tooltip ?? 'Export Project',
         ),
-      if (_tabController.index == ProjectPageTab.details.index)
+      if (_hasUnsavedChanges)
         IconButton(
           icon: Icon(Icons.save, color: saveButtonColor),
-          onPressed: _isLoading || !_hasUnsavedChanges
+          onPressed: _isLoading
               ? null
               : () async {
                   await _saveProject(_currentProject);

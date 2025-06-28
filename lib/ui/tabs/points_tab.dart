@@ -5,12 +5,14 @@ import 'points_tool_view.dart';
 
 class PointsTab extends StatefulWidget {
   final ProjectModel project;
-  final VoidCallback onPointsChanged;
+  final Function()? onPointsChanged;
+  final Function(ProjectModel, {bool hasUnsavedChanges})? onProjectChanged;
 
   const PointsTab({
     super.key,
     required this.project,
-    required this.onPointsChanged,
+    this.onPointsChanged,
+    this.onProjectChanged,
   });
 
   @override
@@ -27,6 +29,7 @@ class _PointsTabState extends State<PointsTab> {
       // key: _pointsToolViewKey, // Only if you need to call refreshPoints() from parent
       project: widget.project,
       onPointsChanged: widget.onPointsChanged,
+      onProjectChanged: widget.onProjectChanged,
     );
   }
 }
