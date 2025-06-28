@@ -4,6 +4,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_compass/flutter_map_compass.dart';
+import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:teleferika/core/logger.dart';
@@ -55,7 +57,10 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
 
   // New point functionality
   PointModel? _newPoint; // The unsaved new point
-  bool _isAddingNewPoint = false; // Whether we're in the process of adding a new point
+  bool _isAddingNewPoint =
+      false; // Whether we're in the process of adding a new point
+  bool _skipNextFitToPoints = false; // Flag to skip automatic fitting after saving new point
+  bool _isExternalRefresh = false; // Flag to prevent callback loops during external refresh
 
   // Data from controller
   List<PointModel> _projectPoints = [];
@@ -70,6 +75,10 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
 
   // Animation timer
   Timer? _glowAnimationTimer;
+
+  // Location stream for CurrentLocationLayer
+  final StreamController<LocationMarkerPosition> _locationStreamController =
+      StreamController<LocationMarkerPosition>.broadcast();
 
   @override
   void initState() {
@@ -88,10 +97,14 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       _loadProjectPoints();
     } else if (widget.project.azimuth != oldWidget.project.azimuth) {
       _recalculateAndDrawLines();
-    } else if (widget.project.startingPointId != oldWidget.project.startingPointId ||
-               widget.project.endingPointId != oldWidget.project.endingPointId) {
+    } else if (widget.project.startingPointId !=
+            oldWidget.project.startingPointId ||
+        widget.project.endingPointId != oldWidget.project.endingPointId) {
       // Project start/end points changed, reload points to get updated data
-      _loadProjectPoints();
+      // But skip if we're in the middle of saving a new point
+      if (!_skipNextFitToPoints) {
+        _loadProjectPoints();
+      }
     }
 
     if (widget.selectedPointId != oldWidget.selectedPointId) {
@@ -105,6 +118,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   @override
   void dispose() {
     _glowAnimationTimer?.cancel();
+    _locationStreamController.close();
     _controller.dispose();
     _mapController.dispose();
     super.dispose();
@@ -172,6 +186,15 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           setState(() {
             _currentPosition = position;
           });
+
+          // Send location data to CurrentLocationLayer
+          _locationStreamController.add(
+            LocationMarkerPosition(
+              latitude: position.latitude,
+              longitude: position.longitude,
+              accuracy: position.accuracy,
+            ),
+          );
         }
       },
       (error, [stackTrace]) {
@@ -197,6 +220,17 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           setState(() {
             _currentDeviceHeading = heading;
           });
+
+          // Update location marker with new heading if we have a current position
+          if (_currentPosition != null) {
+            _locationStreamController.add(
+              LocationMarkerPosition(
+                latitude: _currentPosition!.latitude,
+                longitude: _currentPosition!.longitude,
+                accuracy: _currentPosition!.accuracy,
+              ),
+            );
+          }
         }
       },
       (error, [stackTrace]) {
@@ -221,19 +255,28 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     });
 
     try {
-      final points = await _controller.loadProjectPoints();
-
-      if (mounted) {
-        setState(() {
-          _projectPoints = points;
-          _isLoadingPoints = false;
-          _recalculateAndDrawLines();
-        });
-        widget.onPointsChanged?.call();
-      }
-      if (_isMapReady) {
-        _fitMapToPoints();
-      }
+      await _controller.loadProjectPointsWithFitting(
+        skipNextFitToPoints: _skipNextFitToPoints,
+        onPointsLoaded: (points) {
+          if (mounted) {
+            setState(() {
+              _projectPoints = points;
+              _isLoadingPoints = false;
+            });
+          }
+        },
+        onPointsChanged: () {
+          // Only call the callback if this is not an external refresh
+          if (!_isExternalRefresh) {
+            widget.onPointsChanged?.call();
+          }
+        },
+        recalculateAndDrawLines: _recalculateAndDrawLines,
+        fitMapToPoints: _fitMapToPoints,
+        isMapReady: _isMapReady,
+      );
+      
+      _skipNextFitToPoints = false; // Reset the flag
     } catch (e, stackTrace) {
       logger.severe("MapToolView: Error loading points for map", e, stackTrace);
       if (mounted) {
@@ -279,6 +322,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     });
 
     try {
+      // Set flag to skip automatic fitting after moving point
+      _skipNextFitToPoints = true;
+
       int result = await _controller.movePoint(pointToMove, newPosition);
 
       if (!mounted) return;
@@ -450,13 +496,13 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     }
 
     _updateSelectedPointInstance();
-    
+
     // Combine project points with new point if it exists
     final allPoints = [..._projectPoints];
     if (_newPoint != null) {
       allPoints.add(_newPoint!);
     }
-    
+
     final List<Marker> allMapMarkers = MapMarkers.buildAllMapMarkers(
       projectPoints: allPoints,
       selectedPointId: _selectedPointId,
@@ -560,7 +606,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         _selectedPointInstance = _newPoint;
         return;
       }
-      
+
       // Then check in project points
       if (_projectPoints.isNotEmpty) {
         try {
@@ -620,6 +666,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       options: MapOptions(
         initialCenter: initialMapCenter,
         initialZoom: initialMapZoom,
+        keepAlive: true,
         onTap: (tapPosition, latlng) {
           if (_isMovePointMode) {
             if (_selectedPointId != null) {
@@ -684,6 +731,21 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
             ),
           ],
         ),
+        const MapCompass.cupertino(hideIfRotatedNorth: true),
+        CurrentLocationLayer(
+          style: LocationMarkerStyle(
+            marker: const DefaultLocationMarker(
+              child: Icon(Icons.my_location, color: Colors.blue, size: 24),
+            ),
+            markerSize: const Size(40, 40),
+            markerDirection: MarkerDirection.heading,
+            showAccuracyCircle: true,
+            accuracyCircleColor: Colors.blue.withOpacity(0.3),
+            headingSectorColor: Colors.blue.withOpacity(0.5),
+            headingSectorRadius: 60,
+          ),
+          positionStream: _locationStreamController.stream,
+        ),
         if (polylinePathPoints.isNotEmpty)
           PolylineLayer(
             polylines: [
@@ -698,7 +760,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         if (headingLine != null) PolylineLayer(polylines: [headingLine]),
         if (_projectHeadingLine != null)
           PolylineLayer(polylines: [_projectHeadingLine!]),
-        MarkerLayer(markers: allMapMarkers),
+        MarkerLayer(markers: allMapMarkers, rotate: true),
       ],
     );
   }
@@ -732,7 +794,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
 
     logger.info("Navigating to edit point ${_selectedPointInstance!.name}");
 
-    final result = await Navigator.push<PointModel>(
+    final result = await Navigator.push<Map<String, dynamic>>(
       context,
       MaterialPageRoute(
         builder: (context) => PointDetailsPage(point: _selectedPointInstance!),
@@ -740,14 +802,41 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     );
 
     if (result != null && mounted) {
-      final index = _projectPoints.indexWhere((p) => p.id == result.id);
-      if (index != -1) {
-        setState(() {
-          _projectPoints[index] = result;
-          logger.info("Point ${result.name} updated in MapToolView.");
-        });
-        showSuccessStatus('Point ${result.name} details updated!');
-        widget.onPointsChanged?.call();
+      final action = result['action'] as String?;
+      
+      if (action == 'updated') {
+        final updatedPoint = result['point'] as PointModel?;
+        if (updatedPoint != null) {
+          final index = _projectPoints.indexWhere((p) => p.id == updatedPoint.id);
+          if (index != -1) {
+            setState(() {
+              _projectPoints[index] = updatedPoint;
+              // Update selected point instance if it's the same point
+              if (_selectedPointInstance?.id == updatedPoint.id) {
+                _selectedPointInstance = updatedPoint;
+              }
+              _recalculateAndDrawLines();
+            });
+            logger.info("Point ${updatedPoint.name} updated in MapToolView.");
+            showSuccessStatus('Point ${updatedPoint.name} details updated!');
+            widget.onPointsChanged?.call();
+          }
+        }
+      } else if (action == 'deleted') {
+        final pointId = result['pointId'] as String?;
+        if (pointId != null) {
+          setState(() {
+            _projectPoints.removeWhere((p) => p.id == pointId);
+            if (_selectedPointId == pointId) {
+              _selectedPointId = null;
+              _selectedPointInstance = null;
+            }
+            _recalculateAndDrawLines();
+          });
+          logger.info("Point deleted from MapToolView.");
+          showSuccessStatus('Point deleted successfully!');
+          widget.onPointsChanged?.call();
+        }
       }
     }
   }
@@ -818,7 +907,10 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     // Check if there's already an unsaved point
     if (_newPoint != null) {
       final s = S.of(context);
-      showInfoStatus(s?.mapUnsavedPointExists ?? 'You have an unsaved point. Please save or discard it before adding another.');
+      showInfoStatus(
+        s?.mapUnsavedPointExists ??
+            'You have an unsaved point. Please save or discard it before adding another.',
+      );
       return;
     }
 
@@ -829,10 +921,13 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     try {
       // Try to get current location with maximum accuracy
       LatLng newPointLocation;
-      
+
       if (_hasLocationPermission && _currentPosition != null) {
         // Use current GPS location
-        newPointLocation = LatLng(_currentPosition!.latitude, _currentPosition!.longitude);
+        newPointLocation = LatLng(
+          _currentPosition!.latitude,
+          _currentPosition!.longitude,
+        );
       } else {
         // Use map center as fallback
         final mapCenter = _mapController.camera.center;
@@ -841,7 +936,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
 
       // Create new point
       final newPoint = await _controller.createNewPoint(newPointLocation);
-      
+
       if (mounted) {
         setState(() {
           _newPoint = newPoint;
@@ -849,8 +944,10 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           _selectedPointInstance = newPoint;
           _isAddingNewPoint = false;
         });
-        
-        showInfoStatus('New point created. Tap "Save" to add it to your project.');
+
+        showInfoStatus(
+          'New point created. Tap "Save" to add it to your project.',
+        );
       }
     } catch (e) {
       logger.severe('Failed to create new point: $e');
@@ -867,13 +964,13 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     if (_newPoint == null) return;
 
     try {
-      // Save the point to database
-      final pointId = await _controller.saveNewPoint(_newPoint!);
-      
+      // Set flag to skip automatic fitting after saving new point
+      _skipNextFitToPoints = true;
+
+      // Save the point using the controller method
+      final savedPoint = await _controller.saveNewPointWithStateManagement(_newPoint!);
+
       if (mounted) {
-        // Create a new instance with isUnsaved: false for the saved point
-        final savedPoint = _newPoint!.copyWith(isUnsaved: false);
-        
         // Add to project points list
         setState(() {
           _projectPoints.add(savedPoint);
@@ -882,19 +979,21 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           _selectedPointInstance = null;
           _recalculateAndDrawLines();
         });
-        
-        // Update project start/end points in the database
-        await _controller.updateProjectStartEndPoints();
-        
+
         final s = S.of(context);
-        showSuccessStatus(s?.mapNewPointSaved ?? 'New point saved successfully!');
+        showSuccessStatus(
+          s?.mapNewPointSaved ?? 'New point saved successfully!',
+        );
         widget.onPointsChanged?.call();
       }
     } catch (e) {
       logger.severe('Failed to save new point: $e');
       if (mounted) {
         final s = S.of(context);
-        showErrorStatus(s?.mapErrorSavingNewPoint(e.toString()) ?? 'Error saving new point: $e');
+        showErrorStatus(
+          s?.mapErrorSavingNewPoint(e.toString()) ??
+              'Error saving new point: $e',
+        );
       }
     }
   }
@@ -905,7 +1004,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       _selectedPointId = null;
       _selectedPointInstance = null;
     });
-    
+
     showInfoStatus('New point discarded.');
   }
 
@@ -937,6 +1036,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
 
     if (shouldDelete == true && mounted) {
       try {
+        // Set flag to skip automatic fitting after deleting point
+        _skipNextFitToPoints = true;
+
         final int deletedCount = await _controller.deletePoint(
           pointToDelete.id,
         );
@@ -989,12 +1091,17 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   Future<void> _handlePointUpdated(PointModel updatedPoint) async {
     try {
       // Save to database
-      final result = await _controller.movePoint(updatedPoint, LatLng(updatedPoint.latitude, updatedPoint.longitude));
-      
+      final result = await _controller.movePoint(
+        updatedPoint,
+        LatLng(updatedPoint.latitude, updatedPoint.longitude),
+      );
+
       if (result > 0) {
         // Update local state
         setState(() {
-          final index = _projectPoints.indexWhere((p) => p.id == updatedPoint.id);
+          final index = _projectPoints.indexWhere(
+            (p) => p.id == updatedPoint.id,
+          );
           if (index != -1) {
             _projectPoints[index] = updatedPoint;
             // Update selected point instance if it's the same point
@@ -1004,7 +1111,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           }
           _recalculateAndDrawLines();
         });
-        
+
         showSuccessStatus('Point ${updatedPoint.name} updated successfully!');
         widget.onPointsChanged?.call();
       } else {
@@ -1013,7 +1120,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     } catch (e) {
       logger.severe('Failed to update point ${updatedPoint.name}: $e');
       if (mounted) {
-        showErrorStatus('Error updating point ${updatedPoint.name}: ${e.toString()}');
+        showErrorStatus(
+          'Error updating point ${updatedPoint.name}: ${e.toString()}',
+        );
       }
     }
   }
@@ -1022,8 +1131,50 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   void _updateProjectModel(ProjectModel updatedProject) {
     // Update the controller with the new project
     _controller = MapControllerLogic(project: updatedProject);
-    
+
     // Reload points to get the latest data
     _loadProjectPoints();
+  }
+
+  /// Public method to refresh points from the database
+  /// This can be called from the parent component when points are reordered
+  Future<void> refreshPoints() async {
+    logger.info("MapToolView: External refresh requested.");
+    _isExternalRefresh = true; // Set flag to prevent callback loops
+    
+    try {
+      await _controller.loadProjectPointsWithFitting(
+        skipNextFitToPoints: _skipNextFitToPoints,
+        onPointsLoaded: (points) {
+          if (mounted) {
+            setState(() {
+              _projectPoints = points;
+            });
+          }
+        },
+        onPointsChanged: () {
+          // Only call the callback if this is not an external refresh
+          if (!_isExternalRefresh) {
+            widget.onPointsChanged?.call();
+          }
+        },
+        recalculateAndDrawLines: _recalculateAndDrawLines,
+        fitMapToPoints: _fitMapToPoints,
+        isMapReady: _isMapReady,
+      );
+      
+      _skipNextFitToPoints = false; // Reset the flag
+    } catch (e, stackTrace) {
+      logger.severe("MapToolView: Error refreshing points", e, stackTrace);
+      if (mounted) {
+        final s = S.of(context);
+        showErrorStatus(
+          s?.mapErrorLoadingPoints(e.toString()) ??
+              "Error refreshing points: $e",
+        );
+      }
+    } finally {
+      _isExternalRefresh = false; // Reset flag after refresh
+    }
   }
 }

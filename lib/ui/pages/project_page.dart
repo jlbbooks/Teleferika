@@ -109,6 +109,9 @@ class _ProjectPageState extends State<ProjectPage>
   // Add a GlobalKey to access the PointsTab state
   final GlobalKey<PointsTabState> _pointsTabKey = GlobalKey<PointsTabState>();
 
+  // GlobalKey to access MapToolView methods
+  final GlobalKey<MapToolViewState> _mapTabKey = GlobalKey<MapToolViewState>();
+
   @override
   void initState() {
     super.initState();
@@ -726,6 +729,7 @@ class _ProjectPageState extends State<ProjectPage>
           isAddingPoint: _isAddingPointFromCompassInProgress,
         ),
         MapToolView(
+          key: _mapTabKey,
           project: _currentProject,
           onPointsChanged: () async {
             final updatedProject = await _dbHelper.getProjectById(
@@ -738,6 +742,8 @@ class _ProjectPageState extends State<ProjectPage>
                   _currentProject.points,
                 );
               });
+              // Refresh the map points to reflect any reordering
+              _mapTabKey.currentState?.refreshPoints();
             }
           },
         ),

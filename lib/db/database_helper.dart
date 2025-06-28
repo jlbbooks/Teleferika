@@ -542,7 +542,7 @@ class DatabaseHelper {
     );
 
     logger.info("Found ${pointsMaps.length} points for project $projectId");
-    
+
     // Log each point with its ordinal for debugging
     for (int i = 0; i < pointsMaps.length; i++) {
       final point = pointsMaps[i];
@@ -586,14 +586,20 @@ class DatabaseHelper {
               as String?;
       final currentEndId =
           currentProjectMaps.first[ProjectModel.columnEndingPointId] as String?;
-      
-      logger.info("Current project start/end - Start: $currentStartId, End: $currentEndId");
-      logger.info("New calculated start/end - Start: $newStartingPointId, End: $newEndingPointId");
-      
+
+      logger.info(
+        "Current project start/end - Start: $currentStartId, End: $currentEndId",
+      );
+      logger.info(
+        "New calculated start/end - Start: $newStartingPointId, End: $newEndingPointId",
+      );
+
       if (currentStartId != newStartingPointId ||
           currentEndId != newEndingPointId) {
         needsUpdate = true;
-        logger.info("Start/end points need update: currentStartId=$currentStartId, newStartingPointId=$newStartingPointId, currentEndId=$currentEndId, newEndingPointId=$newEndingPointId");
+        logger.info(
+          "Start/end points need update: currentStartId=$currentStartId, newStartingPointId=$newStartingPointId, currentEndId=$currentEndId, newEndingPointId=$newEndingPointId",
+        );
       } else {
         logger.info("Start/end points are the same, no update needed");
       }
@@ -989,17 +995,13 @@ class DatabaseHelper {
   }
 
   /// Get the OrdinalManager instance for this database helper
-  OrdinalManager get ordinalManager => OrdinalManager(this);
+  OrdinalManager get ordinalManager => OrdinalManager();
 }
 
 /// Centralized ordinal number management for points within projects.
 /// This class provides consistent methods for handling ordinal numbers
 /// and reduces code duplication across the application.
 class OrdinalManager {
-  final DatabaseHelper _dbHelper;
-
-  OrdinalManager(this._dbHelper);
-
   /// Gets the next available ordinal number for a project.
   /// Returns 0 if no points exist, otherwise returns max + 1.
   Future<int> getNextOrdinal(String projectId) async {
@@ -1043,7 +1045,7 @@ class OrdinalManager {
     );
 
     logger.info("Found ${pointsMaps.length} points to resequence");
-    
+
     // Log the current state before resequencing
     logger.info("Current ordinals before resequencing:");
     for (int i = 0; i < pointsMaps.length; i++) {
@@ -1070,7 +1072,9 @@ class OrdinalManager {
           whereArgs: [pointId],
         );
       } else {
-        logger.info("Point $pointId already has correct ordinal $i, no update needed");
+        logger.info(
+          "Point $pointId already has correct ordinal $i, no update needed",
+        );
       }
     }
 

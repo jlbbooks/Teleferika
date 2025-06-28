@@ -233,19 +233,17 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
               ),
 
               // Note section - now editable
-              if (widget.selectedPoint!.note?.isNotEmpty ?? false || _isEditingNote) ...[
-                SizedBox(height: isMobile ? 8 : 12),
-                Container(
-                  padding: EdgeInsets.all(isMobile ? 6 : 8),
-                  decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.secondaryContainer.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: _buildEditableNote(isMobile),
+              SizedBox(height: isMobile ? 8 : 12),
+              Container(
+                padding: EdgeInsets.all(isMobile ? 6 : 8),
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.secondaryContainer.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              ],
+                child: _buildEditableNote(isMobile),
+              ),
 
               // Move mode indicator
               if (widget.isMovePointMode && widget.selectedPoint!.id == widget.selectedPointId) ...[

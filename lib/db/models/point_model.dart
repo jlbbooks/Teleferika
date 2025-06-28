@@ -12,10 +12,23 @@ class PointModel {
   double longitude;
   double? altitude; // New optional altitude field
   int ordinalNumber;
-  String? note;
+  String? _note;
   DateTime? timestamp;
   List<ImageModel> images;
   bool isUnsaved; // Track if this is an unsaved new point
+
+  // Getter for note
+  String? get note => _note;
+
+  // Setter for note that automatically removes trailing blank lines
+  set note(String? value) {
+    if (value == null) {
+      _note = null;
+    } else {
+      // Remove trailing blank lines and trim whitespace
+      _note = value.trim().replaceAll(RegExp(r'\n\s*$'), '');
+    }
+  }
 
   // Database table and column names
   static const String tableName = 'points';
@@ -36,12 +49,15 @@ class PointModel {
     required this.longitude,
     this.altitude, // Add to constructor
     required this.ordinalNumber,
-    this.note,
+    String? note,
     this.timestamp,
     List<ImageModel>? images,
     this.isUnsaved = false, // Default to false for existing points
   }) : this.id = id ?? generateUuid(),
-       this.images = images ?? [];
+       this.images = images ?? [] {
+    // Use the setter to ensure note is cleaned up
+    this.note = note;
+  }
 
   PointModel copyWith({
     String? id,
@@ -58,7 +74,7 @@ class PointModel {
     List<ImageModel>? images,
     bool? isUnsaved,
   }) {
-    return PointModel(
+    final result = PointModel(
       id: id ?? this.id,
       projectId: projectId ?? this.projectId,
       latitude: latitude ?? this.latitude,
@@ -67,11 +83,22 @@ class PointModel {
           ? null
           : altitude ?? this.altitude, // Handle clearAltitude
       ordinalNumber: ordinalNumber ?? this.ordinalNumber,
-      note: clearNote ? null : note ?? this.note,
+      note: null, // Will be set below using the setter
       timestamp: clearTimestamp ? null : timestamp ?? this.timestamp,
       images: images ?? this.images,
       isUnsaved: isUnsaved ?? this.isUnsaved,
     );
+    
+    // Use the setter to ensure note is cleaned up
+    if (clearNote) {
+      result.note = null;
+    } else if (note != null) {
+      result.note = note;
+    } else {
+      result.note = this.note;
+    }
+    
+    return result;
   }
 
   Map<String, dynamic> toMap() {
@@ -91,20 +118,25 @@ class PointModel {
     Map<String, dynamic> map, {
     List<ImageModel>? images,
   }) {
-    return PointModel(
+    final result = PointModel(
       id: map[columnId] as String,
       projectId: map[columnProjectId] as String,
       latitude: map[columnLatitude] as double,
       longitude: map[columnLongitude] as double,
       altitude: map[columnAltitude] as double?, // Add to fromMap
       ordinalNumber: map[columnOrdinalNumber] as int,
-      note: map[columnNote] as String?,
+      note: null, // Will be set below using the setter
       timestamp: map[columnTimestamp] != null
           ? DateTime.tryParse(map[columnTimestamp] as String)
           : null,
       images: images ?? [],
       isUnsaved: false,
     );
+    
+    // Use the setter to ensure note is cleaned up
+    result.note = map[columnNote] as String?;
+    
+    return result;
   }
 
   @override

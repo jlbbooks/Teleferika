@@ -14,7 +14,8 @@ class MapControls {
     required VoidCallback onCenterOnPoints,
     bool isAddingNewPoint = false,
   }) {
-    final bool isLocationLoading = hasLocationPermission && currentPosition == null;
+    final bool isLocationLoading =
+        hasLocationPermission && currentPosition == null;
     final s = S.of(context);
 
     return Container(
@@ -31,18 +32,6 @@ class MapControls {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Center on current location button
-          _buildFloatingActionButton(
-            heroTag: 'center_on_location',
-            icon: Icons.my_location,
-            tooltip: isLocationLoading
-                ? (s?.mapAcquiringLocation ?? 'Acquiring location...')
-                : (s?.mapCenterOnLocation ?? 'Center on my location'),
-            onPressed: isLocationLoading ? null : onCenterOnLocation,
-            isLoading: isLocationLoading,
-            color: Colors.blue,
-          ),
-
           // Add new point button
           _buildFloatingActionButton(
             heroTag: 'add_new_point',
@@ -50,7 +39,9 @@ class MapControls {
             tooltip: isLocationLoading || isAddingNewPoint
                 ? (s?.mapAcquiringLocation ?? 'Acquiring location...')
                 : (s?.mapAddNewPoint ?? 'Add New Point'),
-            onPressed: (isLocationLoading || isAddingNewPoint) ? null : onAddPoint,
+            onPressed: (isLocationLoading || isAddingNewPoint)
+                ? null
+                : onAddPoint,
             isLoading: isLocationLoading || isAddingNewPoint,
             color: Colors.green,
           ),
@@ -62,6 +53,18 @@ class MapControls {
             tooltip: s?.mapCenterOnPoints ?? 'Center on points',
             onPressed: onCenterOnPoints,
             color: Colors.purple,
+          ),
+
+          // Center on current location button
+          _buildFloatingActionButton(
+            heroTag: 'center_on_location',
+            icon: Icons.my_location,
+            tooltip: isLocationLoading
+                ? (s?.mapAcquiringLocation ?? 'Acquiring location...')
+                : (s?.mapCenterOnLocation ?? 'Center on my location'),
+            onPressed: isLocationLoading ? null : onCenterOnLocation,
+            isLoading: isLocationLoading,
+            color: Colors.blue,
           ),
         ],
       ),
@@ -135,13 +138,17 @@ class MapControls {
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Icon(
                       _getMapTypeIcon(currentMapType),
                       size: 14,
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(0.7),
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -156,7 +163,9 @@ class MapControls {
                   Icon(
                     Icons.arrow_drop_down,
                     size: 16,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.6),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant.withOpacity(0.6),
                   ),
                 ],
               ),
@@ -324,7 +333,8 @@ class MapControls {
                       _buildPermissionItem(
                         icon: Icons.location_on_outlined,
                         title: 'Location Permission',
-                        description: s?.mapLocationPermissionInfoText ??
+                        description:
+                            s?.mapLocationPermissionInfoText ??
                             "Location permission is needed to show your current position and for some map features.",
                         color: Colors.blue,
                       ),
@@ -334,7 +344,8 @@ class MapControls {
                       _buildPermissionItem(
                         icon: Icons.compass_calibration_outlined,
                         title: 'Sensor Permission',
-                        description: s?.mapSensorPermissionInfoText ??
+                        description:
+                            s?.mapSensorPermissionInfoText ??
                             "Sensor (compass) permission is needed for direction-based features.",
                         color: Colors.green,
                       ),
@@ -351,7 +362,8 @@ class MapControls {
                           child: ElevatedButton.icon(
                             icon: const Icon(Icons.settings),
                             label: Text(
-                              s?.mapButtonOpenAppSettings ?? "Open App Settings",
+                              s?.mapButtonOpenAppSettings ??
+                                  "Open App Settings",
                             ),
                             onPressed: () async {
                               openAppSettings();
@@ -426,10 +438,7 @@ class MapControls {
                 const SizedBox(height: 4),
                 Text(
                   description,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade700,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
                 ),
               ],
             ),
@@ -438,4 +447,4 @@ class MapControls {
       ),
     );
   }
-} 
+}

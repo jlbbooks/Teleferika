@@ -103,6 +103,33 @@ class MapControllerLogic {
     return await _dbHelper.getPointsForProject(project.id);
   }
 
+  /// Loads project points with optional control over automatic map fitting
+  Future<List<PointModel>> loadProjectPointsWithFitting({
+    required bool skipNextFitToPoints,
+    required Function(List<PointModel>) onPointsLoaded,
+    required Function() onPointsChanged,
+    required Function() recalculateAndDrawLines,
+    required Function() fitMapToPoints,
+    required bool isMapReady,
+  }) async {
+    try {
+      final points = await loadProjectPoints();
+      
+      onPointsLoaded(points);
+      recalculateAndDrawLines();
+      onPointsChanged();
+      
+      if (isMapReady && !skipNextFitToPoints) {
+        fitMapToPoints();
+      }
+      
+      return points;
+    } catch (e, stackTrace) {
+      logger.severe("MapControllerLogic: Error loading points for map", e, stackTrace);
+      rethrow;
+    }
+  }
+
   Future<int> movePoint(PointModel pointToMove, LatLng newPosition) async {
     final updatedPoint = pointToMove.copyWith(
       latitude: newPosition.latitude,
@@ -320,6 +347,20 @@ class MapControllerLogic {
     // Mark the point as saved before inserting
     final savedPoint = point.copyWith(isUnsaved: false);
     return await _dbHelper.insertPoint(savedPoint);
+  }
+
+  /// Saves a new point and returns the saved point with proper state management
+  Future<PointModel> saveNewPointWithStateManagement(PointModel point) async {
+    // Save the point to database
+    final pointId = await saveNewPoint(point);
+    
+    // Create a new instance with isUnsaved: false for the saved point
+    final savedPoint = point.copyWith(isUnsaved: false);
+    
+    // Update project start/end points in the database
+    await updateProjectStartEndPoints();
+    
+    return savedPoint;
   }
 
   // Update project start/end points
