@@ -101,6 +101,14 @@
   "@azimuthSavedSnackbar": {
     "description": "Messaggio snackbar quando l'azimut viene salvato con successo."
   },
+  "azimuthOverwriteTitle": "Sovrascrivere l'azimut?",
+  "@azimuthOverwriteTitle": {
+    "description": "Titolo per la finestra di dialogo che chiede conferma per sovrascrivere il valore dell'azimut esistente."
+  },
+  "azimuthOverwriteMessage": "Il campo azimut ha già un valore. Il nuovo valore calcolato sovrascriverà quello attuale. Vuoi continuare?",
+  "@azimuthOverwriteMessage": {
+    "description": "Messaggio nella finestra di dialogo che chiede conferma per sovrascrivere il valore dell'azimut esistente."
+  },
   "projectNameCannotBeEmptyValidator": "Il nome del progetto non può essere vuoto.",
   "projectSavedSuccessfully": "Progetto salvato con successo.",
   "dialogTitleConfirmDelete": "Conferma Eliminazione",

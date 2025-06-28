@@ -137,6 +137,13 @@ class SIt extends S {
   String get azimuthSavedSnackbar => 'Azimut salvato con successo.';
 
   @override
+  String get azimuthOverwriteTitle => 'Sovrascrivere l\'azimut?';
+
+  @override
+  String get azimuthOverwriteMessage =>
+      'Il campo azimut ha già un valore. Il nuovo valore calcolato sovrascriverà quello attuale. Vuoi continuare?';
+
+  @override
   String get projectNameCannotBeEmptyValidator =>
       'Il nome del progetto non può essere vuoto.';
 

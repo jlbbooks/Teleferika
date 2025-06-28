@@ -313,6 +313,18 @@ abstract class S {
   /// **'Azimuth saved successfully.'**
   String get azimuthSavedSnackbar;
 
+  /// Title for the dialog asking for confirmation to overwrite existing azimuth value.
+  ///
+  /// In en, this message translates to:
+  /// **'Overwrite Azimuth?'**
+  String get azimuthOverwriteTitle;
+
+  /// Message in the dialog asking for confirmation to overwrite existing azimuth value.
+  ///
+  /// In en, this message translates to:
+  /// **'The azimuth field already has a value. The new calculated value will overwrite the current value. Do you want to continue?'**
+  String get azimuthOverwriteMessage;
+
   /// No description provided for @projectNameCannotBeEmptyValidator.
   ///
   /// In en, this message translates to:

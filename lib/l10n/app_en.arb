@@ -101,6 +101,14 @@
   "@azimuthSavedSnackbar": {
     "description": "Snackbar message when azimuth is successfully saved."
   },
+  "azimuthOverwriteTitle": "Overwrite Azimuth?",
+  "@azimuthOverwriteTitle": {
+    "description": "Title for the dialog asking for confirmation to overwrite existing azimuth value."
+  },
+  "azimuthOverwriteMessage": "The azimuth field already has a value. The new calculated value will overwrite the current value. Do you want to continue?",
+  "@azimuthOverwriteMessage": {
+    "description": "Message in the dialog asking for confirmation to overwrite existing azimuth value."
+  },
   "projectNameCannotBeEmptyValidator": "Project name cannot be empty.",
   "projectSavedSuccessfully": "Project saved successfully.",
   "dialogTitleConfirmDelete": "Confirm Delete",

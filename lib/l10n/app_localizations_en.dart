@@ -136,6 +136,13 @@ class SEn extends S {
   String get azimuthSavedSnackbar => 'Azimuth saved successfully.';
 
   @override
+  String get azimuthOverwriteTitle => 'Overwrite Azimuth?';
+
+  @override
+  String get azimuthOverwriteMessage =>
+      'The azimuth field already has a value. The new calculated value will overwrite the current value. Do you want to continue?';
+
+  @override
   String get projectNameCannotBeEmptyValidator =>
       'Project name cannot be empty.';
 

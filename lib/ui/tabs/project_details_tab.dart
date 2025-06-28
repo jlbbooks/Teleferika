@@ -139,6 +139,51 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
     _onChanged();
   }
 
+  Future<void> _handleAzimuthCalculation() async {
+    final s = S.of(context);
+    final currentAzimuthValue = _azimuthController.text.trim();
+    
+    // Check if there's already a value in the azimuth field
+    if (currentAzimuthValue.isNotEmpty && double.tryParse(currentAzimuthValue) != null) {
+      // Show confirmation dialog
+      final bool? shouldOverwrite = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(s?.azimuthOverwriteTitle ?? 'Overwrite Azimuth?'),
+            content: Text(
+              s?.azimuthOverwriteMessage ?? 
+              'The azimuth field already has a value. The new calculated value will overwrite the current value. Do you want to continue?'
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: Text(s?.buttonCancel ?? 'Cancel'),
+                onPressed: () => Navigator.of(context).pop(false),
+              ),
+              TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.primary,
+                ),
+                child: Text(s?.buttonCalculate ?? 'Calculate'),
+                onPressed: () => Navigator.of(context).pop(true),
+              ),
+            ],
+          );
+        },
+      );
+      
+      // If user cancels, return early
+      if (shouldOverwrite != true) {
+        return;
+      }
+    }
+    
+    // Proceed with azimuth calculation
+    if (widget.onCalculateAzimuth != null) {
+      widget.onCalculateAzimuth!();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
@@ -309,8 +354,8 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
                         : () async {
                             if (azimuthButtonIsSave) {
                               await _handleSave();
-                            } else if (widget.onCalculateAzimuth != null) {
-                              widget.onCalculateAzimuth!();
+                            } else {
+                              await _handleAzimuthCalculation();
                             }
                           },
                     style: ElevatedButton.styleFrom(
