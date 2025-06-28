@@ -68,6 +68,18 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
         timestamp: DateTime.now(),
       );
       
+      // Validate the point before saving
+      if (!pointToSave.isValid) {
+        logger.warning('Point to save is invalid: ${pointToSave.validationErrors}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving point: ${pointToSave.validationErrors.join(', ')}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      
       // Use global state to update the point
       await context.projectState.updatePoint(pointToSave);
 
@@ -178,6 +190,19 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
             ordinalNumber: nextOrdinal,
             imagePath: savedPath,
           );
+          
+          // Validate the created image
+          if (!newImage.isValid) {
+            logger.warning('Created invalid ImageModel: ${newImage.validationErrors}');
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error creating image: ${newImage.validationErrors.join(', ')}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+            return;
+          }
+          
           logger.info('New ImageModel created: $newImage');
           setState(() {
             _images.add(newImage);
@@ -316,7 +341,15 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> {
         logger.finer(
           'Updating ordinal for image ID ${_images[i].id} from ${_images[i].ordinalNumber} to $i',
         );
-        _images[i] = _images[i].copyWith(ordinalNumber: i);
+        final updatedImage = _images[i].copyWith(ordinalNumber: i);
+        
+        // Validate the updated image
+        if (!updatedImage.isValid) {
+          logger.warning('Updated image is invalid: ${updatedImage.validationErrors}');
+          continue; // Skip this update if invalid
+        }
+        
+        _images[i] = updatedImage;
         changed = true;
       }
     }

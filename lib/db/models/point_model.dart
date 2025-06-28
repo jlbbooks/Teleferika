@@ -5,17 +5,25 @@ import 'package:teleferika/core/utils/uuid_generator.dart';
 
 import 'image_model.dart'; // Ensure ImageModel is imported if not already
 
+/// Represents a geographic point within a project.
+/// 
+/// Each point has coordinates (latitude, longitude, optional altitude),
+/// an ordinal number for ordering within the project, and can contain
+/// multiple images and notes.
 class PointModel {
-  String id;
-  String projectId;
-  double latitude;
-  double longitude;
-  double? altitude; // New optional altitude field
-  int ordinalNumber;
+  final String id;
+  final String projectId;
+  final double latitude;
+  final double longitude;
+  final double? altitude; // New optional altitude field
+  final int ordinalNumber;
   String? _note;
-  DateTime? timestamp;
-  List<ImageModel> images;
-  bool isUnsaved; // Track if this is an unsaved new point
+  final DateTime? timestamp;
+  final List<ImageModel> _images; // Made private and immutable
+  final bool isUnsaved; // Track if this is an unsaved new point
+
+  // Getter for images
+  List<ImageModel> get images => List.unmodifiable(_images);
 
   // Getter for note
   String get note => _note ?? '';
@@ -54,7 +62,7 @@ class PointModel {
     List<ImageModel>? images,
     this.isUnsaved = false, // Default to false for existing points
   }) : this.id = id ?? generateUuid(),
-       this.images = images ?? [] {
+       this._images = images ?? [] {
     // Use the setter to ensure note is cleaned up
     this.note = note ?? '';
   }
@@ -85,7 +93,7 @@ class PointModel {
       ordinalNumber: ordinalNumber ?? this.ordinalNumber,
       note: null, // Will be set below using the setter
       timestamp: clearTimestamp ? null : timestamp ?? this.timestamp,
-      images: images ?? this.images,
+      images: images ?? this._images,
       isUnsaved: isUnsaved ?? this.isUnsaved,
     );
     
@@ -180,4 +188,30 @@ class PointModel {
   /// Returns the formatted name for this point (e.g., "P1", "P2", etc.)
   /// For unsaved points, returns "NEW"
   String get name => isUnsaved ? 'NEW' : 'P$ordinalNumber';
+
+  /// Validates the point data
+  bool get isValid {
+    return id.isNotEmpty &&
+           projectId.isNotEmpty &&
+           latitude >= -90 && latitude <= 90 &&
+           longitude >= -180 && longitude <= 180 &&
+           ordinalNumber >= 0 &&
+           (altitude == null || altitude! >= -1000 && altitude! <= 10000); // Reasonable altitude range
+  }
+
+  /// Returns validation errors if any
+  List<String> get validationErrors {
+    final errors = <String>[];
+    
+    if (id.isEmpty) errors.add('Point ID cannot be empty');
+    if (projectId.isEmpty) errors.add('Project ID cannot be empty');
+    if (latitude < -90 || latitude > 90) errors.add('Latitude must be between -90 and 90');
+    if (longitude < -180 || longitude > 180) errors.add('Longitude must be between -180 and 180');
+    if (ordinalNumber < 0) errors.add('Ordinal number must be non-negative');
+    if (altitude != null && (altitude! < -1000 || altitude! > 10000)) {
+      errors.add('Altitude must be between -1000 and 10000 meters');
+    }
+    
+    return errors;
+  }
 }

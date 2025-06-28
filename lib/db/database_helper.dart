@@ -673,8 +673,6 @@ class DatabaseHelper {
 
     await db.transaction((txn) async {
       // 1. Insert the PointModel (point.toMap() does not include images)
-      point.id = point.id;
-
       await txn.insert(
         PointModel.tableName,
         point.toMap(), // This map is for the 'points' table

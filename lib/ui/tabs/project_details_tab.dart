@@ -126,15 +126,76 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
   }
 
   Future<void> _handleSave() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      final saved = await context.projectState.saveProject();
-      if (saved) {
-        setState(() {
-          _dirty = false;
-          _originalAzimuthValue = _azimuthController.text;
-          _azimuthFieldModified = false;
-        });
-      }
+    // Parse form values
+    final name = _nameController.text.trim();
+    final note = _noteController.text.trim();
+    final presumed = double.tryParse(_presumedTotalLengthController.text);
+    final azimuth = double.tryParse(_azimuthController.text);
+
+    // Create the project to validate
+    final projectToSave = _currentProject.copyWith(
+      name: name,
+      note: note,
+      presumedTotalLength: _presumedTotalLengthController.text.trim().isEmpty
+          ? null
+          : presumed,
+      azimuth: _azimuthController.text.trim().isEmpty ? null : azimuth,
+      date: _projectDate,
+    );
+
+    // Use model validation
+    if (!projectToSave.isValid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Validation errors: ${projectToSave.validationErrors.join(', ')}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Additional validation for parsing errors
+    if (_presumedTotalLengthController.text.isNotEmpty && presumed == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Invalid presumed total length format. Please enter a valid number.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_azimuthController.text.isNotEmpty && azimuth == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Invalid azimuth format. Please enter a valid number.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final saved = await context.projectState.saveProject();
+    if (saved) {
+      setState(() {
+        _dirty = false;
+        _originalAzimuthValue = _azimuthController.text;
+        _azimuthFieldModified = false;
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Project saved successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error saving project.'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -272,6 +333,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
       padding: const EdgeInsets.all(16.0),
       child: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -282,9 +344,26 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
                 border: const OutlineInputBorder(),
               ),
               validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return s?.projectNameCannotBeEmptyValidator ??
-                      'Project name cannot be empty.';
+                // Create temporary project with all current form values
+                final name = value?.trim() ?? '';
+                final note = _noteController.text.trim();
+                final presumed = double.tryParse(_presumedTotalLengthController.text);
+                final azimuth = double.tryParse(_azimuthController.text);
+                
+                final tempProject = _currentProject.copyWith(
+                  name: name,
+                  note: note,
+                  presumedTotalLength: _presumedTotalLengthController.text.trim().isEmpty
+                      ? null
+                      : presumed,
+                  azimuth: _azimuthController.text.trim().isEmpty ? null : azimuth,
+                  date: _projectDate,
+                );
+                
+                if (!tempProject.isValid) {
+                  final nameErrors = tempProject.validationErrors.where((error) => 
+                    error.contains('name') || error.contains('Project name')).toList();
+                  return nameErrors.isNotEmpty ? nameErrors.first : null;
                 }
                 return null;
               },
@@ -329,14 +408,30 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
                 signed: false,
               ),
               validator: (value) {
-                if (value != null && value.trim().isNotEmpty) {
-                  final num = double.tryParse(value.trim());
-                  if (num == null) {
-                    return s?.invalid_number_validator ?? 'Invalid number.';
-                  }
-                  if (num < 0) {
-                    return s?.must_be_positive_validator ?? 'Must be positive.';
-                  }
+                if (value == null || value.trim().isEmpty) return null; // Optional field
+                
+                final presumed = double.tryParse(value.trim());
+                if (presumed == null) {
+                  return 'Invalid number format';
+                }
+                
+                // Create temporary project with all current form values
+                final name = _nameController.text.trim();
+                final note = _noteController.text.trim();
+                final azimuth = double.tryParse(_azimuthController.text);
+                
+                final tempProject = _currentProject.copyWith(
+                  name: name,
+                  note: note,
+                  presumedTotalLength: presumed,
+                  azimuth: _azimuthController.text.trim().isEmpty ? null : azimuth,
+                  date: _projectDate,
+                );
+                
+                if (!tempProject.isValid) {
+                  final presumedErrors = tempProject.validationErrors.where((error) => 
+                    error.contains('Presumed total length') || error.contains('presumed')).toList();
+                  return presumedErrors.isNotEmpty ? presumedErrors.first : null;
                 }
                 return null;
               },
@@ -407,16 +502,32 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
                       signed: true,
                     ),
                     validator: (value) {
-                      if (value != null && value.trim().isNotEmpty) {
-                        final num = double.tryParse(value.trim());
-                        if (num == null) {
-                          return s?.invalid_number_validator ??
-                              'Invalid number.';
-                        }
-                        if (num <= -360 || num >= 360) {
-                          return s?.must_be_359_validator ??
-                              'Must be +/-359.99';
-                        }
+                      if (value == null || value.trim().isEmpty) return null; // Optional field
+                      
+                      final azimuth = double.tryParse(value.trim());
+                      if (azimuth == null) {
+                        return 'Invalid number format';
+                      }
+                      
+                      // Create temporary project with all current form values
+                      final name = _nameController.text.trim();
+                      final note = _noteController.text.trim();
+                      final presumed = double.tryParse(_presumedTotalLengthController.text);
+                      
+                      final tempProject = _currentProject.copyWith(
+                        name: name,
+                        note: note,
+                        presumedTotalLength: _presumedTotalLengthController.text.trim().isEmpty
+                            ? null
+                            : presumed,
+                        azimuth: azimuth,
+                        date: _projectDate,
+                      );
+                      
+                      if (!tempProject.isValid) {
+                        final azimuthErrors = tempProject.validationErrors.where((error) => 
+                          error.contains('Azimuth') || error.contains('azimuth')).toList();
+                        return azimuthErrors.isNotEmpty ? azimuthErrors.first : null;
                       }
                       return null;
                     },
@@ -446,6 +557,17 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
                 ),
               ],
             ),
+            const SizedBox(height: 16),
+            // Main Save Button
+            ElevatedButton.icon(
+              onPressed: isDirty ? _handleSave : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isDirty ? Colors.green : null,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+              icon: const Icon(Icons.save),
+              label: Text(s?.buttonSave ?? 'Save Project'),
+            ),
           ],
         ),
       ),
@@ -453,6 +575,24 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
   }
 
   bool validateForm() {
-    return _formKey.currentState?.validate() ?? false;
+    // Parse form values
+    final name = _nameController.text.trim();
+    final note = _noteController.text.trim();
+    final presumed = double.tryParse(_presumedTotalLengthController.text);
+    final azimuth = double.tryParse(_azimuthController.text);
+
+    // Create a temporary project with current form values
+    final tempProject = _currentProject.copyWith(
+      name: name,
+      note: note,
+      presumedTotalLength: _presumedTotalLengthController.text.trim().isEmpty
+          ? null
+          : presumed,
+      azimuth: _azimuthController.text.trim().isEmpty ? null : azimuth,
+      date: _projectDate,
+    );
+
+    // Use model validation
+    return tempProject.isValid;
   }
 }

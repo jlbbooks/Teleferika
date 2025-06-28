@@ -4,6 +4,11 @@ import 'package:teleferika/core/utils/uuid_generator.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'dart:math' as math;
 
+/// Represents a photogrammetry project containing multiple geographic points.
+/// 
+/// A project has a name, optional notes, and contains an ordered list of points.
+/// It can track starting and ending points, azimuth, and calculate total rope length
+/// between consecutive points using 3D distance calculations.
 class ProjectModel {
   static const String tableName = 'projects';
   static const String columnId = 'id';
@@ -25,8 +30,10 @@ class ProjectModel {
   final DateTime? lastUpdate; // Tracks when the record was last modified in DB
   final DateTime? date; // User-settable date for the project
   final double? presumedTotalLength;
-  final List<PointModel>
-  points; // In-memory list of points for this project (not persisted in DB)
+  final List<PointModel> _points; // In-memory list of points for this project (not persisted in DB)
+
+  // Getter for points
+  List<PointModel> get points => List.unmodifiable(_points);
 
   ProjectModel({
     String? id, // Default to generating a UUID if not provided
@@ -40,7 +47,7 @@ class ProjectModel {
     List<PointModel>? points,
     this.presumedTotalLength,
   }) : id = id ?? generateUuid(),
-       points = points ?? const []; // Default to empty list
+       _points = points ?? const []; // Default to empty list
 
   Map<String, dynamic> toMap() {
     return {
@@ -110,7 +117,7 @@ class ProjectModel {
       azimuth: clearAzimuth ? null : (azimuth ?? this.azimuth),
       lastUpdate: clearLastUpdate ? null : (lastUpdate ?? this.lastUpdate),
       date: clearDate ? null : (date ?? this.date),
-      points: points ?? this.points,
+      points: points ?? this._points,
       presumedTotalLength: clearPresumedTotalLength ? null : (presumedTotalLength ?? this.presumedTotalLength),
     );
   }
@@ -269,4 +276,28 @@ class ProjectModel {
   }
 
   double _degreesToRadians(double degrees) => degrees * math.pi / 180.0;
+
+  /// Validates the project data
+  bool get isValid {
+    return id.isNotEmpty &&
+           name.trim().isNotEmpty &&
+           (presumedTotalLength == null || presumedTotalLength! >= 0) &&
+           (azimuth == null || (azimuth! >= -360 && azimuth! < 360));
+  }
+
+  /// Returns validation errors if any
+  List<String> get validationErrors {
+    final errors = <String>[];
+    
+    if (id.isEmpty) errors.add('Project ID cannot be empty');
+    if (name.trim().isEmpty) errors.add('Project name cannot be empty');
+    if (presumedTotalLength != null && presumedTotalLength! < 0) {
+      errors.add('Presumed total length must be non-negative');
+    }
+    if (azimuth != null && (azimuth! < -360 || azimuth! >= 360)) {
+      errors.add('Azimuth must be between -360 and 360 degrees');
+    }
+    
+    return errors;
+  }
 }

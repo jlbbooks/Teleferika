@@ -194,6 +194,16 @@ class _ProjectPageState extends State<ProjectPage>
 
   Future<bool?> _saveProject() async {
     if (_isLoading) return null;
+    
+    // Check if we're on the details tab and validate the form
+    if (_tabController.index == ProjectPageTab.details.index) {
+      final detailsTabState = _detailsTabKey.currentState;
+      if (detailsTabState != null && !detailsTabState.validateForm()) {
+        showErrorStatus('Please correct the errors in the form before saving.');
+        return false;
+      }
+    }
+    
     setState(() => _isLoading = true);
     try {
       final saved = await context.projectState.saveProject();

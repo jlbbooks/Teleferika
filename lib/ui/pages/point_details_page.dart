@@ -92,31 +92,41 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
     logger.info(
       "Attempting to save point details for point ID: ${widget.point.id}. Called from WillPop: $calledFromWillPop",
     );
-    if (!_pointFormKey.currentState!.validate()) {
-      logger.warning("Point details form validation failed.");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please correct the errors in the form.'),
-          ),
-        );
-      }
-      return; // Indicate failure if called from WillPop
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
-
+    
+    // Parse form values
     final double? latitude = double.tryParse(_latitudeController.text);
     final double? longitude = double.tryParse(_longitudeController.text);
     final double? altitudeValue = _altitudeController.text.isNotEmpty
         ? double.tryParse(_altitudeController.text)
         : null;
 
+    // Create the point to validate
+    PointModel pointToSave = widget.point.copyWith(
+      latitude: latitude ?? 0.0, // Use 0.0 as fallback for validation
+      longitude: longitude ?? 0.0, // Use 0.0 as fallback for validation
+      note: _noteController.text.trim(),
+      altitude: altitudeValue,
+      timestamp: DateTime.now(),
+      images: _currentImages,
+    );
+
+    // Use model validation instead of form validation
+    if (!pointToSave.isValid) {
+      logger.warning("Point validation failed: ${pointToSave.validationErrors}");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Validation errors: ${pointToSave.validationErrors.join(', ')}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Additional validation for parsing errors
     if (latitude == null || longitude == null) {
       if (mounted) {
-        // Added mounted check
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Invalid latitude or longitude format.'),
@@ -124,14 +134,11 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
           ),
         );
       }
-      setState(() {
-        _isLoading = false;
-      });
       return;
     }
+    
     if (_altitudeController.text.isNotEmpty && altitudeValue == null) {
       if (mounted) {
-        // Added mounted check
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
@@ -141,20 +148,12 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
           ),
         );
       }
-      setState(() {
-        _isLoading = false;
-      });
       return;
     }
 
-    PointModel pointToSave = widget.point.copyWith(
-      latitude: latitude,
-      longitude: longitude,
-      note: _noteController.text.trim(),
-      altitude: altitudeValue,
-      timestamp: DateTime.now(), // Or update timestamp logic
-      images: _currentImages, // *** Include the current list of images ***
-    );
+    setState(() {
+      _isLoading = true;
+    });
 
     try {
       await context.projectState.updatePoint(pointToSave);
@@ -164,12 +163,9 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
       if (mounted) {
         setState(() {
           _hasUnsavedTextChanges = false;
-          _photosChangedAndSaved = false; // Reset both flags
-          // If you were editing widget.point directly, you'd update it here.
-          // Since widget.point is final, this updatedPoint is what gets passed back.
+          _photosChangedAndSaved = false;
         });
         if (!calledFromWillPop) {
-          // Don't show SnackBar if called from WillPop save action
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Point details saved!'),
@@ -177,8 +173,6 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
             ),
           );
         }
-        // Pop with a result to indicate success
-        // This will be called by the main save button, or by the "Save & Exit" in WillPop
         if (Navigator.canPop(context)) {
           Navigator.pop(context, {'action': 'updated', 'point': pointToSave});
         }

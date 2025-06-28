@@ -2,6 +2,11 @@
 
 import 'package:teleferika/core/utils/uuid_generator.dart';
 
+/// Represents an image associated with a geographic point.
+/// 
+/// Each image has a path to the file, an ordinal number for ordering
+/// within the point, and can contain notes. Images are linked to
+/// points via the pointId foreign key.
 class ImageModel {
   static const tableName = 'images';
   static const columnId = 'id';
@@ -120,4 +125,24 @@ class ImageModel {
     imagePath,
     note, // Add note to hashCode
   );
+
+  /// Validates the image data
+  bool get isValid {
+    return id.isNotEmpty &&
+           pointId.isNotEmpty &&
+           ordinalNumber >= 0 &&
+           imagePath.isNotEmpty;
+  }
+
+  /// Returns validation errors if any
+  List<String> get validationErrors {
+    final errors = <String>[];
+    
+    if (id.isEmpty) errors.add('Image ID cannot be empty');
+    if (pointId.isEmpty) errors.add('Point ID cannot be empty');
+    if (ordinalNumber < 0) errors.add('Ordinal number must be non-negative');
+    if (imagePath.isEmpty) errors.add('Image path cannot be empty');
+    
+    return errors;
+  }
 }
