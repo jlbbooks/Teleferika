@@ -294,261 +294,591 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
         final isDirty = _dirty;
         final canCalculate = widget.pointsCount >= 2;
         final saveButtonColor = isDirty ? Colors.green : null;
+        
         return SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(20.0),
           child: Form(
             key: _formKey,
             autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                TextFormField(
-                  controller: _nameController,
-                  decoration: InputDecoration(
-                    labelText: s?.formFieldNameLabel ?? 'Project Name',
-                    border: const OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    // Create temporary project with all current form values
-                    final name = value?.trim() ?? '';
-                    final note = _noteController.text.trim();
-                    final presumed = double.tryParse(
-                      _presumedTotalLengthController.text,
-                    );
-                    final azimuth = double.tryParse(_azimuthController.text);
-
-                    final tempProject = _currentProject.copyWith(
-                      name: name,
-                      note: note,
-                      presumedTotalLength:
-                          _presumedTotalLengthController.text.trim().isEmpty
-                          ? null
-                          : presumed,
-                      azimuth: _azimuthController.text.trim().isEmpty
-                          ? null
-                          : azimuth,
-                      date: _projectDate,
-                    );
-
-                    if (!tempProject.isValid) {
-                      final nameErrors = tempProject.validationErrors
-                          .where(
-                            (error) =>
-                                error.contains('name') ||
-                                error.contains('Project name'),
-                          )
-                          .toList();
-                      return nameErrors.isNotEmpty ? nameErrors.first : null;
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 8),
-                InkWell(
-                  onTap: () => _selectProjectDate(context),
-                  child: InputDecorator(
-                    decoration: InputDecoration(
-                      labelText: s?.formFieldProjectDateLabel ?? 'Project Date',
-                      border: const OutlineInputBorder(),
-                    ),
-                    child: Text(
-                      _projectDate != null
-                          ? DateFormat.yMMMd(
-                              Localizations.localeOf(context).toString(),
-                            ).format(_projectDate!)
-                          : (s?.tap_to_set_date ?? 'Tap to set date'),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _noteController,
-                  decoration: InputDecoration(
-                    labelText: s?.formFieldNoteLabel ?? 'Notes',
-                    border: const OutlineInputBorder(),
-                  ),
-                  maxLines: 5,
-                ),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _presumedTotalLengthController,
-                  decoration: InputDecoration(
-                    labelText:
-                        s?.formFieldPresumedTotalLengthLabel ??
-                        'Presumed Total Length (m)',
-                    border: const OutlineInputBorder(),
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                    signed: false,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty)
-                      return null; // Optional field
-
-                    final presumed = double.tryParse(value.trim());
-                    if (presumed == null) {
-                      return 'Invalid number format';
-                    }
-
-                    // Create temporary project with all current form values
-                    final name = _nameController.text.trim();
-                    final note = _noteController.text.trim();
-                    final azimuth = double.tryParse(_azimuthController.text);
-
-                    final tempProject = _currentProject.copyWith(
-                      name: name,
-                      note: note,
-                      presumedTotalLength: presumed,
-                      azimuth: _azimuthController.text.trim().isEmpty
-                          ? null
-                          : azimuth,
-                      date: _projectDate,
-                    );
-
-                    if (!tempProject.isValid) {
-                      final presumedErrors = tempProject.validationErrors
-                          .where(
-                            (error) =>
-                                error.contains('Presumed total length') ||
-                                error.contains('presumed'),
-                          )
-                          .toList();
-                      return presumedErrors.isNotEmpty
-                          ? presumedErrors.first
-                          : null;
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 8),
-                // Current rope length (calculated from points)
+                // Header Section
                 Container(
-                  padding: const EdgeInsets.all(12.0),
+                  padding: const EdgeInsets.all(16.0),
                   decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.surfaceVariant.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(8.0),
+                    gradient: LinearGradient(
+                      colors: [
+                        Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                        Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.2),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12.0),
                     border: Border.all(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.outline.withOpacity(0.2),
+                      color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
                     ),
                   ),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.straighten,
-                        size: 20,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.folder_open,
+                            color: Theme.of(context).colorScheme.primary,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              s?.formFieldNameLabel ?? 'Project Name',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Current Rope Length',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w500,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurfaceVariant,
-                                  ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _nameController,
+                        decoration: InputDecoration(
+                          hintText: 'Enter project name...',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                            borderSide: BorderSide(
+                              color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${_currentProject.currentRopeLength.toStringAsFixed(2)} m',
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    fontFamily: 'monospace',
-                                  ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                            borderSide: BorderSide(
+                              color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
                             ),
-                          ],
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                            borderSide: BorderSide(
+                              color: Theme.of(context).colorScheme.primary,
+                              width: 2.0,
+                            ),
+                          ),
+                          filled: true,
+                          fillColor: Theme.of(context).colorScheme.surface,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 12.0,
+                          ),
+                        ),
+                        style: Theme.of(context).textTheme.bodyLarge,
+                        validator: (value) {
+                          // Create temporary project with all current form values
+                          final name = value?.trim() ?? '';
+                          final note = _noteController.text.trim();
+                          final presumed = double.tryParse(
+                            _presumedTotalLengthController.text,
+                          );
+                          final azimuth = double.tryParse(_azimuthController.text);
+
+                          final tempProject = _currentProject.copyWith(
+                            name: name,
+                            note: note,
+                            presumedTotalLength:
+                                _presumedTotalLengthController.text.trim().isEmpty
+                                ? null
+                                : presumed,
+                            azimuth: _azimuthController.text.trim().isEmpty
+                                ? null
+                                : azimuth,
+                            date: _projectDate,
+                          );
+
+                          if (!tempProject.isValid) {
+                            final nameErrors = tempProject.validationErrors
+                                .where(
+                                  (error) =>
+                                      error.contains('name') ||
+                                      error.contains('Project name'),
+                                )
+                                .toList();
+                            return nameErrors.isNotEmpty ? nameErrors.first : null;
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Date Section
+                Container(
+                  padding: const EdgeInsets.all(16.0),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12.0),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today,
+                            color: Theme.of(context).colorScheme.secondary,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            s?.formFieldProjectDateLabel ?? 'Project Date',
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      InkWell(
+                        onTap: () => _selectProjectDate(context),
+                        borderRadius: BorderRadius.circular(8.0),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 12.0,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                            ),
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.event,
+                                size: 20,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  _projectDate != null
+                                      ? DateFormat.yMMMd(
+                                          Localizations.localeOf(context).toString(),
+                                        ).format(_projectDate!)
+                                      : (s?.tap_to_set_date ?? 'Tap to set date'),
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: _projectDate != null
+                                        ? Theme.of(context).colorScheme.onSurface
+                                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                              Icon(
+                                Icons.arrow_drop_down,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _azimuthController,
+                const SizedBox(height: 20),
+
+                // Notes Section
+                Container(
+                  padding: const EdgeInsets.all(16.0),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12.0),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.note,
+                            color: Theme.of(context).colorScheme.tertiary,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            s?.formFieldNoteLabel ?? 'Notes',
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _noteController,
                         decoration: InputDecoration(
-                          labelText: s?.formFieldAzimuthLabel ?? 'Azimuth',
-                          border: const OutlineInputBorder(),
+                          hintText: 'Add project notes...',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                            borderSide: BorderSide(
+                              color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                            borderSide: BorderSide(
+                              color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                            borderSide: BorderSide(
+                              color: Theme.of(context).colorScheme.primary,
+                              width: 2.0,
+                            ),
+                          ),
+                          filled: true,
+                          fillColor: Theme.of(context).colorScheme.surface,
+                          contentPadding: const EdgeInsets.all(16.0),
+                        ),
+                        maxLines: 4,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Measurements Section
+                Container(
+                  padding: const EdgeInsets.all(16.0),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Theme.of(context).colorScheme.surface,
+                        Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12.0),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.straighten,
+                            color: Theme.of(context).colorScheme.primary,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Measurements',
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Presumed Total Length
+                      TextFormField(
+                        controller: _presumedTotalLengthController,
+                        decoration: InputDecoration(
+                          labelText: s?.formFieldPresumedTotalLengthLabel ?? 'Presumed Total Length (m)',
+                          hintText: 'Enter length in meters...',
+                          prefixIcon: Icon(
+                            Icons.straighten,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            size: 20,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                            borderSide: BorderSide(
+                              color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                            borderSide: BorderSide(
+                              color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                            borderSide: BorderSide(
+                              color: Theme.of(context).colorScheme.primary,
+                              width: 2.0,
+                            ),
+                          ),
+                          filled: true,
+                          fillColor: Theme.of(context).colorScheme.surface,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 12.0,
+                          ),
                         ),
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
-                          signed: true,
+                          signed: false,
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty)
                             return null; // Optional field
 
-                          final azimuth = double.tryParse(value.trim());
-                          if (azimuth == null) {
+                          final presumed = double.tryParse(value.trim());
+                          if (presumed == null) {
                             return 'Invalid number format';
                           }
 
                           // Create temporary project with all current form values
                           final name = _nameController.text.trim();
                           final note = _noteController.text.trim();
-                          final presumed = double.tryParse(
-                            _presumedTotalLengthController.text,
-                          );
+                          final azimuth = double.tryParse(_azimuthController.text);
 
                           final tempProject = _currentProject.copyWith(
                             name: name,
                             note: note,
-                            presumedTotalLength:
-                                _presumedTotalLengthController.text
-                                    .trim()
-                                    .isEmpty
+                            presumedTotalLength: presumed,
+                            azimuth: _azimuthController.text.trim().isEmpty
                                 ? null
-                                : presumed,
-                            azimuth: azimuth,
+                                : azimuth,
                             date: _projectDate,
                           );
 
                           if (!tempProject.isValid) {
-                            final azimuthErrors = tempProject.validationErrors
+                            final presumedErrors = tempProject.validationErrors
                                 .where(
                                   (error) =>
-                                      error.contains('Azimuth') ||
-                                      error.contains('azimuth'),
+                                      error.contains('Presumed total length') ||
+                                      error.contains('presumed'),
                                 )
                                 .toList();
-                            return azimuthErrors.isNotEmpty
-                                ? azimuthErrors.first
+                            return presumedErrors.isNotEmpty
+                                ? presumedErrors.first
                                 : null;
                           }
                           return null;
                         },
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    SizedBox(
-                      width: 140,
-                      child: ElevatedButton.icon(
-                        onPressed: !canCalculate
-                            ? null
-                            : () async {
-                                await _handleAzimuthCalculation();
-                              },
-                        icon: const Icon(Icons.calculate),
-                        label: Text(s?.buttonCalculate ?? 'Calculate'),
+                      const SizedBox(height: 16),
+
+                      // Current Rope Length (calculated from points)
+                      Container(
+                        padding: const EdgeInsets.all(16.0),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(8.0),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8.0),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(6.0),
+                              ),
+                              child: Icon(
+                                Icons.calculate,
+                                size: 20,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Current Rope Length',
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      fontWeight: FontWeight.w500,
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${_currentProject.currentRopeLength.toStringAsFixed(2)} m',
+                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'monospace',
+                                      color: Theme.of(context).colorScheme.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+
+                      // Azimuth Section
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _azimuthController,
+                              decoration: InputDecoration(
+                                labelText: s?.formFieldAzimuthLabel ?? 'Azimuth',
+                                hintText: 'Enter azimuth in degrees...',
+                                prefixIcon: Icon(
+                                  Icons.compass_calibration,
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  size: 20,
+                                ),
+                                suffixText: '°',
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  borderSide: BorderSide(
+                                    color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  borderSide: BorderSide(
+                                    color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  borderSide: BorderSide(
+                                    color: Theme.of(context).colorScheme.primary,
+                                    width: 2.0,
+                                  ),
+                                ),
+                                filled: true,
+                                fillColor: Theme.of(context).colorScheme.surface,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0,
+                                  vertical: 12.0,
+                                ),
+                              ),
+                              keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true,
+                                signed: true,
+                              ),
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty)
+                                  return null; // Optional field
+
+                                final azimuth = double.tryParse(value.trim());
+                                if (azimuth == null) {
+                                  return 'Invalid number format';
+                                }
+
+                                // Create temporary project with all current form values
+                                final name = _nameController.text.trim();
+                                final note = _noteController.text.trim();
+                                final presumed = double.tryParse(
+                                  _presumedTotalLengthController.text,
+                                );
+
+                                final tempProject = _currentProject.copyWith(
+                                  name: name,
+                                  note: note,
+                                  presumedTotalLength:
+                                      _presumedTotalLengthController.text
+                                          .trim()
+                                          .isEmpty
+                                      ? null
+                                      : presumed,
+                                  azimuth: azimuth,
+                                  date: _projectDate,
+                                );
+
+                                if (!tempProject.isValid) {
+                                  final azimuthErrors = tempProject.validationErrors
+                                      .where(
+                                        (error) =>
+                                            error.contains('Azimuth') ||
+                                            error.contains('azimuth'),
+                                      )
+                                      .toList();
+                                  return azimuthErrors.isNotEmpty
+                                      ? azimuthErrors.first
+                                      : null;
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          SizedBox(
+                            height: 56,
+                            child: ElevatedButton.icon(
+                              onPressed: !canCalculate
+                                  ? null
+                                  : () async {
+                                      await _handleAzimuthCalculation();
+                                    },
+                              icon: const Icon(Icons.calculate, size: 20),
+                              label: Text(
+                                s?.buttonCalculate ?? 'Calculate',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Theme.of(context).colorScheme.secondary,
+                                foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0,
+                                  vertical: 12.0,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
               ],
             ),
           ),
