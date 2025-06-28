@@ -303,7 +303,23 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
       onWillPop: _onWillPop,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Edit Point (${widget.point.name})'),
+          title: Row(
+            children: [
+              Icon(
+                Icons.edit_location,
+                color: Theme.of(context).colorScheme.onPrimary,
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Edit Point',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+              ),
+            ],
+          ),
           leading: IconButton(
             // Custom back button to ensure _onWillPop is always triggered
             icon: Icon(Icons.arrow_back),
@@ -351,7 +367,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
         body: Stack(
           children: [
             SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(20.0),
               child: Form(
                 key: _pointFormKey,
                 autovalidateMode:
@@ -361,136 +377,422 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    // ... your existing TextFormField widgets for latitude, longitude, altitude, note ...
-                    // --- Latitude ---
-                    TextFormField(
-                      controller: _latitudeController,
-                      decoration: const InputDecoration(
-                        labelText: 'Latitude',
-                        hintText: 'e.g. 45.12345',
-                        border: OutlineInputBorder(),
-                        icon: Icon(Icons.pin_drop_outlined),
+                    // Header Section
+                    Container(
+                      padding: const EdgeInsets.all(16.0),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                            Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.2),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(12.0),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                        ),
                       ),
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                        signed: true,
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.location_on,
+                            color: Theme.of(context).colorScheme.primary,
+                            size: 24,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              widget.point.name,
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Latitude cannot be empty';
-                        }
-                        final n = double.tryParse(value);
-                        if (n == null) {
-                          return 'Invalid number format';
-                        }
-                        if (n < -90 || n > 90) {
-                          return 'Latitude must be between -90 and 90';
-                        }
-                        return null;
-                      },
                     ),
-                    const SizedBox(height: 16.0),
+                    const SizedBox(height: 20),
 
-                    // --- Longitude ---
-                    TextFormField(
-                      controller: _longitudeController,
-                      decoration: const InputDecoration(
-                        labelText: 'Longitude',
-                        hintText: 'e.g. -12.54321',
-                        border: OutlineInputBorder(),
-                        icon: Icon(Icons.pin_drop_outlined),
+                    // Coordinates Section
+                    Container(
+                      padding: const EdgeInsets.all(16.0),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Theme.of(context).colorScheme.surface,
+                            Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(12.0),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                        signed: true,
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Longitude cannot be empty';
-                        }
-                        final n = double.tryParse(value);
-                        if (n == null) {
-                          return 'Invalid number format';
-                        }
-                        if (n < -180 || n > 180) {
-                          return 'Longitude must be between -180 and 180';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16.0),
-                    TextFormField(
-                      controller: _altitudeController,
-                      decoration: const InputDecoration(
-                        labelText: 'altitude (m)',
-                        hintText: 'e.g. 1203.5 (Optional)',
-                        border: OutlineInputBorder(),
-                        icon: Icon(Icons.layers), // Compass icon
-                      ),
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                        signed: true, // Allow negative values
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return null; // Altitude is optional
-                        }
-                        final n = double.tryParse(value);
-                        if (n == null) {
-                          return 'Invalid number format';
-                        }
-                        if (n < -1000 || n > 8849) {
-                          return 'Altitude must be between -1000 and 8849 meters';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16.0),
-                    // --- Note ---
-                    TextFormField(
-                      controller: _noteController,
-                      decoration: const InputDecoration(
-                        labelText: 'Note (Optional)',
-                        hintText: 'Any observations or details...',
-                        border: OutlineInputBorder(),
-                        icon: Icon(Icons.notes_outlined),
-                      ),
-                      maxLines: 3,
-                      textInputAction: TextInputAction.done,
-                    ),
-                    const SizedBox(height: 24.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.gps_fixed,
+                                color: Theme.of(context).colorScheme.primary,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Coordinates',
+                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
 
-                    // --- Photos Section ---
-                    const Divider(thickness: 1, height: 32),
-                    PhotoManagerWidget(
-                      // Pass a point model that reflects the current state of _currentImages
-                      // but for other fields, it uses the original widget.point data
-                      // This is important because PhotoManagerWidget's _savePointWithCurrentImages
-                      // will use widget.point.copyWith()
-                      point: widget.point.copyWith(images: _currentImages),
-                      onImageListChangedForUI: (updatedImageList) {
-                        if (!mounted) return;
-                        setState(() {
-                          _currentImages = updatedImageList;
-                          // Don't mark _hasUnsavedTextChanges here, only _photosChangedAndSaved
-                        });
-                        logger.info(
-                          "PointDetailsPage: UI updated with new image list. Count: ${updatedImageList.length}",
-                        );
-                      },
-                      onPhotosSavedSuccessfully: () {
-                        // <--- THIS IS THE CRUCIAL PART
-                        if (!mounted) return;
-                        setState(() {
-                          _photosChangedAndSaved =
-                              true; // <--- ENSURE THIS LINE IS PRESENT AND CORRECT
-                        });
-                        logger.info(
-                          "PointDetailsPage: Notified that photos were successfully auto-saved. _photosChangedAndSaved = true",
-                        );
-                      },
+                          // Latitude
+                          TextFormField(
+                            controller: _latitudeController,
+                            decoration: InputDecoration(
+                              labelText: 'Latitude',
+                              hintText: 'e.g. 45.12345',
+                              prefixIcon: Icon(
+                                Icons.pin_drop_outlined,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                size: 20,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  width: 2.0,
+                                ),
+                              ),
+                              filled: true,
+                              fillColor: Theme.of(context).colorScheme.surface,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                                vertical: 12.0,
+                              ),
+                            ),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                              signed: true,
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Latitude cannot be empty';
+                              }
+                              final n = double.tryParse(value);
+                              if (n == null) {
+                                return 'Invalid number format';
+                              }
+                              if (n < -90 || n > 90) {
+                                return 'Latitude must be between -90 and 90';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Longitude
+                          TextFormField(
+                            controller: _longitudeController,
+                            decoration: InputDecoration(
+                              labelText: 'Longitude',
+                              hintText: 'e.g. -12.54321',
+                              prefixIcon: Icon(
+                                Icons.pin_drop_outlined,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                size: 20,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  width: 2.0,
+                                ),
+                              ),
+                              filled: true,
+                              fillColor: Theme.of(context).colorScheme.surface,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                                vertical: 12.0,
+                              ),
+                            ),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                              signed: true,
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Longitude cannot be empty';
+                              }
+                              final n = double.tryParse(value);
+                              if (n == null) {
+                                return 'Invalid number format';
+                              }
+                              if (n < -180 || n > 180) {
+                                return 'Longitude must be between -180 and 180';
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                    // ...
+                    const SizedBox(height: 20),
+
+                    // Additional Data Section
+                    Container(
+                      padding: const EdgeInsets.all(16.0),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(12.0),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                color: Theme.of(context).colorScheme.secondary,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Additional Data',
+                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Altitude
+                          TextFormField(
+                            controller: _altitudeController,
+                            decoration: InputDecoration(
+                              labelText: 'Altitude (m)',
+                              hintText: 'e.g. 1203.5 (Optional)',
+                              prefixIcon: Icon(
+                                Icons.layers,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                size: 20,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  width: 2.0,
+                                ),
+                              ),
+                              filled: true,
+                              fillColor: Theme.of(context).colorScheme.surface,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                                vertical: 12.0,
+                              ),
+                            ),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                              signed: true, // Allow negative values
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return null; // Altitude is optional
+                              }
+                              final n = double.tryParse(value);
+                              if (n == null) {
+                                return 'Invalid number format';
+                              }
+                              if (n < -1000 || n > 8849) {
+                                return 'Altitude must be between -1000 and 8849 meters';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Note
+                          TextFormField(
+                            controller: _noteController,
+                            decoration: InputDecoration(
+                              labelText: 'Note (Optional)',
+                              hintText: 'Any observations or details...',
+                              prefixIcon: Icon(
+                                Icons.notes_outlined,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                size: 20,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  width: 2.0,
+                                ),
+                              ),
+                              filled: true,
+                              fillColor: Theme.of(context).colorScheme.surface,
+                              contentPadding: const EdgeInsets.all(16.0),
+                            ),
+                            maxLines: 3,
+                            textInputAction: TextInputAction.done,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Photos Section
+                    Container(
+                      padding: const EdgeInsets.all(16.0),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.3),
+                            Theme.of(context).colorScheme.surface,
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(12.0),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.photo_library,
+                                color: Theme.of(context).colorScheme.tertiary,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Photos',
+                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          PhotoManagerWidget(
+                            // Pass a point model that reflects the current state of _currentImages
+                            // but for other fields, it uses the original widget.point data
+                            // This is important because PhotoManagerWidget's _savePointWithCurrentImages
+                            // will use widget.point.copyWith()
+                            point: widget.point.copyWith(images: _currentImages),
+                            onImageListChangedForUI: (updatedImageList) {
+                              if (!mounted) return;
+                              setState(() {
+                                _currentImages = updatedImageList;
+                                // Don't mark _hasUnsavedTextChanges here, only _photosChangedAndSaved
+                              });
+                              logger.info(
+                                "PointDetailsPage: UI updated with new image list. Count: ${updatedImageList.length}",
+                              );
+                            },
+                            onPhotosSavedSuccessfully: () {
+                              // <--- THIS IS THE CRUCIAL PART
+                              if (!mounted) return;
+                              setState(() {
+                                _photosChangedAndSaved =
+                                    true; // <--- ENSURE THIS LINE IS PRESENT AND CORRECT
+                              });
+                              logger.info(
+                                "PointDetailsPage: Notified that photos were successfully auto-saved. _photosChangedAndSaved = true",
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
