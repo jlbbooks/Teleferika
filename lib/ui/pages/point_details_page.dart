@@ -6,6 +6,7 @@ import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/image_model.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/ui/widgets/photo_manager_widget.dart';
+import 'package:teleferika/ui/widgets/status_indicator.dart';
 
 class PointDetailsPage extends StatefulWidget {
   final PointModel point;
@@ -16,7 +17,7 @@ class PointDetailsPage extends StatefulWidget {
   State<PointDetailsPage> createState() => _PointDetailsPageState();
 }
 
-class _PointDetailsPageState extends State<PointDetailsPage> {
+class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
   final _pointFormKey = GlobalKey<FormState>();
   late TextEditingController _latitudeController;
   late TextEditingController _longitudeController;
@@ -30,6 +31,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
   bool _hasUnsavedTextChanges = false; // Tracks changes in text fields
   bool _photosChangedAndSaved =
       false; // Tracks if PhotoManagerWidget auto-saved
+  bool _hasUnsavedChanges = false; // Track if there are any unsaved changes
 
   @override
   void initState() {
@@ -69,6 +71,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
       // For simplicity, any change marks it.
       setState(() {
         _hasUnsavedTextChanges = true;
+        _hasUnsavedChanges = true;
       });
       logger.info("Unsaved textual changes marked.");
     }
@@ -92,7 +95,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
     logger.info(
       "Attempting to save point details for point ID: ${widget.point.id}. Called from WillPop: $calledFromWillPop",
     );
-    
+
     // Parse form values
     final double? latitude = double.tryParse(_latitudeController.text);
     final double? longitude = double.tryParse(_longitudeController.text);
@@ -112,42 +115,25 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
 
     // Use model validation instead of form validation
     if (!pointToSave.isValid) {
-      logger.warning("Point validation failed: ${pointToSave.validationErrors}");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Validation errors: ${pointToSave.validationErrors.join(', ')}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      logger.warning(
+        "Point validation failed: ${pointToSave.validationErrors}",
+      );
+      showErrorStatus(
+        'Validation errors: ${pointToSave.validationErrors.join(', ')}',
+      );
       return;
     }
 
     // Additional validation for parsing errors
     if (latitude == null || longitude == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invalid latitude or longitude format.'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      showErrorStatus('Invalid latitude or longitude format.');
       return;
     }
-    
+
     if (_altitudeController.text.isNotEmpty && altitudeValue == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Invalid altitude format. Please enter a number or leave it empty.',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      showErrorStatus(
+        'Invalid altitude format. Please enter a number or leave it empty.',
+      );
       return;
     }
 
@@ -164,14 +150,10 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
         setState(() {
           _hasUnsavedTextChanges = false;
           _photosChangedAndSaved = false;
+          _hasUnsavedChanges = false;
         });
         if (!calledFromWillPop) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Point details saved!'),
-              backgroundColor: Colors.green,
-            ),
-          );
+          showSuccessStatus('Point details saved!');
         }
         if (Navigator.canPop(context)) {
           Navigator.pop(context, {'action': 'updated', 'point': pointToSave});
@@ -183,11 +165,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
         e,
         stackTrace,
       );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving point: ${e.toString()}')),
-        );
-      }
+      showErrorStatus('Error saving point: ${e.toString()}');
     } finally {
       if (mounted) {
         setState(() {
@@ -296,16 +274,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
 
         if (!mounted) return;
 
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(
-              content: Text(
-                'Point ${widget.point.name} deleted successfully!',
-              ),
-              backgroundColor: Colors.green,
-            ),
-          );
+        showSuccessStatus('Point ${widget.point.name} deleted successfully!');
         // Pop with structured result
         Navigator.pop(context, {
           'action': 'deleted',
@@ -315,16 +284,9 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
       } catch (e) {
         if (!mounted) return;
         logger.severe('Failed to delete point ${widget.point.name}: $e');
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(
-              content: Text(
-                'Error deleting point ${widget.point.name}: ${e.toString()}',
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
+        showErrorStatus(
+          'Error deleting point ${widget.point.name}: ${e.toString()}',
+        );
       } finally {
         if (mounted) {
           setState(() => _isDeleting = false);
@@ -373,7 +335,10 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
               onPressed: _isLoading || _isDeleting ? null : _deletePoint,
             ),
             IconButton(
-              icon: const Icon(Icons.save),
+              icon: Icon(
+                Icons.save,
+                color: _hasUnsavedChanges ? Colors.green : null,
+              ),
               tooltip: 'Save Point Details',
               onPressed: _isLoading
                   ? null
@@ -381,150 +346,162 @@ class _PointDetailsPageState extends State<PointDetailsPage> {
             ),
           ],
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Form(
-            key: _pointFormKey,
-            autovalidateMode:
-                _hasUnsavedTextChanges // Or _formInteracted
-                ? AutovalidateMode.onUserInteraction
-                : AutovalidateMode.disabled,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                // ... your existing TextFormField widgets for latitude, longitude, altitude, note ...
-                // --- Latitude ---
-                TextFormField(
-                  controller: _latitudeController,
-                  decoration: const InputDecoration(
-                    labelText: 'Latitude',
-                    hintText: 'e.g. 45.12345',
-                    border: OutlineInputBorder(),
-                    icon: Icon(Icons.pin_drop_outlined),
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                    signed: true,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Latitude cannot be empty';
-                    }
-                    final n = double.tryParse(value);
-                    if (n == null) {
-                      return 'Invalid number format';
-                    }
-                    if (n < -90 || n > 90) {
-                      return 'Latitude must be between -90 and 90';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16.0),
+        body: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Form(
+                key: _pointFormKey,
+                autovalidateMode:
+                    _hasUnsavedTextChanges // Or _formInteracted
+                    ? AutovalidateMode.onUserInteraction
+                    : AutovalidateMode.disabled,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    // ... your existing TextFormField widgets for latitude, longitude, altitude, note ...
+                    // --- Latitude ---
+                    TextFormField(
+                      controller: _latitudeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Latitude',
+                        hintText: 'e.g. 45.12345',
+                        border: OutlineInputBorder(),
+                        icon: Icon(Icons.pin_drop_outlined),
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                        signed: true,
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Latitude cannot be empty';
+                        }
+                        final n = double.tryParse(value);
+                        if (n == null) {
+                          return 'Invalid number format';
+                        }
+                        if (n < -90 || n > 90) {
+                          return 'Latitude must be between -90 and 90';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16.0),
 
-                // --- Longitude ---
-                TextFormField(
-                  controller: _longitudeController,
-                  decoration: const InputDecoration(
-                    labelText: 'Longitude',
-                    hintText: 'e.g. -12.54321',
-                    border: OutlineInputBorder(),
-                    icon: Icon(Icons.pin_drop_outlined),
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                    signed: true,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Longitude cannot be empty';
-                    }
-                    final n = double.tryParse(value);
-                    if (n == null) {
-                      return 'Invalid number format';
-                    }
-                    if (n < -180 || n > 180) {
-                      return 'Longitude must be between -180 and 180';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16.0),
-                TextFormField(
-                  controller: _altitudeController,
-                  decoration: const InputDecoration(
-                    labelText: 'altitude (m)',
-                    hintText: 'e.g. 1203.5 (Optional)',
-                    border: OutlineInputBorder(),
-                    icon: Icon(Icons.layers), // Compass icon
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                    signed: false,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return null; // Heading is optional
-                    }
-                    final n = double.tryParse(value);
-                    if (n == null) {
-                      return 'Invalid number format';
-                    }
-                    if (n < 0 || n > 8849) {
-                      return 'Enter a valid altitude';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16.0),
-                // --- Note ---
-                TextFormField(
-                  controller: _noteController,
-                  decoration: const InputDecoration(
-                    labelText: 'Note (Optional)',
-                    hintText: 'Any observations or details...',
-                    border: OutlineInputBorder(),
-                    icon: Icon(Icons.notes_outlined),
-                  ),
-                  maxLines: 3,
-                  textInputAction: TextInputAction.done,
-                ),
-                const SizedBox(height: 24.0),
+                    // --- Longitude ---
+                    TextFormField(
+                      controller: _longitudeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Longitude',
+                        hintText: 'e.g. -12.54321',
+                        border: OutlineInputBorder(),
+                        icon: Icon(Icons.pin_drop_outlined),
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                        signed: true,
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Longitude cannot be empty';
+                        }
+                        final n = double.tryParse(value);
+                        if (n == null) {
+                          return 'Invalid number format';
+                        }
+                        if (n < -180 || n > 180) {
+                          return 'Longitude must be between -180 and 180';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16.0),
+                    TextFormField(
+                      controller: _altitudeController,
+                      decoration: const InputDecoration(
+                        labelText: 'altitude (m)',
+                        hintText: 'e.g. 1203.5 (Optional)',
+                        border: OutlineInputBorder(),
+                        icon: Icon(Icons.layers), // Compass icon
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                        signed: true, // Allow negative values
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return null; // Altitude is optional
+                        }
+                        final n = double.tryParse(value);
+                        if (n == null) {
+                          return 'Invalid number format';
+                        }
+                        if (n < -1000 || n > 8849) {
+                          return 'Altitude must be between -1000 and 8849 meters';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16.0),
+                    // --- Note ---
+                    TextFormField(
+                      controller: _noteController,
+                      decoration: const InputDecoration(
+                        labelText: 'Note (Optional)',
+                        hintText: 'Any observations or details...',
+                        border: OutlineInputBorder(),
+                        icon: Icon(Icons.notes_outlined),
+                      ),
+                      maxLines: 3,
+                      textInputAction: TextInputAction.done,
+                    ),
+                    const SizedBox(height: 24.0),
 
-                // --- Photos Section ---
-                const Divider(thickness: 1, height: 32),
-                PhotoManagerWidget(
-                  // Pass a point model that reflects the current state of _currentImages
-                  // but for other fields, it uses the original widget.point data
-                  // This is important because PhotoManagerWidget's _savePointWithCurrentImages
-                  // will use widget.point.copyWith()
-                  point: widget.point.copyWith(images: _currentImages),
-                  onImageListChangedForUI: (updatedImageList) {
-                    if (!mounted) return;
-                    setState(() {
-                      _currentImages = updatedImageList;
-                      // Don't mark _hasUnsavedTextChanges here, only _photosChangedAndSaved
-                    });
-                    logger.info(
-                      "PointDetailsPage: UI updated with new image list. Count: ${updatedImageList.length}",
-                    );
-                  },
-                  onPhotosSavedSuccessfully: () {
-                    // <--- THIS IS THE CRUCIAL PART
-                    if (!mounted) return;
-                    setState(() {
-                      _photosChangedAndSaved =
-                          true; // <--- ENSURE THIS LINE IS PRESENT AND CORRECT
-                    });
-                    logger.info(
-                      "PointDetailsPage: Notified that photos were successfully auto-saved. _photosChangedAndSaved = true",
-                    );
-                  },
+                    // --- Photos Section ---
+                    const Divider(thickness: 1, height: 32),
+                    PhotoManagerWidget(
+                      // Pass a point model that reflects the current state of _currentImages
+                      // but for other fields, it uses the original widget.point data
+                      // This is important because PhotoManagerWidget's _savePointWithCurrentImages
+                      // will use widget.point.copyWith()
+                      point: widget.point.copyWith(images: _currentImages),
+                      onImageListChangedForUI: (updatedImageList) {
+                        if (!mounted) return;
+                        setState(() {
+                          _currentImages = updatedImageList;
+                          // Don't mark _hasUnsavedTextChanges here, only _photosChangedAndSaved
+                        });
+                        logger.info(
+                          "PointDetailsPage: UI updated with new image list. Count: ${updatedImageList.length}",
+                        );
+                      },
+                      onPhotosSavedSuccessfully: () {
+                        // <--- THIS IS THE CRUCIAL PART
+                        if (!mounted) return;
+                        setState(() {
+                          _photosChangedAndSaved =
+                              true; // <--- ENSURE THIS LINE IS PRESENT AND CORRECT
+                        });
+                        logger.info(
+                          "PointDetailsPage: Notified that photos were successfully auto-saved. _photosChangedAndSaved = true",
+                        );
+                      },
+                    ),
+                    // ...
+                  ],
                 ),
-                // ...
-              ],
+              ),
             ),
-          ),
+            Positioned(
+              top: 24,
+              right: 24,
+              child: StatusIndicator(
+                status: currentStatus,
+                onDismiss: hideStatus,
+              ),
+            ),
+          ],
         ),
       ),
     );

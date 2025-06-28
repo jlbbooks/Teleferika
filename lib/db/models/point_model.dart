@@ -6,7 +6,7 @@ import 'package:teleferika/core/utils/uuid_generator.dart';
 import 'image_model.dart'; // Ensure ImageModel is imported if not already
 
 /// Represents a geographic point within a project.
-/// 
+///
 /// Each point has coordinates (latitude, longitude, optional altitude),
 /// an ordinal number for ordering within the project, and can contain
 /// multiple images and notes.
@@ -96,7 +96,7 @@ class PointModel {
       images: images ?? this._images,
       isUnsaved: isUnsaved ?? this.isUnsaved,
     );
-    
+
     // Use the setter to ensure note is cleaned up
     if (clearNote) {
       result.note = '';
@@ -105,7 +105,7 @@ class PointModel {
     } else {
       result.note = this.note;
     }
-    
+
     return result;
   }
 
@@ -117,7 +117,9 @@ class PointModel {
       columnLongitude: longitude,
       columnAltitude: altitude, // Add to toMap
       columnOrdinalNumber: ordinalNumber,
-      columnNote: note.isEmpty ? null : note, // Store null in DB for empty strings
+      columnNote: note.isEmpty
+          ? null
+          : note, // Store null in DB for empty strings
       columnTimestamp: timestamp?.toIso8601String(),
     };
   }
@@ -140,10 +142,10 @@ class PointModel {
       images: images ?? [],
       isUnsaved: false,
     );
-    
+
     // Use the setter to ensure note is cleaned up
     result.note = map[columnNote] as String? ?? '';
-    
+
     return result;
   }
 
@@ -192,26 +194,32 @@ class PointModel {
   /// Validates the point data
   bool get isValid {
     return id.isNotEmpty &&
-           projectId.isNotEmpty &&
-           latitude >= -90 && latitude <= 90 &&
-           longitude >= -180 && longitude <= 180 &&
-           ordinalNumber >= 0 &&
-           (altitude == null || altitude! >= -1000 && altitude! <= 10000); // Reasonable altitude range
+        projectId.isNotEmpty &&
+        latitude >= -90 &&
+        latitude <= 90 &&
+        longitude >= -180 &&
+        longitude <= 180 &&
+        ordinalNumber >= 0 &&
+        (altitude == null ||
+            altitude! >= -1000 &&
+                altitude! <= 8849); // Reasonable altitude range
   }
 
   /// Returns validation errors if any
   List<String> get validationErrors {
     final errors = <String>[];
-    
+
     if (id.isEmpty) errors.add('Point ID cannot be empty');
     if (projectId.isEmpty) errors.add('Project ID cannot be empty');
-    if (latitude < -90 || latitude > 90) errors.add('Latitude must be between -90 and 90');
-    if (longitude < -180 || longitude > 180) errors.add('Longitude must be between -180 and 180');
+    if (latitude < -90 || latitude > 90)
+      errors.add('Latitude must be between -90 and 90');
+    if (longitude < -180 || longitude > 180)
+      errors.add('Longitude must be between -180 and 180');
     if (ordinalNumber < 0) errors.add('Ordinal number must be non-negative');
-    if (altitude != null && (altitude! < -1000 || altitude! > 10000)) {
-      errors.add('Altitude must be between -1000 and 10000 meters');
+    if (altitude != null && (altitude! < -1000 || altitude! > 8849)) {
+      errors.add('Altitude must be between -1000 and 8849 meters');
     }
-    
+
     return errors;
   }
 }

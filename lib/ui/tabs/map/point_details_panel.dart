@@ -516,7 +516,20 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
 
   void _confirmLatitudeChange() {
     final newLatitude = double.tryParse(_latitudeController.text);
-    if (newLatitude != null && newLatitude != widget.selectedPoint!.latitude) {
+    if (newLatitude == null) {
+      // Invalid number format - revert to original value
+      _cancelLatitudeChange();
+      return;
+    }
+    
+    // Validate latitude range
+    if (newLatitude < -90 || newLatitude > 90) {
+      // Invalid latitude range - revert to original value
+      _cancelLatitudeChange();
+      return;
+    }
+    
+    if (newLatitude != widget.selectedPoint!.latitude) {
       _updatePointCoordinates(newLatitude, widget.selectedPoint!.longitude);
     }
     setState(() {
@@ -527,7 +540,20 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
 
   void _confirmLongitudeChange() {
     final newLongitude = double.tryParse(_longitudeController.text);
-    if (newLongitude != null && newLongitude != widget.selectedPoint!.longitude) {
+    if (newLongitude == null) {
+      // Invalid number format - revert to original value
+      _cancelLongitudeChange();
+      return;
+    }
+    
+    // Validate longitude range
+    if (newLongitude < -180 || newLongitude > 180) {
+      // Invalid longitude range - revert to original value
+      _cancelLongitudeChange();
+      return;
+    }
+    
+    if (newLongitude != widget.selectedPoint!.longitude) {
       _updatePointCoordinates(widget.selectedPoint!.latitude, newLongitude);
     }
     setState(() {
