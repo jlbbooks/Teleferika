@@ -2,10 +2,13 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:teleferika/core/project_provider.dart';
+import 'package:teleferika/core/project_state_manager.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
+import 'package:teleferika/ui/widgets/status_indicator.dart';
 
 class ProjectDetailsTab extends StatefulWidget {
   final ProjectModel project;
@@ -23,7 +26,7 @@ class ProjectDetailsTab extends StatefulWidget {
   State<ProjectDetailsTab> createState() => ProjectDetailsTabState();
 }
 
-class ProjectDetailsTabState extends State<ProjectDetailsTab> {
+class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _noteController;
@@ -145,33 +148,22 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
 
     // Use model validation
     if (!projectToSave.isValid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Validation errors: ${projectToSave.validationErrors.join(', ')}'),
-          backgroundColor: Colors.red,
-        ),
+      showErrorStatus(
+        'Validation errors: ${projectToSave.validationErrors.join(', ')}',
       );
       return;
     }
 
     // Additional validation for parsing errors
     if (_presumedTotalLengthController.text.isNotEmpty && presumed == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invalid presumed total length format. Please enter a valid number.'),
-          backgroundColor: Colors.red,
-        ),
+      showErrorStatus(
+        'Invalid presumed total length format. Please enter a valid number.',
       );
       return;
     }
 
     if (_azimuthController.text.isNotEmpty && azimuth == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invalid azimuth format. Please enter a valid number.'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      showErrorStatus('Invalid azimuth format. Please enter a valid number.');
       return;
     }
 
@@ -182,20 +174,10 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
         _originalAzimuthValue = _azimuthController.text;
         _azimuthFieldModified = false;
       });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Project saved successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+
+      showSuccessStatus('Project saved successfully!');
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Error saving project.'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      showErrorStatus('Error saving project.');
     }
   }
 
@@ -254,28 +236,16 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
     final s = S.of(context);
     final currentPoints = context.projectState.currentPoints;
     if (currentPoints.length < 2) {
-      // Show error status - we'll need to implement this
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            s?.errorAzimuthPointsNotSet ?? 'At least two points are required',
-          ),
-          backgroundColor: Colors.red,
-        ),
+      showErrorStatus(
+        s?.errorAzimuthPointsNotSet ?? 'At least two points are required',
       );
       return;
     }
     final startPoint = currentPoints.first;
     final endPoint = currentPoints.last;
     if (startPoint.id == endPoint.id) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            s?.errorAzimuthPointsSame ??
-                'Start and end points must be different',
-          ),
-          backgroundColor: Colors.red,
-        ),
+      showErrorStatus(
+        s?.errorAzimuthPointsSame ?? 'Start and end points must be different',
       );
       return;
     }
@@ -305,272 +275,283 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
     );
 
     setAzimuthFromParent(calculatedAzimuth);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          s?.azimuthCalculatedSnackbar(calculatedAzimuth.toStringAsFixed(2)) ??
-              'Azimuth calculated: ${calculatedAzimuth.toStringAsFixed(2)}°',
-        ),
-        backgroundColor: Colors.green,
-      ),
+    showSuccessStatus(
+      s?.azimuthCalculatedSnackbar(calculatedAzimuth.toStringAsFixed(2)) ??
+          'Azimuth calculated: ${calculatedAzimuth.toStringAsFixed(2)}°',
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final s = S.of(context);
-    final isDirty = _dirty;
-    final canCalculate = widget.pointsCount >= 2;
-    final azimuthButtonIsSave = _azimuthFieldModified;
-    final saveButtonColor = isDirty ? Colors.green : null;
-    final azimuthButtonLabel = azimuthButtonIsSave
-        ? (s?.buttonSave ?? 'Save')
-        : (s?.buttonCalculate ?? 'Calculate');
-    final azimuthButtonIcon = azimuthButtonIsSave
-        ? Icons.save
-        : Icons.calculate;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Form(
-        key: _formKey,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            TextFormField(
-              controller: _nameController,
-              decoration: InputDecoration(
-                labelText: s?.formFieldNameLabel ?? 'Project Name',
-                border: const OutlineInputBorder(),
-              ),
-              validator: (value) {
-                // Create temporary project with all current form values
-                final name = value?.trim() ?? '';
-                final note = _noteController.text.trim();
-                final presumed = double.tryParse(_presumedTotalLengthController.text);
-                final azimuth = double.tryParse(_azimuthController.text);
-                
-                final tempProject = _currentProject.copyWith(
-                  name: name,
-                  note: note,
-                  presumedTotalLength: _presumedTotalLengthController.text.trim().isEmpty
-                      ? null
-                      : presumed,
-                  azimuth: _azimuthController.text.trim().isEmpty ? null : azimuth,
-                  date: _projectDate,
-                );
-                
-                if (!tempProject.isValid) {
-                  final nameErrors = tempProject.validationErrors.where((error) => 
-                    error.contains('name') || error.contains('Project name')).toList();
-                  return nameErrors.isNotEmpty ? nameErrors.first : null;
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 8),
-            InkWell(
-              onTap: () => _selectProjectDate(context),
-              child: InputDecorator(
-                decoration: InputDecoration(
-                  labelText: s?.formFieldProjectDateLabel ?? 'Project Date',
-                  border: const OutlineInputBorder(),
-                ),
-                child: Text(
-                  _projectDate != null
-                      ? DateFormat.yMMMd(
-                          Localizations.localeOf(context).toString(),
-                        ).format(_projectDate!)
-                      : (s?.tap_to_set_date ?? 'Tap to set date'),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _noteController,
-              decoration: InputDecoration(
-                labelText: s?.formFieldNoteLabel ?? 'Notes',
-                border: const OutlineInputBorder(),
-              ),
-              maxLines: 5,
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _presumedTotalLengthController,
-              decoration: InputDecoration(
-                labelText:
-                    s?.formFieldPresumedTotalLengthLabel ??
-                    'Presumed Total Length (m)',
-                border: const OutlineInputBorder(),
-              ),
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-                signed: false,
-              ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) return null; // Optional field
-                
-                final presumed = double.tryParse(value.trim());
-                if (presumed == null) {
-                  return 'Invalid number format';
-                }
-                
-                // Create temporary project with all current form values
-                final name = _nameController.text.trim();
-                final note = _noteController.text.trim();
-                final azimuth = double.tryParse(_azimuthController.text);
-                
-                final tempProject = _currentProject.copyWith(
-                  name: name,
-                  note: note,
-                  presumedTotalLength: presumed,
-                  azimuth: _azimuthController.text.trim().isEmpty ? null : azimuth,
-                  date: _projectDate,
-                );
-                
-                if (!tempProject.isValid) {
-                  final presumedErrors = tempProject.validationErrors.where((error) => 
-                    error.contains('Presumed total length') || error.contains('presumed')).toList();
-                  return presumedErrors.isNotEmpty ? presumedErrors.first : null;
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 8),
-            // Current rope length (calculated from points)
-            Container(
-              padding: const EdgeInsets.all(12.0),
-              decoration: BoxDecoration(
-                color: Theme.of(
-                  context,
-                ).colorScheme.surfaceVariant.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(8.0),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.straighten,
-                    size: 20,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Current Rope Length',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.w500,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${_currentProject.currentRopeLength.toStringAsFixed(2)} m',
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'monospace',
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return Consumer<ProjectStateManager>(
+      builder: (context, projectState, child) {
+        // Update dirty state based on global state
+        _updateDirtyStateFromGlobalState();
+
+        final s = S.of(context);
+        final isDirty = _dirty;
+        final canCalculate = widget.pointsCount >= 2;
+        final saveButtonColor = isDirty ? Colors.green : null;
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _azimuthController,
+                TextFormField(
+                  controller: _nameController,
+                  decoration: InputDecoration(
+                    labelText: s?.formFieldNameLabel ?? 'Project Name',
+                    border: const OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    // Create temporary project with all current form values
+                    final name = value?.trim() ?? '';
+                    final note = _noteController.text.trim();
+                    final presumed = double.tryParse(
+                      _presumedTotalLengthController.text,
+                    );
+                    final azimuth = double.tryParse(_azimuthController.text);
+
+                    final tempProject = _currentProject.copyWith(
+                      name: name,
+                      note: note,
+                      presumedTotalLength:
+                          _presumedTotalLengthController.text.trim().isEmpty
+                          ? null
+                          : presumed,
+                      azimuth: _azimuthController.text.trim().isEmpty
+                          ? null
+                          : azimuth,
+                      date: _projectDate,
+                    );
+
+                    if (!tempProject.isValid) {
+                      final nameErrors = tempProject.validationErrors
+                          .where(
+                            (error) =>
+                                error.contains('name') ||
+                                error.contains('Project name'),
+                          )
+                          .toList();
+                      return nameErrors.isNotEmpty ? nameErrors.first : null;
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 8),
+                InkWell(
+                  onTap: () => _selectProjectDate(context),
+                  child: InputDecorator(
                     decoration: InputDecoration(
-                      labelText: s?.formFieldAzimuthLabel ?? 'Azimuth',
+                      labelText: s?.formFieldProjectDateLabel ?? 'Project Date',
                       border: const OutlineInputBorder(),
                     ),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                      signed: true,
+                    child: Text(
+                      _projectDate != null
+                          ? DateFormat.yMMMd(
+                              Localizations.localeOf(context).toString(),
+                            ).format(_projectDate!)
+                          : (s?.tap_to_set_date ?? 'Tap to set date'),
                     ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) return null; // Optional field
-                      
-                      final azimuth = double.tryParse(value.trim());
-                      if (azimuth == null) {
-                        return 'Invalid number format';
-                      }
-                      
-                      // Create temporary project with all current form values
-                      final name = _nameController.text.trim();
-                      final note = _noteController.text.trim();
-                      final presumed = double.tryParse(_presumedTotalLengthController.text);
-                      
-                      final tempProject = _currentProject.copyWith(
-                        name: name,
-                        note: note,
-                        presumedTotalLength: _presumedTotalLengthController.text.trim().isEmpty
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _noteController,
+                  decoration: InputDecoration(
+                    labelText: s?.formFieldNoteLabel ?? 'Notes',
+                    border: const OutlineInputBorder(),
+                  ),
+                  maxLines: 5,
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _presumedTotalLengthController,
+                  decoration: InputDecoration(
+                    labelText:
+                        s?.formFieldPresumedTotalLengthLabel ??
+                        'Presumed Total Length (m)',
+                    border: const OutlineInputBorder(),
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                    signed: false,
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty)
+                      return null; // Optional field
+
+                    final presumed = double.tryParse(value.trim());
+                    if (presumed == null) {
+                      return 'Invalid number format';
+                    }
+
+                    // Create temporary project with all current form values
+                    final name = _nameController.text.trim();
+                    final note = _noteController.text.trim();
+                    final azimuth = double.tryParse(_azimuthController.text);
+
+                    final tempProject = _currentProject.copyWith(
+                      name: name,
+                      note: note,
+                      presumedTotalLength: presumed,
+                      azimuth: _azimuthController.text.trim().isEmpty
+                          ? null
+                          : azimuth,
+                      date: _projectDate,
+                    );
+
+                    if (!tempProject.isValid) {
+                      final presumedErrors = tempProject.validationErrors
+                          .where(
+                            (error) =>
+                                error.contains('Presumed total length') ||
+                                error.contains('presumed'),
+                          )
+                          .toList();
+                      return presumedErrors.isNotEmpty
+                          ? presumedErrors.first
+                          : null;
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 8),
+                // Current rope length (calculated from points)
+                Container(
+                  padding: const EdgeInsets.all(12.0),
+                  decoration: BoxDecoration(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.surfaceVariant.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(8.0),
+                    border: Border.all(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.outline.withOpacity(0.2),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.straighten,
+                        size: 20,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Current Rope Length',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                  ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${_currentProject.currentRopeLength.toStringAsFixed(2)} m',
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'monospace',
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _azimuthController,
+                        decoration: InputDecoration(
+                          labelText: s?.formFieldAzimuthLabel ?? 'Azimuth',
+                          border: const OutlineInputBorder(),
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                          signed: true,
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty)
+                            return null; // Optional field
+
+                          final azimuth = double.tryParse(value.trim());
+                          if (azimuth == null) {
+                            return 'Invalid number format';
+                          }
+
+                          // Create temporary project with all current form values
+                          final name = _nameController.text.trim();
+                          final note = _noteController.text.trim();
+                          final presumed = double.tryParse(
+                            _presumedTotalLengthController.text,
+                          );
+
+                          final tempProject = _currentProject.copyWith(
+                            name: name,
+                            note: note,
+                            presumedTotalLength:
+                                _presumedTotalLengthController.text
+                                    .trim()
+                                    .isEmpty
+                                ? null
+                                : presumed,
+                            azimuth: azimuth,
+                            date: _projectDate,
+                          );
+
+                          if (!tempProject.isValid) {
+                            final azimuthErrors = tempProject.validationErrors
+                                .where(
+                                  (error) =>
+                                      error.contains('Azimuth') ||
+                                      error.contains('azimuth'),
+                                )
+                                .toList();
+                            return azimuthErrors.isNotEmpty
+                                ? azimuthErrors.first
+                                : null;
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    SizedBox(
+                      width: 140,
+                      child: ElevatedButton.icon(
+                        onPressed: !canCalculate
                             ? null
-                            : presumed,
-                        azimuth: azimuth,
-                        date: _projectDate,
-                      );
-                      
-                      if (!tempProject.isValid) {
-                        final azimuthErrors = tempProject.validationErrors.where((error) => 
-                          error.contains('Azimuth') || error.contains('azimuth')).toList();
-                        return azimuthErrors.isNotEmpty ? azimuthErrors.first : null;
-                      }
-                      return null;
-                    },
-                  ),
-                ),
-                const SizedBox(width: 10),
-                SizedBox(
-                  width: 140,
-                  child: ElevatedButton.icon(
-                    onPressed: !canCalculate && !azimuthButtonIsSave
-                        ? null
-                        : () async {
-                            if (azimuthButtonIsSave) {
-                              await _handleSave();
-                            } else {
-                              await _handleAzimuthCalculation();
-                            }
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: azimuthButtonIsSave && isDirty
-                          ? Colors.green
-                          : null,
+                            : () async {
+                                await _handleAzimuthCalculation();
+                              },
+                        icon: const Icon(Icons.calculate),
+                        label: Text(s?.buttonCalculate ?? 'Calculate'),
+                      ),
                     ),
-                    icon: Icon(azimuthButtonIcon),
-                    label: Text(azimuthButtonLabel),
-                  ),
+                  ],
                 ),
+                const SizedBox(height: 16),
               ],
             ),
-            const SizedBox(height: 16),
-            // Main Save Button
-            ElevatedButton.icon(
-              onPressed: isDirty ? _handleSave : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isDirty ? Colors.green : null,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              icon: const Icon(Icons.save),
-              label: Text(s?.buttonSave ?? 'Save Project'),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -594,5 +575,16 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> {
 
     // Use model validation
     return tempProject.isValid;
+  }
+
+  void _updateDirtyStateFromGlobalState() {
+    final globalHasUnsavedChanges =
+        context.projectStateListen.hasUnsavedChanges;
+    if (!globalHasUnsavedChanges && _dirty) {
+      // Don't call setState during build, just update the variable
+      _dirty = false;
+      _originalAzimuthValue = _azimuthController.text;
+      _azimuthFieldModified = false;
+    }
   }
 }
