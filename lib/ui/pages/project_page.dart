@@ -20,6 +20,7 @@ import 'package:teleferika/ui/tabs/points_tab.dart';
 import 'package:teleferika/ui/tabs/points_tool_view.dart';
 import 'package:teleferika/ui/tabs/project_details_tab.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
+import 'package:teleferika/ui/test/project_state_test_widget.dart';
 
 enum ProjectPageTab {
   details, // 0
@@ -768,6 +769,19 @@ class _ProjectPageState extends State<ProjectPage>
       ),
     ];
     List<Widget> tabBarActions = [
+      // Temporary test button
+      IconButton(
+        icon: const Icon(Icons.science, color: Colors.purple),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ProjectStateTestWidget(),
+            ),
+          );
+        },
+        tooltip: 'Test Global State',
+      ),
       if (!_isEffectivelyNew)
         IconButton(
           icon: const Icon(Icons.delete_outline, color: Colors.redAccent),

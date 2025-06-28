@@ -9,6 +9,7 @@ import 'package:teleferika/licensing/feature_registry.dart';
 import 'package:teleferika/licensing/licence_service.dart';
 import 'package:teleferika/licensing/licensed_features_loader.dart';
 import 'package:teleferika/ui/pages/loading_page.dart';
+import 'package:teleferika/core/project_provider.dart';
 
 import 'core/logger.dart';
 import 'db/database_helper.dart';
@@ -167,20 +168,22 @@ class TeleferiKa extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: AppConfig.appName,
+    return ProjectProvider(
+      child: MaterialApp(
+        title: AppConfig.appName,
 
-      // --- Dynamic Theme Settings ---
-      theme: AppConfig.lightTheme, // Your defined light theme
-      darkTheme: AppConfig.darkTheme, // Your defined dark theme
-      themeMode: ThemeMode.system, // This is the key!
-      // --- End Dynamic Theme Settings ---
-      debugShowCheckedModeBanner: kDebugMode,
-      localizationsDelegates: AppConfig.localizationsDelegates,
-      supportedLocales: AppConfig.supportedLocales,
-      home: ProjectsListPage(
-        appVersion: appVersion,
-      ), // Set ProjectsListPage as the home screen
+        // --- Dynamic Theme Settings ---
+        theme: AppConfig.lightTheme, // Your defined light theme
+        darkTheme: AppConfig.darkTheme, // Your defined dark theme
+        themeMode: ThemeMode.system, // This is the key!
+        // --- End Dynamic Theme Settings ---
+        debugShowCheckedModeBanner: kDebugMode,
+        localizationsDelegates: AppConfig.localizationsDelegates,
+        supportedLocales: AppConfig.supportedLocales,
+        home: ProjectsListPage(
+          appVersion: appVersion,
+        ), // Set ProjectsListPage as the home screen
+      ),
     );
   }
 }
