@@ -202,6 +202,8 @@ class _ProjectPageState extends State<ProjectPage>
         showErrorStatus('Please correct the errors in the form before saving.');
         return false;
       }
+      // Dismiss keyboard when saving from details tab
+      detailsTabState?.dismissKeyboard();
     }
     
     setState(() => _isLoading = true);

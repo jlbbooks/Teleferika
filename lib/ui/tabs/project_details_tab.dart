@@ -919,4 +919,9 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
       _azimuthFieldModified = false;
     }
   }
+
+  /// Dismisses the keyboard by unfocusing the current focus node
+  void dismissKeyboard() {
+    FocusScope.of(context).unfocus();
+  }
 }

@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/core/project_state_manager.dart';
 import 'package:teleferika/db/database_helper.dart';
@@ -14,10 +13,7 @@ import 'package:teleferika/ui/widgets/status_indicator.dart';
 class PointsToolView extends StatefulWidget {
   final ProjectModel project;
 
-  const PointsToolView({
-    super.key,
-    required this.project,
-  });
+  const PointsToolView({super.key, required this.project});
 
   @override
   State<PointsToolView> createState() => PointsToolViewState();
@@ -45,7 +41,8 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
     super.didChangeDependencies();
     // Initialize previous project data after dependencies are available
     if (_previousProject == null) {
-      _previousProject = context.projectStateListen.currentProject ?? widget.project;
+      _previousProject =
+          context.projectStateListen.currentProject ?? widget.project;
     }
   }
 
@@ -53,14 +50,15 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
   void didUpdateWidget(PointsToolView oldWidget) {
     super.didUpdateWidget(oldWidget);
     // Check if parent project start/end points changed using global state
-    final currentProject = context.projectStateListen.currentProject ?? widget.project;
-    
+    final currentProject =
+        context.projectStateListen.currentProject ?? widget.project;
+
     if (_previousProject?.startingPointId != currentProject.startingPointId ||
         _previousProject?.endingPointId != currentProject.endingPointId) {
       // Refresh from global state
       _loadPoints();
     }
-    
+
     // Update stored project data
     _previousProject = currentProject;
   }
@@ -73,7 +71,10 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       });
 
       // Use global state to get points
-      final projectState = Provider.of<ProjectStateManager>(context, listen: false);
+      final projectState = Provider.of<ProjectStateManager>(
+        context,
+        listen: false,
+      );
       await projectState.refreshPoints();
 
       if (mounted) {
@@ -139,9 +140,12 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
     }
 
     // 3. Get current project from global state and create backup before making changes
-    final projectState = Provider.of<ProjectStateManager>(context, listen: false);
+    final projectState = Provider.of<ProjectStateManager>(
+      context,
+      listen: false,
+    );
     final currentProject = projectState.currentProject ?? widget.project;
-    
+
     // Create backup before making changes
     projectState.createPointsBackup();
 
@@ -160,7 +164,10 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
 
   /// Validates if the reorder operation is valid.
   bool _isValidReorder(int oldIndex, int newIndex) {
-    final projectState = Provider.of<ProjectStateManager>(context, listen: false);
+    final projectState = Provider.of<ProjectStateManager>(
+      context,
+      listen: false,
+    );
     final points = projectState.currentPoints;
     if (newIndex < 0 || newIndex >= points.length || oldIndex == newIndex) {
       return false;
@@ -204,7 +211,10 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
         }
 
         // Update project start/end points
-        final projectState = Provider.of<ProjectStateManager>(context, listen: false);
+        final projectState = Provider.of<ProjectStateManager>(
+          context,
+          listen: false,
+        );
         final currentProject = projectState.currentProject ?? widget.project;
         await _dbHelper.updateProjectStartEndPoints(
           currentProject.id!,
@@ -213,9 +223,11 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       });
 
       // Refresh global state
-      final projectState = Provider.of<ProjectStateManager>(context, listen: false);
+      final projectState = Provider.of<ProjectStateManager>(
+        context,
+        listen: false,
+      );
       await projectState.refreshPoints();
-
     } catch (e, stackTrace) {
       logger.severe("Error updating point ordinals in database", e, stackTrace);
       showErrorStatus('Error updating point order: ${e.toString()}');
@@ -275,21 +287,8 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
         ),
       );
     } else {
-      // Normal top bar
-      return Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text('Points:', style: Theme.of(context).textTheme.titleLarge),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.add_location_alt_outlined),
-              label: const Text('Add Point'),
-              onPressed: null, // TODO: _addNewPoint,
-            ),
-          ],
-        ),
-      );
+      // Return empty container when not in selection mode
+      return const SizedBox.shrink();
     }
   }
   // --- End Action Bar ---
@@ -338,9 +337,12 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
     if (_selectedPointIds.isEmpty) return;
 
     // Get current project from global state and create backup before deletion
-    final projectState = Provider.of<ProjectStateManager>(context, listen: false);
+    final projectState = Provider.of<ProjectStateManager>(
+      context,
+      listen: false,
+    );
     final currentProject = projectState.currentProject ?? widget.project;
-    
+
     // Create backup before making changes
     createBackup();
 
@@ -364,7 +366,12 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
   // --- End Delete Logic ---
 
   /// Builds a single point item Card for the ListView.
-  Widget _buildPointItem(BuildContext context, PointModel point, int index, ProjectModel project) {
+  Widget _buildPointItem(
+    BuildContext context,
+    PointModel point,
+    int index,
+    ProjectModel project,
+  ) {
     // index needed for Key
     final bool isSelectedForDelete = _selectedPointIds.contains(point.id);
     final Color baseSelectionColor = Theme.of(context).primaryColorLight;
@@ -491,7 +498,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       builder: (context, projectState, child) {
         // Get current project data from global state
         final currentProject = projectState.currentProject ?? widget.project;
-        
+
         return Stack(
           children: [
             Column(
@@ -507,7 +514,10 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
             Positioned(
               top: 24,
               right: 24,
-              child: StatusIndicator(status: currentStatus, onDismiss: hideStatus),
+              child: StatusIndicator(
+                status: currentStatus,
+                onDismiss: hideStatus,
+              ),
             ),
           ],
         );
@@ -526,10 +536,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
               child: Text(
                 'No points added yet.\nTap "Add Point" to get started.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
             ),
           )
