@@ -6,6 +6,7 @@ import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
+import 'package:teleferika/core/utils/ordinal_manager.dart';
 
 /// Global state manager for the current project being edited.
 /// This ensures all widgets have access to the same project data
@@ -89,7 +90,23 @@ class ProjectStateManager extends ChangeNotifier {
       // Save project details
       await updateProject(projectToSave);
       // Sync points (add/update/delete as needed)
-      await _dbHelper.syncPointsForProject(projectToSave.id, _editingProject!.points ?? []);
+      final dbPoints = await _dbHelper.getPointsForProject(projectToSave.id);
+      final dbPointIds = dbPoints.map((p) => p.id).toSet();
+      final memPoints = _editingProject!.points ?? [];
+      final memPointIds = memPoints.map((p) => p.id).toSet();
+      // Upsert all in-memory points
+      for (final point in memPoints) {
+        if (dbPointIds.contains(point.id)) {
+          await _dbHelper.updatePoint(point);
+        } else {
+          await _dbHelper.insertPoint(point);
+        }
+      }
+      // Delete any DB points not present in memory
+      final pointsToDelete = dbPointIds.difference(memPointIds);
+      for (final pointId in pointsToDelete) {
+        await _dbHelper.deletePointById(pointId);
+      }
       // Reload project and points from DB to ensure state is up to date
       await loadProject(projectToSave.id);
       _hasUnsavedChanges = false;
@@ -134,10 +151,13 @@ class ProjectStateManager extends ChangeNotifier {
   /// Add a new point to the editing project (in-memory only, not DB)
   void addPointInEditingState(PointModel point) {
     if (_editingProject == null) return;
-    final updatedPoints = List<PointModel>.from(_editingProject!.points ?? _currentPoints);
-    updatedPoints.add(point);
-    _editingProject = _editingProject!.copyWith(points: updatedPoints);
-    _currentPoints = updatedPoints;
+    final points = List<PointModel>.from(_editingProject!.points ?? _currentPoints);
+    final nextOrdinal = OrdinalManager.getNextOrdinal(points);
+    final pointWithOrdinal = point.copyWith(ordinalNumber: nextOrdinal);
+    points.add(pointWithOrdinal);
+    final resequenced = OrdinalManager.resequence(points);
+    _editingProject = _editingProject!.copyWith(points: resequenced);
+    _currentPoints = resequenced;
     _hasUnsavedChanges = true;
     notifyListeners();
   }
@@ -145,16 +165,13 @@ class ProjectStateManager extends ChangeNotifier {
   /// Update an existing point in the editing project (in-memory only, not DB)
   void updatePointInEditingState(PointModel updatedPoint) {
     if (_editingProject == null) return;
-    final updatedPoints = List<PointModel>.from(_editingProject!.points ?? _currentPoints);
-    logger.info('[updatePointInEditingState] Attempting to update point: id=${updatedPoint.id}, ordinal=${updatedPoint.ordinalNumber}, name=${updatedPoint.name}, lat=${updatedPoint.latitude}, lon=${updatedPoint.longitude}, note=${updatedPoint.note}');
-    logger.info('[updatePointInEditingState] Points before update: ${updatedPoints.map((p) => p.id).toList()}');
-    final index = updatedPoints.indexWhere((p) => p.id == updatedPoint.id);
+    final points = List<PointModel>.from(_editingProject!.points ?? _currentPoints);
+    final index = points.indexWhere((p) => p.id == updatedPoint.id);
     if (index != -1) {
-      updatedPoints[index] = updatedPoint;
-      logger.info('[updatePointInEditingState] Updated point at index $index.');
-      logger.info('[updatePointInEditingState] Points after update: ${updatedPoints.map((p) => p.id).toList()}');
-      _editingProject = _editingProject!.copyWith(points: updatedPoints);
-      _currentPoints = updatedPoints;
+      points[index] = updatedPoint;
+      final resequenced = OrdinalManager.resequence(points);
+      _editingProject = _editingProject!.copyWith(points: resequenced);
+      _currentPoints = resequenced;
       _hasUnsavedChanges = true;
       notifyListeners();
     } else {
@@ -165,10 +182,10 @@ class ProjectStateManager extends ChangeNotifier {
   /// Delete a point from the editing project (in-memory only, not DB)
   void deletePointInEditingState(String pointId) {
     if (_editingProject == null) return;
-    final updatedPoints = List<PointModel>.from(_editingProject!.points ?? _currentPoints);
-    updatedPoints.removeWhere((p) => p.id == pointId);
-    _editingProject = _editingProject!.copyWith(points: updatedPoints);
-    _currentPoints = updatedPoints;
+    final points = List<PointModel>.from(_editingProject!.points ?? _currentPoints);
+    final resequenced = OrdinalManager.removeById(points, pointId);
+    _editingProject = _editingProject!.copyWith(points: resequenced);
+    _currentPoints = resequenced;
     _hasUnsavedChanges = true;
     notifyListeners();
   }
@@ -176,8 +193,9 @@ class ProjectStateManager extends ChangeNotifier {
   /// Reorder points in the editing project (in-memory only, not DB)
   void reorderPointsInEditingState(List<PointModel> newOrder) {
     if (_editingProject == null) return;
-    _editingProject = _editingProject!.copyWith(points: newOrder);
-    _currentPoints = newOrder;
+    final resequenced = OrdinalManager.resequence(newOrder);
+    _editingProject = _editingProject!.copyWith(points: resequenced);
+    _currentPoints = resequenced;
     _hasUnsavedChanges = true;
     notifyListeners();
   }

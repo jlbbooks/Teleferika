@@ -12,6 +12,7 @@ import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:teleferika/core/utils/ordinal_manager.dart';
 
 enum MapType { openStreetMap, satellite, terrain }
 
@@ -345,7 +346,8 @@ class MapControllerLogic {
 
   // Create a new point at the specified location
   Future<PointModel> createNewPoint(LatLng location) async {
-    final nextOrdinal = await _dbHelper.ordinalManager.getNextOrdinal(project.id);
+    final points = await _dbHelper.getPointsForProject(project.id);
+    final nextOrdinal = OrdinalManager.getNextOrdinal(points);
     
     return PointModel(
       projectId: project.id,

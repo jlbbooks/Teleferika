@@ -18,6 +18,7 @@ import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
+import 'package:teleferika/core/utils/ordinal_manager.dart';
 
 class CompassToolView extends StatefulWidget {
   const CompassToolView({
@@ -195,40 +196,35 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
       String newPointIdFromCompass;
       final dbHelper = DatabaseHelper.instance;
 
-      // Use OrdinalManager to handle the complex ordinal logic
+      // In-memory: get current points, insert new point at correct position, resequence, then persist
+      List<PointModel> points = await dbHelper.getPointsForProject(currentProject.id);
+      List<PointModel> updatedPoints;
       if (!addAsEndPoint && currentProject.endingPointId != null) {
         // Insert before end point
-        await dbHelper.ordinalManager.insertPointBeforeEndPoint(
-          pointFromCompass,
-          currentProject.endingPointId!,
-        );
-        // Get the inserted point ID (we need to query for it)
-        final points = await dbHelper.getPointsForProject(currentProject.id);
-        final insertedPoint = points.firstWhere(
-          (p) =>
-              p.latitude == position.latitude &&
-              p.longitude == position.longitude &&
-              p.note == pointFromCompass.note,
-          orElse: () => throw Exception('Inserted point not found'),
-        );
-        newPointIdFromCompass = insertedPoint.id;
+        int endIndex = points.indexWhere((p) => p.id == currentProject.endingPointId);
+        if (endIndex == -1) endIndex = points.length;
+        updatedPoints = OrdinalManager.insertAtOrdinal(points, pointFromCompass, endIndex);
       } else {
         // Append to end
-        await dbHelper.ordinalManager.insertPointAtOrdinal(
-          pointFromCompass,
-          null,
-        );
-        // Get the inserted point ID
-        final points = await dbHelper.getPointsForProject(currentProject.id);
-        final insertedPoint = points.firstWhere(
-          (p) =>
-              p.latitude == position.latitude &&
-              p.longitude == position.longitude &&
-              p.note == pointFromCompass.note,
-          orElse: () => throw Exception('Inserted point not found'),
-        );
-        newPointIdFromCompass = insertedPoint.id;
+        updatedPoints = OrdinalManager.insertAtOrdinal(points, pointFromCompass, points.length);
       }
+      // Persist all points (upsert)
+      for (final point in updatedPoints) {
+        if (points.any((p) => p.id == point.id)) {
+          await dbHelper.updatePoint(point);
+        } else {
+          await dbHelper.insertPoint(point);
+        }
+      }
+      // Get the inserted point ID
+      final insertedPoint = updatedPoints.firstWhere(
+        (p) =>
+            p.latitude == position.latitude &&
+            p.longitude == position.longitude &&
+            p.note == pointFromCompass.note,
+        orElse: () => throw Exception('Inserted point not found'),
+      );
+      newPointIdFromCompass = insertedPoint.id;
 
       if (addAsEndPoint) {
         ProjectModel projectToUpdate = currentProject
@@ -244,10 +240,8 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
 
       if (mounted) {
         hideStatus();
-        // Get the final point to get the correct ordinal
-        final finalPoint = await dbHelper.getPointById(newPointIdFromCompass);
-        String baseMessage = s?.pointAddedSnackbar(finalPoint?.ordinalNumber.toString() ?? '?') ??
-            'Point ${finalPoint?.ordinalNumber.toString() ?? '?'} added';
+        String baseMessage = s?.pointAddedSnackbar(insertedPoint.ordinalNumber.toString()) ??
+            'Point ${insertedPoint.ordinalNumber.toString()} added';
         String suffix = "";
         if (addAsEndPoint == true) {
           suffix = " ${s?.pointAddedSetAsEndSnackbarSuffix ?? '(set as end point)'}";
