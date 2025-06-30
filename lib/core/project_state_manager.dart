@@ -27,6 +27,16 @@ class ProjectStateManager extends ChangeNotifier {
   bool _hasUnsavedChanges = false;
   ProjectModel? _editingProject; // Working copy for editing
 
+  // Track if there is an unsaved new point (e.g., in MapToolView)
+  bool _hasUnsavedNewPoint = false;
+  bool get hasUnsavedNewPoint => _hasUnsavedNewPoint;
+  void setHasUnsavedNewPoint(bool value) {
+    if (_hasUnsavedNewPoint != value) {
+      _hasUnsavedNewPoint = value;
+      notifyListeners();
+    }
+  }
+
   // Getters
   ProjectModel? get currentProject => _currentProject;
   List<PointModel> get currentPoints => List.unmodifiable(_currentPoints);
@@ -48,9 +58,10 @@ class ProjectStateManager extends ChangeNotifier {
         _currentPoints = project.points;
         _editingProject = project; // Initialize editing copy
         _hasUnsavedChanges = false;
-        logger.info("ProjectStateManager: Loaded project ${project.name} with ${_currentPoints.length} points");
+        _hasUnsavedNewPoint = false;
         notifyListeners();
-      } else {
+        logger.info("ProjectStateManager: Loaded project ${project.name} with ${_currentPoints.length} points");
+        } else {
         logger.warning("ProjectStateManager: Project with ID $projectId not found");
       }
     } catch (e, stackTrace) {
@@ -67,9 +78,10 @@ class ProjectStateManager extends ChangeNotifier {
     _currentPoints = [];
     _editingProject = null;
     _hasUnsavedChanges = false;
-    logger.info("ProjectStateManager: Cleared current project");
+    _hasUnsavedNewPoint = false;
     notifyListeners();
-  }
+    logger.info("ProjectStateManager: Cleared current project");
+   }
 
   /// Update the editing project (for form changes)
   void updateEditingProject(ProjectModel project, {bool hasUnsavedChanges = false}) {
@@ -183,7 +195,22 @@ class ProjectStateManager extends ChangeNotifier {
     if (_editingProject == null) return;
     final points = List<PointModel>.from(_editingProject!.points ?? _currentPoints);
     final resequenced = OrdinalManager.removeById(points, pointId);
-    _editingProject = _editingProject!.copyWith(points: resequenced);
+
+    // Determine new starting/ending point IDs
+    String? newStartingPointId = _editingProject!.startingPointId;
+    String? newEndingPointId = _editingProject!.endingPointId;
+    if (newStartingPointId == pointId || resequenced.isEmpty) {
+      newStartingPointId = resequenced.isNotEmpty ? resequenced.first.id : null;
+    }
+    if (newEndingPointId == pointId || resequenced.isEmpty) {
+      newEndingPointId = resequenced.isNotEmpty ? resequenced.last.id : null;
+    }
+
+    _editingProject = _editingProject!.copyWith(
+      points: resequenced,
+      startingPointId: newStartingPointId,
+      endingPointId: newEndingPointId,
+    );
     _currentPoints = resequenced;
     _hasUnsavedChanges = true;
     notifyListeners();

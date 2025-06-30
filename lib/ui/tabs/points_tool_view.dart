@@ -440,6 +440,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
         // Get current project data from global state
         final currentProject = projectState.currentProject ?? widget.project;
         final points = projectState.currentPoints;
+        final hasUnsavedNewPoint = projectState.hasUnsavedNewPoint;
 
         return Stack(
           children: [
@@ -449,7 +450,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                 Expanded(
                   child: _isLoading
                       ? const Center(child: CircularProgressIndicator())
-                      : _buildPointsList(context, currentProject, points),
+                      : _buildPointsList(context, currentProject, points, hasUnsavedNewPoint),
                 ),
               ],
             ),
@@ -467,7 +468,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
     );
   }
 
-  Widget _buildPointsList(BuildContext context, ProjectModel project, List<PointModel> points) {
+  Widget _buildPointsList(BuildContext context, ProjectModel project, List<PointModel> points, bool hasUnsavedNewPoint) {
     return points.isEmpty
         ? const Center(
             child: Padding(
@@ -479,15 +480,35 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
               ),
             ),
           )
-        : ReorderableListView.builder(
-            itemCount: points.length,
-            onReorder: _isSelectionMode
-                ? (int oldI, int newI) {}
-                : _handleReorder,
-            itemBuilder: (context, index) {
-              final point = points[index];
-              return _buildPointItem(context, point, index, project);
-            },
+        : Column(
+            children: [
+              Expanded(
+                child: ReorderableListView.builder(
+                  itemCount: points.length,
+                  onReorder: _isSelectionMode
+                      ? (int oldI, int newI) {}
+                      : _handleReorder,
+                  itemBuilder: (context, index) {
+                    final point = points[index];
+                    return _buildPointItem(context, point, index, project);
+                  },
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.add_location_alt_outlined),
+                  label: const Text('Add Point'),
+                  onPressed: hasUnsavedNewPoint ? null : () => _handleAddPoint(),
+                ),
+              ),
+            ],
           );
+  }
+
+  void _handleAddPoint() {
+    // This should trigger the add point flow, e.g., open a dialog or navigate
+    // For now, just show a message
+    showInfoStatus('Add Point pressed');
   }
 }

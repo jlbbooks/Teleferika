@@ -53,9 +53,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   String? _selectedPointId;
   bool _isMovePointMode = false;
   bool _isMovingPointLoading = false;
-  PointModel? _selectedPointInstance;
-
-  // New point functionality
   PointModel? _newPoint; // The unsaved new point
   bool _isAddingNewPoint =
       false; // Whether we're in the process of adding a new point
@@ -814,25 +811,22 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           _selectedPointId = null;
         });
       },
-      onEdit: _handleEditPoint,
+      onEdit: () => _handleEditPoint(selectedPoint!),
       onMove: _handleMovePointAction,
-      onDelete: _handleDeletePoint,
+      onDelete: () => _handleDeletePoint(selectedPoint!),
       onPointUpdated: _handlePointUpdated,
       onSaveNewPoint: _newPoint != null ? _handleSaveNewPoint : null,
       onDiscardNewPoint: _newPoint != null ? _handleDiscardNewPoint : null,
     );
   }
 
-  // Action Handlers
-  Future<void> _handleEditPoint() async {
-    if (_selectedPointInstance == null) return;
-
-    logger.info("Navigating to edit point ${_selectedPointInstance!.name}");
+  Future<void> _handleEditPoint(PointModel point) async {
+    logger.info("Navigating to edit point ${point.name}");
 
     final result = await Navigator.push<Map<String, dynamic>>(
       context,
       MaterialPageRoute(
-        builder: (context) => PointDetailsPage(point: _selectedPointInstance!),
+        builder: (context) => PointDetailsPage(point: point),
       ),
     );
 
@@ -876,17 +870,14 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   }
 
   void _handleMovePointAction() {
-    if (_isMovePointMode && _selectedPointInstance?.id == _selectedPointId) {
-      setState(() {
-        _isMovePointMode = false;
-      });
-      _stopGlowAnimation();
-    } else if (!_isMovePointMode) {
-      setState(() {
-        _isMovePointMode = true;
-      });
+    setState(() {
+      _isMovePointMode = !_isMovePointMode;
+    });
+    if (_isMovePointMode) {
       _startGlowAnimation();
       showInfoStatus('Move mode activated. Tap map to relocate point.');
+    } else {
+      _stopGlowAnimation();
     }
   }
 
@@ -907,14 +898,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     _glowAnimationValue = 0.0;
   }
 
-  Future<void> _handleDeletePoint() async {
-    if (_selectedPointInstance == null) {
-      showErrorStatus('No point selected to delete.');
-      return;
-    }
-
-    logger.info("Delete tapped for point ${_selectedPointInstance!.name}");
-    await _handleDeletePointFromPanel(_selectedPointInstance!);
+  Future<void> _handleDeletePoint(PointModel point) async {
+    logger.info("Delete tapped for point ${point.name}");
+    await _handleDeletePointFromPanel(point);
   }
 
   void _centerOnCurrentLocation() {
@@ -983,6 +969,8 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           _selectedPointId = newPoint.id;
           _isAddingNewPoint = false;
         });
+        // Set global unsaved new point flag
+        context.projectState.setHasUnsavedNewPoint(true);
 
         showInfoStatus(
           'New point created. Tap "Save" to add it to your project.',
@@ -1011,13 +999,17 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         context,
         listen: false,
       );
-      projectState.addPointInEditingState(_newPoint!);
+      // Remove isUnsaved flag from the point before adding
+      final savedPoint = _newPoint!.copyWith(isUnsaved: false);
+      projectState.addPointInEditingState(savedPoint);
 
       if (mounted) {
         setState(() {
           _newPoint = null;
           _selectedPointId = null;
         });
+        // Clear global unsaved new point flag
+        context.projectState.setHasUnsavedNewPoint(false);
 
         final s = S.of(context);
         showSuccessStatus(
@@ -1041,6 +1033,8 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       _newPoint = null;
       _selectedPointId = null;
     });
+    // Clear global unsaved new point flag
+    context.projectState.setHasUnsavedNewPoint(false);
 
     showInfoStatus('New point discarded.');
   }

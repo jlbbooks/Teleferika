@@ -343,6 +343,7 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
       builder: (context, projectState, child) {
         // Get current project from global state
         final currentProject = projectState.currentProject;
+        final hasUnsavedNewPoint = projectState.hasUnsavedNewPoint;
         
         if (currentProject == null) {
           return const Center(
@@ -354,13 +355,13 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
           requiredPermissions: [PermissionType.location, PermissionType.sensor],
           onPermissionsResult: _handlePermissionResults,
           showOverlay: true, // Use overlay instead of full screen
-          child: _buildCompassContent(currentProject, projectState),
+          child: _buildCompassContent(currentProject, projectState, hasUnsavedNewPoint),
         );
       },
     );
   }
 
-  Widget _buildCompassContent(ProjectModel currentProject, ProjectStateManager projectState) {
+  Widget _buildCompassContent(ProjectModel currentProject, ProjectStateManager projectState, bool hasUnsavedNewPoint) {
     // Show basic compass background when permissions are missing or compass unavailable
     if (!_hasLocationPermission || !_hasSensorPermission || !_isCompassAvailable) {
       return Stack(
@@ -537,7 +538,7 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
                         ),
                         textStyle: const TextStyle(fontSize: 16),
                       ),
-                      onPressed: () => _handleAddPointPressed(context, projectState),
+                      onPressed: hasUnsavedNewPoint ? null : () => _handleAddPointPressed(context, projectState),
                     ),
                   ),
                 _buildProjectAzimuthText(currentProject),
