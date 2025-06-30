@@ -76,7 +76,9 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
         context,
         listen: false,
       );
-      await projectState.refreshPoints();
+      if (!projectState.hasUnsavedChanges) {
+        await projectState.refreshPoints();
+      }
 
       if (mounted) {
         setState(() {

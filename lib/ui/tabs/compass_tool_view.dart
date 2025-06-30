@@ -238,7 +238,9 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
 
       await dbHelper.updateProjectStartEndPoints(currentProject.id);
       // Refresh global state
-      await projectState.refreshPoints();
+      if (!projectState.hasUnsavedChanges) {
+        await projectState.refreshPoints();
+      }
 
       if (mounted) {
         hideStatus();

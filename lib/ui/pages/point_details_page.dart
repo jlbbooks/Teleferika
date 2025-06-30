@@ -144,7 +144,12 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
     });
 
     try {
-      context.projectState.updatePointInEditingState(pointToSave);
+      final exists = context.projectState.currentPoints.any((p) => p.id == pointToSave.id);
+      if (exists) {
+        context.projectState.updatePointInEditingState(pointToSave);
+      } else {
+        context.projectState.addPointInEditingState(pointToSave);
+      }
       logger.info(
         "Point ID ${widget.point.id} and its images updated successfully. Image count: ${_currentImages.length}",
       );

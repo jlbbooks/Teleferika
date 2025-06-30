@@ -78,11 +78,12 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   final StreamController<LocationMarkerPosition> _locationStreamController =
       StreamController<LocationMarkerPosition>.broadcast();
 
+  bool _didInitialLoad = false;
+
   @override
   void initState() {
     super.initState();
     _selectedPointId = widget.selectedPointId;
-    _loadProjectPoints();
   }
 
   @override
@@ -91,6 +92,11 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     // Initialize controller with current project from global state
     final currentProject = context.projectStateListen.currentProject ?? widget.project;
     _controller = MapControllerLogic(project: currentProject);
+
+    if (!_didInitialLoad) {
+      _didInitialLoad = true;
+      _loadProjectPoints();
+    }
   }
 
   @override
@@ -231,7 +237,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     try {
       // Use global state to get points
       final projectState = Provider.of<ProjectStateManager>(context, listen: false);
-      await projectState.refreshPoints();
+      if (!projectState.hasUnsavedChanges) {
+        await projectState.refreshPoints();
+      }
       
       if (mounted) {
         setState(() {
@@ -1093,7 +1101,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     try {
       // Use global state to refresh points
       final projectState = Provider.of<ProjectStateManager>(context, listen: false);
-      await projectState.refreshPoints();
+      if (!projectState.hasUnsavedChanges) {
+        await projectState.refreshPoints();
+      }
       
       if (mounted) {
         // Recalculate lines with current points
