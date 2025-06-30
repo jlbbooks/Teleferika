@@ -570,7 +570,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                           onCenterOnLocation: _centerOnCurrentLocation,
                           onAddPoint: _handleAddPointButtonPressed,
                           onCenterOnPoints: _fitMapToPoints,
-                          isAddingNewPoint: _isAddingNewPoint,
+                          isAddingNewPoint: _isAddingNewPoint || _newPoint != null,
                         ),
                       ),
                     ],
@@ -981,6 +981,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         setState(() {
           _newPoint = newPoint;
           _selectedPointId = newPoint.id;
+          _isAddingNewPoint = false;
         });
 
         showInfoStatus(
