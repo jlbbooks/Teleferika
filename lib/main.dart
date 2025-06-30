@@ -91,7 +91,7 @@ class _MyAppRootState extends State<MyAppRoot> {
       logger.info("Version info loaded successfully.");
 
       // Simulate other essential checks
-      await Future.delayed(const Duration(milliseconds: 100));
+      await Future.delayed(const Duration(milliseconds: kDebugMode ? 100 : 3000));
       logger.config("Other essential checks simulated successfully.");
     } catch (e, stackTrace) {
       logger.severe("Error during app initialization", e, stackTrace);

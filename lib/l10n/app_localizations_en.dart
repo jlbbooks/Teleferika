@@ -619,4 +619,13 @@ class SEn extends S {
 
   @override
   String get mapCompassNorthIndicator => 'North';
+
+  @override
+  String get errorLocationUnavailable => 'Location unavailable.';
+
+  @override
+  String get infoPointAddedPendingSave => 'Point added (pending save)';
+
+  @override
+  String get errorGeneric => 'Error';
 }

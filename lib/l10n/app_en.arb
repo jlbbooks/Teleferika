@@ -651,5 +651,8 @@
   "mapCompassNorthIndicator": "North",
   "@mapCompassNorthIndicator": {
     "description": "Label for the north indicator on the compass arrow."
-  }
+  },
+  "errorLocationUnavailable": "Location unavailable.",
+  "infoPointAddedPendingSave": "Point added (pending save)",
+  "errorGeneric": "Error"
 }

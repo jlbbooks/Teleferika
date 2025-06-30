@@ -345,15 +345,16 @@ class MapControllerLogic {
   }
 
   // Create a new point at the specified location
-  Future<PointModel> createNewPoint(LatLng location) async {
+  Future<PointModel> createNewPoint(LatLng location, {double? altitude}) async {
     final points = await _dbHelper.getPointsForProject(project.id);
     final nextOrdinal = OrdinalManager.getNextOrdinal(points);
-    
     return PointModel(
       projectId: project.id,
       latitude: location.latitude,
       longitude: location.longitude,
+      altitude: altitude, // Always include altitude if available
       ordinalNumber: nextOrdinal,
+      note: 'Point added from map',
       timestamp: DateTime.now(),
       isUnsaved: true, // Mark as unsaved
     );

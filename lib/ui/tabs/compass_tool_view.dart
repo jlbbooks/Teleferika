@@ -19,6 +19,7 @@ import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 import 'package:teleferika/core/utils/ordinal_manager.dart';
+import 'package:uuid/uuid.dart';
 
 class CompassToolView extends StatefulWidget {
   const CompassToolView({
@@ -182,90 +183,63 @@ class _CompassToolViewState extends State<CompassToolView> with StatusMixin {
     showLoadingStatus(s?.infoFetchingLocation ?? 'Fetching location...');
 
     try {
-      final position = await _determinePosition();
-      final pointFromCompass = PointModel(
-        projectId: currentProject.id,
-        latitude: position.latitude,
-        longitude: position.longitude,
-        altitude: position.altitude,
-        ordinalNumber: 0, // Will be set by OrdinalManager
-        note: s?.pointFromCompassDefaultNote(heading.toStringAsFixed(1)) ??
-            'Point from compass at ${heading.toStringAsFixed(1)}°',
-      );
-
-      String newPointIdFromCompass;
-      final dbHelper = DatabaseHelper.instance;
-
-      // In-memory: get current points, insert new point at correct position, resequence, then persist
-      List<PointModel> points = await dbHelper.getPointsForProject(currentProject.id);
-      List<PointModel> updatedPoints;
-      if (!addAsEndPoint && currentProject.endingPointId != null) {
-        // Insert before end point
-        int endIndex = points.indexWhere((p) => p.id == currentProject.endingPointId);
-        if (endIndex == -1) endIndex = points.length;
-        updatedPoints = OrdinalManager.insertAtOrdinal(points, pointFromCompass, endIndex);
-      } else {
-        // Append to end
-        updatedPoints = OrdinalManager.insertAtOrdinal(points, pointFromCompass, points.length);
-      }
-      // Persist all points (upsert)
-      for (final point in updatedPoints) {
-        if (points.any((p) => p.id == point.id)) {
-          await dbHelper.updatePoint(point);
-        } else {
-          await dbHelper.insertPoint(point);
-        }
-      }
-      // Get the inserted point ID
-      final insertedPoint = updatedPoints.firstWhere(
-        (p) =>
-            p.latitude == position.latitude &&
-            p.longitude == position.longitude &&
-            p.note == pointFromCompass.note,
-        orElse: () => throw Exception('Inserted point not found'),
-      );
-      newPointIdFromCompass = insertedPoint.id;
-
-      if (addAsEndPoint) {
-        ProjectModel projectToUpdate = currentProject
-            .copyWith(endingPointId: newPointIdFromCompass);
-        await projectState.updateProject(projectToUpdate);
-      }
-
-      await dbHelper.updateProjectStartEndPoints(currentProject.id);
-      // Refresh global state
-      if (!projectState.hasUnsavedChanges) {
-        await projectState.refreshPoints();
-      }
-
-      if (mounted) {
-        hideStatus();
-        String baseMessage = s?.pointAddedSnackbar(insertedPoint.ordinalNumber.toString()) ??
-            'Point ${insertedPoint.ordinalNumber.toString()} added';
-        String suffix = "";
-        if (addAsEndPoint == true) {
-          suffix = " ${s?.pointAddedSetAsEndSnackbarSuffix ?? '(set as end point)'}";
-        } else if (currentProject.endingPointId != null) {
-          suffix = " ${s?.pointAddedInsertedBeforeEndSnackbarSuffix ?? '(inserted before end point)'}";
-        }
-        showSuccessStatus(baseMessage + suffix);
-      }
-    } catch (e, stackTrace) {
-      logger.severe("Error adding point from compass", e, stackTrace);
-      if (mounted) {
-        hideStatus();
-        showErrorStatus(s?.errorAddingPoint(e.toString()) ?? 'Error adding point: $e');
-      }
-    } finally {
-      if (mounted) {
+      final location = await _getCurrentLocation();
+      if (location == null) {
+        showErrorStatus(s?.errorLocationUnavailable ?? 'Location unavailable');
         setState(() {
           _isAddingPoint = false;
         });
+        return;
       }
+
+      // Get the current in-memory points
+      final points = List<PointModel>.from(projectState.currentPoints);
+      final newPointId = const Uuid().v4();
+      final newPoint = PointModel(
+        id: newPointId,
+        projectId: currentProject.id,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        altitude: location.altitude,
+        ordinalNumber: 0, // will be set by OrdinalManager
+        note: s?.pointFromCompassDefaultNote(heading.toStringAsFixed(1)) ?? 'Point from compass at ${heading.toStringAsFixed(1)}°',
+      );
+
+      int insertIndex = points.length;
+      String? newEndingPointId = currentProject.endingPointId;
+      if (!addAsEndPoint && currentProject.endingPointId != null) {
+        // Insert just before the current end point
+        insertIndex = points.indexWhere((p) => p.id == currentProject.endingPointId);
+        if (insertIndex == -1) {
+          insertIndex = points.length; // fallback: append
+        }
+      } else if (addAsEndPoint) {
+        // Set as new end point
+        newEndingPointId = newPointId;
+        insertIndex = points.length;
+      }
+
+      // Insert the new point at the correct index
+      final updatedPoints = OrdinalManager.insertAtOrdinal(points, newPoint, insertIndex);
+
+      // Update the in-memory project (endingPointId if needed)
+      final updatedProject = currentProject.copyWith(
+        endingPointId: newEndingPointId,
+        points: updatedPoints,
+      );
+      projectState.updateEditingProject(updatedProject);
+      showInfoStatus(s?.infoPointAddedPendingSave ?? 'Point added (pending save)');
+    } catch (e, st) {
+      logger.severe('Error adding point from compass', e, st);
+      showErrorStatus('${s?.errorGeneric ?? 'Error'}: $e');
+    } finally {
+      setState(() {
+        _isAddingPoint = false;
+      });
     }
   }
 
-  Future<Position> _determinePosition() async {
+  Future<Position?> _getCurrentLocation() async {
     bool serviceEnabled;
     LocationPermission permission;
 

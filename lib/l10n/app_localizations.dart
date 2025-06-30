@@ -1107,6 +1107,24 @@ abstract class S {
   /// In en, this message translates to:
   /// **'North'**
   String get mapCompassNorthIndicator;
+
+  /// No description provided for @errorLocationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Location unavailable.'**
+  String get errorLocationUnavailable;
+
+  /// No description provided for @infoPointAddedPendingSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Point added (pending save)'**
+  String get infoPointAddedPendingSave;
+
+  /// No description provided for @errorGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get errorGeneric;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

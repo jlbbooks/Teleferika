@@ -87,14 +87,11 @@ class ProjectStateManager extends ChangeNotifier {
       final projectToSave = _editingProject!.copyWith(
         lastUpdate: DateTime.now(),
       );
-      // Save project details
-      await updateProject(projectToSave);
-      // Sync points (add/update/delete as needed)
+      // 1. Update all points first
       final dbPoints = await _dbHelper.getPointsForProject(projectToSave.id);
       final dbPointIds = dbPoints.map((p) => p.id).toSet();
       final memPoints = _editingProject!.points ?? [];
       final memPointIds = memPoints.map((p) => p.id).toSet();
-      // Upsert all in-memory points
       for (final point in memPoints) {
         if (dbPointIds.contains(point.id)) {
           await _dbHelper.updatePoint(point);
@@ -102,12 +99,14 @@ class ProjectStateManager extends ChangeNotifier {
           await _dbHelper.insertPoint(point);
         }
       }
-      // Delete any DB points not present in memory
+      // 2. Delete any DB points not present in memory
       final pointsToDelete = dbPointIds.difference(memPointIds);
       for (final pointId in pointsToDelete) {
         await _dbHelper.deletePointById(pointId);
       }
-      // Reload project and points from DB to ensure state is up to date
+      // 3. Now update the project (with valid start/end point IDs)
+      await updateProject(projectToSave);
+      // 4. Reload project and points from DB to ensure state is up to date
       await loadProject(projectToSave.id);
       _hasUnsavedChanges = false;
       logger.info("ProjectStateManager: Project and points saved successfully");

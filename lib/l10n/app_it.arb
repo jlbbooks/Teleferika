@@ -725,5 +725,8 @@
   "mapCompassNorthIndicator": "Nord",
   "@mapCompassNorthIndicator": {
     "description": "Etichetta per l'indicatore nord sulla freccia della bussola."
-  }
+  },
+  "errorLocationUnavailable": "Posizione non disponibile.",
+  "infoPointAddedPendingSave": "Punto aggiunto (in attesa di salvataggio)",
+  "errorGeneric": "Errore"
 }

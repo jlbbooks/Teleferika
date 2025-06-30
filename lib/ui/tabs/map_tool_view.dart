@@ -903,6 +903,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     try {
       // Try to get current location with maximum accuracy
       LatLng newPointLocation;
+      double? altitude;
 
       if (_hasLocationPermission && _currentPosition != null) {
         // Use current GPS location
@@ -910,14 +911,16 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           _currentPosition!.latitude,
           _currentPosition!.longitude,
         );
+        altitude = _currentPosition!.altitude;
       } else {
         // Use map center as fallback
         final mapCenter = _mapController.camera.center;
         newPointLocation = mapCenter;
+        altitude = null;
       }
 
       // Create new point
-      final newPoint = await _controller.createNewPoint(newPointLocation);
+      final newPoint = await _controller.createNewPoint(newPointLocation, altitude: altitude);
 
       if (mounted) {
         setState(() {

@@ -624,4 +624,14 @@ class SIt extends S {
 
   @override
   String get mapCompassNorthIndicator => 'Nord';
+
+  @override
+  String get errorLocationUnavailable => 'Posizione non disponibile.';
+
+  @override
+  String get infoPointAddedPendingSave =>
+      'Punto aggiunto (in attesa di salvataggio)';
+
+  @override
+  String get errorGeneric => 'Errore';
 }
