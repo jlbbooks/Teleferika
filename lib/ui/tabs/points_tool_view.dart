@@ -7,6 +7,7 @@ import 'package:teleferika/core/project_state_manager.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
+import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/pages/point_details_page.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 
@@ -14,7 +15,11 @@ class PointsToolView extends StatefulWidget {
   final ProjectModel project;
   final List<PointModel> points;
 
-  const PointsToolView({super.key, required this.project, required this.points});
+  const PointsToolView({
+    super.key,
+    required this.project,
+    required this.points,
+  });
 
   @override
   State<PointsToolView> createState() => PointsToolViewState();
@@ -340,7 +345,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                     value: isSelectedForDelete,
                     activeColor: Theme.of(context).primaryColor,
                     onChanged: (bool? value) {
-                      if (point.id != null) _togglePointSelection(point.id!);
+                      if (point.id != null) _togglePointSelection(point.id);
                     },
                   )
                 : ReorderableDragStartListener(
@@ -357,7 +362,11 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
             title: Text(
               '${point.name}: Alt: ${point.altitude?.toStringAsFixed(2) ?? '---'}\nLat: ${point.latitude.toStringAsFixed(5)}\nLon: ${point.longitude.toStringAsFixed(5)}',
             ),
-            subtitle: Text(point.note.isEmpty ? 'No note' : point.note),
+            subtitle: Text(
+              point.note.isEmpty
+                  ? (S.of(context)?.noNote ?? 'No note')
+                  : point.note,
+            ),
             trailing: !_isSelectionMode
                 ? IconButton(
                     icon: const Icon(
@@ -397,7 +406,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
     // Make it async
     if (_isSelectionMode) {
       if (point.id != null) {
-        _togglePointSelection(point.id!);
+        _togglePointSelection(point.id);
       }
     } else {
       // Non-selection mode tap: Navigate to detail page
@@ -450,7 +459,12 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                 Expanded(
                   child: _isLoading
                       ? const Center(child: CircularProgressIndicator())
-                      : _buildPointsList(context, currentProject, points, hasUnsavedNewPoint),
+                      : _buildPointsList(
+                          context,
+                          currentProject,
+                          points,
+                          hasUnsavedNewPoint,
+                        ),
                 ),
               ],
             ),
@@ -468,7 +482,12 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
     );
   }
 
-  Widget _buildPointsList(BuildContext context, ProjectModel project, List<PointModel> points, bool hasUnsavedNewPoint) {
+  Widget _buildPointsList(
+    BuildContext context,
+    ProjectModel project,
+    List<PointModel> points,
+    bool hasUnsavedNewPoint,
+  ) {
     return points.isEmpty
         ? const Center(
             child: Padding(
@@ -499,7 +518,9 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                 child: ElevatedButton.icon(
                   icon: const Icon(Icons.add_location_alt_outlined),
                   label: const Text('Add Point'),
-                  onPressed: hasUnsavedNewPoint ? null : () => _handleAddPoint(),
+                  onPressed: hasUnsavedNewPoint
+                      ? null
+                      : () => _handleAddPoint(),
                 ),
               ),
             ],

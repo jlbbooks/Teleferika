@@ -519,7 +519,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
             selectedPoint = _newPoint;
           } else {
             try {
-              selectedPoint = points.firstWhere((p) => p.id == _selectedPointId);
+              selectedPoint = points.firstWhere(
+                (p) => p.id == _selectedPointId,
+              );
             } catch (_) {
               selectedPoint = null;
             }
@@ -545,7 +547,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                         headingLine,
                         initialMapCenter: initialMapCenter,
                         initialMapZoom: initialMapZoom,
-                        tileLayerUrl: _controller.getTileLayerUrl(_currentMapType),
+                        tileLayerUrl: _controller.getTileLayerUrl(
+                          _currentMapType,
+                        ),
                       ),
                       MapControls.buildMapTypeSelector(
                         currentMapType: _currentMapType,
@@ -567,7 +571,8 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                           onCenterOnLocation: _centerOnCurrentLocation,
                           onAddPoint: _handleAddPointButtonPressed,
                           onCenterOnPoints: _fitMapToPoints,
-                          isAddingNewPoint: _isAddingNewPoint || _newPoint != null,
+                          isAddingNewPoint:
+                              _isAddingNewPoint || _newPoint != null,
                         ),
                       ),
                     ],
@@ -766,6 +771,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
             PolylineLayer(polylines: [_projectHeadingLine!]),
           MarkerLayer(
             markers: MapMarkers.buildAllMapMarkers(
+              context: context,
               projectPoints: allPoints,
               selectedPointId: _selectedPointId,
               isMovePointMode: _isMovePointMode,
@@ -825,9 +831,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
 
     final result = await Navigator.push<Map<String, dynamic>>(
       context,
-      MaterialPageRoute(
-        builder: (context) => PointDetailsPage(point: point),
-      ),
+      MaterialPageRoute(builder: (context) => PointDetailsPage(point: point)),
     );
 
     if (result != null && mounted) {

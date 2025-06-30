@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:teleferika/db/models/point_model.dart';
+import 'package:teleferika/l10n/app_localizations.dart';
 
 class PointDetailsPanel extends StatefulWidget {
   final PointModel? selectedPoint;
@@ -44,12 +45,12 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
   bool _isEditingLatitude = false;
   bool _isEditingLongitude = false;
   bool _isEditingNote = false;
-  
+
   // Controllers for text fields
   late TextEditingController _latitudeController;
   late TextEditingController _longitudeController;
   late TextEditingController _noteController;
-  
+
   // Focus nodes for text fields
   late FocusNode _latitudeFocusNode;
   late FocusNode _longitudeFocusNode;
@@ -79,8 +80,11 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
 
   void _updateControllers() {
     if (widget.selectedPoint != null) {
-      _latitudeController.text = widget.selectedPoint!.latitude.toStringAsFixed(6);
-      _longitudeController.text = widget.selectedPoint!.longitude.toStringAsFixed(6);
+      _latitudeController.text = widget.selectedPoint!.latitude.toStringAsFixed(
+        6,
+      );
+      _longitudeController.text = widget.selectedPoint!.longitude
+          .toStringAsFixed(6);
       _noteController.text = widget.selectedPoint!.note;
     }
   }
@@ -102,22 +106,26 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
 
     // Determine if the panel should appear at the bottom
     final bool shouldShowAtBottom = _shouldShowPanelAtBottom();
-    
+
     // Get screen width for responsive design
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 600;
-    
+
     // Calculate responsive width and positioning - make it narrower
-    final maxWidth = isMobile ? screenWidth * 0.65 : 280.0; // Reduced from 0.85 and 320
+    final maxWidth = isMobile
+        ? screenWidth * 0.65
+        : 280.0; // Reduced from 0.85 and 320
     final horizontalPadding = isMobile ? 8.0 : 16.0;
     final verticalPadding = isMobile ? 12.0 : 16.0;
-    
+
     // Account for floating action buttons - they're on the left side
     final bottomOffset = 100.0; // Space for floating buttons
 
     return Positioned(
       top: shouldShowAtBottom ? null : 16,
-      bottom: shouldShowAtBottom ? 24.0 : null, // Match floating buttons bottom position
+      bottom: shouldShowAtBottom
+          ? 24.0
+          : null, // Match floating buttons bottom position
       right: horizontalPadding,
       child: Material(
         elevation: 8.0,
@@ -197,19 +205,22 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                         ),
                         SizedBox(width: isMobile ? 6 : 8),
                         Text(
-                          'Coordinates',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w500,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            fontSize: isMobile ? 11 : null,
-                          ),
+                          S.of(context)?.coordinates ?? 'Coordinates',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w500,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                                fontSize: isMobile ? 11 : null,
+                              ),
                         ),
                       ],
                     ),
                     SizedBox(height: isMobile ? 4 : 6),
                     // Latitude
                     _buildEditableCoordinate(
-                      label: 'Lat:',
+                      label: S.of(context)?.lat ?? 'Lat:',
                       controller: _latitudeController,
                       focusNode: _latitudeFocusNode,
                       isEditing: _isEditingLatitude,
@@ -221,7 +232,7 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                     SizedBox(height: isMobile ? 2 : 4),
                     // Longitude
                     _buildEditableCoordinate(
-                      label: 'Lon:',
+                      label: S.of(context)?.lon ?? 'Lon:',
                       controller: _longitudeController,
                       focusNode: _longitudeFocusNode,
                       isEditing: _isEditingLongitude,
@@ -248,7 +259,8 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
               ),
 
               // Move mode indicator
-              if (widget.isMovePointMode && widget.selectedPoint!.id == widget.selectedPointId) ...[
+              if (widget.isMovePointMode &&
+                  widget.selectedPoint!.id == widget.selectedPointId) ...[
                 SizedBox(height: isMobile ? 8 : 12),
                 Container(
                   padding: EdgeInsets.all(isMobile ? 6 : 8),
@@ -267,7 +279,8 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                       SizedBox(width: isMobile ? 6 : 8),
                       Expanded(
                         child: Text(
-                          'Tap on the map to set new location',
+                          S.of(context)?.tapOnTheMapToSetNewLocation ??
+                              'Tap on the map to set new location',
                           style: TextStyle(
                             color: Colors.orange.shade700,
                             fontStyle: FontStyle.italic,
@@ -337,7 +350,9 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                           contentPadding: EdgeInsets.zero,
                           isDense: true,
                         ),
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                         onSubmitted: (_) => onConfirm(),
                       ),
                     ),
@@ -365,7 +380,9 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                       child: Container(
                         padding: EdgeInsets.all(isMobile ? 2 : 4),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.primary.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Icon(
@@ -400,9 +417,7 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
         Icon(
           Icons.note_outlined,
           size: isMobile ? 14 : 16,
-          color: Theme.of(
-            context,
-          ).colorScheme.onSecondaryContainer,
+          color: Theme.of(context).colorScheme.onSecondaryContainer,
         ),
         SizedBox(width: isMobile ? 6 : 8),
         Expanded(
@@ -419,11 +434,11 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                           ).colorScheme.onSecondaryContainer,
                           fontSize: isMobile ? 11 : null,
                         ),
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.zero,
                           isDense: true,
-                          hintText: 'Add a note...',
+                          hintText: S.of(context)?.addANote ?? 'Add a note...',
                         ),
                         maxLines: isMobile ? 2 : 3,
                         onSubmitted: (_) => _confirmNoteChange(),
@@ -453,7 +468,9 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                       child: Container(
                         padding: EdgeInsets.all(isMobile ? 2 : 4),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.primary.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Icon(
@@ -468,11 +485,15 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
               : GestureDetector(
                   onTap: _startEditingNote,
                   child: Text(
-                    widget.selectedPoint!.note.isEmpty ? 'Tap to add note...' : widget.selectedPoint!.note,
+                    widget.selectedPoint!.note.isEmpty
+                        ? S.of(context)?.tapToAddNote ?? 'Tap to add note...'
+                        : widget.selectedPoint!.note,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: widget.selectedPoint!.note.isNotEmpty
                           ? Theme.of(context).colorScheme.onSecondaryContainer
-                          : Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.5),
+                          : Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant.withOpacity(0.5),
                       fontSize: isMobile ? 11 : null,
                       fontStyle: widget.selectedPoint!.note.isNotEmpty
                           ? FontStyle.normal
@@ -521,14 +542,14 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
       _cancelLatitudeChange();
       return;
     }
-    
+
     // Validate latitude range
     if (newLatitude < -90 || newLatitude > 90) {
       // Invalid latitude range - revert to original value
       _cancelLatitudeChange();
       return;
     }
-    
+
     if (newLatitude != widget.selectedPoint!.latitude) {
       _updatePointCoordinates(newLatitude, widget.selectedPoint!.longitude);
     }
@@ -545,14 +566,14 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
       _cancelLongitudeChange();
       return;
     }
-    
+
     // Validate longitude range
     if (newLongitude < -180 || newLongitude > 180) {
       // Invalid longitude range - revert to original value
       _cancelLongitudeChange();
       return;
     }
-    
+
     if (newLongitude != widget.selectedPoint!.longitude) {
       _updatePointCoordinates(widget.selectedPoint!.latitude, newLongitude);
     }
@@ -574,7 +595,9 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
   }
 
   void _cancelLatitudeChange() {
-    _latitudeController.text = widget.selectedPoint!.latitude.toStringAsFixed(6);
+    _latitudeController.text = widget.selectedPoint!.latitude.toStringAsFixed(
+      6,
+    );
     setState(() {
       _isEditingLatitude = false;
     });
@@ -582,7 +605,9 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
   }
 
   void _cancelLongitudeChange() {
-    _longitudeController.text = widget.selectedPoint!.longitude.toStringAsFixed(6);
+    _longitudeController.text = widget.selectedPoint!.longitude.toStringAsFixed(
+      6,
+    );
     setState(() {
       _isEditingLongitude = false;
     });
@@ -605,7 +630,9 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
       longitude: newLongitude,
     );
     // Add logging
-    debugPrint('[PointDetailsPanel] _updatePointCoordinates: id=${updatedPoint.id}, ordinal=${updatedPoint.ordinalNumber}, name=${updatedPoint.name}, lat=${updatedPoint.latitude}, lon=${updatedPoint.longitude}, note=${updatedPoint.note}');
+    debugPrint(
+      '[PointDetailsPanel] _updatePointCoordinates: id=${updatedPoint.id}, ordinal=${updatedPoint.ordinalNumber}, name=${updatedPoint.name}, lat=${updatedPoint.latitude}, lon=${updatedPoint.longitude}, note=${updatedPoint.note}',
+    );
     widget.onPointUpdated?.call(updatedPoint);
 
     // Don't center the map - let it stay where it is
@@ -614,11 +641,11 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
   void _updatePointNote(String newNote) {
     if (widget.selectedPoint == null) return;
 
-    final updatedPoint = widget.selectedPoint!.copyWith(
-      note: newNote,
-    );
+    final updatedPoint = widget.selectedPoint!.copyWith(note: newNote);
     // Add logging
-    debugPrint('[PointDetailsPanel] _updatePointNote: id=${updatedPoint.id}, ordinal=${updatedPoint.ordinalNumber}, name=${updatedPoint.name}, lat=${updatedPoint.latitude}, lon=${updatedPoint.longitude}, note=${updatedPoint.note}');
+    debugPrint(
+      '[PointDetailsPanel] _updatePointNote: id=${updatedPoint.id}, ordinal=${updatedPoint.ordinalNumber}, name=${updatedPoint.name}, lat=${updatedPoint.latitude}, lon=${updatedPoint.longitude}, note=${updatedPoint.note}',
+    );
     widget.onPointUpdated?.call(updatedPoint);
   }
 
@@ -658,7 +685,7 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
           Expanded(
             child: _buildActionButton(
               icon: Icons.save,
-              label: 'Save',
+              label: S.of(context)?.save ?? 'Save',
               color: Colors.green,
               onPressed: widget.onSaveNewPoint,
               isMobile: isMobile,
@@ -668,7 +695,7 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
           Expanded(
             child: _buildActionButton(
               icon: Icons.delete_outline,
-              label: 'Discard',
+              label: S.of(context)?.discard ?? 'Discard',
               color: Colors.red,
               onPressed: widget.onDiscardNewPoint,
               isMobile: isMobile,
@@ -686,7 +713,7 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
         Expanded(
           child: _buildActionButton(
             icon: Icons.edit_outlined,
-            label: 'Edit',
+            label: S.of(context)?.edit ?? 'Edit',
             color: Colors.blue,
             onPressed: widget.isMovePointMode ? null : widget.onEdit,
             isMobile: isMobile,
@@ -695,13 +722,19 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
         SizedBox(width: isMobile ? 6 : 8),
         Expanded(
           child: _buildActionButton(
-            icon: widget.isMovePointMode && widget.selectedPoint!.id == widget.selectedPointId
+            icon:
+                widget.isMovePointMode &&
+                    widget.selectedPoint!.id == widget.selectedPointId
                 ? Icons.cancel_outlined
                 : Icons.open_with,
-            label: widget.isMovePointMode && widget.selectedPoint!.id == widget.selectedPointId
-                ? 'Cancel'
-                : 'Move',
-            color: widget.isMovePointMode && widget.selectedPoint!.id == widget.selectedPointId
+            label:
+                widget.isMovePointMode &&
+                    widget.selectedPoint!.id == widget.selectedPointId
+                ? S.of(context)?.cancel ?? 'Cancel'
+                : S.of(context)?.move ?? 'Move',
+            color:
+                widget.isMovePointMode &&
+                    widget.selectedPoint!.id == widget.selectedPointId
                 ? Colors.orange
                 : Colors.teal,
             onPressed: widget.isMovingPointLoading ? null : widget.onMove,
@@ -712,7 +745,7 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
         Expanded(
           child: _buildActionButton(
             icon: Icons.delete_outline,
-            label: 'Delete',
+            label: S.of(context)?.delete ?? 'Delete',
             color: Colors.red,
             onPressed: (widget.isMovePointMode || widget.isMovingPointLoading)
                 ? null
@@ -738,7 +771,7 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
         borderRadius: BorderRadius.circular(8),
         child: Container(
           padding: EdgeInsets.symmetric(
-            vertical: isMobile ? 6 : 8, 
+            vertical: isMobile ? 6 : 8,
             horizontal: isMobile ? 2 : 4,
           ),
           decoration: BoxDecoration(

@@ -811,4 +811,55 @@ class SEn extends S {
   @override
   String get invalid_altitude_format =>
       'Invalid altitude format. Please enter a number or leave it empty.';
+
+  @override
+  String get coordinates => 'Coordinates';
+
+  @override
+  String get lat => 'Lat:';
+
+  @override
+  String get lon => 'Lon:';
+
+  @override
+  String get addANote => 'Add a note...';
+
+  @override
+  String get tapToAddNote => 'Tap to add note...';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get discard => 'Discard';
+
+  @override
+  String get edit => 'Edit';
+
+  @override
+  String get move => 'Move';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get tapOnTheMapToSetNewLocation =>
+      'Tap on the map to set new location';
+
+  @override
+  String headingLabel(String angle) {
+    return 'Heading: $angle°';
+  }
+
+  @override
+  String get locationPermissionTitle => 'Location Permission';
+
+  @override
+  String get sensorPermissionTitle => 'Sensor Permission';
+
+  @override
+  String get noNote => 'No note';
 }

@@ -6,32 +6,31 @@ import 'package:teleferika/l10n/app_localizations.dart';
 
 class AppConfig {
   static const String appName = 'TeleferiKa';
-  
+
   static final ThemeData lightTheme = ThemeData(
+    useMaterial3: true,
     brightness: Brightness.light,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: Colors.teal,
+      seedColor: Colors.blue,
       brightness: Brightness.light,
     ),
     appBarTheme: AppBarTheme(
-      backgroundColor: ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.light).primary,
-      foregroundColor: ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.light).onPrimary,
+      backgroundColor: Colors.blue[100],
+      foregroundColor: Colors.blue[900],
       elevation: 2,
       centerTitle: false,
       titleTextStyle: TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.w600,
-        color: ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.light).onPrimary,
+        color: Colors.blue[900],
       ),
       iconTheme: IconThemeData(
-        color: ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.light).onPrimary,
+        color: Colors.blue[900],
       ),
     ),
     cardTheme: CardThemeData(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ),
     inputDecorationTheme: InputDecorationTheme(
       border: OutlineInputBorder(
@@ -44,7 +43,7 @@ class AppConfig {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.teal, width: 2),
+        borderSide: BorderSide(color: Colors.blue, width: 2),
       ),
       filled: true,
       fillColor: Colors.grey.shade50,
@@ -52,39 +51,41 @@ class AppConfig {
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
     ),
   );
-  
+
   static final ThemeData darkTheme = ThemeData(
+    useMaterial3: true,
     brightness: Brightness.dark,
     colorScheme: ColorScheme.fromSeed(
       seedColor: Colors.teal,
       brightness: Brightness.dark,
+    ).copyWith(
+      primary: Colors.teal[100],
+      onPrimary: Colors.teal[900],
+      surface: Colors.grey[900],
+      onSurface: Colors.white,
     ),
     appBarTheme: AppBarTheme(
-      backgroundColor: ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.dark).primary,
-      foregroundColor: ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.dark).onPrimary,
+      backgroundColor: Colors.teal[100],
+      foregroundColor: Colors.teal[900],
       elevation: 2,
       centerTitle: false,
       titleTextStyle: TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.w600,
-        color: ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.dark).onPrimary,
+        color: Colors.teal[900],
       ),
       iconTheme: IconThemeData(
-        color: ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.dark).onPrimary,
+        color: Colors.teal[900],
       ),
     ),
     cardTheme: CardThemeData(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ),
     inputDecorationTheme: InputDecorationTheme(
       border: OutlineInputBorder(
@@ -105,14 +106,12 @@ class AppConfig {
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
     ),
   );
-  
+
   static const List<Locale> supportedLocales = [
     Locale('en'),
     Locale('it'),

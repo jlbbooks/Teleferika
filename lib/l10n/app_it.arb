@@ -782,5 +782,25 @@
   "install_demo_license": "Installa licenza demo",
   "clear_license": "Cancella licenza",
   "invalid_latitude_or_longitude_format": "Formato latitudine o longitudine non valido.",
-  "invalid_altitude_format": "Formato altitudine non valido. Inserisci un numero o lascia vuoto."
+  "invalid_altitude_format": "Formato altitudine non valido. Inserisci un numero o lascia vuoto.",
+  "coordinates": "Coordinate",
+  "lat": "Lat:",
+  "lon": "Lon:",
+  "addANote": "Aggiungi una nota...",
+  "tapToAddNote": "Tocca per aggiungere una nota...",
+  "save": "Salva",
+  "discard": "Scarta",
+  "edit": "Modifica",
+  "move": "Sposta",
+  "cancel": "Annulla",
+  "delete": "Elimina",
+  "tapOnTheMapToSetNewLocation": "Tocca sulla mappa per impostare la nuova posizione",
+  "headingLabel": "Direzione: {angle}°",
+  "@headingLabel": {
+    "description": "Etichetta per il marker della direzione sulla mappa.",
+    "placeholders": { "angle": { "type": "String", "example": "123.4" } }
+  },
+  "locationPermissionTitle": "Permesso di localizzazione",
+  "sensorPermissionTitle": "Permesso sensore",
+  "noNote": "Nessuna nota"
 }

@@ -130,59 +130,6 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
     }
   }
 
-  Future<void> _handleSave() async {
-    // Parse form values
-    final name = _nameController.text.trim();
-    final note = _noteController.text.trim();
-    final presumed = double.tryParse(_presumedTotalLengthController.text);
-    final azimuth = double.tryParse(_azimuthController.text);
-
-    // Create the project to validate
-    final projectToSave = _currentProject.copyWith(
-      name: name,
-      note: note,
-      presumedTotalLength: _presumedTotalLengthController.text.trim().isEmpty
-          ? null
-          : presumed,
-      azimuth: _azimuthController.text.trim().isEmpty ? null : azimuth,
-      date: _projectDate,
-    );
-
-    // Use model validation
-    if (!projectToSave.isValid) {
-      showErrorStatus(
-        'Validation errors: ${projectToSave.validationErrors.join(', ')}',
-      );
-      return;
-    }
-
-    // Additional validation for parsing errors
-    if (_presumedTotalLengthController.text.isNotEmpty && presumed == null) {
-      showErrorStatus(
-        'Invalid presumed total length format. Please enter a valid number.',
-      );
-      return;
-    }
-
-    if (_azimuthController.text.isNotEmpty && azimuth == null) {
-      showErrorStatus('Invalid azimuth format. Please enter a valid number.');
-      return;
-    }
-
-    final saved = await context.projectState.saveProject();
-    if (saved) {
-      setState(() {
-        _dirty = false;
-        _originalAzimuthValue = _azimuthController.text;
-        _azimuthFieldModified = false;
-      });
-
-      showSuccessStatus('Project saved successfully!');
-    } else {
-      showErrorStatus('Error saving project.');
-    }
-  }
-
   void setAzimuthFromParent(double value) {
     _azimuthController.text = value.toStringAsFixed(2);
     _originalAzimuthValue = _azimuthController.text;
@@ -296,7 +243,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
         final isDirty = _dirty;
         final canCalculate = (project.points?.length ?? 0) >= 2;
         final saveButtonColor = isDirty ? Colors.green : null;
-        
+
         return SingleChildScrollView(
           padding: const EdgeInsets.all(20.0),
           child: Form(
@@ -311,15 +258,21 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
-                        Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.2),
+                        Theme.of(
+                          context,
+                        ).colorScheme.primaryContainer.withOpacity(0.3),
+                        Theme.of(
+                          context,
+                        ).colorScheme.secondaryContainer.withOpacity(0.2),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(12.0),
                     border: Border.all(
-                      color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.outline.withOpacity(0.2),
                     ),
                   ),
                   child: Column(
@@ -336,9 +289,8 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                           Expanded(
                             child: Text(
                               s?.formFieldNameLabel ?? 'Project Name',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w600),
                             ),
                           ),
                         ],
@@ -351,13 +303,17 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8.0),
                             borderSide: BorderSide(
-                              color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.outline.withOpacity(0.3),
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8.0),
                             borderSide: BorderSide(
-                              color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.outline.withOpacity(0.3),
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
@@ -382,13 +338,17 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                           final presumed = double.tryParse(
                             _presumedTotalLengthController.text,
                           );
-                          final azimuth = double.tryParse(_azimuthController.text);
+                          final azimuth = double.tryParse(
+                            _azimuthController.text,
+                          );
 
                           final tempProject = project.copyWith(
                             name: name,
                             note: note,
                             presumedTotalLength:
-                                _presumedTotalLengthController.text.trim().isEmpty
+                                _presumedTotalLengthController.text
+                                    .trim()
+                                    .isEmpty
                                 ? null
                                 : presumed,
                             azimuth: _azimuthController.text.trim().isEmpty
@@ -405,7 +365,9 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                                       error.contains('Project name'),
                                 )
                                 .toList();
-                            return nameErrors.isNotEmpty ? nameErrors.first : null;
+                            return nameErrors.isNotEmpty
+                                ? nameErrors.first
+                                : null;
                           }
                           return null;
                         },
@@ -422,7 +384,9 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                     color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(12.0),
                     border: Border.all(
-                      color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.outline.withOpacity(0.2),
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -445,9 +409,8 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                           const SizedBox(width: 8),
                           Text(
                             s?.formFieldProjectDateLabel ?? 'Project Date',
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
@@ -462,7 +425,9 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                           ),
                           decoration: BoxDecoration(
                             border: Border.all(
-                              color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.outline.withOpacity(0.3),
                             ),
                             borderRadius: BorderRadius.circular(8.0),
                           ),
@@ -471,26 +436,38 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                               Icon(
                                 Icons.event,
                                 size: 20,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
                                   _projectDate != null
                                       ? DateFormat.yMMMd(
-                                          Localizations.localeOf(context).toString(),
+                                          Localizations.localeOf(
+                                            context,
+                                          ).toString(),
                                         ).format(_projectDate!)
-                                      : (s?.tap_to_set_date ?? 'Tap to set date'),
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: _projectDate != null
-                                        ? Theme.of(context).colorScheme.onSurface
-                                        : Theme.of(context).colorScheme.onSurfaceVariant,
-                                  ),
+                                      : (s?.tap_to_set_date ??
+                                            'Tap to set date'),
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        color: _projectDate != null
+                                            ? Theme.of(
+                                                context,
+                                              ).colorScheme.onSurface
+                                            : Theme.of(
+                                                context,
+                                              ).colorScheme.onSurfaceVariant,
+                                      ),
                                 ),
                               ),
                               Icon(
                                 Icons.arrow_drop_down,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                             ],
                           ),
@@ -508,7 +485,9 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                     color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(12.0),
                     border: Border.all(
-                      color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.outline.withOpacity(0.2),
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -531,9 +510,8 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                           const SizedBox(width: 8),
                           Text(
                             s?.formFieldNoteLabel ?? 'Notes',
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
@@ -545,13 +523,17 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8.0),
                             borderSide: BorderSide(
-                              color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.outline.withOpacity(0.3),
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8.0),
                             borderSide: BorderSide(
-                              color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.outline.withOpacity(0.3),
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
@@ -580,14 +562,18 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                     gradient: LinearGradient(
                       colors: [
                         Theme.of(context).colorScheme.surface,
-                        Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                        Theme.of(
+                          context,
+                        ).colorScheme.surfaceVariant.withOpacity(0.3),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(12.0),
                     border: Border.all(
-                      color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.outline.withOpacity(0.2),
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -610,9 +596,8 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                           const SizedBox(width: 8),
                           Text(
                             'Measurements',
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
@@ -622,23 +607,31 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                       TextFormField(
                         controller: _presumedTotalLengthController,
                         decoration: InputDecoration(
-                          labelText: s?.formFieldPresumedTotalLengthLabel ?? 'Presumed Total Length (m)',
+                          labelText:
+                              s?.formFieldPresumedTotalLengthLabel ??
+                              'Presumed Total Length (m)',
                           hintText: 'Enter length in meters...',
                           prefixIcon: Icon(
                             Icons.straighten,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                             size: 20,
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8.0),
                             borderSide: BorderSide(
-                              color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.outline.withOpacity(0.3),
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8.0),
                             borderSide: BorderSide(
-                              color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.outline.withOpacity(0.3),
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
@@ -671,7 +664,9 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                           // Create temporary project with all current form values
                           final name = _nameController.text.trim();
                           final note = _noteController.text.trim();
-                          final azimuth = double.tryParse(_azimuthController.text);
+                          final azimuth = double.tryParse(
+                            _azimuthController.text,
+                          );
 
                           final tempProject = project.copyWith(
                             name: name,
@@ -704,10 +699,14 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                       Container(
                         padding: const EdgeInsets.all(16.0),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.primaryContainer.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(8.0),
                           border: Border.all(
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primary.withOpacity(0.2),
                           ),
                         ),
                         child: Row(
@@ -715,7 +714,9 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                             Container(
                               padding: const EdgeInsets.all(8.0),
                               decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.primary.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(6.0),
                               ),
                               child: Icon(
@@ -731,19 +732,27 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                                 children: [
                                   Text(
                                     'Current Rope Length',
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      fontWeight: FontWeight.w500,
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                    ),
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w500,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
+                                        ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     '${project.currentRopeLength.toStringAsFixed(2)} m',
-                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      fontFamily: 'monospace',
-                                      color: Theme.of(context).colorScheme.primary,
-                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'monospace',
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                        ),
                                   ),
                                 ],
                               ),
@@ -761,44 +770,56 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                             child: TextFormField(
                               controller: _azimuthController,
                               decoration: InputDecoration(
-                                labelText: s?.formFieldAzimuthLabel ?? 'Azimuth',
+                                labelText:
+                                    s?.formFieldAzimuthLabel ?? 'Azimuth',
                                 hintText: 'Enter azimuth in degrees...',
                                 prefixIcon: Icon(
                                   Icons.compass_calibration,
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                   size: 20,
                                 ),
                                 suffixText: '°',
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8.0),
                                   borderSide: BorderSide(
-                                    color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline.withOpacity(0.3),
                                   ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8.0),
                                   borderSide: BorderSide(
-                                    color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline.withOpacity(0.3),
                                   ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8.0),
                                   borderSide: BorderSide(
-                                    color: Theme.of(context).colorScheme.primary,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                     width: 2.0,
                                   ),
                                 ),
                                 filled: true,
-                                fillColor: Theme.of(context).colorScheme.surface,
+                                fillColor: Theme.of(
+                                  context,
+                                ).colorScheme.surface,
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 16.0,
                                   vertical: 12.0,
                                 ),
                               ),
-                              keyboardType: const TextInputType.numberWithOptions(
-                                decimal: true,
-                                signed: true,
-                              ),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                    signed: true,
+                                  ),
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty)
                                   return null; // Optional field
@@ -829,7 +850,8 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                                 );
 
                                 if (!tempProject.isValid) {
-                                  final azimuthErrors = tempProject.validationErrors
+                                  final azimuthErrors = tempProject
+                                      .validationErrors
                                       .where(
                                         (error) =>
                                             error.contains('Azimuth') ||
@@ -859,8 +881,12 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                                 style: const TextStyle(fontSize: 12),
                               ),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Theme.of(context).colorScheme.secondary,
-                                foregroundColor: Theme.of(context).colorScheme.onSecondary,
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.secondary,
+                                foregroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.onSecondary,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8.0),
                                 ),

@@ -1449,6 +1449,102 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Invalid altitude format. Please enter a number or leave it empty.'**
   String get invalid_altitude_format;
+
+  /// No description provided for @coordinates.
+  ///
+  /// In en, this message translates to:
+  /// **'Coordinates'**
+  String get coordinates;
+
+  /// No description provided for @lat.
+  ///
+  /// In en, this message translates to:
+  /// **'Lat:'**
+  String get lat;
+
+  /// No description provided for @lon.
+  ///
+  /// In en, this message translates to:
+  /// **'Lon:'**
+  String get lon;
+
+  /// No description provided for @addANote.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a note...'**
+  String get addANote;
+
+  /// No description provided for @tapToAddNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to add note...'**
+  String get tapToAddNote;
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// No description provided for @discard.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard'**
+  String get discard;
+
+  /// No description provided for @edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get edit;
+
+  /// No description provided for @move.
+  ///
+  /// In en, this message translates to:
+  /// **'Move'**
+  String get move;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @tapOnTheMapToSetNewLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap on the map to set new location'**
+  String get tapOnTheMapToSetNewLocation;
+
+  /// Label for the heading angle marker on the map.
+  ///
+  /// In en, this message translates to:
+  /// **'Heading: {angle}°'**
+  String headingLabel(String angle);
+
+  /// No description provided for @locationPermissionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Location Permission'**
+  String get locationPermissionTitle;
+
+  /// No description provided for @sensorPermissionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sensor Permission'**
+  String get sensorPermissionTitle;
+
+  /// No description provided for @noNote.
+  ///
+  /// In en, this message translates to:
+  /// **'No note'**
+  String get noNote;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

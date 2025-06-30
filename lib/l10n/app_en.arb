@@ -708,5 +708,25 @@
   "install_demo_license": "Install Demo License",
   "clear_license": "Clear License",
   "invalid_latitude_or_longitude_format": "Invalid latitude or longitude format.",
-  "invalid_altitude_format": "Invalid altitude format. Please enter a number or leave it empty."
+  "invalid_altitude_format": "Invalid altitude format. Please enter a number or leave it empty.",
+  "coordinates": "Coordinates",
+  "lat": "Lat:",
+  "lon": "Lon:",
+  "addANote": "Add a note...",
+  "tapToAddNote": "Tap to add note...",
+  "save": "Save",
+  "discard": "Discard",
+  "edit": "Edit",
+  "move": "Move",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "tapOnTheMapToSetNewLocation": "Tap on the map to set new location",
+  "headingLabel": "Heading: {angle}°",
+  "@headingLabel": {
+    "description": "Label for the heading angle marker on the map.",
+    "placeholders": { "angle": { "type": "String", "example": "123.4" } }
+  },
+  "locationPermissionTitle": "Location Permission",
+  "sensorPermissionTitle": "Sensor Permission",
+  "noNote": "No note"
 }

@@ -1,12 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:teleferika/core/logger.dart';
-import 'package:teleferika/core/project_provider.dart';
+import 'package:teleferika/core/utils/ordinal_manager.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
-import 'package:teleferika/core/utils/ordinal_manager.dart';
 
 /// Global state manager for the current project being edited.
 /// This ensures all widgets have access to the same project data
@@ -18,11 +15,11 @@ class ProjectStateManager extends ChangeNotifier {
   ProjectStateManager._internal();
 
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
-  
+
   ProjectModel? _currentProject;
   List<PointModel> _currentPoints = [];
   bool _isLoading = false;
-  
+
   // Project editing state
   bool _hasUnsavedChanges = false;
   ProjectModel? _editingProject; // Working copy for editing
@@ -48,9 +45,9 @@ class ProjectStateManager extends ChangeNotifier {
   /// Load a project and its points into global state
   Future<void> loadProject(String projectId) async {
     if (_isLoading) return;
-    
+
     setState(() => _isLoading = true);
-    
+
     try {
       final project = await _dbHelper.getProjectById(projectId);
       if (project != null) {
@@ -60,12 +57,20 @@ class ProjectStateManager extends ChangeNotifier {
         _hasUnsavedChanges = false;
         _hasUnsavedNewPoint = false;
         notifyListeners();
-        logger.info("ProjectStateManager: Loaded project ${project.name} with ${_currentPoints.length} points");
-        } else {
-        logger.warning("ProjectStateManager: Project with ID $projectId not found");
+        logger.info(
+          "ProjectStateManager: Loaded project ${project.name} with ${_currentPoints.length} points",
+        );
+      } else {
+        logger.warning(
+          "ProjectStateManager: Project with ID $projectId not found",
+        );
       }
     } catch (e, stackTrace) {
-      logger.severe("ProjectStateManager: Error loading project $projectId", e, stackTrace);
+      logger.severe(
+        "ProjectStateManager: Error loading project $projectId",
+        e,
+        stackTrace,
+      );
       rethrow;
     } finally {
       setState(() => _isLoading = false);
@@ -81,20 +86,25 @@ class ProjectStateManager extends ChangeNotifier {
     _hasUnsavedNewPoint = false;
     notifyListeners();
     logger.info("ProjectStateManager: Cleared current project");
-   }
+  }
 
   /// Update the editing project (for form changes)
-  void updateEditingProject(ProjectModel project, {bool hasUnsavedChanges = false}) {
+  void updateEditingProject(
+    ProjectModel project, {
+    bool hasUnsavedChanges = false,
+  }) {
     _editingProject = project;
     _hasUnsavedChanges = hasUnsavedChanges;
-    logger.info("ProjectStateManager: Updated editing project, hasUnsavedChanges: $hasUnsavedChanges");
+    logger.info(
+      "ProjectStateManager: Updated editing project, hasUnsavedChanges: $hasUnsavedChanges",
+    );
     notifyListeners();
   }
 
   /// Save the current editing project to database
   Future<bool> saveProject() async {
     if (_editingProject == null) return false;
-    
+
     try {
       final projectToSave = _editingProject!.copyWith(
         lastUpdate: DateTime.now(),
@@ -140,21 +150,27 @@ class ProjectStateManager extends ChangeNotifier {
   /// Refresh points from database
   Future<void> refreshPoints() async {
     if (_currentProject == null) return;
-    
+
     try {
       // Refresh both points and project data to get updated start/end point IDs
       final points = await _dbHelper.getPointsForProject(_currentProject!.id);
       final project = await _dbHelper.getProjectById(_currentProject!.id);
-      
+
       _currentPoints = points;
       if (project != null) {
         _currentProject = project;
       }
-      
-      logger.info("ProjectStateManager: Refreshed ${points.length} points and project data");
+
+      logger.info(
+        "ProjectStateManager: Refreshed ${points.length} points and project data",
+      );
       notifyListeners();
     } catch (e, stackTrace) {
-      logger.severe("ProjectStateManager: Error refreshing points", e, stackTrace);
+      logger.severe(
+        "ProjectStateManager: Error refreshing points",
+        e,
+        stackTrace,
+      );
       rethrow;
     }
   }
@@ -162,7 +178,9 @@ class ProjectStateManager extends ChangeNotifier {
   /// Add a new point to the editing project (in-memory only, not DB)
   void addPointInEditingState(PointModel point) {
     if (_editingProject == null) return;
-    final points = List<PointModel>.from(_editingProject!.points ?? _currentPoints);
+    final points = List<PointModel>.from(
+      _editingProject!.points ?? _currentPoints,
+    );
     final nextOrdinal = OrdinalManager.getNextOrdinal(points);
     final pointWithOrdinal = point.copyWith(ordinalNumber: nextOrdinal);
     points.add(pointWithOrdinal);
@@ -176,7 +194,9 @@ class ProjectStateManager extends ChangeNotifier {
   /// Update an existing point in the editing project (in-memory only, not DB)
   void updatePointInEditingState(PointModel updatedPoint) {
     if (_editingProject == null) return;
-    final points = List<PointModel>.from(_editingProject!.points ?? _currentPoints);
+    final points = List<PointModel>.from(
+      _editingProject!.points ?? _currentPoints,
+    );
     final index = points.indexWhere((p) => p.id == updatedPoint.id);
     if (index != -1) {
       points[index] = updatedPoint;
@@ -186,14 +206,18 @@ class ProjectStateManager extends ChangeNotifier {
       _hasUnsavedChanges = true;
       notifyListeners();
     } else {
-      logger.warning('[updatePointInEditingState] Point with id=${updatedPoint.id} not found in editing project.');
+      logger.warning(
+        '[updatePointInEditingState] Point with id=${updatedPoint.id} not found in editing project.',
+      );
     }
   }
 
   /// Delete a point from the editing project (in-memory only, not DB)
   void deletePointInEditingState(String pointId) {
     if (_editingProject == null) return;
-    final points = List<PointModel>.from(_editingProject!.points ?? _currentPoints);
+    final points = List<PointModel>.from(
+      _editingProject!.points ?? _currentPoints,
+    );
     final resequenced = OrdinalManager.removeById(points, pointId);
 
     // Determine new starting/ending point IDs
@@ -236,7 +260,11 @@ class ProjectStateManager extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e, stackTrace) {
-      logger.severe("ProjectStateManager: Error updating project", e, stackTrace);
+      logger.severe(
+        "ProjectStateManager: Error updating project",
+        e,
+        stackTrace,
+      );
       rethrow;
     }
   }
@@ -257,26 +285,8 @@ class ProjectStateManager extends ChangeNotifier {
     return sorted;
   }
 
-  /// Update project start/end points in database
-  Future<void> _updateProjectStartEndPoints() async {
-    if (_currentProject == null) return;
-    
-    try {
-      await _dbHelper.updateProjectStartEndPoints(_currentProject!.id);
-      
-      // Refresh project data to get updated start/end point IDs
-      final project = await _dbHelper.getProjectById(_currentProject!.id);
-      if (project != null) {
-        _currentProject = project;
-        logger.info("ProjectStateManager: Updated project start/end points and refreshed project data");
-      }
-    } catch (e, stackTrace) {
-      logger.severe("ProjectStateManager: Error updating project start/end points", e, stackTrace);
-    }
-  }
-
   void setState(VoidCallback fn) {
     fn();
     notifyListeners();
   }
-} 
+}

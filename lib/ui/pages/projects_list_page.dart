@@ -353,13 +353,13 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
     setState(() {
       _isSelectionMode = true;
       _highlightedProjectId = null; // Clear single highlight
-      _toggleSelection(project.id!);
+      _toggleSelection(project.id);
     });
   }
 
   void _onItemTap(ProjectModel project) async {
     if (_isSelectionMode) {
-      _toggleSelection(project.id!);
+      _toggleSelection(project.id);
     } else {
       logger.info("Navigating to details for project: ${project.name}");
       // Clear any previous highlight before navigating
@@ -676,7 +676,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
                 value: _selectedProjectIdsForMultiSelect.contains(project.id),
                 onChanged: (bool? value) {
                   if (project.id != null) {
-                    _toggleSelection(project.id!);
+                    _toggleSelection(project.id);
                   }
                 },
               )
@@ -688,7 +688,13 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
           style: const TextStyle(fontWeight: FontWeight.w500),
         ),
         subtitle: Text(
-          S.of(context)?.project_id_label((project.id ?? "New").toString(), lastUpdateText ?? '') ?? 'ID: ${(project.id ?? "New").toString()} | ${lastUpdateText ?? ""}',
+          S
+                  .of(context)
+                  ?.project_id_label(
+                    (project.id ?? "New").toString(),
+                    lastUpdateText ?? '',
+                  ) ??
+              'ID: ${(project.id ?? "New").toString()} | ${lastUpdateText ?? ""}',
           style: const TextStyle(fontSize: 12.0, color: Colors.grey),
         ),
         trailing: !_isSelectionMode
@@ -855,7 +861,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 8.0, left: 16.0),
                         child: Text(
-                          version!,
+                          version,
                           style: const TextStyle(
                             fontSize: 10.0,
                             color: Colors.white70,

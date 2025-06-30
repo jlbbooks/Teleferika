@@ -3,17 +3,15 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:provider/provider.dart';
 import 'package:teleferika/core/app_config.dart';
+import 'package:teleferika/core/project_state_manager.dart';
 import 'package:teleferika/licensing/feature_registry.dart';
 import 'package:teleferika/licensing/licence_service.dart';
 import 'package:teleferika/licensing/licensed_features_loader.dart';
 import 'package:teleferika/ui/pages/loading_page.dart';
-import 'package:teleferika/core/project_provider.dart';
-import 'package:flutter/services.dart';
-import 'package:logging/logging.dart';
-import 'package:provider/provider.dart';
-import 'package:teleferika/core/project_state_manager.dart';
 
 import 'core/logger.dart';
 import 'db/database_helper.dart';
@@ -25,18 +23,18 @@ void main() async {
   setupLogging();
 
   final Logger logger = Logger('MainApp');
-  
+
   try {
     logger.info('Starting app initialization...');
-    
+
     // Initialize licence service
     await LicenceService.instance.initialize();
     logger.info('LicenceService initialized');
-    
+
     // Initialize database
     await DatabaseHelper.instance.database;
     logger.info('Database initialized');
-    
+
     logger.info('App initialization complete');
   } catch (e, stackTrace) {
     logger.severe('Failed to initialize app', e, stackTrace);
@@ -91,7 +89,9 @@ class _MyAppRootState extends State<MyAppRoot> {
       logger.info("Version info loaded successfully.");
 
       // Simulate other essential checks
-      await Future.delayed(const Duration(milliseconds: kDebugMode ? 100 : 3000));
+      await Future.delayed(
+        const Duration(milliseconds: kDebugMode ? 100 : 3000),
+      );
       logger.config("Other essential checks simulated successfully.");
     } catch (e, stackTrace) {
       logger.severe("Error during app initialization", e, stackTrace);
@@ -99,12 +99,8 @@ class _MyAppRootState extends State<MyAppRoot> {
 
     final endTime = DateTime.now();
     final duration = endTime.difference(startTime);
-    logger.fine(
-      "Initialization completed in ${duration.inMilliseconds}ms",
-    );
-    logger.fine(
-      "Version: $_versionInfo, Build: $_buildNumber",
-    );
+    logger.fine("Initialization completed in ${duration.inMilliseconds}ms");
+    logger.fine("Version: $_versionInfo, Build: $_buildNumber");
 
     if (mounted) {
       setState(() {
@@ -133,26 +129,6 @@ class _MyAppRootState extends State<MyAppRoot> {
       ],
       child: MaterialApp(
         title: 'Teleferika',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-          useMaterial3: true,
-        ),
-        home: const ProjectsListPage(),
-      ),
-    );
-  }
-}
-
-class TeleferiKa extends StatelessWidget {
-  final String? appVersion;
-  const TeleferiKa({super.key, this.appVersion});
-
-  @override
-  Widget build(BuildContext context) {
-    return ProjectProvider(
-      child: MaterialApp(
-        title: AppConfig.appName,
-
         // --- Dynamic Theme Settings ---
         theme: AppConfig.lightTheme, // Your defined light theme
         darkTheme: AppConfig.darkTheme, // Your defined dark theme
@@ -161,9 +137,7 @@ class TeleferiKa extends StatelessWidget {
         debugShowCheckedModeBanner: kDebugMode,
         localizationsDelegates: AppConfig.localizationsDelegates,
         supportedLocales: AppConfig.supportedLocales,
-        home: ProjectsListPage(
-          appVersion: appVersion,
-        ), // Set ProjectsListPage as the home screen
+        home: const ProjectsListPage(),
       ),
     );
   }

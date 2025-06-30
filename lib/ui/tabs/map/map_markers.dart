@@ -5,9 +5,11 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:teleferika/db/models/point_model.dart';
+import 'package:teleferika/l10n/app_localizations.dart';
 
 class MapMarkers {
   static List<Marker> buildAllMapMarkers({
+    required BuildContext context,
     required List<PointModel> projectPoints,
     required String? selectedPointId,
     required bool isMovePointMode,
@@ -38,7 +40,11 @@ class MapMarkers {
     // Add heading label marker
     if (headingFromFirstToLast != null && projectPoints.length >= 2) {
       allMarkers.add(
-        _buildHeadingLabelMarker(projectPoints, headingFromFirstToLast),
+        _buildHeadingLabelMarker(
+          context,
+          projectPoints,
+          headingFromFirstToLast,
+        ),
       );
     }
 
@@ -122,6 +128,7 @@ class MapMarkers {
   }
 
   static Marker _buildHeadingLabelMarker(
+    BuildContext context,
     List<PointModel> points,
     double heading,
   ) {
@@ -161,7 +168,8 @@ class MapMarkers {
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
-              'Heading: ${heading.toStringAsFixed(1)}°',
+              S.of(context)?.headingLabel(heading.toStringAsFixed(1)) ??
+                  'Heading: ${heading.toStringAsFixed(1)}°',
               style: const TextStyle(color: Colors.black, fontSize: 12),
               textAlign: TextAlign.center,
             ),

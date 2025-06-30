@@ -334,7 +334,7 @@ class MapControls {
                     if (!hasLocationPermission) ...[
                       _buildPermissionItem(
                         icon: Icons.location_on_outlined,
-                        title: 'Location Permission',
+                        title: S.of(context)?.locationPermissionTitle ?? 'Location Permission',
                         description:
                             s?.mapLocationPermissionInfoText ??
                             "Location permission is needed to show your current position and for some map features.",
@@ -345,7 +345,7 @@ class MapControls {
                     if (!hasSensorPermission) ...[
                       _buildPermissionItem(
                         icon: Icons.compass_calibration_outlined,
-                        title: 'Sensor Permission',
+                        title: S.of(context)?.sensorPermissionTitle ?? 'Sensor Permission',
                         description:
                             s?.mapSensorPermissionInfoText ??
                             "Sensor (compass) permission is needed for direction-based features.",
@@ -459,7 +459,7 @@ class MapControls {
                   if (!hasLocationPermission) ...[
                     _buildPermissionItem(
                       icon: Icons.location_on_outlined,
-                      title: 'Location Permission',
+                      title: S.of(context)?.locationPermissionTitle ?? 'Location Permission',
                       description:
                           s?.mapLocationPermissionInfoText ??
                           "Location permission is needed to show your current position and for some map features.",
@@ -470,7 +470,7 @@ class MapControls {
                   if (!hasSensorPermission) ...[
                     _buildPermissionItem(
                       icon: Icons.compass_calibration_outlined,
-                      title: 'Sensor Permission',
+                      title: S.of(context)?.sensorPermissionTitle ?? 'Sensor Permission',
                       description:
                           s?.mapSensorPermissionInfoText ??
                           "Sensor (compass) permission is needed for direction-based features.",

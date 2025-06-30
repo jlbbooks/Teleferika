@@ -820,4 +820,55 @@ class SIt extends S {
   @override
   String get invalid_altitude_format =>
       'Formato altitudine non valido. Inserisci un numero o lascia vuoto.';
+
+  @override
+  String get coordinates => 'Coordinate';
+
+  @override
+  String get lat => 'Lat:';
+
+  @override
+  String get lon => 'Lon:';
+
+  @override
+  String get addANote => 'Aggiungi una nota...';
+
+  @override
+  String get tapToAddNote => 'Tocca per aggiungere una nota...';
+
+  @override
+  String get save => 'Salva';
+
+  @override
+  String get discard => 'Scarta';
+
+  @override
+  String get edit => 'Modifica';
+
+  @override
+  String get move => 'Sposta';
+
+  @override
+  String get cancel => 'Annulla';
+
+  @override
+  String get delete => 'Elimina';
+
+  @override
+  String get tapOnTheMapToSetNewLocation =>
+      'Tocca sulla mappa per impostare la nuova posizione';
+
+  @override
+  String headingLabel(String angle) {
+    return 'Direzione: $angle°';
+  }
+
+  @override
+  String get locationPermissionTitle => 'Permesso di localizzazione';
+
+  @override
+  String get sensorPermissionTitle => 'Permesso sensore';
+
+  @override
+  String get noNote => 'Nessuna nota';
 }

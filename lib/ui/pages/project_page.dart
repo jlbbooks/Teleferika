@@ -416,6 +416,10 @@ class _ProjectPageState extends State<ProjectPage>
     // Calculate real total length directly from global state
     final currentRealTotalLength = _calculateRealTotalLength(currentPoints);
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tabIconColor = isDark ? Colors.teal[900] : Colors.blue[900];
+    final tabTextColor = isDark ? Colors.teal[900] : Colors.blue[900];
+
     Widget tabBarViewWidget = TabBarView(
       controller: _tabController,
       children: [
@@ -435,20 +439,32 @@ class _ProjectPageState extends State<ProjectPage>
     );
     List<Widget> tabWidgets = [
       Tab(
-        icon: const Icon(Icons.info_outline),
-        text: s?.details_tab_label ?? "Details",
+        icon: Icon(Icons.info_outline, color: tabIconColor),
+        child: Text(
+          s?.details_tab_label ?? "Details",
+          style: TextStyle(color: tabTextColor),
+        ),
       ),
       Tab(
-        icon: const Icon(Icons.list_alt_outlined),
-        text: s?.points_tab_label ?? "Points",
+        icon: Icon(Icons.list_alt_outlined, color: tabIconColor),
+        child: Text(
+          s?.points_tab_label ?? "Points",
+          style: TextStyle(color: tabTextColor),
+        ),
       ),
       Tab(
-        icon: const Icon(Icons.explore_outlined),
-        text: s?.compass_tab_label ?? "Compass",
+        icon: Icon(Icons.explore_outlined, color: tabIconColor),
+        child: Text(
+          s?.compass_tab_label ?? "Compass",
+          style: TextStyle(color: tabTextColor),
+        ),
       ),
       Tab(
-        icon: const Icon(Icons.map_outlined),
-        text: s?.map_tab_label ?? "Map",
+        icon: Icon(Icons.map_outlined, color: tabIconColor),
+        child: Text(
+          s?.map_tab_label ?? "Map",
+          style: TextStyle(color: tabTextColor),
+        ),
       ),
     ];
     List<Widget> tabBarActions = [
@@ -487,20 +503,9 @@ class _ProjectPageState extends State<ProjectPage>
         appBar: AppBar(
           title: Row(
             children: [
-              Icon(
-                _isEffectivelyNew ? Icons.add_circle_outline : Icons.edit_note,
-                size: 24,
-              ),
-              const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  _isEffectivelyNew
-                      ? (s?.new_project_title ?? 'New Project')
-                      : (s?.edit_project_title_named(
-                              currentProject?.name ?? widget.project.name,
-                            ) ??
-                              currentProject?.name ??
-                              widget.project.name),
+                  currentProject?.name ?? widget.project.name,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -540,20 +545,9 @@ class _ProjectPageState extends State<ProjectPage>
         appBar: AppBar(
           title: Row(
             children: [
-              Icon(
-                _isEffectivelyNew ? Icons.add_circle_outline : Icons.edit_note,
-                size: 24,
-              ),
-              const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  _isEffectivelyNew
-                      ? (s?.new_project_title ?? 'New Project')
-                      : (s?.edit_project_title_named(
-                              currentProject?.name ?? widget.project.name,
-                            ) ??
-                              currentProject?.name ??
-                              widget.project.name),
+                  currentProject?.name ?? widget.project.name,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
