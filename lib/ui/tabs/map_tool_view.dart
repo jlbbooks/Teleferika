@@ -10,15 +10,14 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
-import 'package:teleferika/core/logger.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/core/project_state_manager.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/pages/point_details_page.dart';
-import 'package:teleferika/ui/widgets/status_indicator.dart';
 import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
+import 'package:teleferika/ui/widgets/status_indicator.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'map/map_controller.dart';
@@ -60,8 +59,10 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   PointModel? _newPoint; // The unsaved new point
   bool _isAddingNewPoint =
       false; // Whether we're in the process of adding a new point
-  bool _skipNextFitToPoints = false; // Flag to skip automatic fitting after saving new point
-  bool _isExternalRefresh = false; // Flag to prevent callback loops during external refresh
+  bool _skipNextFitToPoints =
+      false; // Flag to skip automatic fitting after saving new point
+  bool _isExternalRefresh =
+      false; // Flag to prevent callback loops during external refresh
 
   // Data from global state and sensors
   Position? _currentPosition;
@@ -90,7 +91,8 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Initialize controller with current project from global state
-    final currentProject = context.projectStateListen.currentProject ?? widget.project;
+    final currentProject =
+        context.projectStateListen.currentProject ?? widget.project;
     _controller = MapControllerLogic(project: currentProject);
 
     if (!_didInitialLoad) {
@@ -104,10 +106,11 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     super.didUpdateWidget(oldWidget);
 
     // Get current project from global state
-    final currentProject = context.projectStateListen.currentProject ?? widget.project;
+    final currentProject =
+        context.projectStateListen.currentProject ?? widget.project;
     final oldProject = oldWidget.project;
 
-    if (currentProject.id != oldProject.id) {
+    if (currentProject.id != oldProject.id && !_isLoadingPoints) {
       _loadProjectPoints();
     } else if (currentProject.azimuth != oldProject.azimuth) {
       _recalculateAndDrawLines();
@@ -115,16 +118,15 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         currentProject.endingPointId != oldProject.endingPointId) {
       // Project start/end points changed, reload points to get updated data
       // But skip if we're in the middle of saving a new point
-      if (!_skipNextFitToPoints) {
+      if (!_skipNextFitToPoints && !_isLoadingPoints) {
         _loadProjectPoints();
       }
     }
 
     if (widget.selectedPointId != oldWidget.selectedPointId) {
-      setState(() {
-        _selectedPointId = widget.selectedPointId;
-        _updateSelectedPointInstance();
-      });
+      _selectedPointId = widget.selectedPointId;
+      _updateSelectedPointInstance();
+      setState(() {}); // Only call setState once after updating state
     }
   }
 
@@ -149,13 +151,17 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     if (hasLocation) {
       _startListeningToLocation();
     } else {
-      showInfoStatus('Location permission denied. Map features requiring location will be limited.');
+      showInfoStatus(
+        'Location permission denied. Map features requiring location will be limited.',
+      );
     }
 
     if (hasSensor) {
       _startListeningToCompass();
     } else {
-      showInfoStatus('Sensor permission denied. Device orientation features will be unavailable.');
+      showInfoStatus(
+        'Sensor permission denied. Device orientation features will be unavailable.',
+      );
     }
   }
 
@@ -236,30 +242,33 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
 
     try {
       // Use global state to get points
-      final projectState = Provider.of<ProjectStateManager>(context, listen: false);
-      if (!projectState.hasUnsavedChanges) {
-        await projectState.refreshPoints();
-      }
-      
+      final projectState = Provider.of<ProjectStateManager>(
+        context,
+        listen: false,
+      );
+      // if (!projectState.hasUnsavedChanges) {
+      //   await projectState.refreshPoints();
+      // }
+
       if (mounted) {
         setState(() {
           _isLoadingPoints = false;
         });
-        
+
         // Recalculate lines with current points
         _recalculateAndDrawLines();
-        
+
         // Fit map to points if not skipping
         if (!_skipNextFitToPoints && _isMapReady) {
           _fitMapToPoints();
         }
-        
+
         // Only call the callback if this is not an external refresh
         if (!_isExternalRefresh) {
           // No callback needed - global state will notify listeners automatically
         }
       }
-      
+
       _skipNextFitToPoints = false; // Reset the flag
     } catch (e, stackTrace) {
       logger.severe("MapToolView: Error loading points for map", e, stackTrace);
@@ -278,9 +287,12 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   }
 
   void _recalculateAndDrawLines() {
-    final projectState = Provider.of<ProjectStateManager>(context, listen: false);
+    final projectState = Provider.of<ProjectStateManager>(
+      context,
+      listen: false,
+    );
     final points = projectState.currentPoints;
-    
+
     _headingFromFirstToLast = _controller.recalculateHeadingLine(points);
     _projectHeadingLine = _controller.recalculateProjectHeadingLine(points);
   }
@@ -300,7 +312,10 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       _skipNextFitToPoints = true;
 
       // Use global state to move the point in memory (not DB)
-      final projectState = Provider.of<ProjectStateManager>(context, listen: false);
+      final projectState = Provider.of<ProjectStateManager>(
+        context,
+        listen: false,
+      );
       final updatedPoint = pointToMove.copyWith(
         latitude: newPosition.latitude,
         longitude: newPosition.longitude,
@@ -313,7 +328,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         _isMovePointMode = false;
         _recalculateAndDrawLines();
       });
-      
+
       showSuccessStatus('Point ${pointToMove.name} moved (pending save)!');
     } catch (e) {
       logger.severe('Failed to move point ${pointToMove.name}: $e');
@@ -338,19 +353,16 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       return;
     }
 
-    final projectState = Provider.of<ProjectStateManager>(context, listen: false);
+    final projectState = Provider.of<ProjectStateManager>(
+      context,
+      listen: false,
+    );
     final points = projectState.currentPoints;
 
     if (points.isEmpty) {
       try {
-        final center = _controller.getInitialCenter(
-          points,
-          _currentPosition,
-        );
-        final zoom = _controller.getInitialZoom(
-          points,
-          _currentPosition,
-        );
+        final center = _controller.getInitialCenter(points, _currentPosition);
+        final zoom = _controller.getInitialZoom(points, _currentPosition);
         _mapController.move(center, zoom);
       } catch (e) {
         logger.warning('Error moving map to default center: $e');
@@ -407,7 +419,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                     end: Alignment.bottomRight,
                     colors: [
                       Theme.of(context).colorScheme.surface,
-                      Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                      Theme.of(
+                        context,
+                      ).colorScheme.surfaceVariant.withOpacity(0.3),
                     ],
                   ),
                 ),
@@ -463,8 +477,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           );
         }
 
-        _updateSelectedPointInstance();
-
         // Get points from global state
         final points = projectState.currentPoints;
 
@@ -474,17 +486,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           allPoints.add(_newPoint!);
         }
 
-        final List<Marker> allMapMarkers = MapMarkers.buildAllMapMarkers(
-          projectPoints: allPoints,
-          selectedPointId: _selectedPointId,
-          isMovePointMode: _isMovePointMode,
-          glowAnimationValue: _glowAnimationValue,
-          currentPosition: _currentPosition,
-          hasLocationPermission: _hasLocationPermission,
-          headingFromFirstToLast: _headingFromFirstToLast,
-          onPointTap: _handlePointTap,
-          currentDeviceHeading: _currentDeviceHeading,
-        );
         final List<LatLng> polylinePathPoints = _buildPolylinePathPoints();
         final headingLine = _buildHeadingLine();
 
@@ -516,56 +517,80 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           );
         }
 
-        return PermissionHandlerWidget(
-          requiredPermissions: [PermissionType.location, PermissionType.sensor],
-          onPermissionsResult: _handlePermissionResults,
-          showOverlay: true,
-          child: Stack(
-            children: [
-              Scaffold(
-                body: Stack(
-                  children: [
-                    _buildFlutterMapWidget(
-                      allMapMarkers,
-                      polylinePathPoints,
-                      headingLine,
-                      initialMapCenter: initialMapCenter,
-                      initialMapZoom: initialMapZoom,
-                    ),
-                    MapControls.buildMapTypeSelector(
-                      currentMapType: _currentMapType,
-                      onMapTypeChanged: (mapType) {
-                        setState(() {
-                          _currentMapType = mapType;
-                        });
-                      },
-                      context: context,
-                    ),
-                    _buildPointDetailsPanel(),
-                    Positioned(
-                      bottom: 24,
-                      left: 24,
-                      child: MapControls.buildFloatingActionButtons(
-                        context: context,
-                        hasLocationPermission: _hasLocationPermission,
-                        currentPosition: _currentPosition,
-                        onCenterOnLocation: _centerOnCurrentLocation,
-                        onAddPoint: _handleAddPointButtonPressed,
-                        onCenterOnPoints: _fitMapToPoints,
-                        isAddingNewPoint: _isAddingNewPoint,
+        try {
+          return PermissionHandlerWidget(
+            requiredPermissions: [
+              PermissionType.location,
+              PermissionType.sensor,
+            ],
+            onPermissionsResult: _handlePermissionResults,
+            showOverlay: true,
+            child: Stack(
+              children: [
+                Scaffold(
+                  body: Stack(
+                    children: [
+                      _buildFlutterMapWidget(
+                        allPoints,
+                        polylinePathPoints,
+                        headingLine,
+                        initialMapCenter: initialMapCenter,
+                        initialMapZoom: initialMapZoom,
+                        tileLayerUrl: _controller.getTileLayerUrl(_currentMapType),
                       ),
-                    ),
-                  ],
+                      MapControls.buildMapTypeSelector(
+                        currentMapType: _currentMapType,
+                        onMapTypeChanged: (mapType) {
+                          setState(() {
+                            _currentMapType = mapType;
+                          });
+                        },
+                        context: context,
+                      ),
+                      _buildPointDetailsPanel(),
+                      Positioned(
+                        bottom: 24,
+                        left: 24,
+                        child: MapControls.buildFloatingActionButtons(
+                          context: context,
+                          hasLocationPermission: _hasLocationPermission,
+                          currentPosition: _currentPosition,
+                          onCenterOnLocation: _centerOnCurrentLocation,
+                          onAddPoint: _handleAddPointButtonPressed,
+                          onCenterOnPoints: _fitMapToPoints,
+                          isAddingNewPoint: _isAddingNewPoint,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+                Positioned(
+                  top: 24,
+                  right: 24,
+                  child: StatusIndicator(
+                    status: currentStatus,
+                    onDismiss: hideStatus,
+                  ),
+                ),
+              ],
+            ),
+          );
+        } catch (e, st) {
+          logger.severe('MapToolView: Exception building FlutterMap: $e\n$st');
+          return Stack(
+            children: [
+              const Center(child: Text('Error building map. See logs.')),
               Positioned(
                 top: 24,
                 right: 24,
-                child: StatusIndicator(status: currentStatus, onDismiss: hideStatus),
+                child: StatusIndicator(
+                  status: currentStatus,
+                  onDismiss: hideStatus,
+                ),
               ),
             ],
-          ),
-        );
+          );
+        }
       },
     );
   }
@@ -580,9 +605,12 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       }
 
       // Then check in project points from global state
-      final projectState = Provider.of<ProjectStateManager>(context, listen: false);
+      final projectState = Provider.of<ProjectStateManager>(
+        context,
+        listen: false,
+      );
       final points = projectState.currentPoints;
-      
+
       if (points.isNotEmpty) {
         try {
           _selectedPointInstance = points.firstWhere(
@@ -592,14 +620,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           logger.warning(
             "Selected point ID $_selectedPointId not found in project points. Deselecting.",
           );
-          Future.microtask(() {
-            if (mounted) {
-              setState(() {
-                _selectedPointId = null;
-                _selectedPointInstance = null;
-              });
-            }
-          });
+          // Do NOT call setState here. Just clear the selection variables directly.
+          _selectedPointId = null;
+          _selectedPointInstance = null;
         }
       }
     }
@@ -607,13 +630,14 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
 
   List<LatLng> _buildPolylinePathPoints() {
     if (!_isLoadingPoints) {
-      final projectState = Provider.of<ProjectStateManager>(context, listen: false);
+      final projectState = Provider.of<ProjectStateManager>(
+        context,
+        listen: false,
+      );
       final points = projectState.currentPoints;
-      
+
       if (points.length >= 2) {
-        return points
-            .map((p) => LatLng(p.latitude, p.longitude))
-            .toList();
+        return points.map((p) => LatLng(p.latitude, p.longitude)).toList();
       }
     }
     return [];
@@ -621,9 +645,12 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
 
   Polyline? _buildHeadingLine() {
     if (_headingFromFirstToLast != null) {
-      final projectState = Provider.of<ProjectStateManager>(context, listen: false);
+      final projectState = Provider.of<ProjectStateManager>(
+        context,
+        listen: false,
+      );
       final points = projectState.currentPoints;
-      
+
       if (points.length >= 2) {
         return Polyline(
           points: [
@@ -639,117 +666,162 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     return null;
   }
 
+  // Helper to check if a polyline has at least two distinct points
+  bool _isValidPolyline(List<LatLng> points) {
+    if (points.length < 2) return false;
+    final first = points.first;
+    return points.any(
+      (p) => p.latitude != first.latitude || p.longitude != first.longitude,
+    );
+  }
+
   Widget _buildFlutterMapWidget(
-    List<Marker> allMapMarkers,
+    List<PointModel> allPoints,
     List<LatLng> polylinePathPoints,
     Polyline? headingLine, {
     required LatLng initialMapCenter,
     required double initialMapZoom,
+    required String tileLayerUrl,
   }) {
-    return FlutterMap(
-      mapController: _mapController,
-      options: MapOptions(
-        initialCenter: initialMapCenter,
-        initialZoom: initialMapZoom,
-        keepAlive: true,
-        onTap: (tapPosition, latlng) {
-          if (_isMovePointMode) {
-            if (_selectedPointId != null) {
-              try {
-                final projectState = Provider.of<ProjectStateManager>(context, listen: false);
-                final points = projectState.currentPoints;
-                final pointToMove = points.firstWhere(
-                  (p) => p.id == _selectedPointId,
-                );
-                _handleMovePoint(pointToMove, latlng);
-              } catch (e) {
-                logger.warning(
-                  "Error finding point to move in onTap: $_selectedPointId. $e",
-                );
+    try {
+      return FlutterMap(
+        mapController: _mapController,
+        options: MapOptions(
+          initialCenter: initialMapCenter,
+          initialZoom: initialMapZoom,
+          keepAlive: true,
+          onTap: (tapPosition, latlng) {
+            if (_isMovePointMode) {
+              if (_selectedPointId != null) {
+                try {
+                  final projectState = Provider.of<ProjectStateManager>(
+                    context,
+                    listen: false,
+                  );
+                  final points = projectState.currentPoints;
+                  final pointToMove = points.firstWhere(
+                    (p) => p.id == _selectedPointId,
+                  );
+                  _handleMovePoint(pointToMove, latlng);
+                } catch (e) {
+                  logger.warning(
+                    "Error finding point to move in onTap: $_selectedPointId. $e",
+                  );
+                  showErrorStatus(
+                    "Error: Selected point not found. Please select again.",
+                  );
+                  setState(() {
+                    _isMovePointMode = false;
+                    _selectedPointId = null;
+                    _selectedPointInstance = null;
+                  });
+                }
+              } else {
                 showErrorStatus(
-                  "Error: Selected point not found. Please select again.",
+                  "No point selected to move. Tap a point first, then activate 'Move Point' mode.",
                 );
+              }
+            } else {
+              // Only deselect if we're not dealing with a new point
+              if (_selectedPointId != null && _newPoint == null) {
                 setState(() {
-                  _isMovePointMode = false;
                   _selectedPointId = null;
                   _selectedPointInstance = null;
                 });
               }
-            } else {
-              showErrorStatus(
-                "No point selected to move. Tap a point first, then activate 'Move Point' mode.",
-              );
             }
-          } else {
-            // Only deselect if we're not dealing with a new point
-            if (_selectedPointId != null && _newPoint == null) {
+          },
+          onMapReady: () {
+            logger.info("MapToolView: Map is ready (onMapReady called).");
+            if (mounted) {
               setState(() {
-                _selectedPointId = null;
-                _selectedPointInstance = null;
+                _isMapReady = true;
               });
+              _fitMapToPoints();
             }
-          }
-        },
-        onMapReady: () {
-          logger.info("MapToolView: Map is ready (onMapReady called).");
-          if (mounted) {
-            setState(() {
-              _isMapReady = true;
-            });
-            _fitMapToPoints();
-          }
-        },
-      ),
-      children: [
-        TileLayer(
-          urlTemplate: _controller.getTileLayerUrl(_currentMapType),
-          userAgentPackageName: 'com.jlbbooks.teleferika',
+          },
         ),
-        RichAttributionWidget(
-          attributions: [
-            TextSourceAttribution(
-              _controller.getTileLayerAttribution(_currentMapType),
-              onTap: () {
-                final url = _controller.getAttributionUrl(_currentMapType);
-                if (url.isNotEmpty) {
-                  launchUrl(Uri.parse(url));
-                }
-              },
-            ),
-          ],
-        ),
-        const MapCompass.cupertino(hideIfRotatedNorth: true),
-        CurrentLocationLayer(
-          style: LocationMarkerStyle(
-            marker: const DefaultLocationMarker(
-              child: Icon(Icons.my_location, color: Colors.blue, size: 24),
-            ),
-            markerSize: const Size(40, 40),
-            markerDirection: MarkerDirection.heading,
-            showAccuracyCircle: true,
-            accuracyCircleColor: Colors.blue.withOpacity(0.3),
-            headingSectorColor: Colors.blue.withOpacity(0.5),
-            headingSectorRadius: 60,
+        children: [
+          TileLayer(
+            urlTemplate: tileLayerUrl,
+            userAgentPackageName: 'com.jlbbooks.teleferika',
           ),
-          positionStream: _locationStreamController.stream,
-        ),
-        if (polylinePathPoints.isNotEmpty)
-          PolylineLayer(
-            polylines: [
-              Polyline(
-                points: polylinePathPoints,
-                gradientColors: [Colors.green, Colors.yellow, Colors.red],
-                colorsStop: [0.0, 0.5, 1.0],
-                strokeWidth: 3.0,
+          RichAttributionWidget(
+            attributions: [
+              TextSourceAttribution(
+                _controller.getTileLayerAttribution(_currentMapType),
+                onTap: () {
+                  final url = _controller.getAttributionUrl(_currentMapType);
+                  if (url.isNotEmpty) {
+                    launchUrl(Uri.parse(url));
+                  }
+                },
               ),
             ],
           ),
-        if (headingLine != null) PolylineLayer(polylines: [headingLine]),
-        if (_projectHeadingLine != null)
-          PolylineLayer(polylines: [_projectHeadingLine!]),
-        MarkerLayer(markers: allMapMarkers, rotate: true),
-      ],
-    );
+          const MapCompass.cupertino(hideIfRotatedNorth: true),
+          CurrentLocationLayer(
+            style: LocationMarkerStyle(
+              marker: const DefaultLocationMarker(
+                child: Icon(Icons.my_location, color: Colors.blue, size: 24),
+              ),
+              markerSize: const Size(40, 40),
+              markerDirection: MarkerDirection.heading,
+              showAccuracyCircle: true,
+              accuracyCircleColor: Colors.blue.withOpacity(0.3),
+              headingSectorColor: Colors.blue.withOpacity(0.5),
+              headingSectorRadius: 60,
+            ),
+            positionStream: _locationStreamController.stream,
+          ),
+          if (_isValidPolyline(polylinePathPoints))
+            PolylineLayer(
+              polylines: [
+                Polyline(
+                  points: polylinePathPoints,
+                  gradientColors: [Colors.green, Colors.yellow, Colors.red],
+                  colorsStop: [0.0, 0.5, 1.0],
+                  strokeWidth: 3.0,
+                ),
+              ],
+            ),
+          if (headingLine != null && _isValidPolyline(headingLine.points))
+            PolylineLayer(polylines: [headingLine]),
+          if (_projectHeadingLine != null &&
+              _isValidPolyline(_projectHeadingLine!.points))
+            PolylineLayer(polylines: [_projectHeadingLine!]),
+          MarkerLayer(
+            markers: MapMarkers.buildAllMapMarkers(
+              projectPoints: allPoints,
+              selectedPointId: _selectedPointId,
+              isMovePointMode: _isMovePointMode,
+              glowAnimationValue: _glowAnimationValue,
+              currentPosition: _currentPosition,
+              hasLocationPermission: _hasLocationPermission,
+              headingFromFirstToLast: _headingFromFirstToLast,
+              onPointTap: _handlePointTap,
+              currentDeviceHeading: _currentDeviceHeading,
+            ),
+            rotate: true,
+          ),
+        ],
+      );
+    } catch (e, st) {
+      logger.severe('MapToolView: Exception building FlutterMap: $e\n$st');
+      return Stack(
+        children: [
+          const Center(child: Text('Error building map. See logs.')),
+          Positioned(
+            top: 24,
+            right: 24,
+            child: StatusIndicator(
+              status: currentStatus,
+              onDismiss: hideStatus,
+            ),
+          ),
+        ],
+      );
+    }
   }
 
   Widget _buildPointDetailsPanel() {
@@ -790,7 +862,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
 
     if (result != null && mounted) {
       final action = result['action'] as String?;
-      
+
       if (action == 'updated') {
         final updatedPoint = result['point'] as PointModel?;
         if (updatedPoint != null) {
@@ -800,14 +872,21 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
             _updateSelectedPointInstance();
             _recalculateAndDrawLines();
           });
-          logger.info("Point ${updatedPoint.name} details updated (pending save)!");
-          showSuccessStatus('Point ${updatedPoint.name} details updated (pending save)!');
+          logger.info(
+            "Point ${updatedPoint.name} details updated (pending save)!",
+          );
+          showSuccessStatus(
+            'Point ${updatedPoint.name} details updated (pending save)!',
+          );
         }
       } else if (action == 'deleted') {
         final pointId = result['pointId'] as String?;
         if (pointId != null) {
           // Use global state to delete the point in memory
-          final projectState = Provider.of<ProjectStateManager>(context, listen: false);
+          final projectState = Provider.of<ProjectStateManager>(
+            context,
+            listen: false,
+          );
           projectState.deletePointInEditingState(pointId);
           setState(() {
             if (_selectedPointId == pointId) {
@@ -920,7 +999,10 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       }
 
       // Create new point
-      final newPoint = await _controller.createNewPoint(newPointLocation, altitude: altitude);
+      final newPoint = await _controller.createNewPoint(
+        newPointLocation,
+        altitude: altitude,
+      );
 
       if (mounted) {
         setState(() {
@@ -953,7 +1035,10 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       _skipNextFitToPoints = true;
 
       // Use global state to add the new point in memory (not DB)
-      final projectState = Provider.of<ProjectStateManager>(context, listen: false);
+      final projectState = Provider.of<ProjectStateManager>(
+        context,
+        listen: false,
+      );
       projectState.addPointInEditingState(_newPoint!);
 
       if (mounted) {
@@ -1020,7 +1105,10 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     if (shouldDelete == true && mounted) {
       try {
         // Use global state to delete the point in memory (not DB)
-        final projectState = Provider.of<ProjectStateManager>(context, listen: false);
+        final projectState = Provider.of<ProjectStateManager>(
+          context,
+          listen: false,
+        );
         projectState.deletePointInEditingState(pointToDelete.id);
 
         setState(() {
@@ -1033,7 +1121,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           }
         });
 
-        showSuccessStatus('Point ${pointToDelete.name} deleted (pending save).');
+        showSuccessStatus(
+          'Point ${pointToDelete.name} deleted (pending save).',
+        );
       } catch (e) {
         if (!mounted) return;
         logger.severe(
@@ -1072,7 +1162,10 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         showSuccessStatus('Point ${updatedPoint.name} updated!');
       } else {
         // Use global state to update the point in memory and mark as dirty
-        final projectState = Provider.of<ProjectStateManager>(context, listen: false);
+        final projectState = Provider.of<ProjectStateManager>(
+          context,
+          listen: false,
+        );
         projectState.updatePointInEditingState(updatedPoint);
 
         // Update selected point instance if it's the same point
@@ -1100,24 +1193,27 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   Future<void> refreshPoints() async {
     logger.info("MapToolView: External refresh requested.");
     _isExternalRefresh = true; // Set flag to prevent callback loops
-    
+
     try {
       // Use global state to refresh points
-      final projectState = Provider.of<ProjectStateManager>(context, listen: false);
+      final projectState = Provider.of<ProjectStateManager>(
+        context,
+        listen: false,
+      );
       if (!projectState.hasUnsavedChanges) {
         await projectState.refreshPoints();
       }
-      
+
       if (mounted) {
         // Recalculate lines with current points
         _recalculateAndDrawLines();
-        
+
         // Fit map to points if not skipping
         if (!_skipNextFitToPoints && _isMapReady) {
           _fitMapToPoints();
         }
       }
-      
+
       _skipNextFitToPoints = false; // Reset the flag
     } catch (e, stackTrace) {
       logger.severe("MapToolView: Error refreshing points", e, stackTrace);
