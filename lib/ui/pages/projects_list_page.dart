@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
 import 'package:teleferika/core/app_config.dart';
-import 'package:teleferika/core/logger.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/project_model.dart';
+import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/licensing/licence_model.dart';
 import 'package:teleferika/licensing/licence_service.dart';
 import 'package:teleferika/licensing/licensed_features_loader.dart';
@@ -83,11 +83,12 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
         _activeLicence = licence;
       });
 
-      String title = "Licence Information";
+      String title =
+          S.of(context)?.license_information_title ?? 'Licence Information';
       String contentText;
       List<Widget> actions = [
         TextButton(
-          child: const Text("Close"),
+          child: Text(S.of(context)?.close_button ?? 'Close'),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ];
@@ -112,9 +113,11 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
         actions.insert(
           0,
           TextButton(
-            child: const Text("Import New Licence"),
+            child: Text(
+              S.of(context)?.import_new_licence ?? 'Import New Licence',
+            ),
             onPressed: () {
-              Navigator.of(context).pop(); // Close current dialog
+              Navigator.of(context).pop();
               _handleImportLicence();
             },
           ),
@@ -125,9 +128,9 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
         actions.insert(
           0,
           TextButton(
-            child: const Text("Import Licence"),
+            child: Text(S.of(context)?.import_licence ?? 'Import Licence'),
             onPressed: () {
-              Navigator.of(context).pop(); // Close current dialog
+              Navigator.of(context).pop();
               _handleImportLicence();
             },
           ),
@@ -168,7 +171,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
                 color: hasLicensedFeatures ? Colors.amber : Colors.grey,
               ),
               const SizedBox(width: 8),
-              const Text('Premium Features'),
+              Text(S.of(context)?.premium_features_title ?? 'Premium Features'),
             ],
           ),
           content: Column(
@@ -176,10 +179,13 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (hasLicensedFeatures) ...[
-                const Text('Premium features are available in this build!'),
+                Text(
+                  S.of(context)?.premium_features_available ??
+                      'Premium features are available in this build!',
+                ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Available Features:',
+                Text(
+                  S.of(context)?.available_features ?? 'Available Features:',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
@@ -207,9 +213,15 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
                     null)
                   LicensedFeaturesLoader.buildLicensedWidget('premium_banner')!,
               ] else ...[
-                const Text('Premium features are not available in this build.'),
+                Text(
+                  S.of(context)?.premium_features_not_available ??
+                      'Premium features are not available in this build.',
+                ),
                 const SizedBox(height: 8),
-                const Text('This is the opensource version of the app.'),
+                Text(
+                  S.of(context)?.opensource_version ??
+                      'This is the opensource version of the app.',
+                ),
               ],
               if (versionInfo.isNotEmpty) ...[
                 const SizedBox(height: 16),
@@ -226,12 +238,12 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
           ),
           actions: [
             TextButton(
-              child: const Text("Close"),
+              child: Text(S.of(context)?.close_button ?? 'Close'),
               onPressed: () => Navigator.of(context).pop(),
             ),
             if (hasLicensedFeatures)
               TextButton(
-                child: const Text("Try Feature"),
+                child: Text(S.of(context)?.try_feature ?? 'Try Feature'),
                 onPressed: () {
                   Navigator.of(context).pop();
                   _demonstrateLicensedFeature();
@@ -263,7 +275,9 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
           setState(() {
             _activeLicence = importedLicence; // Update local state
           });
-          showSuccessStatus('Licence for ${importedLicence.email} imported successfully!');
+          showSuccessStatus(
+            'Licence for ${importedLicence.email} imported successfully!',
+          );
           _showLicenceInfoDialog(); // Show updated info
         } else {
           // User cancelled or import failed without throwing a specific format exception handled below
@@ -352,10 +366,10 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
       setState(() {
         _highlightedProjectId = null;
       });
-      
+
       // Clear global state to ensure fresh data
       context.projectState.clearProject();
-      
+
       final result = await Navigator.push(
         context,
         MaterialPageRoute(
@@ -407,7 +421,9 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
         });
         // Clear global state after deletion
         context.projectState.clearProject();
-        showInfoStatus('Project deleted.');
+        showInfoStatus(
+          S.of(context)?.point_deleted_success(id) ?? 'Project deleted.',
+        );
       } else if (action == 'navigated_back') {
         // User just came back, potentially from viewing an existing project. Highlight it.
         logger.info("ProjectPage returned: navigated back from project $id.");
@@ -501,19 +517,24 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
           builder: (BuildContext context) {
             return AlertDialog(
               title: Text(
-                "Delete Project${_selectedProjectIdsForMultiSelect.length > 1 ? 's' : ''}?",
+                S.of(context)?.delete_projects_title ?? 'Delete Project(s)?',
               ),
               content: Text(
-                "Are you sure you want to delete ${_selectedProjectIdsForMultiSelect.length} selected project${_selectedProjectIdsForMultiSelect.length > 1 ? 's' : ''}? This action cannot be undone.",
+                S
+                        .of(context)
+                        ?.delete_projects_content(
+                          _selectedProjectIdsForMultiSelect.length,
+                        ) ??
+                    'Are you sure you want to delete ${_selectedProjectIdsForMultiSelect.length} selected project(s)? This action cannot be undone.',
               ),
               actions: <Widget>[
                 TextButton(
-                  child: const Text("Cancel"),
+                  child: Text(S.of(context)?.dialog_cancel ?? 'Cancel'),
                   onPressed: () => Navigator.of(context).pop(false),
                 ),
                 TextButton(
-                  child: const Text(
-                    "Delete",
+                  child: Text(
+                    S.of(context)?.buttonDelete ?? 'Delete',
                     style: TextStyle(color: Colors.red),
                   ),
                   onPressed: () => Navigator.of(context).pop(true),
@@ -540,11 +561,28 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
           _selectedProjectIdsForMultiSelect.clear();
           _highlightedProjectId = null;
         });
-        logger.info("${idsToDelete.length} project(s) deleted.");
-        showSuccessStatus('${idsToDelete.length} project(s) deleted.');
+        logger.info(
+          "${_selectedProjectIdsForMultiSelect.length} project(s) deleted.",
+        );
+        showSuccessStatus(
+          S
+                  .of(context)
+                  ?.point_deleted_success(
+                    _selectedProjectIdsForMultiSelect.length.toString(),
+                  ) ??
+              '${_selectedProjectIdsForMultiSelect.length} project(s) deleted.',
+        );
       } catch (e, stackTrace) {
         logger.severe("Error deleting projects", e, stackTrace);
-        showErrorStatus('Error deleting projects: $e');
+        showErrorStatus(
+          S
+                  .of(context)
+                  ?.error_deleting_point(
+                    _selectedProjectIdsForMultiSelect.length.toString(),
+                    e.toString(),
+                  ) ??
+              'Error deleting projects: $e',
+        );
       }
     }
   }
@@ -618,8 +656,8 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
           'Proj. Date: $formattedProjectDate\nUpd: $formattedUpdateTime';
     } else {
       lastUpdateText = project.lastUpdate != null
-          ? 'Last Update: ${lastUpdateDateTimeFormat.format(project.lastUpdate!)}'
-          : 'No updates';
+          ? S.of(context)?.no_updates ?? 'No updates'
+          : S.of(context)?.no_updates ?? 'No updates';
     }
 
     // Determine if the item should be highlighted
@@ -644,11 +682,13 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
               )
             : const Icon(Icons.folder_outlined, size: 30),
         title: Text(
-          project.name.isNotEmpty ? project.name : "Untitled Project",
+          project.name.isNotEmpty
+              ? project.name
+              : S.of(context)?.untitled_project ?? 'Untitled Project',
           style: const TextStyle(fontWeight: FontWeight.w500),
         ),
         subtitle: Text(
-          'ID: ${project.id ?? "New"} | $lastUpdateText',
+          S.of(context)?.project_id_label((project.id ?? "New").toString(), lastUpdateText ?? '') ?? 'ID: ${(project.id ?? "New").toString()} | ${lastUpdateText ?? ""}',
           style: const TextStyle(fontSize: 12.0, color: Colors.grey),
         ),
         trailing: !_isSelectionMode
@@ -672,13 +712,15 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
           ? AppBar(
               title: Row(
                 children: [
-                  Icon(
-                    Icons.select_all,
-                    size: 24,
-                  ),
+                  Icon(Icons.select_all, size: 24),
                   const SizedBox(width: 12),
                   Text(
-                    "${_selectedProjectIdsForMultiSelect.length} selected",
+                    S
+                            .of(context)
+                            ?.selected_count(
+                              _selectedProjectIdsForMultiSelect.length,
+                            ) ??
+                        '${_selectedProjectIdsForMultiSelect.length} selected',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -692,7 +734,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
               actions: [
                 IconButton(
                   icon: const Icon(Icons.delete_outline),
-                  tooltip: "Delete Selected",
+                  tooltip: S.of(context)?.delete_selected ?? 'Delete Selected',
                   onPressed: _deleteSelectedProjects,
                 ),
               ],
@@ -700,10 +742,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
           : AppBar(
               title: Row(
                 children: [
-                  Icon(
-                    Icons.folder_open,
-                    size: 24,
-                  ),
+                  Icon(Icons.folder_open, size: 24),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -780,23 +819,29 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
                           //     ],
                           //   ),
                           // ),
-                          const PopupMenuItem<String>(
+                          PopupMenuItem<String>(
                             value: 'test_license',
                             child: Row(
                               children: [
                                 Icon(Icons.bug_report, size: 20),
                                 SizedBox(width: 8),
-                                Text('Install Demo License'),
+                                Text(
+                                  S.of(context)?.install_demo_license ??
+                                      'Install Demo License',
+                                ),
                               ],
                             ),
                           ),
-                          const PopupMenuItem<String>(
+                          PopupMenuItem<String>(
                             value: 'clear_license',
                             child: Row(
                               children: [
                                 Icon(Icons.clear, size: 20),
                                 SizedBox(width: 8),
-                                Text('Clear License'),
+                                Text(
+                                  S.of(context)?.clear_license ??
+                                      'Clear License',
+                                ),
                               ],
                             ),
                           ),
@@ -838,8 +883,11 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
                 return Center(child: Text("Error: ${snapshot.error}"));
               } else if (_currentProjects.isEmpty) {
                 // Use _currentProjects to determine if the list is empty
-                return const Center(
-                  child: Text("No projects yet. Tap '+' to add one!"),
+                return Center(
+                  child: Text(
+                    S.of(context)?.no_projects_yet ??
+                        "No projects yet. Tap '+' to add one!",
+                  ),
                 );
               }
 
@@ -866,7 +914,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
       floatingActionButton: FloatingActionButton(
         heroTag: 'projectPageFAB',
         onPressed: _navigateToAddProjectPage,
-        tooltip: 'Add New Project',
+        tooltip: S.of(context)?.add_new_project_tooltip ?? 'Add New Project',
         child: const Icon(Icons.add),
       ),
     );

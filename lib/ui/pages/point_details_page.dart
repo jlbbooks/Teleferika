@@ -1,11 +1,11 @@
 // lib/point_details_page.dart
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
-import 'package:teleferika/core/logger.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/image_model.dart';
 import 'package:teleferika/db/models/point_model.dart';
+import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/widgets/photo_manager_widget.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 
@@ -121,20 +121,20 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
         "Point validation failed: ${pointToSave.validationErrors}",
       );
       showErrorStatus(
-        'Validation errors: ${pointToSave.validationErrors.join(', ')}',
+        S.of(context)?.error_saving_point(pointToSave.validationErrors.join(', ')) ?? 'Error saving point: ${pointToSave.validationErrors.join(', ')}',
       );
       return;
     }
 
     // Additional validation for parsing errors
     if (latitude == null || longitude == null) {
-      showErrorStatus('Invalid latitude or longitude format.');
+      showErrorStatus(S.of(context)?.invalid_latitude_or_longitude_format ?? 'Invalid latitude or longitude format.');
       return;
     }
 
     if (_altitudeController.text.isNotEmpty && altitudeValue == null) {
       showErrorStatus(
-        'Invalid altitude format. Please enter a number or leave it empty.',
+        S.of(context)?.invalid_altitude_format ?? 'Invalid altitude format. Please enter a number or leave it empty.',
       );
       return;
     }
@@ -144,7 +144,9 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
     });
 
     try {
-      final exists = context.projectState.currentPoints.any((p) => p.id == pointToSave.id);
+      final exists = context.projectState.currentPoints.any(
+        (p) => p.id == pointToSave.id,
+      );
       if (exists) {
         context.projectState.updatePointInEditingState(pointToSave);
       } else {
@@ -160,7 +162,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
           _hasUnsavedChanges = false;
         });
         if (!calledFromWillPop) {
-          showSuccessStatus('Point details saved!');
+          showSuccessStatus(S.of(context)?.point_details_saved ?? 'Point details saved!');
         }
         if (Navigator.canPop(context)) {
           Navigator.pop(context, {'action': 'updated', 'point': pointToSave});
@@ -172,7 +174,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
         e,
         stackTrace,
       );
-      showErrorStatus('Error saving point: ${e.toString()}');
+      showErrorStatus(S.of(context)?.error_saving_point(e.toString()) ?? 'Error saving point: ${e.toString()}');
     } finally {
       if (mounted) {
         setState(() {
@@ -189,24 +191,22 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
-          title: const Text('Unsaved Changes'),
-          content: const Text(
-            'You have unsaved changes to point details. Save them?',
-          ),
+          title: Text(S.of(context)?.unsaved_point_details_title ?? 'Unsaved Changes'),
+          content: Text(S.of(context)?.unsaved_point_details_content ?? 'You have unsaved changes to point details. Save them?'),
           actions: <Widget>[
             TextButton(
-              child: const Text('Discard Text Changes'),
+              child: Text(S.of(context)?.discard_text_changes ?? 'Discard Text Changes'),
               onPressed: () => Navigator.of(context).pop('discard_text'),
             ),
             TextButton(
-              child: const Text('Cancel'),
+              child: Text(S.of(context)?.dialog_cancel ?? 'Cancel'),
               onPressed: () => Navigator.of(context).pop('cancel'),
             ),
             TextButton(
               style: TextButton.styleFrom(
                 foregroundColor: Theme.of(context).primaryColor,
               ),
-              child: const Text('Save All & Exit'),
+              child: Text(S.of(context)?.save_all_and_exit ?? 'Save All & Exit'),
               onPressed: () => Navigator.of(context).pop('save_all_and_exit'),
             ),
           ],
@@ -253,17 +253,20 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Confirm Deletion'),
+          title: Text(S.of(context)?.confirm_deletion_title ?? 'Confirm Deletion'),
           content: Text(
-            'Are you sure you want to delete point ${widget.point.name}? This action cannot be undone.',
+            S.of(context)?.confirm_deletion_content(widget.point.name) ?? 'Are you sure you want to delete point ${widget.point.name}? This action cannot be undone.',
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancel'),
+              child: Text(S.of(context)?.dialog_cancel ?? 'Cancel'),
               onPressed: () => Navigator.of(context).pop(false),
             ),
             TextButton(
-              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+              child: Text(
+                S.of(context)?.buttonDelete ?? 'Delete',
+                style: TextStyle(color: Colors.red),
+              ),
               onPressed: () => Navigator.of(context).pop(true),
             ),
           ],
@@ -281,7 +284,9 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
 
         if (!mounted) return;
 
-        showSuccessStatus('Point ${widget.point.name} deleted successfully!');
+        showSuccessStatus(
+          S.of(context)?.point_deleted_success(widget.point.name) ?? 'Point ${widget.point.name} deleted successfully!',
+        );
         // Pop with structured result
         Navigator.pop(context, {
           'action': 'deleted',
@@ -292,7 +297,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
         if (!mounted) return;
         logger.severe('Failed to delete point ${widget.point.name}: $e');
         showErrorStatus(
-          'Error deleting point ${widget.point.name}: ${e.toString()}',
+          S.of(context)?.error_deleting_point(widget.point.name, e.toString()) ?? 'Error deleting point ${widget.point.name}: ${e.toString()}',
         );
       } finally {
         if (mounted) {
@@ -310,16 +315,13 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
         appBar: AppBar(
           title: Row(
             children: [
-              Icon(
-                Icons.edit_location,
-                size: 24,
-              ),
+              Icon(Icons.edit_location, size: 24),
               const SizedBox(width: 12),
               Text(
-                'Edit Point',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                S.of(context)?.edit_point_title ?? 'Edit Point',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
               ),
             ],
           ),
@@ -352,7 +354,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                       ),
                     )
                   : const Icon(Icons.delete_outline),
-              tooltip: 'Delete Point',
+              tooltip: S.of(context)?.delete_project_tooltip ?? 'Delete Point',
               onPressed: _isLoading || _isDeleting ? null : _deletePoint,
             ),
             IconButton(
@@ -360,7 +362,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                 Icons.save,
                 color: _hasUnsavedChanges ? Colors.green : null,
               ),
-              tooltip: 'Save Point Details',
+              tooltip: S.of(context)?.save_project_tooltip ?? 'Save Point Details',
               onPressed: _isLoading
                   ? null
                   : () => _savePointDetails(calledFromWillPop: false),
@@ -386,15 +388,21 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
-                            Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.2),
+                            Theme.of(
+                              context,
+                            ).colorScheme.primaryContainer.withOpacity(0.3),
+                            Theme.of(
+                              context,
+                            ).colorScheme.secondaryContainer.withOpacity(0.2),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(12.0),
                         border: Border.all(
-                          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.outline.withOpacity(0.2),
                         ),
                       ),
                       child: Row(
@@ -408,10 +416,13 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                           Expanded(
                             child: Text(
                               widget.point.name,
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurface,
+                                  ),
                             ),
                           ),
                         ],
@@ -426,14 +437,18 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                         gradient: LinearGradient(
                           colors: [
                             Theme.of(context).colorScheme.surface,
-                            Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                            Theme.of(
+                              context,
+                            ).colorScheme.surfaceVariant.withOpacity(0.3),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(12.0),
                         border: Border.all(
-                          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.outline.withOpacity(0.2),
                         ),
                         boxShadow: [
                           BoxShadow(
@@ -456,10 +471,13 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                               const SizedBox(width: 8),
                               Text(
                                 'Coordinates',
-                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: Theme.of(context).colorScheme.onSurface,
-                                ),
+                                style: Theme.of(context).textTheme.titleSmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface,
+                                    ),
                               ),
                             ],
                           ),
@@ -469,23 +487,29 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                           TextFormField(
                             controller: _latitudeController,
                             decoration: InputDecoration(
-                              labelText: 'Latitude',
-                              hintText: 'e.g. 45.12345',
+                              labelText: S.of(context)?.latitude_label ?? 'Latitude',
+                              hintText: S.of(context)?.latitude_hint ?? 'e.g. 45.12345',
                               prefixIcon: Icon(
                                 Icons.pin_drop_outlined,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                                 size: 20,
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8.0),
                                 borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.outline.withOpacity(0.3),
                                 ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8.0),
                                 borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.outline.withOpacity(0.3),
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
@@ -508,14 +532,14 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Latitude cannot be empty';
+                                return S.of(context)?.latitude_empty_validator ?? 'Latitude cannot be empty';
                               }
                               final n = double.tryParse(value);
                               if (n == null) {
-                                return 'Invalid number format';
+                                return S.of(context)?.latitude_invalid_validator ?? 'Invalid number format';
                               }
                               if (n < -90 || n > 90) {
-                                return 'Latitude must be between -90 and 90';
+                                return S.of(context)?.latitude_range_validator ?? 'Latitude must be between -90 and 90';
                               }
                               return null;
                             },
@@ -526,23 +550,29 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                           TextFormField(
                             controller: _longitudeController,
                             decoration: InputDecoration(
-                              labelText: 'Longitude',
-                              hintText: 'e.g. -12.54321',
+                              labelText: S.of(context)?.longitude_label ?? 'Longitude',
+                              hintText: S.of(context)?.longitude_hint ?? 'e.g. -12.54321',
                               prefixIcon: Icon(
                                 Icons.pin_drop_outlined,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                                 size: 20,
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8.0),
                                 borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.outline.withOpacity(0.3),
                                 ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8.0),
                                 borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.outline.withOpacity(0.3),
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
@@ -565,14 +595,14 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Longitude cannot be empty';
+                                return S.of(context)?.longitude_empty_validator ?? 'Longitude cannot be empty';
                               }
                               final n = double.tryParse(value);
                               if (n == null) {
-                                return 'Invalid number format';
+                                return S.of(context)?.longitude_invalid_validator ?? 'Invalid number format';
                               }
                               if (n < -180 || n > 180) {
-                                return 'Longitude must be between -180 and 180';
+                                return S.of(context)?.longitude_range_validator ?? 'Longitude must be between -180 and 180';
                               }
                               return null;
                             },
@@ -589,7 +619,9 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                         color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(12.0),
                         border: Border.all(
-                          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.outline.withOpacity(0.2),
                         ),
                         boxShadow: [
                           BoxShadow(
@@ -611,11 +643,14 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Additional Data',
-                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: Theme.of(context).colorScheme.onSurface,
-                                ),
+                                S.of(context)?.additional_data_section_title ?? 'Additional Data',
+                                style: Theme.of(context).textTheme.titleSmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface,
+                                    ),
                               ),
                             ],
                           ),
@@ -625,23 +660,29 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                           TextFormField(
                             controller: _altitudeController,
                             decoration: InputDecoration(
-                              labelText: 'Altitude (m)',
-                              hintText: 'e.g. 1203.5 (Optional)',
+                              labelText: S.of(context)?.altitude_label ?? 'Altitude (m)',
+                              hintText: S.of(context)?.altitude_hint ?? 'e.g. 1203.5 (Optional)',
                               prefixIcon: Icon(
                                 Icons.layers,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                                 size: 20,
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8.0),
                                 borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.outline.withOpacity(0.3),
                                 ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8.0),
                                 borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.outline.withOpacity(0.3),
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
@@ -668,10 +709,10 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                               }
                               final n = double.tryParse(value);
                               if (n == null) {
-                                return 'Invalid number format';
+                                return S.of(context)?.altitude_invalid_validator ?? 'Invalid number format';
                               }
                               if (n < -1000 || n > 8849) {
-                                return 'Altitude must be between -1000 and 8849 meters';
+                                return S.of(context)?.altitude_range_validator ?? 'Altitude must be between -1000 and 8849 meters';
                               }
                               return null;
                             },
@@ -682,23 +723,29 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                           TextFormField(
                             controller: _noteController,
                             decoration: InputDecoration(
-                              labelText: 'Note (Optional)',
-                              hintText: 'Any observations or details...',
+                              labelText: S.of(context)?.note_label ?? 'Note (Optional)',
+                              hintText: S.of(context)?.note_hint ?? 'Any observations or details...',
                               prefixIcon: Icon(
                                 Icons.notes_outlined,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                                 size: 20,
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8.0),
                                 borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.outline.withOpacity(0.3),
                                 ),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8.0),
                                 borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.outline.withOpacity(0.3),
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
@@ -726,7 +773,9 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            Theme.of(context).colorScheme.tertiaryContainer.withOpacity(0.3),
+                            Theme.of(
+                              context,
+                            ).colorScheme.tertiaryContainer.withOpacity(0.3),
                             Theme.of(context).colorScheme.surface,
                           ],
                           begin: Alignment.topLeft,
@@ -734,7 +783,9 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                         ),
                         borderRadius: BorderRadius.circular(12.0),
                         border: Border.all(
-                          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.outline.withOpacity(0.2),
                         ),
                         boxShadow: [
                           BoxShadow(
@@ -756,11 +807,14 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Photos',
-                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: Theme.of(context).colorScheme.onSurface,
-                                ),
+                                S.of(context)?.photos_section_title ?? 'Photos',
+                                style: Theme.of(context).textTheme.titleSmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface,
+                                    ),
                               ),
                             ],
                           ),
@@ -770,7 +824,9 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                             // but for other fields, it uses the original widget.point data
                             // This is important because PhotoManagerWidget's _savePointWithCurrentImages
                             // will use widget.point.copyWith()
-                            point: widget.point.copyWith(images: _currentImages),
+                            point: widget.point.copyWith(
+                              images: _currentImages,
+                            ),
                             onImageListChangedForUI: (updatedImageList) {
                               if (!mounted) return;
                               setState(() {

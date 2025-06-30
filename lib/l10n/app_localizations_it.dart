@@ -634,4 +634,190 @@ class SIt extends S {
 
   @override
   String get errorGeneric => 'Errore';
+
+  @override
+  String get edit_point_title => 'Modifica Punto';
+
+  @override
+  String get coordinates_section_title => 'Coordinate';
+
+  @override
+  String get latitude_label => 'Latitudine';
+
+  @override
+  String get latitude_hint => 'es. 45.12345';
+
+  @override
+  String get latitude_empty_validator => 'La latitudine non può essere vuota';
+
+  @override
+  String get latitude_invalid_validator => 'Formato numero non valido';
+
+  @override
+  String get latitude_range_validator =>
+      'La latitudine deve essere tra -90 e 90';
+
+  @override
+  String get longitude_label => 'Longitudine';
+
+  @override
+  String get longitude_hint => 'es. -12.54321';
+
+  @override
+  String get longitude_empty_validator => 'La longitudine non può essere vuota';
+
+  @override
+  String get longitude_invalid_validator => 'Formato numero non valido';
+
+  @override
+  String get longitude_range_validator =>
+      'La longitudine deve essere tra -180 e 180';
+
+  @override
+  String get additional_data_section_title => 'Dati aggiuntivi';
+
+  @override
+  String get altitude_label => 'Altitudine (m)';
+
+  @override
+  String get altitude_hint => 'es. 1203.5 (Opzionale)';
+
+  @override
+  String get altitude_invalid_validator => 'Formato numero non valido';
+
+  @override
+  String get altitude_range_validator =>
+      'L\'altitudine deve essere tra -1000 e 8849 metri';
+
+  @override
+  String get note_label => 'Note (Opzionale)';
+
+  @override
+  String get note_hint => 'Osservazioni o dettagli...';
+
+  @override
+  String get photos_section_title => 'Foto';
+
+  @override
+  String get unsaved_point_details_title => 'Modifiche non salvate';
+
+  @override
+  String get unsaved_point_details_content =>
+      'Hai modifiche non salvate ai dettagli del punto. Vuoi salvarle?';
+
+  @override
+  String get discard_text_changes => 'Scarta modifiche testo';
+
+  @override
+  String get save_all_and_exit => 'Salva tutto ed esci';
+
+  @override
+  String get confirm_deletion_title => 'Conferma eliminazione';
+
+  @override
+  String confirm_deletion_content(Object pointName) {
+    return 'Sei sicuro di voler eliminare il punto $pointName? Questa azione non può essere annullata.';
+  }
+
+  @override
+  String point_deleted_success(Object pointName) {
+    return 'Punto $pointName eliminato con successo!';
+  }
+
+  @override
+  String error_deleting_point(Object errorMessage, Object pointName) {
+    return 'Errore durante l\'eliminazione del punto $pointName: $errorMessage';
+  }
+
+  @override
+  String error_saving_point(Object errorMessage) {
+    return 'Errore durante il salvataggio del punto: $errorMessage';
+  }
+
+  @override
+  String get point_details_saved => 'Dettagli punto salvati!';
+
+  @override
+  String get undo_changes_tooltip => 'Annulla modifiche';
+
+  @override
+  String get no_projects_yet =>
+      'Nessun progetto ancora. Tocca \'+\' per aggiungerne uno!';
+
+  @override
+  String get add_new_project_tooltip => 'Aggiungi nuovo progetto';
+
+  @override
+  String get untitled_project => 'Progetto senza titolo';
+
+  @override
+  String get delete_selected => 'Elimina selezionati';
+
+  @override
+  String selected_count(Object count) {
+    return '$count selezionati';
+  }
+
+  @override
+  String get delete_projects_title => 'Eliminare progetti?';
+
+  @override
+  String delete_projects_content(Object count) {
+    return 'Sei sicuro di voler eliminare $count progetti selezionati? Questa azione non può essere annullata.';
+  }
+
+  @override
+  String project_id_label(Object id, Object lastUpdateText) {
+    return 'ID: $id | $lastUpdateText';
+  }
+
+  @override
+  String get no_updates => 'Nessun aggiornamento';
+
+  @override
+  String get license_information_title => 'Informazioni licenza';
+
+  @override
+  String get close_button => 'Chiudi';
+
+  @override
+  String get import_new_licence => 'Importa nuova licenza';
+
+  @override
+  String get import_licence => 'Importa licenza';
+
+  @override
+  String get premium_features_title => 'Funzionalità Premium';
+
+  @override
+  String get premium_features_available =>
+      'Le funzionalità premium sono disponibili in questa versione!';
+
+  @override
+  String get available_features => 'Funzionalità disponibili:';
+
+  @override
+  String get premium_features_not_available =>
+      'Le funzionalità premium non sono disponibili in questa versione.';
+
+  @override
+  String get opensource_version =>
+      'Questa è la versione open source dell\'app.';
+
+  @override
+  String get try_feature => 'Prova funzionalità';
+
+  @override
+  String get install_demo_license => 'Installa licenza demo';
+
+  @override
+  String get clear_license => 'Cancella licenza';
+
+  @override
+  String get invalid_latitude_or_longitude_format =>
+      'Formato latitudine o longitudine non valido.';
+
+  @override
+  String get invalid_altitude_format =>
+      'Formato altitudine non valido. Inserisci un numero o lascia vuoto.';
 }

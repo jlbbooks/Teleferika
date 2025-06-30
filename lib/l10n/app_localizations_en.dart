@@ -628,4 +628,187 @@ class SEn extends S {
 
   @override
   String get errorGeneric => 'Error';
+
+  @override
+  String get edit_point_title => 'Edit Point';
+
+  @override
+  String get coordinates_section_title => 'Coordinates';
+
+  @override
+  String get latitude_label => 'Latitude';
+
+  @override
+  String get latitude_hint => 'e.g. 45.12345';
+
+  @override
+  String get latitude_empty_validator => 'Latitude cannot be empty';
+
+  @override
+  String get latitude_invalid_validator => 'Invalid number format';
+
+  @override
+  String get latitude_range_validator => 'Latitude must be between -90 and 90';
+
+  @override
+  String get longitude_label => 'Longitude';
+
+  @override
+  String get longitude_hint => 'e.g. -12.54321';
+
+  @override
+  String get longitude_empty_validator => 'Longitude cannot be empty';
+
+  @override
+  String get longitude_invalid_validator => 'Invalid number format';
+
+  @override
+  String get longitude_range_validator =>
+      'Longitude must be between -180 and 180';
+
+  @override
+  String get additional_data_section_title => 'Additional Data';
+
+  @override
+  String get altitude_label => 'Altitude (m)';
+
+  @override
+  String get altitude_hint => 'e.g. 1203.5 (Optional)';
+
+  @override
+  String get altitude_invalid_validator => 'Invalid number format';
+
+  @override
+  String get altitude_range_validator =>
+      'Altitude must be between -1000 and 8849 meters';
+
+  @override
+  String get note_label => 'Note (Optional)';
+
+  @override
+  String get note_hint => 'Any observations or details...';
+
+  @override
+  String get photos_section_title => 'Photos';
+
+  @override
+  String get unsaved_point_details_title => 'Unsaved Changes';
+
+  @override
+  String get unsaved_point_details_content =>
+      'You have unsaved changes to point details. Save them?';
+
+  @override
+  String get discard_text_changes => 'Discard Text Changes';
+
+  @override
+  String get save_all_and_exit => 'Save All & Exit';
+
+  @override
+  String get confirm_deletion_title => 'Confirm Deletion';
+
+  @override
+  String confirm_deletion_content(Object pointName) {
+    return 'Are you sure you want to delete point $pointName? This action cannot be undone.';
+  }
+
+  @override
+  String point_deleted_success(Object pointName) {
+    return 'Point $pointName deleted successfully!';
+  }
+
+  @override
+  String error_deleting_point(Object errorMessage, Object pointName) {
+    return 'Error deleting point $pointName: $errorMessage';
+  }
+
+  @override
+  String error_saving_point(Object errorMessage) {
+    return 'Error saving point: $errorMessage';
+  }
+
+  @override
+  String get point_details_saved => 'Point details saved!';
+
+  @override
+  String get undo_changes_tooltip => 'Undo Changes';
+
+  @override
+  String get no_projects_yet => 'No projects yet. Tap \'+\' to add one!';
+
+  @override
+  String get add_new_project_tooltip => 'Add New Project';
+
+  @override
+  String get untitled_project => 'Untitled Project';
+
+  @override
+  String get delete_selected => 'Delete Selected';
+
+  @override
+  String selected_count(Object count) {
+    return '$count selected';
+  }
+
+  @override
+  String get delete_projects_title => 'Delete Project(s)?';
+
+  @override
+  String delete_projects_content(Object count) {
+    return 'Are you sure you want to delete $count selected project(s)? This action cannot be undone.';
+  }
+
+  @override
+  String project_id_label(Object id, Object lastUpdateText) {
+    return 'ID: $id | $lastUpdateText';
+  }
+
+  @override
+  String get no_updates => 'No updates';
+
+  @override
+  String get license_information_title => 'Licence Information';
+
+  @override
+  String get close_button => 'Close';
+
+  @override
+  String get import_new_licence => 'Import New Licence';
+
+  @override
+  String get import_licence => 'Import Licence';
+
+  @override
+  String get premium_features_title => 'Premium Features';
+
+  @override
+  String get premium_features_available =>
+      'Premium features are available in this build!';
+
+  @override
+  String get available_features => 'Available Features:';
+
+  @override
+  String get premium_features_not_available =>
+      'Premium features are not available in this build.';
+
+  @override
+  String get opensource_version => 'This is the opensource version of the app.';
+
+  @override
+  String get try_feature => 'Try Feature';
+
+  @override
+  String get install_demo_license => 'Install Demo License';
+
+  @override
+  String get clear_license => 'Clear License';
+
+  @override
+  String get invalid_latitude_or_longitude_format =>
+      'Invalid latitude or longitude format.';
+
+  @override
+  String get invalid_altitude_format =>
+      'Invalid altitude format. Please enter a number or leave it empty.';
 }

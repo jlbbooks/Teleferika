@@ -1125,6 +1125,330 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Error'**
   String get errorGeneric;
+
+  /// No description provided for @edit_point_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Point'**
+  String get edit_point_title;
+
+  /// No description provided for @coordinates_section_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Coordinates'**
+  String get coordinates_section_title;
+
+  /// No description provided for @latitude_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Latitude'**
+  String get latitude_label;
+
+  /// No description provided for @latitude_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 45.12345'**
+  String get latitude_hint;
+
+  /// No description provided for @latitude_empty_validator.
+  ///
+  /// In en, this message translates to:
+  /// **'Latitude cannot be empty'**
+  String get latitude_empty_validator;
+
+  /// No description provided for @latitude_invalid_validator.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid number format'**
+  String get latitude_invalid_validator;
+
+  /// No description provided for @latitude_range_validator.
+  ///
+  /// In en, this message translates to:
+  /// **'Latitude must be between -90 and 90'**
+  String get latitude_range_validator;
+
+  /// No description provided for @longitude_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Longitude'**
+  String get longitude_label;
+
+  /// No description provided for @longitude_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. -12.54321'**
+  String get longitude_hint;
+
+  /// No description provided for @longitude_empty_validator.
+  ///
+  /// In en, this message translates to:
+  /// **'Longitude cannot be empty'**
+  String get longitude_empty_validator;
+
+  /// No description provided for @longitude_invalid_validator.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid number format'**
+  String get longitude_invalid_validator;
+
+  /// No description provided for @longitude_range_validator.
+  ///
+  /// In en, this message translates to:
+  /// **'Longitude must be between -180 and 180'**
+  String get longitude_range_validator;
+
+  /// No description provided for @additional_data_section_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional Data'**
+  String get additional_data_section_title;
+
+  /// No description provided for @altitude_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Altitude (m)'**
+  String get altitude_label;
+
+  /// No description provided for @altitude_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 1203.5 (Optional)'**
+  String get altitude_hint;
+
+  /// No description provided for @altitude_invalid_validator.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid number format'**
+  String get altitude_invalid_validator;
+
+  /// No description provided for @altitude_range_validator.
+  ///
+  /// In en, this message translates to:
+  /// **'Altitude must be between -1000 and 8849 meters'**
+  String get altitude_range_validator;
+
+  /// No description provided for @note_label.
+  ///
+  /// In en, this message translates to:
+  /// **'Note (Optional)'**
+  String get note_label;
+
+  /// No description provided for @note_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Any observations or details...'**
+  String get note_hint;
+
+  /// No description provided for @photos_section_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get photos_section_title;
+
+  /// No description provided for @unsaved_point_details_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsaved Changes'**
+  String get unsaved_point_details_title;
+
+  /// No description provided for @unsaved_point_details_content.
+  ///
+  /// In en, this message translates to:
+  /// **'You have unsaved changes to point details. Save them?'**
+  String get unsaved_point_details_content;
+
+  /// No description provided for @discard_text_changes.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard Text Changes'**
+  String get discard_text_changes;
+
+  /// No description provided for @save_all_and_exit.
+  ///
+  /// In en, this message translates to:
+  /// **'Save All & Exit'**
+  String get save_all_and_exit;
+
+  /// No description provided for @confirm_deletion_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Deletion'**
+  String get confirm_deletion_title;
+
+  /// No description provided for @confirm_deletion_content.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete point {pointName}? This action cannot be undone.'**
+  String confirm_deletion_content(Object pointName);
+
+  /// No description provided for @point_deleted_success.
+  ///
+  /// In en, this message translates to:
+  /// **'Point {pointName} deleted successfully!'**
+  String point_deleted_success(Object pointName);
+
+  /// No description provided for @error_deleting_point.
+  ///
+  /// In en, this message translates to:
+  /// **'Error deleting point {pointName}: {errorMessage}'**
+  String error_deleting_point(Object errorMessage, Object pointName);
+
+  /// No description provided for @error_saving_point.
+  ///
+  /// In en, this message translates to:
+  /// **'Error saving point: {errorMessage}'**
+  String error_saving_point(Object errorMessage);
+
+  /// No description provided for @point_details_saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Point details saved!'**
+  String get point_details_saved;
+
+  /// No description provided for @undo_changes_tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo Changes'**
+  String get undo_changes_tooltip;
+
+  /// No description provided for @no_projects_yet.
+  ///
+  /// In en, this message translates to:
+  /// **'No projects yet. Tap \'+\' to add one!'**
+  String get no_projects_yet;
+
+  /// No description provided for @add_new_project_tooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Add New Project'**
+  String get add_new_project_tooltip;
+
+  /// No description provided for @untitled_project.
+  ///
+  /// In en, this message translates to:
+  /// **'Untitled Project'**
+  String get untitled_project;
+
+  /// No description provided for @delete_selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Selected'**
+  String get delete_selected;
+
+  /// No description provided for @selected_count.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String selected_count(Object count);
+
+  /// No description provided for @delete_projects_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Project(s)?'**
+  String get delete_projects_title;
+
+  /// No description provided for @delete_projects_content.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete {count} selected project(s)? This action cannot be undone.'**
+  String delete_projects_content(Object count);
+
+  /// No description provided for @project_id_label.
+  ///
+  /// In en, this message translates to:
+  /// **'ID: {id} | {lastUpdateText}'**
+  String project_id_label(Object id, Object lastUpdateText);
+
+  /// No description provided for @no_updates.
+  ///
+  /// In en, this message translates to:
+  /// **'No updates'**
+  String get no_updates;
+
+  /// No description provided for @license_information_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Licence Information'**
+  String get license_information_title;
+
+  /// No description provided for @close_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close_button;
+
+  /// No description provided for @import_new_licence.
+  ///
+  /// In en, this message translates to:
+  /// **'Import New Licence'**
+  String get import_new_licence;
+
+  /// No description provided for @import_licence.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Licence'**
+  String get import_licence;
+
+  /// No description provided for @premium_features_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium Features'**
+  String get premium_features_title;
+
+  /// No description provided for @premium_features_available.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium features are available in this build!'**
+  String get premium_features_available;
+
+  /// No description provided for @available_features.
+  ///
+  /// In en, this message translates to:
+  /// **'Available Features:'**
+  String get available_features;
+
+  /// No description provided for @premium_features_not_available.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium features are not available in this build.'**
+  String get premium_features_not_available;
+
+  /// No description provided for @opensource_version.
+  ///
+  /// In en, this message translates to:
+  /// **'This is the opensource version of the app.'**
+  String get opensource_version;
+
+  /// No description provided for @try_feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Try Feature'**
+  String get try_feature;
+
+  /// No description provided for @install_demo_license.
+  ///
+  /// In en, this message translates to:
+  /// **'Install Demo License'**
+  String get install_demo_license;
+
+  /// No description provided for @clear_license.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear License'**
+  String get clear_license;
+
+  /// No description provided for @invalid_latitude_or_longitude_format.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid latitude or longitude format.'**
+  String get invalid_latitude_or_longitude_format;
+
+  /// No description provided for @invalid_altitude_format.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid altitude format. Please enter a number or leave it empty.'**
+  String get invalid_altitude_format;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {
