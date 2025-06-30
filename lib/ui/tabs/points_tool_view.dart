@@ -439,7 +439,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       builder: (context, projectState, child) {
         // Get current project data from global state
         final currentProject = projectState.currentProject ?? widget.project;
-        final points = widget.points;
+        final points = projectState.currentPoints;
 
         return Stack(
           children: [
