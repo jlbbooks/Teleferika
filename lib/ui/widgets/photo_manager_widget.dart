@@ -2,10 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:logging/logging.dart';
 import 'package:path/path.dart' as p; // For p.basename, p.join
 import 'package:path_provider/path_provider.dart';
-import 'package:logging/logging.dart';
-import 'package:teleferika/core/logger.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/core/utils/uuid_generator.dart';
 import 'package:teleferika/db/database_helper.dart';
@@ -32,7 +31,8 @@ class PhotoManagerWidget extends StatefulWidget {
   State<PhotoManagerWidget> createState() => _PhotoManagerWidgetState();
 }
 
-class _PhotoManagerWidgetState extends State<PhotoManagerWidget> with StatusMixin {
+class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
+    with StatusMixin {
   final Logger logger = Logger('PhotoManagerWidget');
   late List<ImageModel> _images;
   final ImagePicker _picker = ImagePicker();
@@ -70,21 +70,25 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> with StatusMixi
         // Optionally update a 'lastModified' timestamp on the point itself here if desired
         timestamp: DateTime.now(),
       );
-      
+
       // Validate the point before saving
       if (!pointToSave.isValid) {
-        logger.warning('Point to save is invalid: ${pointToSave.validationErrors}');
+        logger.warning(
+          'Point to save is invalid: ${pointToSave.validationErrors}',
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error saving point: ${pointToSave.validationErrors.join(', ')}'),
+            content: Text(
+              'Error saving point: ${pointToSave.validationErrors.join(', ')}',
+            ),
             backgroundColor: Colors.red,
           ),
         );
         return;
       }
-      
+
       // Use global state to update the point
-      await context.projectState.updatePoint(pointToSave);
+      context.projectState.updatePointInEditingState(pointToSave);
 
       logger.info(
         'Successfully auto-saved image changes for point ID: ${widget.point.id}. Image count: ${_images.length}',
@@ -193,19 +197,23 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> with StatusMixi
             ordinalNumber: nextOrdinal,
             imagePath: savedPath,
           );
-          
+
           // Validate the created image
           if (!newImage.isValid) {
-            logger.warning('Created invalid ImageModel: ${newImage.validationErrors}');
+            logger.warning(
+              'Created invalid ImageModel: ${newImage.validationErrors}',
+            );
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Error creating image: ${newImage.validationErrors.join(', ')}'),
+                content: Text(
+                  'Error creating image: ${newImage.validationErrors.join(', ')}',
+                ),
                 backgroundColor: Colors.red,
               ),
             );
             return;
           }
-          
+
           logger.info('New ImageModel created: $newImage');
           setState(() {
             _images.add(newImage);
@@ -345,13 +353,15 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget> with StatusMixi
           'Updating ordinal for image ID ${_images[i].id} from ${_images[i].ordinalNumber} to $i',
         );
         final updatedImage = _images[i].copyWith(ordinalNumber: i);
-        
+
         // Validate the updated image
         if (!updatedImage.isValid) {
-          logger.warning('Updated image is invalid: ${updatedImage.validationErrors}');
+          logger.warning(
+            'Updated image is invalid: ${updatedImage.validationErrors}',
+          );
           continue; // Skip this update if invalid
         }
-        
+
         _images[i] = updatedImage;
         changed = true;
       }

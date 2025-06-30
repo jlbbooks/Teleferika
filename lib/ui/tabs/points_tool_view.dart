@@ -12,8 +12,9 @@ import 'package:teleferika/ui/widgets/status_indicator.dart';
 
 class PointsToolView extends StatefulWidget {
   final ProjectModel project;
+  final List<PointModel> points;
 
-  const PointsToolView({super.key, required this.project});
+  const PointsToolView({super.key, required this.project, required this.points});
 
   @override
   State<PointsToolView> createState() => PointsToolViewState();
@@ -139,17 +140,11 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       return;
     }
 
-    // 3. Get current project from global state and create backup before making changes
+    // 3. Get current points from editing state
     final projectState = Provider.of<ProjectStateManager>(
       context,
       listen: false,
     );
-    final currentProject = projectState.currentProject ?? widget.project;
-
-    // Create backup before making changes
-    projectState.createPointsBackup();
-
-    // 4. Get current points from global state
     final currentPoints = projectState.currentPoints;
     final List<PointModel> reorderedPointsWithNewOrdinals =
         _getReorderedPointsWithNewOrdinals(
@@ -158,8 +153,8 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
           adjustedNewIndex,
         );
 
-    // 5. Persist changes to the database using global state
-    await _updatePointOrdinalsInDatabase(reorderedPointsWithNewOrdinals);
+    // 4. Update the editing state (in-memory only)
+    projectState.reorderPointsInEditingState(reorderedPointsWithNewOrdinals);
   }
 
   /// Validates if the reorder operation is valid.
@@ -194,73 +189,14 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
     return reorderedPoints;
   }
 
-  /// Updates the ordinal numbers of points in the database
-  Future<void> _updatePointOrdinalsInDatabase(
-    List<PointModel> pointsWithNewOrdinals,
-  ) async {
-    try {
-      final db = await _dbHelper.database;
-      await db.transaction((txn) async {
-        for (final point in pointsWithNewOrdinals) {
-          await txn.update(
-            'points',
-            point.toMap(),
-            where: 'id = ?',
-            whereArgs: [point.id],
-          );
-        }
-
-        // Update project start/end points
-        final projectState = Provider.of<ProjectStateManager>(
-          context,
-          listen: false,
-        );
-        final currentProject = projectState.currentProject ?? widget.project;
-        await _dbHelper.updateProjectStartEndPoints(
-          currentProject.id!,
-          txn: txn,
-        );
-      });
-
-      // Refresh global state
-      final projectState = Provider.of<ProjectStateManager>(
-        context,
-        listen: false,
-      );
-      await projectState.refreshPoints();
-
-       // Mark project as dirty (unsaved changes)
-    final currentProject = projectState.currentProject ?? widget.project;
-    projectState.updateEditingProject(
-      currentProject,
-      hasUnsavedChanges: true,
-    );
-    
-    } catch (e, stackTrace) {
-      logger.severe("Error updating point ordinals in database", e, stackTrace);
-      showErrorStatus('Error updating point order: ${e.toString()}');
-      rethrow;
-    }
-  }
-
-  /// Public method to access backup functionality from parent
-  void createBackup() {
-    context.projectState.createPointsBackup();
-  }
-
   /// Public method to access undo functionality from parent
   Future<void> undoChanges() async {
-    await context.projectState.undoPointsChanges();
-  }
-
-  /// Public method to access clear backup functionality from parent
-  void clearBackup() {
-    context.projectState.clearPointsBackup();
+    await context.projectState.undoChanges();
   }
 
   /// Public method to access onProjectSaved functionality from parent
   void onProjectSaved() {
-    context.projectState.clearPointsBackup();
+    // No backup to clear; nothing needed
   }
 
   // --- Action Bar for Normal and Selection Mode ---
@@ -344,20 +280,15 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
   Future<void> _deleteSelectedPoints() async {
     if (_selectedPointIds.isEmpty) return;
 
-    // Get current project from global state and create backup before deletion
     final projectState = Provider.of<ProjectStateManager>(
       context,
       listen: false,
     );
-    final currentProject = projectState.currentProject ?? widget.project;
-
-    // Create backup before making changes
-    createBackup();
 
     try {
-      // Delete points using global state
+      // Delete points in editing state (in-memory only)
       for (String pointId in _selectedPointIds) {
-        await projectState.deletePoint(pointId);
+        projectState.deletePointInEditingState(pointId);
       }
 
       if (mounted) {
@@ -479,8 +410,8 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       if (result != null && mounted) {
         final String? action = result['action'] as String?;
         if (action == 'deleted' || action == 'updated') {
-          // Refresh both points and project data
-          await _loadPoints();
+          // Do NOT reload points from DB; just let the Consumer rebuild from in-memory state
+          // await _loadPoints();
         }
       }
     }
@@ -506,6 +437,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       builder: (context, projectState, child) {
         // Get current project data from global state
         final currentProject = projectState.currentProject ?? widget.project;
+        final points = widget.points;
 
         return Stack(
           children: [
@@ -515,7 +447,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                 Expanded(
                   child: _isLoading
                       ? const Center(child: CircularProgressIndicator())
-                      : _buildPointsList(context, currentProject),
+                      : _buildPointsList(context, currentProject, points),
                 ),
               ],
             ),
@@ -533,10 +465,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
     );
   }
 
-  Widget _buildPointsList(BuildContext context, ProjectModel project) {
-    // Get points from global state
-    final points = context.projectStateListen.currentPoints;
-
+  Widget _buildPointsList(BuildContext context, ProjectModel project, List<PointModel> points) {
     return points.isEmpty
         ? const Center(
             child: Padding(

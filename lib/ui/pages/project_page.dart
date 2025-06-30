@@ -233,19 +233,9 @@ class _ProjectPageState extends State<ProjectPage>
     }
   }
 
-  /// Creates a backup of the current points list for undo functionality
-  void _createPointsBackup() {
-    context.projectState.createPointsBackup();
-  }
-
-  /// Restores the original points list and clears the backup
-  Future<void> _undoPointsChanges() async {
-    await context.projectState.undoPointsChanges();
-  }
-
-  /// Clears the backup when project is saved
-  void _clearPointsBackup() {
-    context.projectState.clearPointsBackup();
+  /// Undo changes by reloading the project and points from the DB
+  Future<void> _undoChanges() async {
+    await context.projectState.undoChanges();
   }
 
   void _handleOnPopInvokedWithResult(bool didPop, Object? result) async {
@@ -474,11 +464,11 @@ class _ProjectPageState extends State<ProjectPage>
           onPressed: _isLoading ? null : _handleExport,
           tooltip: s?.export_project_tooltip ?? 'Export Project',
         ),
-      if (context.projectState.hasPointsChanges)
+      if (context.projectState.hasUnsavedChanges)
         IconButton(
           icon: const Icon(Icons.undo, color: Colors.orange),
-          onPressed: _isLoading ? null : _undoPointsChanges,
-          tooltip: 'Undo Points Changes',
+          onPressed: _isLoading ? null : _undoChanges,
+          tooltip: 'Undo Changes',
         ),
       if (context.projectState.hasUnsavedChanges)
         IconButton(

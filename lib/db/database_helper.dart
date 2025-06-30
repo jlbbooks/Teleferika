@@ -1001,6 +1001,74 @@ class DatabaseHelper {
 
   /// Get the OrdinalManager instance for this database helper
   OrdinalManager get ordinalManager => OrdinalManager();
+
+  /// Syncs the DB points for a project to match the given list.
+  /// Updates/inserts all points in newPoints, deletes any DB points not present in newPoints.
+  Future<void> syncPointsForProject(String projectId, List<PointModel> newPoints) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      // 1. Get all current point IDs for this project in the DB
+      final List<Map<String, dynamic>> dbPointMaps = await txn.query(
+        PointModel.tableName,
+        columns: [PointModel.columnId],
+        where: '${PointModel.columnProjectId} = ?',
+        whereArgs: [projectId],
+      );
+      final Set<String> dbPointIds = dbPointMaps.map((m) => m[PointModel.columnId] as String).toSet();
+      final Set<String> newPointIds = newPoints.map((p) => p.id).toSet();
+
+      // 2. Update or insert all points in newPoints
+      for (final point in newPoints) {
+        if (dbPointIds.contains(point.id)) {
+          await _updatePointWithTxn(point, txn);
+        } else {
+          await _insertPointWithTxn(point, txn);
+        }
+      }
+
+      // 3. Delete any DB points not present in newPoints
+      final pointsToDelete = dbPointIds.difference(newPointIds);
+      for (final pointId in pointsToDelete) {
+        await ordinalManager.deletePointAndResequence(pointId, txn: txn);
+      }
+
+      // 4. Update project's start/end points
+      await updateProjectStartEndPoints(projectId, txn: txn);
+    });
+  }
+
+  /// Update a point using a transaction
+  Future<void> _updatePointWithTxn(PointModel point, Transaction txn) async {
+    // 1. Update the PointModel itself
+    await txn.update(
+      PointModel.tableName,
+      point.toMap(),
+      where: '${PointModel.columnId} = ?',
+      whereArgs: [point.id],
+    );
+    // 2. Delete existing images for this point
+    await txn.delete(
+      ImageModel.tableName,
+      where: '${ImageModel.columnPointId} = ?',
+      whereArgs: [point.id],
+    );
+    // 3. Insert new/updated list of images
+    for (final image in point.images) {
+      await txn.insert(ImageModel.tableName, image.toMap());
+    }
+  }
+
+  /// Insert a point using a transaction
+  Future<void> _insertPointWithTxn(PointModel point, Transaction txn) async {
+    await txn.insert(
+      PointModel.tableName,
+      point.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+    for (final image in point.images) {
+      await txn.insert(ImageModel.tableName, image.toMap());
+    }
+  }
 }
 
 /// Centralized ordinal number management for points within projects.

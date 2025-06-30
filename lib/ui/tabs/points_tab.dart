@@ -236,6 +236,8 @@ class PointsTabState extends State<PointsTab> with StatusMixin {
   Widget build(BuildContext context) {
     return Consumer<ProjectStateManager>(
       builder: (context, projectState, child) {
+        final currentProject = projectState.currentProject ?? widget.project;
+        final points = projectState.currentPoints;
         final s = S.of(context);
         
         return Stack(
@@ -248,7 +250,6 @@ class PointsTabState extends State<PointsTab> with StatusMixin {
                   // Project Statistics Section
                   _buildProjectStats(),
                   const SizedBox(height: 20),
-                  
                   // Points List Section
                   Expanded(
                     child: Container(
@@ -308,7 +309,8 @@ class PointsTabState extends State<PointsTab> with StatusMixin {
                           Expanded(
                             child: PointsToolView(
                               key: _pointsToolViewKey,
-                              project: widget.project,
+                              project: currentProject,
+                              points: points,
                             ),
                           ),
                         ],
@@ -342,18 +344,8 @@ class PointsTabState extends State<PointsTab> with StatusMixin {
     _pointsToolViewKey.currentState?.refreshPoints();
   }
 
-  /// Public method to create backup in PointsToolView
-  void createBackup() {
-    _pointsToolViewKey.currentState?.createBackup();
-  }
-
   /// Public method to undo changes in PointsToolView
   Future<void> undoChanges() async {
-    await _pointsToolViewKey.currentState?.undoChanges();
-  }
-
-  /// Public method to clear backup in PointsToolView
-  void clearBackup() {
-    _pointsToolViewKey.currentState?.clearBackup();
+    await context.projectState.undoChanges();
   }
 }

@@ -144,7 +144,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
     });
 
     try {
-      await context.projectState.updatePoint(pointToSave);
+      context.projectState.updatePointInEditingState(pointToSave);
       logger.info(
         "Point ID ${widget.point.id} and its images updated successfully. Image count: ${_currentImages.length}",
       );
@@ -272,7 +272,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
 
       try {
         // Use global state to delete the point
-        await context.projectState.deletePoint(widget.point.id);
+        context.projectState.deletePointInEditingState(widget.point.id);
 
         if (!mounted) return;
 

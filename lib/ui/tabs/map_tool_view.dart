@@ -291,9 +291,13 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       // Set flag to skip automatic fitting after moving point
       _skipNextFitToPoints = true;
 
-      // Use global state to move the point
+      // Use global state to move the point in memory (not DB)
       final projectState = Provider.of<ProjectStateManager>(context, listen: false);
-      await projectState.movePoint(pointToMove, newPosition.latitude, newPosition.longitude);
+      final updatedPoint = pointToMove.copyWith(
+        latitude: newPosition.latitude,
+        longitude: newPosition.longitude,
+      );
+      projectState.updatePointInEditingState(updatedPoint);
 
       if (!mounted) return;
 
@@ -302,7 +306,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         _recalculateAndDrawLines();
       });
       
-      showSuccessStatus('Point ${pointToMove.name} moved successfully!');
+      showSuccessStatus('Point ${pointToMove.name} moved (pending save)!');
     } catch (e) {
       logger.severe('Failed to move point ${pointToMove.name}: $e');
       if (!mounted) return;
@@ -782,26 +786,21 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       if (action == 'updated') {
         final updatedPoint = result['point'] as PointModel?;
         if (updatedPoint != null) {
-          // Use global state to update the point
-          final projectState = Provider.of<ProjectStateManager>(context, listen: false);
-          await projectState.updatePoint(updatedPoint);
-          
+          // Do NOT call updatePointInEditingState again; PointDetailsPage already did it and notified listeners
           setState(() {
             // Update the selected point instance to get the latest data from global state
             _updateSelectedPointInstance();
             _recalculateAndDrawLines();
           });
-          
-          logger.info("Point ${updatedPoint.name} updated in MapToolView.");
-          showSuccessStatus('Point ${updatedPoint.name} details updated!');
+          logger.info("Point ${updatedPoint.name} details updated (pending save)!");
+          showSuccessStatus('Point ${updatedPoint.name} details updated (pending save)!');
         }
       } else if (action == 'deleted') {
         final pointId = result['pointId'] as String?;
         if (pointId != null) {
-          // Use global state to delete the point
+          // Use global state to delete the point in memory
           final projectState = Provider.of<ProjectStateManager>(context, listen: false);
-          await projectState.deletePoint(pointId);
-          
+          projectState.deletePointInEditingState(pointId);
           setState(() {
             if (_selectedPointId == pointId) {
               _selectedPointId = null;
@@ -809,9 +808,8 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
             }
             _recalculateAndDrawLines();
           });
-          
           logger.info("Point deleted from MapToolView.");
-          showSuccessStatus('Point deleted successfully!');
+          showSuccessStatus('Point deleted (pending save)!');
         }
       }
     }
@@ -943,9 +941,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       // Set flag to skip automatic fitting after saving new point
       _skipNextFitToPoints = true;
 
-      // Use global state to save the new point
+      // Use global state to add the new point in memory (not DB)
       final projectState = Provider.of<ProjectStateManager>(context, listen: false);
-      await projectState.addPoint(_newPoint!);
+      projectState.addPointInEditingState(_newPoint!);
 
       if (mounted) {
         setState(() {
@@ -957,7 +955,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
 
         final s = S.of(context);
         showSuccessStatus(
-          s?.mapNewPointSaved ?? 'New point saved successfully!',
+          s?.mapNewPointSaved ?? 'New point saved (pending save)!',
         );
       }
     } catch (e) {
@@ -1010,12 +1008,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
 
     if (shouldDelete == true && mounted) {
       try {
-        // Set flag to skip automatic fitting after deleting point
-        _skipNextFitToPoints = true;
-
-        // Use global state to delete the point
+        // Use global state to delete the point in memory (not DB)
         final projectState = Provider.of<ProjectStateManager>(context, listen: false);
-        await projectState.deletePoint(pointToDelete.id);
+        projectState.deletePointInEditingState(pointToDelete.id);
 
         setState(() {
           logger.info(
@@ -1027,7 +1022,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           }
         });
 
-        showSuccessStatus('Point ${pointToDelete.name} deleted.');
+        showSuccessStatus('Point ${pointToDelete.name} deleted (pending save).');
       } catch (e) {
         if (!mounted) return;
         logger.severe(
@@ -1065,9 +1060,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         });
         showSuccessStatus('Point ${updatedPoint.name} updated!');
       } else {
-        // Use global state to update the point in database
+        // Use global state to update the point in memory and mark as dirty
         final projectState = Provider.of<ProjectStateManager>(context, listen: false);
-        await projectState.updatePoint(updatedPoint);
+        projectState.updatePointInEditingState(updatedPoint);
 
         // Update selected point instance if it's the same point
         setState(() {
@@ -1077,7 +1072,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           _recalculateAndDrawLines();
         });
 
-        showSuccessStatus('Point ${updatedPoint.name} updated successfully!');
+        showSuccessStatus('Point ${updatedPoint.name} updated (pending save)!');
       }
     } catch (e) {
       logger.severe('Failed to update point ${updatedPoint.name}: $e');
@@ -1123,5 +1118,10 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     } finally {
       _isExternalRefresh = false; // Reset flag after refresh
     }
+  }
+
+  /// Public method to undo changes (reload from DB)
+  Future<void> undoChanges() async {
+    await context.projectState.undoChanges();
   }
 }

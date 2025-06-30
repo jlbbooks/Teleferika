@@ -604,8 +604,8 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
       latitude: newLatitude,
       longitude: newLongitude,
     );
-
-    // Update the point in the parent widget
+    // Add logging
+    debugPrint('[PointDetailsPanel] _updatePointCoordinates: id=${updatedPoint.id}, ordinal=${updatedPoint.ordinalNumber}, name=${updatedPoint.name}, lat=${updatedPoint.latitude}, lon=${updatedPoint.longitude}, note=${updatedPoint.note}');
     widget.onPointUpdated?.call(updatedPoint);
 
     // Don't center the map - let it stay where it is
@@ -617,8 +617,8 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
     final updatedPoint = widget.selectedPoint!.copyWith(
       note: newNote,
     );
-
-    // Update the point in the parent widget
+    // Add logging
+    debugPrint('[PointDetailsPanel] _updatePointNote: id=${updatedPoint.id}, ordinal=${updatedPoint.ordinalNumber}, name=${updatedPoint.name}, lat=${updatedPoint.latitude}, lon=${updatedPoint.longitude}, note=${updatedPoint.note}');
     widget.onPointUpdated?.call(updatedPoint);
   }
 

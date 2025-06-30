@@ -287,12 +287,14 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
   Widget build(BuildContext context) {
     return Consumer<ProjectStateManager>(
       builder: (context, projectState, child) {
+        // Always use the editing project if available
+        final project = projectState.editingProject ?? widget.project;
         // Update dirty state based on global state
         _updateDirtyStateFromGlobalState();
 
         final s = S.of(context);
         final isDirty = _dirty;
-        final canCalculate = widget.pointsCount >= 2;
+        final canCalculate = (project.points?.length ?? 0) >= 2;
         final saveButtonColor = isDirty ? Colors.green : null;
         
         return SingleChildScrollView(
@@ -382,7 +384,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                           );
                           final azimuth = double.tryParse(_azimuthController.text);
 
-                          final tempProject = _currentProject.copyWith(
+                          final tempProject = project.copyWith(
                             name: name,
                             note: note,
                             presumedTotalLength:
@@ -671,7 +673,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                           final note = _noteController.text.trim();
                           final azimuth = double.tryParse(_azimuthController.text);
 
-                          final tempProject = _currentProject.copyWith(
+                          final tempProject = project.copyWith(
                             name: name,
                             note: note,
                             presumedTotalLength: presumed,
@@ -736,7 +738,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    '${_currentProject.currentRopeLength.toStringAsFixed(2)} m',
+                                    '${project.currentRopeLength.toStringAsFixed(2)} m',
                                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                       fontWeight: FontWeight.bold,
                                       fontFamily: 'monospace',
@@ -813,7 +815,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                                   _presumedTotalLengthController.text,
                                 );
 
-                                final tempProject = _currentProject.copyWith(
+                                final tempProject = project.copyWith(
                                   name: name,
                                   note: note,
                                   presumedTotalLength:
