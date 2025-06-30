@@ -125,7 +125,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
 
     if (widget.selectedPointId != oldWidget.selectedPointId) {
       _selectedPointId = widget.selectedPointId;
-      _updateSelectedPointInstance();
       setState(() {}); // Only call setState once after updating state
     }
   }
@@ -479,7 +478,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
 
         // Get points from global state
         final points = projectState.currentPoints;
-
         // Combine project points with new point if it exists
         final allPoints = [...points];
         if (_newPoint != null) {
@@ -517,6 +515,20 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           );
         }
 
+        // Get the selected point from the latest global state
+        PointModel? selectedPoint;
+        if (_selectedPointId != null) {
+          if (_newPoint != null && _newPoint!.id == _selectedPointId) {
+            selectedPoint = _newPoint;
+          } else {
+            try {
+              selectedPoint = points.firstWhere((p) => p.id == _selectedPointId);
+            } catch (_) {
+              selectedPoint = null;
+            }
+          }
+        }
+
         try {
           return PermissionHandlerWidget(
             requiredPermissions: [
@@ -547,7 +559,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                         },
                         context: context,
                       ),
-                      _buildPointDetailsPanel(),
+                      _buildPointDetailsPanel(selectedPoint),
                       Positioned(
                         bottom: 24,
                         left: 24,
@@ -593,39 +605,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         }
       },
     );
-  }
-
-  void _updateSelectedPointInstance() {
-    _selectedPointInstance = null;
-    if (_selectedPointId != null) {
-      // First check if it's the new point
-      if (_newPoint != null && _newPoint!.id == _selectedPointId) {
-        _selectedPointInstance = _newPoint;
-        return;
-      }
-
-      // Then check in project points from global state
-      final projectState = Provider.of<ProjectStateManager>(
-        context,
-        listen: false,
-      );
-      final points = projectState.currentPoints;
-
-      if (points.isNotEmpty) {
-        try {
-          _selectedPointInstance = points.firstWhere(
-            (p) => p.id == _selectedPointId,
-          );
-        } catch (e) {
-          logger.warning(
-            "Selected point ID $_selectedPointId not found in project points. Deselecting.",
-          );
-          // Do NOT call setState here. Just clear the selection variables directly.
-          _selectedPointId = null;
-          _selectedPointInstance = null;
-        }
-      }
-    }
   }
 
   List<LatLng> _buildPolylinePathPoints() {
@@ -713,7 +692,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                   setState(() {
                     _isMovePointMode = false;
                     _selectedPointId = null;
-                    _selectedPointInstance = null;
                   });
                 }
               } else {
@@ -723,10 +701,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
               }
             } else {
               // Only deselect if we're not dealing with a new point
-              if (_selectedPointId != null && _newPoint == null) {
+              if (_selectedPointId != null) {
                 setState(() {
                   _selectedPointId = null;
-                  _selectedPointInstance = null;
                 });
               }
             }
@@ -824,9 +801,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     }
   }
 
-  Widget _buildPointDetailsPanel() {
+  Widget _buildPointDetailsPanel(PointModel? selectedPoint) {
     return PointDetailsPanel(
-      selectedPoint: _selectedPointInstance,
+      selectedPoint: selectedPoint,
       isMovePointMode: _isMovePointMode,
       isMovingPointLoading: _isMovingPointLoading,
       selectedPointId: _selectedPointId,
@@ -835,7 +812,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
       onClose: () {
         setState(() {
           _selectedPointId = null;
-          _selectedPointInstance = null;
         });
       },
       onEdit: _handleEditPoint,
@@ -868,8 +844,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         if (updatedPoint != null) {
           // Do NOT call updatePointInEditingState again; PointDetailsPage already did it and notified listeners
           setState(() {
-            // Update the selected point instance to get the latest data from global state
-            _updateSelectedPointInstance();
             _recalculateAndDrawLines();
           });
           logger.info(
@@ -891,7 +865,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           setState(() {
             if (_selectedPointId == pointId) {
               _selectedPointId = null;
-              _selectedPointInstance = null;
             }
             _recalculateAndDrawLines();
           });
@@ -1008,8 +981,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         setState(() {
           _newPoint = newPoint;
           _selectedPointId = newPoint.id;
-          _selectedPointInstance = newPoint;
-          _isAddingNewPoint = false;
         });
 
         showInfoStatus(
@@ -1045,8 +1016,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         setState(() {
           _newPoint = null;
           _selectedPointId = null;
-          _selectedPointInstance = null;
-          _recalculateAndDrawLines();
         });
 
         final s = S.of(context);
@@ -1070,7 +1039,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     setState(() {
       _newPoint = null;
       _selectedPointId = null;
-      _selectedPointInstance = null;
     });
 
     showInfoStatus('New point discarded.');
@@ -1117,7 +1085,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           );
           if (_selectedPointId == pointToDelete.id) {
             _selectedPointId = null;
-            _selectedPointInstance = null;
           }
         });
 
@@ -1139,10 +1106,8 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     setState(() {
       if (_selectedPointId == point.id) {
         _selectedPointId = null;
-        _selectedPointInstance = null;
       } else {
         _selectedPointId = point.id;
-        _selectedPointInstance = point;
       }
     });
   }
@@ -1155,9 +1120,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         // Update the local new point instance
         setState(() {
           _newPoint = updatedPoint;
-          if (_selectedPointInstance?.id == updatedPoint.id) {
-            _selectedPointInstance = updatedPoint;
-          }
         });
         showSuccessStatus('Point ${updatedPoint.name} updated!');
       } else {
@@ -1168,11 +1130,8 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
         );
         projectState.updatePointInEditingState(updatedPoint);
 
-        // Update selected point instance if it's the same point
+        // Recalculate lines if needed
         setState(() {
-          if (_selectedPointInstance?.id == updatedPoint.id) {
-            _selectedPointInstance = updatedPoint;
-          }
           _recalculateAndDrawLines();
         });
 
