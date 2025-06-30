@@ -228,6 +228,14 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
         listen: false,
       );
       await projectState.refreshPoints();
+
+       // Mark project as dirty (unsaved changes)
+    final currentProject = projectState.currentProject ?? widget.project;
+    projectState.updateEditingProject(
+      currentProject,
+      hasUnsavedChanges: true,
+    );
+    
     } catch (e, stackTrace) {
       logger.severe("Error updating point ordinals in database", e, stackTrace);
       showErrorStatus('Error updating point order: ${e.toString()}');
