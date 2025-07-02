@@ -64,6 +64,8 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   // Data from global state and sensors
   Position? _currentPosition;
   double? _currentDeviceHeading;
+  double? _currentCompassAccuracy;
+  bool? _shouldCalibrateCompass;
   bool _hasLocationPermission = false;
   bool _hasSensorPermission = false;
   bool _isCheckingPermissions = true; // Add loading state for permissions
@@ -197,10 +199,12 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
 
   void _startListeningToCompass() {
     _controller.startListeningToCompass(
-      (heading) {
+      (heading, accuracy, shouldCalibrate) {
         if (mounted) {
           setState(() {
             _currentDeviceHeading = heading;
+            _currentCompassAccuracy = accuracy;
+            _shouldCalibrateCompass = shouldCalibrate;
           });
 
           // Update location marker with new heading if we have a current position
@@ -225,6 +229,8 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           );
           setState(() {
             _currentDeviceHeading = null;
+            _currentCompassAccuracy = null;
+            _shouldCalibrateCompass = null;
           });
         }
       },

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_compass/flutter_compass.dart';
+import 'package:compassx/compassx.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
@@ -26,7 +26,7 @@ class MapControllerLogic {
   
   // Stream subscriptions
   StreamSubscription<Position>? _positionStreamSubscription;
-  StreamSubscription<CompassEvent>? _compassSubscription;
+  StreamSubscription<CompassXEvent>? _compassSubscription;
   
   // Animation timer
   Timer? _glowAnimationTimer;
@@ -97,18 +97,16 @@ class MapControllerLogic {
 
   // Compass listening
   void startListeningToCompass(
-    Function(double) onHeadingUpdate,
+    Function(double heading, double? accuracy, bool? shouldCalibrate) onCompassUpdate,
     Function(Object, [StackTrace?]) onError,
   ) {
-    if (FlutterCompass.events == null) {
-      logger.warning("Compass events stream is null. Cannot listen to compass.");
-      onError("Compass not available");
-      return;
-    }
-
-    _compassSubscription = FlutterCompass.events!.listen(
-      (CompassEvent event) {
-        onHeadingUpdate(event.heading ?? 0.0);
+    _compassSubscription = CompassX.events.listen(
+      (event) {
+        onCompassUpdate(
+          event.heading ?? 0.0,
+          event.accuracy,
+          event.shouldCalibrate,
+        );
       },
       onError: onError,
     );
