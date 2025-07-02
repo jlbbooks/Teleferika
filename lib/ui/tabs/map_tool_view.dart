@@ -17,6 +17,7 @@ import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/pages/point_details_page.dart';
+import 'package:teleferika/ui/widgets/compass_calibration_panel.dart';
 import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -25,7 +26,6 @@ import 'map/map_controller.dart';
 import 'map/map_controls.dart';
 import 'map/map_markers.dart';
 import 'map/point_details_panel.dart';
-import 'package:teleferika/ui/widgets/compass_calibration_panel.dart';
 
 class MapToolView extends StatefulWidget {
   final ProjectModel project;
@@ -221,8 +221,12 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           });
 
           // Show calibrate compass notice if it just became true
-          if (shouldCalibrate == true && prevShouldCalibrate != true && !_hasShownCalibrateCompassNotice) {
-            showErrorStatus('Compass sensor needs calibration. Please move your device in a figure-8 motion.');
+          if (shouldCalibrate == true &&
+              prevShouldCalibrate != true &&
+              !_hasShownCalibrateCompassNotice) {
+            showErrorStatus(
+              'Compass sensor needs calibration. Please move your device in a figure-8 motion.',
+            );
             _hasShownCalibrateCompassNotice = true;
           }
 
@@ -624,10 +628,13 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                             },
                           ),
                         ),
-                      if (_shouldCalibrateCompass == true || _forceShowCalibrationPanel)
+                      if (_shouldCalibrateCompass == true ||
+                          _forceShowCalibrationPanel)
                         CompassCalibrationPanel(
                           onClose: _forceShowCalibrationPanel
-                              ? () => setState(() => _forceShowCalibrationPanel = false)
+                              ? () => setState(
+                                  () => _forceShowCalibrationPanel = false,
+                                )
                               : null,
                         ),
                     ],
@@ -802,6 +809,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
               markerSize: const Size.square(60),
               markerDirection: MarkerDirection.heading,
               showAccuracyCircle: false,
+              headingSectorRadius: 40,
             ),
             positionStream: _locationStreamController.stream,
           ),
