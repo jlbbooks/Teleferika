@@ -18,6 +18,7 @@ class DatabaseHelper {
       10; // Incremented due to adding note column to images table
 
   DatabaseHelper._privateConstructor();
+
   static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
   static Database? _database;
   final Logger logger = Logger('DatabaseHelper');
@@ -663,6 +664,7 @@ class DatabaseHelper {
       whereArgs: [id],
     );
   }
+
   // --- End Project Methods ---
 
   // --- Point Methods ---

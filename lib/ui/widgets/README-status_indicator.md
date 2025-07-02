@@ -109,7 +109,7 @@ When using the `StatusMixin`, you have access to these methods:
 
 - `showStatus(StatusInfo status)` - Show a custom status
 - `showSuccessStatus(String message)` - Show success message
-- `showErrorStatus(String message)` - Show error message  
+- `showErrorStatus(String message)` - Show error message
 - `showInfoStatus(String message)` - Show info message
 - `showLoadingStatus(String message)` - Show loading indicator
 - `hideStatus()` - Hide current status
@@ -126,7 +126,7 @@ When using the `StatusMixin`, you have access to these methods:
 ### Status Types
 
 - **Success**: Green with check icon, auto-hides after 3 seconds
-- **Error**: Red with error icon, auto-hides after 3 seconds  
+- **Error**: Red with error icon, auto-hides after 3 seconds
 - **Info**: Blue with info icon, auto-hides after 3 seconds
 - **Loading**: Orange with spinner, doesn't auto-hide
 
@@ -140,4 +140,5 @@ When using the `StatusMixin`, you have access to these methods:
 
 ### Example Integration
 
-See `lib/ui/pages/project_page.dart` for a complete example of how the status system is integrated into a real page. 
+See `lib/ui/pages/project_page.dart` for a complete example of how the status system is integrated
+into a real page. 

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
-import 'package:teleferika/core/logger.dart';
 import 'package:teleferika/licensing/licensed_features_loader.dart';
 
 import 'licence_service.dart';

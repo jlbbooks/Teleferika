@@ -84,7 +84,7 @@ class _StatusIndicatorState extends State<StatusIndicator> {
   @override
   void didUpdateWidget(StatusIndicator oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     if (widget.status != oldWidget.status) {
       if (widget.status != null) {
         _showStatus();
@@ -96,13 +96,13 @@ class _StatusIndicatorState extends State<StatusIndicator> {
 
   void _showStatus() {
     _visible.value = true;
-    
+
     // Clear any existing timer
     _hideTimer?.cancel();
 
     // Set up auto-hide timer (except for loading status or if autoHide is false)
-    if (widget.autoHide && 
-        widget.status?.type != StatusType.loading && 
+    if (widget.autoHide &&
+        widget.status?.type != StatusType.loading &&
         widget.status?.duration.inSeconds != 0) {
       _hideTimer = Timer(widget.status!.duration, () {
         if (mounted) {
@@ -153,12 +153,17 @@ class _StatusIndicatorState extends State<StatusIndicator> {
                       borderRadius: BorderRadius.circular(8),
                       color: Colors.transparent,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
                           color: widget.status!.color.withOpacity(0.95),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        constraints: BoxConstraints(maxWidth: widget.maxWidth ?? 320),
+                        constraints: BoxConstraints(
+                          maxWidth: widget.maxWidth ?? 320,
+                        ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -168,7 +173,9 @@ class _StatusIndicatorState extends State<StatusIndicator> {
                                 height: 18,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
                                 ),
                               )
                             else
@@ -195,10 +202,17 @@ class _StatusIndicatorState extends State<StatusIndicator> {
                             ),
                             if (widget.status!.type != StatusType.loading)
                               IconButton(
-                                icon: const Icon(Icons.close, color: Colors.white, size: 16),
+                                icon: const Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
                                 onPressed: _handleDismiss,
                                 padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                                constraints: const BoxConstraints(
+                                  minWidth: 24,
+                                  minHeight: 24,
+                                ),
                               ),
                           ],
                         ),
@@ -269,4 +283,4 @@ mixin StatusMixin<T extends StatefulWidget> on State<T> {
     _statusTimer?.cancel();
     super.dispose();
   }
-} 
+}

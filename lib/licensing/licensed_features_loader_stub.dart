@@ -13,7 +13,9 @@ class LicensedFeaturesLoaderStub {
   final Logger logger = Logger('LicensedFeaturesLoaderStub');
   static final LicensedFeaturesLoaderStub _instance =
       LicensedFeaturesLoaderStub._internal();
+
   factory LicensedFeaturesLoaderStub() => _instance;
+
   LicensedFeaturesLoaderStub._internal();
 
   static LicensedFeaturesLoaderStub get instance => _instance;

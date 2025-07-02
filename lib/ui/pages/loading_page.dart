@@ -6,6 +6,7 @@ import 'package:teleferika/licensing/feature_registry.dart';
 
 class LoadingPage extends StatefulWidget {
   final String? appVersion;
+
   const LoadingPage({super.key, this.appVersion});
 
   @override
@@ -32,9 +33,12 @@ class _LoadingPageState extends State<LoadingPage> {
       localizationsDelegates: AppConfig.localizationsDelegates,
       supportedLocales: AppConfig.supportedLocales,
       // --- Dynamic Theme Settings ---
-      theme: AppConfig.lightTheme, // Your defined light theme
-      darkTheme: AppConfig.darkTheme, // Your defined dark theme
-      themeMode: ThemeMode.system, // Auto-switch light/dark theme!
+      theme: AppConfig.lightTheme,
+      // Your defined light theme
+      darkTheme: AppConfig.darkTheme,
+      // Your defined dark theme
+      themeMode: ThemeMode.system,
+      // Auto-switch light/dark theme!
       // --- End Dynamic Theme Settings ---
       home: Builder(
         // Use a Builder to get a context from WITHIN this MaterialApp

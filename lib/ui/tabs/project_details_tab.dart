@@ -260,7 +260,8 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
         ),
       ),
       child: ExpansionTile(
-        initiallyExpanded: false, // Start folded
+        initiallyExpanded: false,
+        // Start folded
         backgroundColor: Colors.transparent,
         collapsedBackgroundColor: Colors.transparent,
         shape: RoundedRectangleBorder(

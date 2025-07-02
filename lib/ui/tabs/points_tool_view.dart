@@ -242,6 +242,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       return const SizedBox.shrink();
     }
   }
+
   // --- End Action Bar ---
 
   // --- Confirmation Dialog for Deletion ---
@@ -281,6 +282,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       _deleteSelectedPoints();
     }
   }
+
   // --- End Confirmation Dialog ---
 
   // --- Delete Logic ---
@@ -309,6 +311,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       }
     }
   }
+
   // --- End Delete Logic ---
 
   /// Builds a single point item Card for the ListView.
@@ -324,7 +327,8 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
     const double selectedOpacity = 0.3;
 
     return Card(
-      key: ValueKey(point.id ?? index), // Crucial for ReorderableListView
+      key: ValueKey(point.id ?? index),
+      // Crucial for ReorderableListView
       margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
       elevation: _isSelectionMode && isSelectedForDelete ? 4.0 : 1.0,
       shape: RoundedRectangleBorder(
@@ -399,6 +403,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       ),
     );
   }
+
   // --- End Widget Building Helper Methods ---
 
   // --- Point Item Interaction Handlers ---
@@ -440,6 +445,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       }
     });
   }
+
   // --- End Point Item Interaction Handlers ---
 
   @override

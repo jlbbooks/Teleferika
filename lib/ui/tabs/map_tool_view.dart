@@ -47,6 +47,7 @@ class MapToolView extends StatefulWidget {
 
 class MapToolViewState extends State<MapToolView> with StatusMixin {
   final Logger logger = Logger('MapToolView');
+
   // Controller for business logic
   late MapControllerLogic _controller;
 
@@ -86,8 +87,10 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
 
   // Debug panel state
   bool _hasClosedDebugPanel = false;
+
   // Track if we've already shown the calibrate compass notice this session
   bool _hasShownCalibrateCompassNotice = false;
+
   // For testing: force show calibration panel
   bool _forceShowCalibrationPanel = false;
 
@@ -1285,6 +1288,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
 // Custom marker: red transparent accuracy circle with current location icon
 class _CurrentLocationAccuracyMarker extends StatelessWidget {
   final double? accuracy;
+
   const _CurrentLocationAccuracyMarker({this.accuracy});
 
   @override
@@ -1304,6 +1308,7 @@ class _CurrentLocationAccuracyMarker extends StatelessWidget {
 
 class _AccuracyCirclePainter extends CustomPainter {
   final double? accuracy;
+
   _AccuracyCirclePainter({this.accuracy});
 
   @override
@@ -1325,6 +1330,7 @@ class _AccuracyCirclePainter extends CustomPainter {
 // Arrow widget for project azimuth
 class _ProjectAzimuthArrow extends StatelessWidget {
   final double azimuth;
+
   const _ProjectAzimuthArrow({required this.azimuth});
 
   @override
@@ -1387,6 +1393,7 @@ class _DebugPanel extends StatelessWidget {
   final Position? position;
   final VoidCallback? onClose;
   final VoidCallback? onTestCalibrationPanel;
+
   const _DebugPanel({
     this.heading,
     this.compassAccuracy,

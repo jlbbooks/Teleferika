@@ -12,17 +12,24 @@ enum FeatureType {
 /// Base class for all feature plugins
 abstract class FeaturePlugin {
   String get name;
+
   String get description;
+
   List<FeatureType> get supportedTypes;
+
   bool get requiresLicence;
 
   void initialize();
+
   Widget? buildWidget(String widgetType);
+
   dynamic executeFunction(
     String functionName, [
     Map<String, dynamic>? parameters,
   ]);
+
   bool hasFeature(String featureName);
+
   List<String> get availableFeatures;
 }
 

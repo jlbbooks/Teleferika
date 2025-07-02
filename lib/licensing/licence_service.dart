@@ -3,12 +3,9 @@ import 'dart:convert'; // For jsonEncode/jsonDecode
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:teleferika/core/logger.dart';
-import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:teleferika/licensing/licence_model.dart';
-import 'package:teleferika/licensing/licensed_features_loader_stub.dart';
 
 /// Service for managing software licences
 class LicenceService {
@@ -21,9 +18,11 @@ class LicenceService {
   bool _isInitialized = false;
 
   static final LicenceService _instance = LicenceService._internal();
+
   factory LicenceService() => _instance;
+
   LicenceService._internal();
-  
+
   static LicenceService get instance => _instance;
 
   /// Initialize the service

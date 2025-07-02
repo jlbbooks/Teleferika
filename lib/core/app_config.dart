@@ -24,9 +24,7 @@ class AppConfig {
         fontWeight: FontWeight.w600,
         color: Colors.blue[900],
       ),
-      iconTheme: IconThemeData(
-        color: Colors.blue[900],
-      ),
+      iconTheme: IconThemeData(color: Colors.blue[900]),
     ),
     cardTheme: CardThemeData(
       elevation: 2,
@@ -60,15 +58,16 @@ class AppConfig {
   static final ThemeData darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: Colors.teal,
-      brightness: Brightness.dark,
-    ).copyWith(
-      primary: Colors.teal[100],
-      onPrimary: Colors.teal[900],
-      surface: Colors.grey[900],
-      onSurface: Colors.white,
-    ),
+    colorScheme:
+        ColorScheme.fromSeed(
+          seedColor: Colors.teal,
+          brightness: Brightness.dark,
+        ).copyWith(
+          primary: Colors.teal[100],
+          onPrimary: Colors.teal[900],
+          surface: Colors.grey[900],
+          onSurface: Colors.white,
+        ),
     appBarTheme: AppBarTheme(
       backgroundColor: Colors.teal[100],
       foregroundColor: Colors.teal[900],
@@ -79,9 +78,7 @@ class AppConfig {
         fontWeight: FontWeight.w600,
         color: Colors.teal[900],
       ),
-      iconTheme: IconThemeData(
-        color: Colors.teal[900],
-      ),
+      iconTheme: IconThemeData(color: Colors.teal[900]),
     ),
     cardTheme: CardThemeData(
       elevation: 2,

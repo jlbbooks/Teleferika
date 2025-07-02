@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 class CompassCalibrationPanel extends StatelessWidget {
   final VoidCallback? onClose;
+
   const CompassCalibrationPanel({this.onClose, super.key});
 
   @override
@@ -47,4 +48,4 @@ class CompassCalibrationPanel extends StatelessWidget {
       ),
     );
   }
-} 
+}

@@ -64,9 +64,8 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
       // Create an updated PointModel with the current list of images
       // We use the existing widget.point data for other fields
       PointModel pointToSave = widget.point.copyWith(
-        images: List<ImageModel>.from(
-          _images,
-        ), // Pass a copy of the current images
+        images: List<ImageModel>.from(_images),
+        // Pass a copy of the current images
         // Optionally update a 'lastModified' timestamp on the point itself here if desired
         timestamp: DateTime.now(),
       );

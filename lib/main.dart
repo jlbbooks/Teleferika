@@ -130,9 +130,12 @@ class _MyAppRootState extends State<MyAppRoot> {
       child: MaterialApp(
         title: 'Teleferika',
         // --- Dynamic Theme Settings ---
-        theme: AppConfig.lightTheme, // Your defined light theme
-        darkTheme: AppConfig.darkTheme, // Your defined dark theme
-        themeMode: ThemeMode.system, // This is the key!
+        theme: AppConfig.lightTheme,
+        // Your defined light theme
+        darkTheme: AppConfig.darkTheme,
+        // Your defined dark theme
+        themeMode: ThemeMode.system,
+        // This is the key!
         // --- End Dynamic Theme Settings ---
         debugShowCheckedModeBanner: kDebugMode,
         localizationsDelegates: AppConfig.localizationsDelegates,

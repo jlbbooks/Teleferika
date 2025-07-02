@@ -11,7 +11,9 @@ import 'package:teleferika/db/models/project_model.dart';
 class ProjectStateManager extends ChangeNotifier {
   final Logger logger = Logger('ProjectStateManager');
   static final ProjectStateManager _instance = ProjectStateManager._internal();
+
   factory ProjectStateManager() => _instance;
+
   ProjectStateManager._internal();
 
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
@@ -26,7 +28,9 @@ class ProjectStateManager extends ChangeNotifier {
 
   // Track if there is an unsaved new point (e.g., in MapToolView)
   bool _hasUnsavedNewPoint = false;
+
   bool get hasUnsavedNewPoint => _hasUnsavedNewPoint;
+
   void setHasUnsavedNewPoint(bool value) {
     if (_hasUnsavedNewPoint != value) {
       _hasUnsavedNewPoint = value;
@@ -36,10 +40,15 @@ class ProjectStateManager extends ChangeNotifier {
 
   // Getters
   ProjectModel? get currentProject => _currentProject;
+
   List<PointModel> get currentPoints => List.unmodifiable(_currentPoints);
+
   bool get isLoading => _isLoading;
+
   bool get hasProject => _currentProject != null;
+
   bool get hasUnsavedChanges => _hasUnsavedChanges;
+
   ProjectModel? get editingProject => _editingProject;
 
   /// Load a project and its points into global state

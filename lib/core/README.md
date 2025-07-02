@@ -7,4 +7,4 @@ This directory contains core application functionality that is used throughout t
 - `app_config.dart` - Application configuration (themes, locales, etc.)
 - `logger.dart` - Logging system configuration
 - `utils/` - Core utility functions
-  - `uuid_generator.dart` - UUID generation utilities
+    - `uuid_generator.dart` - UUID generation utilities

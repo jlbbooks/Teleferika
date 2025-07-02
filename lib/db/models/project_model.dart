@@ -1,11 +1,12 @@
 // db/models/project_model.dart
 
-import 'package:teleferika/core/utils/uuid_generator.dart';
-import 'package:teleferika/db/models/point_model.dart';
 import 'dart:math' as math;
 
+import 'package:teleferika/core/utils/uuid_generator.dart';
+import 'package:teleferika/db/models/point_model.dart';
+
 /// Represents a photogrammetry project containing multiple geographic points.
-/// 
+///
 /// A project has a name, optional notes, and contains an ordered list of points.
 /// It can track starting and ending points, azimuth, and calculate total rope length
 /// between consecutive points using 3D distance calculations.
@@ -30,7 +31,8 @@ class ProjectModel {
   final DateTime? lastUpdate; // Tracks when the record was last modified in DB
   final DateTime? date; // User-settable date for the project
   final double? presumedTotalLength;
-  final List<PointModel> _points; // In-memory list of points for this project (not persisted in DB)
+  final List<PointModel>
+  _points; // In-memory list of points for this project (not persisted in DB)
 
   // Getter for points
   List<PointModel> get points => List.unmodifiable(_points);
@@ -71,7 +73,8 @@ class ProjectModel {
     return ProjectModel(
       id: map[columnId] as String?,
       name: map[columnName] as String,
-      note: map[columnNote] as String? ?? '', // Convert null to empty string
+      note: map[columnNote] as String? ?? '',
+      // Convert null to empty string
       startingPointId: map[columnStartingPointId] as String?,
       endingPointId: map[columnEndingPointId] as String?,
       azimuth: map[columnAzimuth] as double?,
@@ -85,6 +88,7 @@ class ProjectModel {
       presumedTotalLength: map[columnPresumedTotalLength] as double?,
     );
   }
+
   ProjectModel copyWith({
     String? id, // Allow id to be explicitly part of copyWith if needed
     String? name,
@@ -118,7 +122,9 @@ class ProjectModel {
       lastUpdate: clearLastUpdate ? null : (lastUpdate ?? this.lastUpdate),
       date: clearDate ? null : (date ?? this.date),
       points: points ?? this._points,
-      presumedTotalLength: clearPresumedTotalLength ? null : (presumedTotalLength ?? this.presumedTotalLength),
+      presumedTotalLength: clearPresumedTotalLength
+          ? null
+          : (presumedTotalLength ?? this.presumedTotalLength),
     );
   }
 
@@ -182,40 +188,44 @@ class ProjectModel {
     }
 
     double totalLength = 0.0;
-    
+
     for (int i = 0; i < points.length - 1; i++) {
       final point1 = points[i];
       final point2 = points[i + 1];
-      
+
       // Get altitudes with interpolation for missing values
       final altitude1 = _getInterpolatedAltitude(i);
       final altitude2 = _getInterpolatedAltitude(i + 1);
-      
+
       // Calculate 3D distance between points
       final distance = _calculate3DDistance(
-        point1.latitude, point1.longitude, altitude1,
-        point2.latitude, point2.longitude, altitude2,
+        point1.latitude,
+        point1.longitude,
+        altitude1,
+        point2.latitude,
+        point2.longitude,
+        altitude2,
       );
-      
+
       totalLength += distance;
     }
-    
+
     return totalLength;
   }
 
   /// Gets the altitude for a point, interpolating if missing
   double _getInterpolatedAltitude(int pointIndex) {
     final point = points[pointIndex];
-    
+
     // If the point has altitude data, use it
     if (point.altitude != null) {
       return point.altitude!;
     }
-    
+
     // Try to interpolate from surrounding points
     double? prevAltitude;
     double? nextAltitude;
-    
+
     // Find previous altitude
     for (int i = pointIndex - 1; i >= 0; i--) {
       if (points[i].altitude != null) {
@@ -223,7 +233,7 @@ class ProjectModel {
         break;
       }
     }
-    
+
     // Find next altitude
     for (int i = pointIndex + 1; i < points.length; i++) {
       if (points[i].altitude != null) {
@@ -231,12 +241,12 @@ class ProjectModel {
         break;
       }
     }
-    
+
     // If we have both previous and next altitudes, interpolate
     if (prevAltitude != null && nextAltitude != null) {
       return (prevAltitude + nextAltitude) / 2.0;
     }
-    
+
     // If we only have one of them, use that
     if (prevAltitude != null) {
       return prevAltitude;
@@ -244,7 +254,7 @@ class ProjectModel {
     if (nextAltitude != null) {
       return nextAltitude;
     }
-    
+
     // If no altitude data available anywhere, assume 0
     return 0.0;
   }
@@ -252,8 +262,12 @@ class ProjectModel {
   /// Calculates 3D distance between two points using the Haversine formula for horizontal distance
   /// and Pythagorean theorem for the vertical component
   double _calculate3DDistance(
-    double lat1, double lon1, double alt1,
-    double lat2, double lon2, double alt2,
+    double lat1,
+    double lon1,
+    double alt1,
+    double lat2,
+    double lon2,
+    double alt2,
   ) {
     // Calculate horizontal distance using Haversine formula
     const R = 6371000.0; // Earth's radius in meters
@@ -261,18 +275,24 @@ class ProjectModel {
     final lat2Rad = _degreesToRadians(lat2);
     final deltaLat = _degreesToRadians(lat2 - lat1);
     final deltaLon = _degreesToRadians(lon2 - lon1);
-    
-    final a = math.sin(deltaLat / 2) * math.sin(deltaLat / 2) +
-        math.cos(lat1Rad) * math.cos(lat2Rad) *
-        math.sin(deltaLon / 2) * math.sin(deltaLon / 2);
+
+    final a =
+        math.sin(deltaLat / 2) * math.sin(deltaLat / 2) +
+        math.cos(lat1Rad) *
+            math.cos(lat2Rad) *
+            math.sin(deltaLon / 2) *
+            math.sin(deltaLon / 2);
     final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
     final horizontalDistance = R * c;
-    
+
     // Calculate vertical distance
     final verticalDistance = (alt2 - alt1).abs();
-    
+
     // Calculate 3D distance using Pythagorean theorem
-    return math.sqrt(horizontalDistance * horizontalDistance + verticalDistance * verticalDistance);
+    return math.sqrt(
+      horizontalDistance * horizontalDistance +
+          verticalDistance * verticalDistance,
+    );
   }
 
   double _degreesToRadians(double degrees) => degrees * math.pi / 180.0;
@@ -280,15 +300,15 @@ class ProjectModel {
   /// Validates the project data
   bool get isValid {
     return id.isNotEmpty &&
-           name.trim().isNotEmpty &&
-           (presumedTotalLength == null || presumedTotalLength! >= 0) &&
-           (azimuth == null || (azimuth! >= -360 && azimuth! < 360));
+        name.trim().isNotEmpty &&
+        (presumedTotalLength == null || presumedTotalLength! >= 0) &&
+        (azimuth == null || (azimuth! >= -360 && azimuth! < 360));
   }
 
   /// Returns validation errors if any
   List<String> get validationErrors {
     final errors = <String>[];
-    
+
     if (id.isEmpty) errors.add('Project ID cannot be empty');
     if (name.trim().isEmpty) errors.add('Project name cannot be empty');
     if (presumedTotalLength != null && presumedTotalLength! < 0) {
@@ -297,7 +317,7 @@ class ProjectModel {
     if (azimuth != null && (azimuth! < -360 || azimuth! >= 360)) {
       errors.add('Azimuth must be between -360 and 360 degrees');
     }
-    
+
     return errors;
   }
 }

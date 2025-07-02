@@ -107,8 +107,10 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
 
     // Create the point to validate
     PointModel pointToSave = widget.point.copyWith(
-      latitude: latitude ?? 0.0, // Use 0.0 as fallback for validation
-      longitude: longitude ?? 0.0, // Use 0.0 as fallback for validation
+      latitude: latitude ?? 0.0,
+      // Use 0.0 as fallback for validation
+      longitude: longitude ?? 0.0,
+      // Use 0.0 as fallback for validation
       note: _noteController.text.trim(),
       altitude: altitudeValue,
       timestamp: DateTime.now(),
@@ -121,20 +123,27 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
         "Point validation failed: ${pointToSave.validationErrors}",
       );
       showErrorStatus(
-        S.of(context)?.error_saving_point(pointToSave.validationErrors.join(', ')) ?? 'Error saving point: ${pointToSave.validationErrors.join(', ')}',
+        S
+                .of(context)
+                ?.error_saving_point(pointToSave.validationErrors.join(', ')) ??
+            'Error saving point: ${pointToSave.validationErrors.join(', ')}',
       );
       return;
     }
 
     // Additional validation for parsing errors
     if (latitude == null || longitude == null) {
-      showErrorStatus(S.of(context)?.invalid_latitude_or_longitude_format ?? 'Invalid latitude or longitude format.');
+      showErrorStatus(
+        S.of(context)?.invalid_latitude_or_longitude_format ??
+            'Invalid latitude or longitude format.',
+      );
       return;
     }
 
     if (_altitudeController.text.isNotEmpty && altitudeValue == null) {
       showErrorStatus(
-        S.of(context)?.invalid_altitude_format ?? 'Invalid altitude format. Please enter a number or leave it empty.',
+        S.of(context)?.invalid_altitude_format ??
+            'Invalid altitude format. Please enter a number or leave it empty.',
       );
       return;
     }
@@ -162,7 +171,9 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
           _hasUnsavedChanges = false;
         });
         if (!calledFromWillPop) {
-          showSuccessStatus(S.of(context)?.point_details_saved ?? 'Point details saved!');
+          showSuccessStatus(
+            S.of(context)?.point_details_saved ?? 'Point details saved!',
+          );
         }
         if (Navigator.canPop(context)) {
           Navigator.pop(context, {'action': 'updated', 'point': pointToSave});
@@ -174,7 +185,10 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
         e,
         stackTrace,
       );
-      showErrorStatus(S.of(context)?.error_saving_point(e.toString()) ?? 'Error saving point: ${e.toString()}');
+      showErrorStatus(
+        S.of(context)?.error_saving_point(e.toString()) ??
+            'Error saving point: ${e.toString()}',
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -191,11 +205,18 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
-          title: Text(S.of(context)?.unsaved_point_details_title ?? 'Unsaved Changes'),
-          content: Text(S.of(context)?.unsaved_point_details_content ?? 'You have unsaved changes to point details. Save them?'),
+          title: Text(
+            S.of(context)?.unsaved_point_details_title ?? 'Unsaved Changes',
+          ),
+          content: Text(
+            S.of(context)?.unsaved_point_details_content ??
+                'You have unsaved changes to point details. Save them?',
+          ),
           actions: <Widget>[
             TextButton(
-              child: Text(S.of(context)?.discard_text_changes ?? 'Discard Text Changes'),
+              child: Text(
+                S.of(context)?.discard_text_changes ?? 'Discard Text Changes',
+              ),
               onPressed: () => Navigator.of(context).pop('discard_text'),
             ),
             TextButton(
@@ -206,7 +227,9 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
               style: TextButton.styleFrom(
                 foregroundColor: Theme.of(context).primaryColor,
               ),
-              child: Text(S.of(context)?.save_all_and_exit ?? 'Save All & Exit'),
+              child: Text(
+                S.of(context)?.save_all_and_exit ?? 'Save All & Exit',
+              ),
               onPressed: () => Navigator.of(context).pop('save_all_and_exit'),
             ),
           ],
@@ -253,9 +276,12 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(S.of(context)?.confirm_deletion_title ?? 'Confirm Deletion'),
+          title: Text(
+            S.of(context)?.confirm_deletion_title ?? 'Confirm Deletion',
+          ),
           content: Text(
-            S.of(context)?.confirm_deletion_content(widget.point.name) ?? 'Are you sure you want to delete point ${widget.point.name}? This action cannot be undone.',
+            S.of(context)?.confirm_deletion_content(widget.point.name) ??
+                'Are you sure you want to delete point ${widget.point.name}? This action cannot be undone.',
           ),
           actions: <Widget>[
             TextButton(
@@ -285,7 +311,8 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
         if (!mounted) return;
 
         showSuccessStatus(
-          S.of(context)?.point_deleted_success(widget.point.name) ?? 'Point ${widget.point.name} deleted successfully!',
+          S.of(context)?.point_deleted_success(widget.point.name) ??
+              'Point ${widget.point.name} deleted successfully!',
         );
         // Pop with structured result
         Navigator.pop(context, {
@@ -297,7 +324,10 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
         if (!mounted) return;
         logger.severe('Failed to delete point ${widget.point.name}: $e');
         showErrorStatus(
-          S.of(context)?.error_deleting_point(widget.point.name, e.toString()) ?? 'Error deleting point ${widget.point.name}: ${e.toString()}',
+          S
+                  .of(context)
+                  ?.error_deleting_point(widget.point.name, e.toString()) ??
+              'Error deleting point ${widget.point.name}: ${e.toString()}',
         );
       } finally {
         if (mounted) {
@@ -362,7 +392,8 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                 Icons.save,
                 color: _hasUnsavedChanges ? Colors.green : null,
               ),
-              tooltip: S.of(context)?.save_project_tooltip ?? 'Save Point Details',
+              tooltip:
+                  S.of(context)?.save_project_tooltip ?? 'Save Point Details',
               onPressed: _isLoading
                   ? null
                   : () => _savePointDetails(calledFromWillPop: false),
@@ -487,8 +518,11 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                           TextFormField(
                             controller: _latitudeController,
                             decoration: InputDecoration(
-                              labelText: S.of(context)?.latitude_label ?? 'Latitude',
-                              hintText: S.of(context)?.latitude_hint ?? 'e.g. 45.12345',
+                              labelText:
+                                  S.of(context)?.latitude_label ?? 'Latitude',
+                              hintText:
+                                  S.of(context)?.latitude_hint ??
+                                  'e.g. 45.12345',
                               prefixIcon: Icon(
                                 Icons.pin_drop_outlined,
                                 color: Theme.of(
@@ -532,14 +566,23 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return S.of(context)?.latitude_empty_validator ?? 'Latitude cannot be empty';
+                                return S
+                                        .of(context)
+                                        ?.latitude_empty_validator ??
+                                    'Latitude cannot be empty';
                               }
                               final n = double.tryParse(value);
                               if (n == null) {
-                                return S.of(context)?.latitude_invalid_validator ?? 'Invalid number format';
+                                return S
+                                        .of(context)
+                                        ?.latitude_invalid_validator ??
+                                    'Invalid number format';
                               }
                               if (n < -90 || n > 90) {
-                                return S.of(context)?.latitude_range_validator ?? 'Latitude must be between -90 and 90';
+                                return S
+                                        .of(context)
+                                        ?.latitude_range_validator ??
+                                    'Latitude must be between -90 and 90';
                               }
                               return null;
                             },
@@ -550,8 +593,11 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                           TextFormField(
                             controller: _longitudeController,
                             decoration: InputDecoration(
-                              labelText: S.of(context)?.longitude_label ?? 'Longitude',
-                              hintText: S.of(context)?.longitude_hint ?? 'e.g. -12.54321',
+                              labelText:
+                                  S.of(context)?.longitude_label ?? 'Longitude',
+                              hintText:
+                                  S.of(context)?.longitude_hint ??
+                                  'e.g. -12.54321',
                               prefixIcon: Icon(
                                 Icons.pin_drop_outlined,
                                 color: Theme.of(
@@ -595,14 +641,23 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                             ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return S.of(context)?.longitude_empty_validator ?? 'Longitude cannot be empty';
+                                return S
+                                        .of(context)
+                                        ?.longitude_empty_validator ??
+                                    'Longitude cannot be empty';
                               }
                               final n = double.tryParse(value);
                               if (n == null) {
-                                return S.of(context)?.longitude_invalid_validator ?? 'Invalid number format';
+                                return S
+                                        .of(context)
+                                        ?.longitude_invalid_validator ??
+                                    'Invalid number format';
                               }
                               if (n < -180 || n > 180) {
-                                return S.of(context)?.longitude_range_validator ?? 'Longitude must be between -180 and 180';
+                                return S
+                                        .of(context)
+                                        ?.longitude_range_validator ??
+                                    'Longitude must be between -180 and 180';
                               }
                               return null;
                             },
@@ -643,7 +698,8 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                S.of(context)?.additional_data_section_title ?? 'Additional Data',
+                                S.of(context)?.additional_data_section_title ??
+                                    'Additional Data',
                                 style: Theme.of(context).textTheme.titleSmall
                                     ?.copyWith(
                                       fontWeight: FontWeight.w600,
@@ -660,8 +716,12 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                           TextFormField(
                             controller: _altitudeController,
                             decoration: InputDecoration(
-                              labelText: S.of(context)?.altitude_label ?? 'Altitude (m)',
-                              hintText: S.of(context)?.altitude_hint ?? 'e.g. 1203.5 (Optional)',
+                              labelText:
+                                  S.of(context)?.altitude_label ??
+                                  'Altitude (m)',
+                              hintText:
+                                  S.of(context)?.altitude_hint ??
+                                  'e.g. 1203.5 (Optional)',
                               prefixIcon: Icon(
                                 Icons.layers,
                                 color: Theme.of(
@@ -709,10 +769,16 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                               }
                               final n = double.tryParse(value);
                               if (n == null) {
-                                return S.of(context)?.altitude_invalid_validator ?? 'Invalid number format';
+                                return S
+                                        .of(context)
+                                        ?.altitude_invalid_validator ??
+                                    'Invalid number format';
                               }
                               if (n < -1000 || n > 8849) {
-                                return S.of(context)?.altitude_range_validator ?? 'Altitude must be between -1000 and 8849 meters';
+                                return S
+                                        .of(context)
+                                        ?.altitude_range_validator ??
+                                    'Altitude must be between -1000 and 8849 meters';
                               }
                               return null;
                             },
@@ -723,8 +789,12 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                           TextFormField(
                             controller: _noteController,
                             decoration: InputDecoration(
-                              labelText: S.of(context)?.note_label ?? 'Note (Optional)',
-                              hintText: S.of(context)?.note_hint ?? 'Any observations or details...',
+                              labelText:
+                                  S.of(context)?.note_label ??
+                                  'Note (Optional)',
+                              hintText:
+                                  S.of(context)?.note_hint ??
+                                  'Any observations or details...',
                               prefixIcon: Icon(
                                 Icons.notes_outlined,
                                 color: Theme.of(

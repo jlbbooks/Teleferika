@@ -283,7 +283,8 @@ class MapControls {
     required VoidCallback onRetryPermissions,
   }) {
     // Don't show overlay while checking permissions or if all permissions are granted
-    if (isCheckingPermissions || (hasLocationPermission && hasSensorPermission)) {
+    if (isCheckingPermissions ||
+        (hasLocationPermission && hasSensorPermission)) {
       return const SizedBox.shrink();
     }
 
@@ -334,7 +335,9 @@ class MapControls {
                     if (!hasLocationPermission) ...[
                       _buildPermissionItem(
                         icon: Icons.location_on_outlined,
-                        title: S.of(context)?.locationPermissionTitle ?? 'Location Permission',
+                        title:
+                            S.of(context)?.locationPermissionTitle ??
+                            'Location Permission',
                         description:
                             s?.mapLocationPermissionInfoText ??
                             "Location permission is needed to show your current position and for some map features.",
@@ -345,7 +348,9 @@ class MapControls {
                     if (!hasSensorPermission) ...[
                       _buildPermissionItem(
                         icon: Icons.compass_calibration_outlined,
-                        title: S.of(context)?.sensorPermissionTitle ?? 'Sensor Permission',
+                        title:
+                            S.of(context)?.sensorPermissionTitle ??
+                            'Sensor Permission',
                         description:
                             s?.mapSensorPermissionInfoText ??
                             "Sensor (compass) permission is needed for direction-based features.",
@@ -409,7 +414,8 @@ class MapControls {
     required VoidCallback onRetryPermissions,
   }) {
     // Don't show overlay while checking permissions or if all permissions are granted
-    if (isCheckingPermissions || (hasLocationPermission && hasSensorPermission)) {
+    if (isCheckingPermissions ||
+        (hasLocationPermission && hasSensorPermission)) {
       return const SizedBox.shrink();
     }
 
@@ -459,7 +465,9 @@ class MapControls {
                   if (!hasLocationPermission) ...[
                     _buildPermissionItem(
                       icon: Icons.location_on_outlined,
-                      title: S.of(context)?.locationPermissionTitle ?? 'Location Permission',
+                      title:
+                          S.of(context)?.locationPermissionTitle ??
+                          'Location Permission',
                       description:
                           s?.mapLocationPermissionInfoText ??
                           "Location permission is needed to show your current position and for some map features.",
@@ -470,7 +478,9 @@ class MapControls {
                   if (!hasSensorPermission) ...[
                     _buildPermissionItem(
                       icon: Icons.compass_calibration_outlined,
-                      title: S.of(context)?.sensorPermissionTitle ?? 'Sensor Permission',
+                      title:
+                          S.of(context)?.sensorPermissionTitle ??
+                          'Sensor Permission',
                       description:
                           s?.mapSensorPermissionInfoText ??
                           "Sensor (compass) permission is needed for direction-based features.",
@@ -489,8 +499,7 @@ class MapControls {
                         child: ElevatedButton.icon(
                           icon: const Icon(Icons.settings),
                           label: Text(
-                            s?.mapButtonOpenAppSettings ??
-                                "Open App Settings",
+                            s?.mapButtonOpenAppSettings ?? "Open App Settings",
                           ),
                           onPressed: () async {
                             openAppSettings();

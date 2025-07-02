@@ -3,13 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 
-enum PermissionType {
-  location,
-  sensor,
-  camera,
-  microphone,
-  storage,
-}
+enum PermissionType { location, sensor, camera, microphone, storage }
 
 class PermissionHandlerWidget extends StatefulWidget {
   final List<PermissionType> requiredPermissions;
@@ -28,7 +22,8 @@ class PermissionHandlerWidget extends StatefulWidget {
   });
 
   @override
-  State<PermissionHandlerWidget> createState() => _PermissionHandlerWidgetState();
+  State<PermissionHandlerWidget> createState() =>
+      _PermissionHandlerWidgetState();
 }
 
 class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
@@ -46,14 +41,14 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
   Future<void> _checkPermissions() async {
     try {
       final permissions = await _requestPermissions();
-      
+
       if (mounted) {
         setState(() {
           _permissionStatus = permissions;
           _isCheckingPermissions = false;
           _isRetrying = false;
         });
-        
+
         widget.onPermissionsResult(permissions);
       }
     } catch (e) {
@@ -98,52 +93,52 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
 
   Future<bool> _requestLocationPermission() async {
     LocationPermission permission = await Geolocator.checkPermission();
-    
+
     if (_isRetrying || permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
     }
-    
+
     return permission == LocationPermission.whileInUse ||
-           permission == LocationPermission.always;
+        permission == LocationPermission.always;
   }
 
   Future<bool> _requestSensorPermission() async {
     PermissionStatus status = await Permission.sensors.status;
-    
+
     if (_isRetrying || status.isDenied || status.isRestricted) {
       status = await Permission.sensors.request();
     }
-    
+
     return status.isGranted;
   }
 
   Future<bool> _requestCameraPermission() async {
     PermissionStatus status = await Permission.camera.status;
-    
+
     if (_isRetrying || status.isDenied || status.isRestricted) {
       status = await Permission.camera.request();
     }
-    
+
     return status.isGranted;
   }
 
   Future<bool> _requestMicrophonePermission() async {
     PermissionStatus status = await Permission.microphone.status;
-    
+
     if (_isRetrying || status.isDenied || status.isRestricted) {
       status = await Permission.microphone.request();
     }
-    
+
     return status.isGranted;
   }
 
   Future<bool> _requestStoragePermission() async {
     PermissionStatus status = await Permission.storage.status;
-    
+
     if (_isRetrying || status.isDenied || status.isRestricted) {
       status = await Permission.storage.request();
     }
-    
+
     return status.isGranted;
   }
 
@@ -154,10 +149,8 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
   @override
   Widget build(BuildContext context) {
     if (_isCheckingPermissions) {
-      return widget.loadingWidget ?? 
-        const Center(
-          child: CircularProgressIndicator(),
-        );
+      return widget.loadingWidget ??
+          const Center(child: CircularProgressIndicator());
     }
 
     if (_allPermissionsGranted) {
@@ -165,12 +158,7 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
     }
 
     if (widget.showOverlay) {
-      return Stack(
-        children: [
-          widget.child,
-          _buildPermissionOverlay(),
-        ],
-      );
+      return Stack(children: [widget.child, _buildPermissionOverlay()]);
     }
 
     return _buildPermissionOverlay();
@@ -222,9 +210,9 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
                   ),
                   const SizedBox(height: 16),
 
-                  ...missingPermissions.map((permission) => 
-                    _buildPermissionItem(permission, s)
-                  ).expand((widget) => [widget, const SizedBox(height: 12)]),
+                  ...missingPermissions
+                      .map((permission) => _buildPermissionItem(permission, s))
+                      .expand((widget) => [widget, const SizedBox(height: 12)]),
 
                   const SizedBox(height: 24),
 
@@ -285,14 +273,16 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
       case PermissionType.location:
         icon = Icons.location_on_outlined;
         title = 'Location Permission';
-        description = s?.mapLocationPermissionInfoText ??
+        description =
+            s?.mapLocationPermissionInfoText ??
             "Location permission is needed to show your current position and for some map features.";
         color = Colors.blue;
         break;
       case PermissionType.sensor:
         icon = Icons.compass_calibration_outlined;
         title = 'Sensor Permission';
-        description = s?.mapSensorPermissionInfoText ??
+        description =
+            s?.mapSensorPermissionInfoText ??
             "Sensor (compass) permission is needed for direction-based features.";
         color = Colors.green;
         break;
@@ -359,4 +349,4 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
       ),
     );
   }
-} 
+}

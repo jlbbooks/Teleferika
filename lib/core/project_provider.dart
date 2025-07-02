@@ -5,11 +5,8 @@ import 'package:teleferika/core/project_state_manager.dart';
 /// Provider widget that makes the global project state available to child widgets
 class ProjectProvider extends StatelessWidget {
   final Widget child;
-  
-  const ProjectProvider({
-    super.key,
-    required this.child,
-  });
+
+  const ProjectProvider({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -22,9 +19,9 @@ class ProjectProvider extends StatelessWidget {
 
 /// Extension to easily access the project state manager from any widget
 extension ProjectStateExtension on BuildContext {
-  ProjectStateManager get projectState => 
+  ProjectStateManager get projectState =>
       Provider.of<ProjectStateManager>(this, listen: false);
-  
-  ProjectStateManager get projectStateListen => 
+
+  ProjectStateManager get projectStateListen =>
       Provider.of<ProjectStateManager>(this, listen: true);
-} 
+}

@@ -3,7 +3,7 @@
 import 'package:teleferika/core/utils/uuid_generator.dart';
 
 /// Represents an image associated with a geographic point.
-/// 
+///
 /// Each image has a path to the file, an ordinal number for ordering
 /// within the point, and can contain notes. Images are linked to
 /// points via the pointId foreign key.
@@ -41,34 +41,41 @@ class ImageModel {
     required this.ordinalNumber,
     required this.imagePath,
     String? note,
-  }) : id = id ?? generateUuid(), // Generate UUID if id is null
-       _note = null { // Will be set below using the setter
+  }) : id = id ?? generateUuid(),
+       // Generate UUID if id is null
+       _note = null {
+    // Will be set below using the setter
     // Use the setter to ensure note is cleaned up
     this.note = note ?? '';
   }
 
   Map<String, dynamic> toMap() {
     return {
-      columnId: id, // String
-      columnPointId: pointId, // String
+      columnId: id,
+      // String
+      columnPointId: pointId,
+      // String
       columnOrdinalNumber: ordinalNumber,
       columnImagePath: imagePath,
-      columnNote: note.isEmpty ? null : note, // Store null in DB for empty strings
+      columnNote: note.isEmpty ? null : note,
+      // Store null in DB for empty strings
     };
   }
 
   factory ImageModel.fromMap(Map<String, dynamic> map) {
     final result = ImageModel(
-      id: map[columnId] as String, // Cast to non-nullable String
-      pointId: map[columnPointId] as String, // Cast to String
+      id: map[columnId] as String,
+      // Cast to non-nullable String
+      pointId: map[columnPointId] as String,
+      // Cast to String
       ordinalNumber: map[columnOrdinalNumber] as int,
       imagePath: map[columnImagePath] as String,
       note: null, // Will be set below using the setter
     );
-    
+
     // Use the setter to ensure note is cleaned up
     result.note = map[columnNote] as String? ?? '';
-    
+
     return result;
   }
 
@@ -87,7 +94,7 @@ class ImageModel {
       imagePath: imagePath ?? this.imagePath,
       note: null, // Will be set below using the setter
     );
-    
+
     // Use the setter to ensure note is cleaned up
     if (clearNote) {
       result.note = '';
@@ -96,7 +103,7 @@ class ImageModel {
     } else {
       result.note = this.note;
     }
-    
+
     return result;
   }
 
@@ -129,20 +136,20 @@ class ImageModel {
   /// Validates the image data
   bool get isValid {
     return id.isNotEmpty &&
-           pointId.isNotEmpty &&
-           ordinalNumber >= 0 &&
-           imagePath.isNotEmpty;
+        pointId.isNotEmpty &&
+        ordinalNumber >= 0 &&
+        imagePath.isNotEmpty;
   }
 
   /// Returns validation errors if any
   List<String> get validationErrors {
     final errors = <String>[];
-    
+
     if (id.isEmpty) errors.add('Image ID cannot be empty');
     if (pointId.isEmpty) errors.add('Point ID cannot be empty');
     if (ordinalNumber < 0) errors.add('Ordinal number must be non-negative');
     if (imagePath.isEmpty) errors.add('Image path cannot be empty');
-    
+
     return errors;
   }
 }

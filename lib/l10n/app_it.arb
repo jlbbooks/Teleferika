@@ -272,7 +272,7 @@
   "export_requires_licence_title": "Licenza richiesta per l'esportazione",
   "export_requires_licence_message": "Questa funzione richiede una licenza attiva. Importa un file di licenza valido per procedere.",
   "action_import_licence": "Importa licenza",
-   "unsaved_changes_dialog_title": "Modifiche non salvate",
+  "unsaved_changes_dialog_title": "Modifiche non salvate",
   "@unsaved_changes_dialog_title": {
     "description": "Titolo per la finestra di dialogo che avvisa delle modifiche non salvate."
   },
@@ -798,7 +798,12 @@
   "headingLabel": "Direzione: {angle}°",
   "@headingLabel": {
     "description": "Etichetta per il marker della direzione sulla mappa.",
-    "placeholders": { "angle": { "type": "String", "example": "123.4" } }
+    "placeholders": {
+      "angle": {
+        "type": "String",
+        "example": "123.4"
+      }
+    }
   },
   "locationPermissionTitle": "Permesso di localizzazione",
   "sensorPermissionTitle": "Permesso sensore",

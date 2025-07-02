@@ -31,10 +31,13 @@ class PointsTabState extends State<PointsTab> with StatusMixin {
     // Create a new point with default values
     final newPoint = PointModel(
       projectId: currentProject.id,
-      latitude: 0.0, // Will be set by GPS
-      longitude: 0.0, // Will be set by GPS
+      latitude: 0.0,
+      // Will be set by GPS
+      longitude: 0.0,
+      // Will be set by GPS
       altitude: null,
-      ordinalNumber: 0, // Will be set by OrdinalManager
+      ordinalNumber: 0,
+      // Will be set by OrdinalManager
       note: '',
     );
 

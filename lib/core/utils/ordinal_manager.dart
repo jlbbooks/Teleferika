@@ -5,7 +5,8 @@ class OrdinalManager {
   /// Returns the next ordinal for a list of points.
   static int getNextOrdinal(List<PointModel> points) {
     if (points.isEmpty) return 0;
-    return points.map((p) => p.ordinalNumber).reduce((a, b) => a > b ? a : b) + 1;
+    return points.map((p) => p.ordinalNumber).reduce((a, b) => a > b ? a : b) +
+        1;
   }
 
   /// Resequences the list so ordinals are consecutive starting from 0.
@@ -19,7 +20,11 @@ class OrdinalManager {
   }
 
   /// Insert a point at a specific ordinal, shifting others.
-  static List<PointModel> insertAtOrdinal(List<PointModel> points, PointModel newPoint, int ordinal) {
+  static List<PointModel> insertAtOrdinal(
+    List<PointModel> points,
+    PointModel newPoint,
+    int ordinal,
+  ) {
     final updated = List<PointModel>.from(points);
     updated.insert(ordinal, newPoint.copyWith(ordinalNumber: ordinal));
     return resequence(updated);
@@ -27,15 +32,20 @@ class OrdinalManager {
 
   /// Remove a point by id and resequence.
   static List<PointModel> removeById(List<PointModel> points, String pointId) {
-    final updated = List<PointModel>.from(points)..removeWhere((p) => p.id == pointId);
+    final updated = List<PointModel>.from(points)
+      ..removeWhere((p) => p.id == pointId);
     return resequence(updated);
   }
 
   /// Move a point from oldIndex to newIndex and resequence.
-  static List<PointModel> move(List<PointModel> points, int oldIndex, int newIndex) {
+  static List<PointModel> move(
+    List<PointModel> points,
+    int oldIndex,
+    int newIndex,
+  ) {
     final updated = List<PointModel>.from(points);
     final point = updated.removeAt(oldIndex);
     updated.insert(newIndex, point);
     return resequence(updated);
   }
-} 
+}

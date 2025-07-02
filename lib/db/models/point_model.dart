@@ -87,11 +87,11 @@ class PointModel {
       projectId: projectId ?? this.projectId,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
-      altitude: clearAltitude
-          ? null
-          : altitude ?? this.altitude, // Handle clearAltitude
+      altitude: clearAltitude ? null : altitude ?? this.altitude,
+      // Handle clearAltitude
       ordinalNumber: ordinalNumber ?? this.ordinalNumber,
-      note: null, // Will be set below using the setter
+      note: null,
+      // Will be set below using the setter
       timestamp: clearTimestamp ? null : timestamp ?? this.timestamp,
       images: images ?? this._images,
       isUnsaved: isUnsaved ?? this.isUnsaved,
@@ -133,9 +133,11 @@ class PointModel {
       projectId: map[columnProjectId] as String,
       latitude: map[columnLatitude] as double,
       longitude: map[columnLongitude] as double,
-      altitude: map[columnAltitude] as double?, // Add to fromMap
+      altitude: map[columnAltitude] as double?,
+      // Add to fromMap
       ordinalNumber: map[columnOrdinalNumber] as int,
-      note: null, // Will be set below using the setter
+      note: null,
+      // Will be set below using the setter
       timestamp: map[columnTimestamp] != null
           ? DateTime.tryParse(map[columnTimestamp] as String)
           : null,
@@ -179,7 +181,8 @@ class PointModel {
       projectId,
       latitude,
       longitude,
-      altitude, // Add to hashCode
+      altitude,
+      // Add to hashCode
       ordinalNumber,
       note,
       timestamp,

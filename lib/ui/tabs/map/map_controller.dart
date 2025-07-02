@@ -1,33 +1,32 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart';
 import 'package:compassx/compassx.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:teleferika/core/logger.dart';
+import 'package:teleferika/core/utils/ordinal_manager.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:teleferika/core/utils/ordinal_manager.dart';
 
 enum MapType { openStreetMap, satellite, terrain }
 
 class MapControllerLogic {
   final ProjectModel project;
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
-  
+
   // Default center if no points are available (e.g., Rome)
   final LatLng _defaultCenter = const LatLng(41.9028, 12.4964);
   final double _defaultZoom = 6.0;
-  
+
   // Stream subscriptions
   StreamSubscription<Position>? _positionStreamSubscription;
   StreamSubscription<CompassXEvent>? _compassSubscription;
-  
+
   // Animation timer
   Timer? _glowAnimationTimer;
   double _glowAnimationValue = 0.0;
@@ -56,7 +55,8 @@ class MapControllerLogic {
     }
 
     return {
-      'location': locationPermission == LocationPermission.whileInUse ||
+      'location':
+          locationPermission == LocationPermission.whileInUse ||
           locationPermission == LocationPermission.always,
       'sensor': sensorStatus.isGranted,
     };
@@ -71,7 +71,8 @@ class MapControllerLogic {
     PermissionStatus sensorStatus = await Permission.sensors.status;
 
     return {
-      'location': locationPermission == LocationPermission.whileInUse ||
+      'location':
+          locationPermission == LocationPermission.whileInUse ||
           locationPermission == LocationPermission.always,
       'sensor': sensorStatus.isGranted,
     };
@@ -89,27 +90,22 @@ class MapControllerLogic {
 
     _positionStreamSubscription = Geolocator.getPositionStream(
       locationSettings: locationSettings,
-    ).listen(
-      onPositionUpdate,
-      onError: onError,
-    );
+    ).listen(onPositionUpdate, onError: onError);
   }
 
   // Compass listening
   void startListeningToCompass(
-    Function(double heading, double? accuracy, bool? shouldCalibrate) onCompassUpdate,
+    Function(double heading, double? accuracy, bool? shouldCalibrate)
+    onCompassUpdate,
     Function(Object, [StackTrace?]) onError,
   ) {
-    _compassSubscription = CompassX.events.listen(
-      (event) {
-        onCompassUpdate(
-          event.heading ?? 0.0,
-          event.accuracy,
-          event.shouldCalibrate,
-        );
-      },
-      onError: onError,
-    );
+    _compassSubscription = CompassX.events.listen((event) {
+      onCompassUpdate(
+        event.heading ?? 0.0,
+        event.accuracy,
+        event.shouldCalibrate,
+      );
+    }, onError: onError);
   }
 
   // Point operations
@@ -128,18 +124,22 @@ class MapControllerLogic {
   }) async {
     try {
       final points = await loadProjectPoints();
-      
+
       onPointsLoaded(points);
       recalculateAndDrawLines();
       onPointsChanged();
-      
+
       if (isMapReady && !skipNextFitToPoints) {
         fitMapToPoints();
       }
-      
+
       return points;
     } catch (e, stackTrace) {
-      logger.severe("MapControllerLogic: Error loading points for map", e, stackTrace);
+      logger.severe(
+        "MapControllerLogic: Error loading points for map",
+        e,
+        stackTrace,
+      );
       rethrow;
     }
   }
@@ -180,7 +180,9 @@ class MapControllerLogic {
       final projectHeading = project.azimuth!;
 
       // Use presumed total length from project, default to 500m if not provided
-      final lineLengthKm = (project.presumedTotalLength ?? 500.0) / 1000.0; // Convert meters to kilometers
+      final lineLengthKm =
+          (project.presumedTotalLength ?? 500.0) /
+          1000.0; // Convert meters to kilometers
 
       final endPoint = _calculateDestinationPoint(
         firstPoint,
@@ -200,7 +202,10 @@ class MapControllerLogic {
     }
   }
 
-  LatLng getInitialCenter(List<PointModel> projectPoints, Position? currentPosition) {
+  LatLng getInitialCenter(
+    List<PointModel> projectPoints,
+    Position? currentPosition,
+  ) {
     if (projectPoints.isNotEmpty) {
       return LatLng(
         projectPoints.first.latitude,
@@ -217,7 +222,10 @@ class MapControllerLogic {
     return _defaultCenter;
   }
 
-  double getInitialZoom(List<PointModel> projectPoints, Position? currentPosition) {
+  double getInitialZoom(
+    List<PointModel> projectPoints,
+    Position? currentPosition,
+  ) {
     if (projectPoints.isNotEmpty) {
       if (projectPoints.length == 1) {
         return 15.0; // Closer zoom for single point
@@ -273,17 +281,19 @@ class MapControllerLogic {
     _glowAnimationTimer?.cancel();
     _glowAnimationValue = 0.0;
     _glowAnimationCallback = callback;
-    
-    _glowAnimationTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
+
+    _glowAnimationTimer = Timer.periodic(const Duration(milliseconds: 50), (
+      timer,
+    ) {
       _glowAnimationValue += 0.3; // Fast animation
       if (_glowAnimationValue >= 2 * math.pi) {
         _glowAnimationValue = 0.0; // Reset to start
       }
-      
+
       // Calculate color interpolation between blue and purpleAccent
       final progress = (math.sin(_glowAnimationValue) + 1) / 2; // 0 to 1
       final animatedValue = progress;
-      
+
       _glowAnimationCallback?.call(animatedValue);
     });
   }
@@ -296,6 +306,7 @@ class MapControllerLogic {
 
   // Helper functions
   double _degreesToRadians(double degrees) => degrees * math.pi / 180.0;
+
   double _radiansToDegrees(double radians) => radians * 180.0 / math.pi;
 
   // Function to calculate initial bearing from point1 to point2
@@ -308,7 +319,8 @@ class MapControllerLogic {
     final dLon = lon2 - lon1;
 
     final y = math.sin(dLon) * math.cos(lat2);
-    final x = math.cos(lat1) * math.sin(lat2) -
+    final x =
+        math.cos(lat1) * math.sin(lat2) -
         math.sin(lat1) * math.cos(lat2) * math.cos(dLon);
 
     var initialBearingRadians = math.atan2(y, x);
@@ -333,7 +345,8 @@ class MapControllerLogic {
       math.sin(lat1) * math.cos(distanceKm / R) +
           math.cos(lat1) * math.sin(distanceKm / R) * math.cos(bearingRad),
     );
-    final lon2 = lon1 +
+    final lon2 =
+        lon1 +
         math.atan2(
           math.sin(bearingRad) * math.sin(distanceKm / R) * math.cos(lat1),
           math.cos(distanceKm / R) - math.sin(lat1) * math.sin(lat2),
@@ -350,7 +363,8 @@ class MapControllerLogic {
       projectId: project.id,
       latitude: location.latitude,
       longitude: location.longitude,
-      altitude: altitude, // Always include altitude if available
+      altitude: altitude,
+      // Always include altitude if available
       ordinalNumber: nextOrdinal,
       note: 'Point added from map',
       timestamp: DateTime.now(),
@@ -369,13 +383,13 @@ class MapControllerLogic {
   Future<PointModel> saveNewPointWithStateManagement(PointModel point) async {
     // Save the point to database
     final pointId = await saveNewPoint(point);
-    
+
     // Create a new instance with isUnsaved: false for the saved point
     final savedPoint = point.copyWith(isUnsaved: false);
-    
+
     // Update project start/end points in the database
     await updateProjectStartEndPoints();
-    
+
     return savedPoint;
   }
 
@@ -383,4 +397,4 @@ class MapControllerLogic {
   Future<void> updateProjectStartEndPoints() async {
     await _dbHelper.updateProjectStartEndPoints(project.id);
   }
-} 
+}
