@@ -13,7 +13,6 @@ import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/licensing/licence_service.dart';
 import 'package:teleferika/licensing/licensed_features_loader.dart';
-import 'package:teleferika/ui/tabs/compass_tool_view.dart';
 import 'package:teleferika/ui/tabs/map_tool_view.dart';
 import 'package:teleferika/ui/tabs/points_tab.dart';
 import 'package:teleferika/ui/tabs/points_tool_view.dart';
@@ -23,8 +22,7 @@ import 'package:teleferika/ui/widgets/status_indicator.dart';
 enum ProjectPageTab {
   details, // 0
   points, // 1
-  compass, // 2
-  map, // 3
+  map, // 2
   // Add more tabs here if needed
 }
 
@@ -194,7 +192,7 @@ class _ProjectPageState extends State<ProjectPage>
 
   Future<bool?> _saveProject() async {
     if (_isLoading) return null;
-    
+
     // Check if we're on the details tab and validate the form
     if (_tabController.index == ProjectPageTab.details.index) {
       final detailsTabState = _detailsTabKey.currentState;
@@ -205,7 +203,7 @@ class _ProjectPageState extends State<ProjectPage>
       // Dismiss keyboard when saving from details tab
       detailsTabState?.dismissKeyboard();
     }
-    
+
     setState(() => _isLoading = true);
     try {
       final saved = await context.projectState.saveProject();
@@ -433,7 +431,6 @@ class _ProjectPageState extends State<ProjectPage>
           key: _pointsTabKey,
           project: currentProject ?? widget.project,
         ),
-        CompassToolView(),
         MapToolView(key: _mapTabKey, project: currentProject ?? widget.project),
       ],
     );
@@ -449,13 +446,6 @@ class _ProjectPageState extends State<ProjectPage>
         icon: Icon(Icons.list_alt_outlined, color: tabIconColor),
         child: Text(
           s?.points_tab_label ?? "Points",
-          style: TextStyle(color: tabTextColor),
-        ),
-      ),
-      Tab(
-        icon: Icon(Icons.explore_outlined, color: tabIconColor),
-        child: Text(
-          s?.compass_tab_label ?? "Compass",
           style: TextStyle(color: tabTextColor),
         ),
       ),
@@ -506,9 +496,9 @@ class _ProjectPageState extends State<ProjectPage>
               Expanded(
                 child: Text(
                   currentProject?.name ?? widget.project.name,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -548,9 +538,9 @@ class _ProjectPageState extends State<ProjectPage>
               Expanded(
                 child: Text(
                   currentProject?.name ?? widget.project.name,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
             ],
