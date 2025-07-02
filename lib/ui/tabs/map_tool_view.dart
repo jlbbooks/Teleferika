@@ -83,6 +83,8 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
 
   // Debug panel state
   bool _hasClosedDebugPanel = false;
+  // Track if we've already shown the calibrate compass notice this session
+  bool _hasShownCalibrateCompassNotice = false;
 
   @override
   void initState() {
@@ -100,6 +102,8 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
 
     // Reset debug panel closed state every time we re-enter
     _hasClosedDebugPanel = false;
+    // Reset calibrate compass notice flag every time we re-enter
+    _hasShownCalibrateCompassNotice = false;
 
     if (!_didInitialLoad) {
       _didInitialLoad = true;
@@ -208,11 +212,18 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     _controller.startListeningToCompass(
       (heading, accuracy, shouldCalibrate) {
         if (mounted) {
+          final prevShouldCalibrate = _shouldCalibrateCompass;
           setState(() {
             _currentDeviceHeading = heading;
             _currentCompassAccuracy = accuracy;
             _shouldCalibrateCompass = shouldCalibrate;
           });
+
+          // Show calibrate compass notice if it just became true
+          if (shouldCalibrate == true && prevShouldCalibrate != true && !_hasShownCalibrateCompassNotice) {
+            showErrorStatus('Compass sensor needs calibration. Please move your device in a figure-8 motion.');
+            _hasShownCalibrateCompassNotice = true;
+          }
 
           // Update location marker with new heading if we have a current position
           if (_currentPosition != null) {
