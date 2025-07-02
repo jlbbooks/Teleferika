@@ -1,6 +1,8 @@
 // map_tool_view.dart
 
 import 'dart:async';
+import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -801,6 +803,33 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
             ],
           ),
           const MapCompass.cupertino(hideIfRotatedNorth: true),
+          // Add azimuth arrow marker on top of current location (drawn first, so it's below the location marker)
+          if (_currentPosition != null &&
+              Provider.of<ProjectStateManager>(
+                    context,
+                    listen: false,
+                  ).currentProject?.azimuth !=
+                  null)
+            MarkerLayer(
+              markers: [
+                Marker(
+                  width: 40,
+                  height: 40,
+                  point: LatLng(
+                    _currentPosition!.latitude,
+                    _currentPosition!.longitude,
+                  ),
+                  child: _ProjectAzimuthArrow(
+                    azimuth: Provider.of<ProjectStateManager>(
+                      context,
+                      listen: false,
+                    ).currentProject!.azimuth!,
+                  ),
+                  alignment: Alignment.center,
+                ),
+              ],
+            ),
+
           CurrentLocationLayer(
             style: LocationMarkerStyle(
               marker: _CurrentLocationAccuracyMarker(
@@ -1291,6 +1320,62 @@ class _AccuracyCirclePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+// Arrow widget for project azimuth
+class _ProjectAzimuthArrow extends StatelessWidget {
+  final double azimuth;
+  const _ProjectAzimuthArrow({required this.azimuth});
+
+  @override
+  Widget build(BuildContext context) {
+    return Transform.rotate(
+      angle: (azimuth - 90) * 3.141592653589793 / 180.0,
+      child: CustomPaint(
+        size: const Size(32, 32),
+        painter: _StaticArrowPainter(),
+      ),
+    );
+  }
+}
+
+class _StaticArrowPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final double arrowLength = 14;
+    final double arrowWidth = 7;
+
+    final double angle = 0.0; // Upwards
+
+    final tip = Offset(
+      center.dx + arrowLength * cos(angle),
+      center.dy + arrowLength * sin(angle),
+    );
+    final left = Offset(
+      center.dx + arrowWidth * cos(angle + 2.5),
+      center.dy + arrowWidth * sin(angle + 2.5),
+    );
+    final right = Offset(
+      center.dx + arrowWidth * cos(angle - 2.5),
+      center.dy + arrowWidth * sin(angle - 2.5),
+    );
+
+    final path = ui.Path()
+      ..moveTo(tip.dx, tip.dy)
+      ..lineTo(left.dx, left.dy)
+      ..lineTo(right.dx, right.dy)
+      ..close();
+
+    final paint = Paint()
+      ..color = Colors.purple
+      ..style = PaintingStyle.fill;
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // Debug panel widget for kDebugMode
