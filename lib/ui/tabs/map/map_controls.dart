@@ -23,7 +23,7 @@ class MapControls {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -118,10 +118,12 @@ class MapControls {
         shadowColor: Colors.black12,
         child: Container(
           decoration: BoxDecoration(
-            color: Theme.of(context).cardColor.withOpacity(0.9),
+            color: Theme.of(context).cardColor.withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(8.0),
             border: Border.all(
-              color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+              color: Theme.of(
+                context,
+              ).colorScheme.outline.withValues(alpha: 0.1),
               width: 0.5,
             ),
           ),
@@ -140,7 +142,7 @@ class MapControls {
                     decoration: BoxDecoration(
                       color: Theme.of(
                         context,
-                      ).colorScheme.primary.withOpacity(0.05),
+                      ).colorScheme.primary.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Icon(
@@ -148,7 +150,7 @@ class MapControls {
                       size: 14,
                       color: Theme.of(
                         context,
-                      ).colorScheme.primary.withOpacity(0.7),
+                      ).colorScheme.primary.withValues(alpha: 0.7),
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -165,7 +167,7 @@ class MapControls {
                     size: 16,
                     color: Theme.of(
                       context,
-                    ).colorScheme.onSurfaceVariant.withOpacity(0.6),
+                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
                   ),
                 ],
               ),
@@ -217,7 +219,9 @@ class MapControls {
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                    ? Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.1)
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(6),
               ),
@@ -291,7 +295,7 @@ class MapControls {
     final s = S.of(context);
     return Positioned.fill(
       child: Container(
-        color: Colors.black.withOpacity(0.7),
+        color: Colors.black.withValues(alpha: 0.7),
         child: Center(
           child: Container(
             margin: const EdgeInsets.all(32),
@@ -421,7 +425,7 @@ class MapControls {
 
     final s = S.of(context);
     return Container(
-      color: Colors.black.withOpacity(0.7),
+      color: Colors.black.withValues(alpha: 0.7),
       child: Center(
         child: Container(
           margin: const EdgeInsets.all(32),
@@ -542,9 +546,9 @@ class MapControls {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -552,7 +556,7 @@ class MapControls {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
+              color: color.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, size: 20, color: color),

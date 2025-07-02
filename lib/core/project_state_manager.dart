@@ -121,7 +121,7 @@ class ProjectStateManager extends ChangeNotifier {
       // 1. Update all points first
       final dbPoints = await _dbHelper.getPointsForProject(projectToSave.id);
       final dbPointIds = dbPoints.map((p) => p.id).toSet();
-      final memPoints = _editingProject!.points ?? [];
+      final memPoints = _editingProject!.points;
       final memPointIds = memPoints.map((p) => p.id).toSet();
       for (final point in memPoints) {
         if (dbPointIds.contains(point.id)) {
@@ -151,7 +151,7 @@ class ProjectStateManager extends ChangeNotifier {
   /// Undo changes by reloading the project and points from the DB into the editing state
   Future<void> undoChanges() async {
     if (_editingProject?.id == null) return;
-    await loadProject(_editingProject!.id!);
+    await loadProject(_editingProject!.id);
     logger.info("ProjectStateManager: Changes undone by reloading from DB");
     notifyListeners();
   }
@@ -187,9 +187,7 @@ class ProjectStateManager extends ChangeNotifier {
   /// Add a new point to the editing project (in-memory only, not DB)
   void addPointInEditingState(PointModel point) {
     if (_editingProject == null) return;
-    final points = List<PointModel>.from(
-      _editingProject!.points ?? _currentPoints,
-    );
+    final points = List<PointModel>.from(_editingProject!.points);
     final nextOrdinal = OrdinalManager.getNextOrdinal(points);
     final pointWithOrdinal = point.copyWith(ordinalNumber: nextOrdinal);
     points.add(pointWithOrdinal);
@@ -204,7 +202,7 @@ class ProjectStateManager extends ChangeNotifier {
   void updatePointInEditingState(PointModel updatedPoint) {
     if (_editingProject == null) return;
     final points = List<PointModel>.from(
-      _editingProject!.points ?? _currentPoints,
+      _editingProject!.points,
     );
     final index = points.indexWhere((p) => p.id == updatedPoint.id);
     if (index != -1) {
@@ -225,7 +223,7 @@ class ProjectStateManager extends ChangeNotifier {
   void deletePointInEditingState(String pointId) {
     if (_editingProject == null) return;
     final points = List<PointModel>.from(
-      _editingProject!.points ?? _currentPoints,
+      _editingProject!.points,
     );
     final resequenced = OrdinalManager.removeById(points, pointId);
 

@@ -61,8 +61,8 @@ class PointModel {
     this.timestamp,
     List<ImageModel>? images,
     this.isUnsaved = false, // Default to false for existing points
-  }) : this.id = id ?? generateUuid(),
-       this._images = images ?? [] {
+  }) : id = id ?? generateUuid(),
+       _images = images ?? [] {
     // Use the setter to ensure note is cleaned up
     this.note = note ?? '';
   }
@@ -93,7 +93,7 @@ class PointModel {
       note: null,
       // Will be set below using the setter
       timestamp: clearTimestamp ? null : timestamp ?? this.timestamp,
-      images: images ?? this._images,
+      images: images ?? _images,
       isUnsaved: isUnsaved ?? this.isUnsaved,
     );
 
@@ -214,10 +214,12 @@ class PointModel {
 
     if (id.isEmpty) errors.add('Point ID cannot be empty');
     if (projectId.isEmpty) errors.add('Project ID cannot be empty');
-    if (latitude < -90 || latitude > 90)
+    if (latitude < -90 || latitude > 90) {
       errors.add('Latitude must be between -90 and 90');
-    if (longitude < -180 || longitude > 180)
+    }
+    if (longitude < -180 || longitude > 180) {
       errors.add('Longitude must be between -180 and 180');
+    }
     if (ordinalNumber < 0) errors.add('Ordinal number must be non-negative');
     if (altitude != null && (altitude! < -1000 || altitude! > 8849)) {
       errors.add('Altitude must be between -1000 and 8849 meters');

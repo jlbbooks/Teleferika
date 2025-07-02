@@ -1,5 +1,7 @@
 // map_tool_view.dart
 
+// ignore_for_file: unused_field
+
 import 'dart:async';
 import 'dart:math';
 import 'dart:ui' as ui;
@@ -73,7 +75,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   bool? _shouldCalibrateCompass;
   bool _hasLocationPermission = false;
   bool _hasSensorPermission = false;
-  bool _isCheckingPermissions = true; // Add loading state for permissions
+  final bool _isCheckingPermissions = true; // Add loading state for permissions
   double? _headingFromFirstToLast;
   Polyline? _projectHeadingLine;
   MapType _currentMapType = MapType.openStreetMap;
@@ -271,15 +273,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     });
 
     try {
-      // Use global state to get points
-      final projectState = Provider.of<ProjectStateManager>(
-        context,
-        listen: false,
-      );
-      // if (!projectState.hasUnsavedChanges) {
-      //   await projectState.refreshPoints();
-      // }
-
       if (mounted) {
         setState(() {
           _isLoadingPoints = false;
@@ -452,9 +445,8 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                     end: Alignment.bottomRight,
                     colors: [
                       Theme.of(context).colorScheme.surface,
-                      Theme.of(
-                        context,
-                      ).colorScheme.surfaceVariant.withOpacity(0.3),
+                      Theme.of(context).colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.3),
                     ],
                   ),
                 ),
@@ -468,7 +460,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                       decoration: BoxDecoration(
                         color: Theme.of(
                           context,
-                        ).colorScheme.primary.withOpacity(0.1),
+                        ).colorScheme.primary.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: CircularProgressIndicator(
@@ -492,7 +484,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(
                           context,
-                        ).colorScheme.onSurfaceVariant.withOpacity(0.7),
+                        ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -1318,7 +1310,7 @@ class _AccuracyCirclePainter extends CustomPainter {
         ? (accuracy!.clamp(5, 50) / 50.0) * (size.width / 2)
         : size.width / 2;
     final paint = Paint()
-      ..color = Colors.red.withOpacity(0.3)
+      ..color = Colors.red.withValues(alpha: 0.3)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(center, accuracyRadius, paint);
   }
@@ -1406,7 +1398,7 @@ class _DebugPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.black.withOpacity(0.7),
+      color: Colors.black.withValues(alpha: 0.7),
       borderRadius: BorderRadius.circular(8),
       child: Padding(
         padding: const EdgeInsets.all(10.0),

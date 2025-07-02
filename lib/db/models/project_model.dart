@@ -121,7 +121,7 @@ class ProjectModel {
       azimuth: clearAzimuth ? null : (azimuth ?? this.azimuth),
       lastUpdate: clearLastUpdate ? null : (lastUpdate ?? this.lastUpdate),
       date: clearDate ? null : (date ?? this.date),
-      points: points ?? this._points,
+      points: points ?? _points,
       presumedTotalLength: clearPresumedTotalLength
           ? null
           : (presumedTotalLength ?? this.presumedTotalLength),

@@ -100,11 +100,7 @@ class MapControllerLogic {
     Function(Object, [StackTrace?]) onError,
   ) {
     _compassSubscription = CompassX.events.listen((event) {
-      onCompassUpdate(
-        event.heading ?? 0.0,
-        event.accuracy,
-        event.shouldCalibrate,
-      );
+      onCompassUpdate(event.heading, event.accuracy, event.shouldCalibrate);
     }, onError: onError);
   }
 
@@ -381,9 +377,6 @@ class MapControllerLogic {
 
   /// Saves a new point and returns the saved point with proper state management
   Future<PointModel> saveNewPointWithStateManagement(PointModel point) async {
-    // Save the point to database
-    final pointId = await saveNewPoint(point);
-
     // Create a new instance with isUnsaved: false for the saved point
     final savedPoint = point.copyWith(isUnsaved: false);
 

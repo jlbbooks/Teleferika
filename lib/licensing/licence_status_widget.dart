@@ -128,7 +128,6 @@ class _LicenceStatusWidgetState extends State<LicenceStatusWidget> {
 
   Widget _buildLicenceCard() {
     final status = _licenceStatus!;
-    final hasLicence = status['hasLicence'] as bool;
     final isValid = status['isValid'] as bool;
     final expiresSoon = status['expiresSoon'] as bool;
     final daysRemaining = status['daysRemaining'] as int;
@@ -282,8 +281,8 @@ class _LicenceStatusWidgetState extends State<LicenceStatusWidget> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Remove'),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Remove'),
           ),
         ],
       ),

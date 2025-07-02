@@ -1,3 +1,5 @@
+// ignore_for_file: unused_field
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -29,7 +31,7 @@ class PermissionHandlerWidget extends StatefulWidget {
 class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
   Map<PermissionType, bool> _permissionStatus = {};
   bool _isCheckingPermissions = true;
-  bool _hasShownDialog = false;
+  final bool _hasShownDialog = false;
   bool _isRetrying = false;
 
   @override
@@ -172,7 +174,7 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
         .toList();
 
     return Container(
-      color: Colors.black.withOpacity(0.7),
+      color: Colors.black.withValues(alpha: 0.7),
       child: Center(
         child: Container(
           margin: const EdgeInsets.all(32),
@@ -309,9 +311,9 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -319,7 +321,7 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
+              color: color.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, size: 20, color: color),

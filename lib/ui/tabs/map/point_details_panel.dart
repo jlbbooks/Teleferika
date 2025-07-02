@@ -1,3 +1,5 @@
+// ignore_for_file: unused_local_variable
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -138,7 +140,9 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12.0),
             border: Border.all(
-              color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+              color: Theme.of(
+                context,
+              ).colorScheme.outline.withValues(alpha: 0.2),
               width: 1,
             ),
           ),
@@ -157,11 +161,11 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                     decoration: BoxDecoration(
                       color: Theme.of(
                         context,
-                      ).colorScheme.primary.withOpacity(0.1),
+                      ).colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      '${widget.selectedPoint!.name}',
+                      widget.selectedPoint!.name,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).colorScheme.primary,
@@ -190,7 +194,7 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                 decoration: BoxDecoration(
                   color: Theme.of(
                     context,
-                  ).colorScheme.surfaceVariant.withOpacity(0.3),
+                  ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
@@ -252,7 +256,7 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                 decoration: BoxDecoration(
                   color: Theme.of(
                     context,
-                  ).colorScheme.secondaryContainer.withOpacity(0.3),
+                  ).colorScheme.secondaryContainer.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: _buildEditableNote(isMobile),
@@ -265,9 +269,11 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                 Container(
                   padding: EdgeInsets.all(isMobile ? 6 : 8),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.1),
+                    color: Colors.orange.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                    border: Border.all(
+                      color: Colors.orange.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -363,7 +369,7 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                       child: Container(
                         padding: EdgeInsets.all(isMobile ? 2 : 4),
                         decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.1),
+                          color: Colors.red.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Icon(
@@ -382,7 +388,7 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                         decoration: BoxDecoration(
                           color: Theme.of(
                             context,
-                          ).colorScheme.primary.withOpacity(0.1),
+                          ).colorScheme.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Icon(
@@ -451,7 +457,7 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                       child: Container(
                         padding: EdgeInsets.all(isMobile ? 2 : 4),
                         decoration: BoxDecoration(
-                          color: Colors.red.withOpacity(0.1),
+                          color: Colors.red.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Icon(
@@ -470,7 +476,7 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                         decoration: BoxDecoration(
                           color: Theme.of(
                             context,
-                          ).colorScheme.primary.withOpacity(0.1),
+                          ).colorScheme.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Icon(
@@ -491,9 +497,8 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: widget.selectedPoint!.note.isNotEmpty
                           ? Theme.of(context).colorScheme.onSecondaryContainer
-                          : Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant.withOpacity(0.5),
+                          : Theme.of(context).colorScheme.onSurfaceVariant
+                                .withValues(alpha: 0.5),
                       fontSize: isMobile ? 11 : null,
                       fontStyle: widget.selectedPoint!.note.isNotEmpty
                           ? FontStyle.normal
@@ -655,7 +660,6 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
     try {
       // Get the current map bounds
       final bounds = widget.mapController.camera.visibleBounds;
-      if (bounds == null) return false;
 
       // Get the selected point's position
       final pointLatLng = LatLng(
@@ -776,13 +780,13 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
           ),
           decoration: BoxDecoration(
             color: onPressed != null
-                ? color.withOpacity(0.1)
-                : Colors.grey.withOpacity(0.1),
+                ? color.withValues(alpha: 0.1)
+                : Colors.grey.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: onPressed != null
-                  ? color.withOpacity(0.3)
-                  : Colors.grey.withOpacity(0.3),
+                  ? color.withValues(alpha: 0.3)
+                  : Colors.grey.withValues(alpha: 0.3),
               width: 1,
             ),
           ),

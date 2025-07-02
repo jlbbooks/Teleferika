@@ -158,7 +158,7 @@ class _StatusIndicatorState extends State<StatusIndicator> {
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: widget.status!.color.withOpacity(0.95),
+                          color: widget.status!.color.withValues(alpha: 0.95),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         constraints: BoxConstraints(

@@ -1,4 +1,6 @@
 // lib/point_details_page.dart
+// ignore_for_file: unused_field
+
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:teleferika/core/project_provider.dart';
@@ -419,12 +421,10 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            Theme.of(
-                              context,
-                            ).colorScheme.primaryContainer.withOpacity(0.3),
-                            Theme.of(
-                              context,
-                            ).colorScheme.secondaryContainer.withOpacity(0.2),
+                            Theme.of(context).colorScheme.primaryContainer
+                                .withValues(alpha: 0.3),
+                            Theme.of(context).colorScheme.secondaryContainer
+                                .withValues(alpha: 0.2),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -433,7 +433,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                         border: Border.all(
                           color: Theme.of(
                             context,
-                          ).colorScheme.outline.withOpacity(0.2),
+                          ).colorScheme.outline.withValues(alpha: 0.2),
                         ),
                       ),
                       child: Row(
@@ -468,9 +468,10 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                         gradient: LinearGradient(
                           colors: [
                             Theme.of(context).colorScheme.surface,
-                            Theme.of(
-                              context,
-                            ).colorScheme.surfaceVariant.withOpacity(0.3),
+                            Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest
+                                .withValues(alpha: 0.3),
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -479,11 +480,11 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                         border: Border.all(
                           color: Theme.of(
                             context,
-                          ).colorScheme.outline.withOpacity(0.2),
+                          ).colorScheme.outline.withValues(alpha: 0.2),
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -535,7 +536,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                                 borderSide: BorderSide(
                                   color: Theme.of(
                                     context,
-                                  ).colorScheme.outline.withOpacity(0.3),
+                                  ).colorScheme.outline.withValues(alpha: 0.3),
                                 ),
                               ),
                               enabledBorder: OutlineInputBorder(
@@ -543,7 +544,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                                 borderSide: BorderSide(
                                   color: Theme.of(
                                     context,
-                                  ).colorScheme.outline.withOpacity(0.3),
+                                  ).colorScheme.outline.withValues(alpha: 0.3),
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
@@ -610,7 +611,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                                 borderSide: BorderSide(
                                   color: Theme.of(
                                     context,
-                                  ).colorScheme.outline.withOpacity(0.3),
+                                  ).colorScheme.outline.withValues(alpha: 0.3),
                                 ),
                               ),
                               enabledBorder: OutlineInputBorder(
@@ -618,7 +619,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                                 borderSide: BorderSide(
                                   color: Theme.of(
                                     context,
-                                  ).colorScheme.outline.withOpacity(0.3),
+                                  ).colorScheme.outline.withValues(alpha: 0.3),
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
@@ -676,11 +677,11 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                         border: Border.all(
                           color: Theme.of(
                             context,
-                          ).colorScheme.outline.withOpacity(0.2),
+                          ).colorScheme.outline.withValues(alpha: 0.2),
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),
@@ -734,7 +735,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                                 borderSide: BorderSide(
                                   color: Theme.of(
                                     context,
-                                  ).colorScheme.outline.withOpacity(0.3),
+                                  ).colorScheme.outline.withValues(alpha: 0.3),
                                 ),
                               ),
                               enabledBorder: OutlineInputBorder(
@@ -742,7 +743,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                                 borderSide: BorderSide(
                                   color: Theme.of(
                                     context,
-                                  ).colorScheme.outline.withOpacity(0.3),
+                                  ).colorScheme.outline.withValues(alpha: 0.3),
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
@@ -807,7 +808,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                                 borderSide: BorderSide(
                                   color: Theme.of(
                                     context,
-                                  ).colorScheme.outline.withOpacity(0.3),
+                                  ).colorScheme.outline.withValues(alpha: 0.3),
                                 ),
                               ),
                               enabledBorder: OutlineInputBorder(
@@ -815,7 +816,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                                 borderSide: BorderSide(
                                   color: Theme.of(
                                     context,
-                                  ).colorScheme.outline.withOpacity(0.3),
+                                  ).colorScheme.outline.withValues(alpha: 0.3),
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
@@ -843,9 +844,8 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            Theme.of(
-                              context,
-                            ).colorScheme.tertiaryContainer.withOpacity(0.3),
+                            Theme.of(context).colorScheme.tertiaryContainer
+                                .withValues(alpha: 0.3),
                             Theme.of(context).colorScheme.surface,
                           ],
                           begin: Alignment.topLeft,
@@ -855,11 +855,11 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                         border: Border.all(
                           color: Theme.of(
                             context,
-                          ).colorScheme.outline.withOpacity(0.2),
+                          ).colorScheme.outline.withValues(alpha: 0.2),
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           ),

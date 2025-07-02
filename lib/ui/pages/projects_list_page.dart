@@ -321,11 +321,6 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
         });
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
   // This can be used if you only want to refresh data from DB
   void _refreshProjectsListFromDb() {
     setState(() {
@@ -641,11 +636,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
     final DateFormat projectDateFormat = DateFormat.yMMMd(locale);
     final DateFormat timeFormat = DateFormat.Hm(locale); // For HH:mm
 
-    // For "Last Update: MMM d, yyyy HH:mm" (fallback if project.date is null)
-    // We'll use yMMMd for the date part and Hm for the time part.
-    final DateFormat lastUpdateDateTimeFormat = DateFormat.yMMMd(
-      locale,
-    ).add_Hm();
+    
     String lastUpdateText;
     if (project.date != null) {
       String formattedProjectDate = projectDateFormat.format(project.date!);
@@ -661,8 +652,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
     }
 
     // Determine if the item should be highlighted
-    bool isHighlighted =
-        project.id != null && project.id == _highlightedProjectId;
+    bool isHighlighted = project.id == _highlightedProjectId;
 
     return Card(
       elevation: 2.0,
@@ -675,9 +665,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
             ? Checkbox(
                 value: _selectedProjectIdsForMultiSelect.contains(project.id),
                 onChanged: (bool? value) {
-                  if (project.id != null) {
-                    _toggleSelection(project.id);
-                  }
+                  _toggleSelection(project.id);
                 },
               )
             : const Icon(Icons.folder_outlined, size: 30),
@@ -691,10 +679,10 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
           S
                   .of(context)
                   ?.project_id_label(
-                    (project.id ?? "New").toString(),
-                    lastUpdateText ?? '',
+                    (project.id).toString(),
+                    lastUpdateText,
                   ) ??
-              'ID: ${(project.id ?? "New").toString()} | ${lastUpdateText ?? ""}',
+              'ID: ${(project.id).toString()} | $lastUpdateText',
           style: const TextStyle(fontSize: 12.0, color: Colors.grey),
         ),
         trailing: !_isSelectionMode

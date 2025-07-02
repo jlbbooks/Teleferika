@@ -1,4 +1,6 @@
 // points_tool_view.dart
+// ignore_for_file: unused_field
+
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
@@ -31,7 +33,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
 
   bool _isLoading = true;
   bool _isSelectionMode = false;
-  Set<String> _selectedPointIds = {};
+  final Set<String> _selectedPointIds = {};
 
   // Store previous project data for comparison
   ProjectModel? _previousProject;
@@ -46,10 +48,8 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Initialize previous project data after dependencies are available
-    if (_previousProject == null) {
-      _previousProject =
-          context.projectStateListen.currentProject ?? widget.project;
-    }
+    _previousProject ??=
+        context.projectStateListen.currentProject ?? widget.project;
   }
 
   @override
@@ -327,7 +327,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
     const double selectedOpacity = 0.3;
 
     return Card(
-      key: ValueKey(point.id ?? index),
+      key: ValueKey(point.id),
       // Crucial for ReorderableListView
       margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
       elevation: _isSelectionMode && isSelectedForDelete ? 4.0 : 1.0,
@@ -349,7 +349,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                     value: isSelectedForDelete,
                     activeColor: Theme.of(context).primaryColor,
                     onChanged: (bool? value) {
-                      if (point.id != null) _togglePointSelection(point.id);
+                      _togglePointSelection(point.id);
                     },
                   )
                 : ReorderableDragStartListener(
@@ -410,9 +410,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
   Future<void> _handlePointTap(PointModel point) async {
     // Make it async
     if (_isSelectionMode) {
-      if (point.id != null) {
-        _togglePointSelection(point.id);
-      }
+      _togglePointSelection(point.id);
     } else {
       // Non-selection mode tap: Navigate to detail page
       if (!mounted) return; // Guard against navigation if widget is disposed

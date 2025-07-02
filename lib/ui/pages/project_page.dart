@@ -1,5 +1,5 @@
 // project_details_page.dart
-// ignore_for_file: curly_braces_in_flow_control_structures
+// ignore_for_file: curly_braces_in_flow_control_structures, unused_field
 
 import 'dart:async';
 import 'dart:math' as math;
@@ -412,7 +412,7 @@ class _ProjectPageState extends State<ProjectPage>
     final currentPoints = context.projectStateListen.currentPoints;
 
     // Calculate real total length directly from global state
-    final currentRealTotalLength = _calculateRealTotalLength(currentPoints);
+    _calculateRealTotalLength(currentPoints);
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final tabIconColor = isDark ? Colors.teal[900] : Colors.blue[900];

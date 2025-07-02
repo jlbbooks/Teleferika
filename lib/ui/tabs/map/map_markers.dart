@@ -105,7 +105,9 @@ class MapMarkers {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(point.isUnsaved ? 0.2 : 0.1),
+                  color: Colors.black.withValues(
+                    alpha: (point.isUnsaved ? 0.2 : 0.1),
+                  ),
                   blurRadius: point.isUnsaved ? 4 : 2,
                   offset: const Offset(0, 1),
                 ),

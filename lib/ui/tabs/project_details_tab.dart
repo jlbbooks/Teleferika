@@ -49,7 +49,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
         widget.project.date ?? (widget.isNew ? DateTime.now() : null);
 
     _nameController = TextEditingController(text: widget.project.name);
-    _noteController = TextEditingController(text: widget.project.note ?? '');
+    _noteController = TextEditingController(text: widget.project.note);
     _presumedTotalLengthController = TextEditingController(
       text: widget.project.presumedTotalLength?.toString() ?? '',
     );
@@ -199,22 +199,22 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
       return;
     }
 
-    double _degreesToRadians(double degrees) =>
+    double degreesToRadians(double degrees) =>
         degrees * 3.141592653589793 / 180.0;
-    double _radiansToDegrees(double radians) =>
+    double radiansToDegrees(double radians) =>
         radians * 180.0 / 3.141592653589793;
     double calculateBearingFromPoints(PointModel start, PointModel end) {
-      final double lat1Rad = _degreesToRadians(start.latitude);
-      final double lon1Rad = _degreesToRadians(start.longitude);
-      final double lat2Rad = _degreesToRadians(end.latitude);
-      final double lon2Rad = _degreesToRadians(end.longitude);
+      final double lat1Rad = degreesToRadians(start.latitude);
+      final double lon1Rad = degreesToRadians(start.longitude);
+      final double lat2Rad = degreesToRadians(end.latitude);
+      final double lon2Rad = degreesToRadians(end.longitude);
       final double dLon = lon2Rad - lon1Rad;
       final double y = math.sin(dLon) * math.cos(lat2Rad);
       final double x =
           math.cos(lat1Rad) * math.sin(lat2Rad) -
           math.sin(lat1Rad) * math.cos(lat2Rad) * math.cos(dLon);
       double bearingRad = math.atan2(y, x);
-      double bearingDeg = _radiansToDegrees(bearingRad);
+      double bearingDeg = radiansToDegrees(bearingRad);
       return (bearingDeg + 360) % 360;
     }
 
@@ -234,29 +234,31 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
     final currentProject =
         context.projectState.currentProject ?? widget.project;
     final points = context.projectState.currentPoints;
-    final s = S.of(context);
-
     // Count images from the points in global state
     int totalImages = 0;
     for (final point in points) {
       // Assuming points have an images property or we can get it from global state
       // For now, we'll use a placeholder - you may need to add this to your global state
-      totalImages += point.images?.length ?? 0;
+      totalImages += point.images.length;
     }
 
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
-            Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.2),
+            Theme.of(
+              context,
+            ).colorScheme.primaryContainer.withValues(alpha: 0.3),
+            Theme.of(
+              context,
+            ).colorScheme.secondaryContainer.withValues(alpha: 0.2),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(12.0),
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
         ),
       ),
       child: ExpansionTile(
@@ -357,10 +359,10 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(8.0),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 2,
             offset: const Offset(0, 1),
           ),
@@ -371,7 +373,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
           Container(
             padding: const EdgeInsets.all(8.0),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(6.0),
             ),
             child: Icon(icon, size: 20, color: color),
@@ -414,9 +416,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
         _updateDirtyStateFromGlobalState();
 
         final s = S.of(context);
-        final isDirty = _dirty;
-        final canCalculate = (project.points?.length ?? 0) >= 2;
-        final saveButtonColor = isDirty ? Colors.green : null;
+        final canCalculate = (project.points.length) >= 2;
 
         return SingleChildScrollView(
           padding: const EdgeInsets.all(20.0),
@@ -437,10 +437,10 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                       colors: [
                         Theme.of(
                           context,
-                        ).colorScheme.primaryContainer.withOpacity(0.3),
+                        ).colorScheme.primaryContainer.withValues(alpha: 0.3),
                         Theme.of(
                           context,
-                        ).colorScheme.secondaryContainer.withOpacity(0.2),
+                        ).colorScheme.secondaryContainer.withValues(alpha: 0.2),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -449,7 +449,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                     border: Border.all(
                       color: Theme.of(
                         context,
-                      ).colorScheme.outline.withOpacity(0.2),
+                      ).colorScheme.outline.withValues(alpha: 0.2),
                     ),
                   ),
                   child: Column(
@@ -483,7 +483,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                             borderSide: BorderSide(
                               color: Theme.of(
                                 context,
-                              ).colorScheme.outline.withOpacity(0.3),
+                              ).colorScheme.outline.withValues(alpha: 0.3),
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
@@ -491,7 +491,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                             borderSide: BorderSide(
                               color: Theme.of(
                                 context,
-                              ).colorScheme.outline.withOpacity(0.3),
+                              ).colorScheme.outline.withValues(alpha: 0.3),
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
@@ -581,7 +581,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                             border: Border.all(
                               color: Theme.of(
                                 context,
-                              ).colorScheme.outline.withOpacity(0.3),
+                              ).colorScheme.outline.withValues(alpha: 0.3),
                             ),
                             borderRadius: BorderRadius.circular(8.0),
                           ),
@@ -655,7 +655,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                             borderSide: BorderSide(
                               color: Theme.of(
                                 context,
-                              ).colorScheme.outline.withOpacity(0.3),
+                              ).colorScheme.outline.withValues(alpha: 0.3),
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
@@ -663,7 +663,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                             borderSide: BorderSide(
                               color: Theme.of(
                                 context,
-                              ).colorScheme.outline.withOpacity(0.3),
+                              ).colorScheme.outline.withValues(alpha: 0.3),
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
@@ -692,9 +692,8 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                     gradient: LinearGradient(
                       colors: [
                         Theme.of(context).colorScheme.surface,
-                        Theme.of(
-                          context,
-                        ).colorScheme.surfaceVariant.withOpacity(0.3),
+                        Theme.of(context).colorScheme.surfaceContainerHighest
+                            .withValues(alpha: 0.3),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -703,11 +702,11 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                     border: Border.all(
                       color: Theme.of(
                         context,
-                      ).colorScheme.outline.withOpacity(0.2),
+                      ).colorScheme.outline.withValues(alpha: 0.2),
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
@@ -753,7 +752,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                             borderSide: BorderSide(
                               color: Theme.of(
                                 context,
-                              ).colorScheme.outline.withOpacity(0.3),
+                              ).colorScheme.outline.withValues(alpha: 0.3),
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
@@ -761,7 +760,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                             borderSide: BorderSide(
                               color: Theme.of(
                                 context,
-                              ).colorScheme.outline.withOpacity(0.3),
+                              ).colorScheme.outline.withValues(alpha: 0.3),
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
@@ -783,8 +782,9 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                           signed: false,
                         ),
                         validator: (value) {
-                          if (value == null || value.trim().isEmpty)
+                          if (value == null || value.trim().isEmpty) {
                             return null; // Optional field
+                          }
 
                           final presumed = double.tryParse(value.trim());
                           if (presumed == null) {
@@ -831,12 +831,12 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                         decoration: BoxDecoration(
                           color: Theme.of(
                             context,
-                          ).colorScheme.primaryContainer.withOpacity(0.3),
+                          ).colorScheme.primaryContainer.withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(8.0),
                           border: Border.all(
                             color: Theme.of(
                               context,
-                            ).colorScheme.primary.withOpacity(0.2),
+                            ).colorScheme.primary.withValues(alpha: 0.2),
                           ),
                         ),
                         child: Row(
@@ -846,7 +846,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                               decoration: BoxDecoration(
                                 color: Theme.of(
                                   context,
-                                ).colorScheme.primary.withOpacity(0.1),
+                                ).colorScheme.primary.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(6.0),
                               ),
                               child: Icon(
@@ -914,17 +914,15 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8.0),
                                   borderSide: BorderSide(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.outline.withOpacity(0.3),
+                                    color: Theme.of(context).colorScheme.outline
+                                        .withValues(alpha: 0.3),
                                   ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8.0),
                                   borderSide: BorderSide(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.outline.withOpacity(0.3),
+                                    color: Theme.of(context).colorScheme.outline
+                                        .withValues(alpha: 0.3),
                                   ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
@@ -951,8 +949,9 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                                     signed: true,
                                   ),
                               validator: (value) {
-                                if (value == null || value.trim().isEmpty)
+                                if (value == null || value.trim().isEmpty) {
                                   return null; // Optional field
+                                }
 
                                 final azimuth = double.tryParse(value.trim());
                                 if (azimuth == null) {
