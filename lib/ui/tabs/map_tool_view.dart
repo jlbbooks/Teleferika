@@ -2,6 +2,7 @@
 
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_compass/flutter_map_compass.dart';
@@ -80,6 +81,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
 
   bool _didInitialLoad = false;
 
+  // Debug panel state
+  bool _hasClosedDebugPanel = false;
+
   @override
   void initState() {
     super.initState();
@@ -93,6 +97,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     final currentProject =
         context.projectStateListen.currentProject ?? widget.project;
     _controller = MapControllerLogic(project: currentProject);
+
+    // Reset debug panel closed state every time we re-enter
+    _hasClosedDebugPanel = false;
 
     if (!_didInitialLoad) {
       _didInitialLoad = true;
@@ -581,6 +588,22 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                               _isAddingNewPoint || _newPoint != null,
                         ),
                       ),
+                      if (kDebugMode && !_hasClosedDebugPanel)
+                        Positioned(
+                          top: 16,
+                          left: 16,
+                          child: _DebugPanel(
+                            heading: _currentDeviceHeading,
+                            compassAccuracy: _currentCompassAccuracy,
+                            shouldCalibrate: _shouldCalibrateCompass,
+                            position: _currentPosition,
+                            onClose: () {
+                              setState(() {
+                                _hasClosedDebugPanel = true;
+                              });
+                            },
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -1210,7 +1233,7 @@ class _CurrentLocationAccuracyMarker extends StatelessWidget {
           size: const Size(60, 60),
           painter: _AccuracyCirclePainter(accuracy: accuracy),
         ),
-        Icon(Icons.my_location, color: Colors.black, size: 32),
+        Icon(Icons.my_location, color: Colors.black, size: 20),
       ],
     );
   }
@@ -1234,4 +1257,89 @@ class _AccuracyCirclePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+// Debug panel widget for kDebugMode
+class _DebugPanel extends StatelessWidget {
+  final double? heading;
+  final double? compassAccuracy;
+  final bool? shouldCalibrate;
+  final Position? position;
+  final VoidCallback? onClose;
+  const _DebugPanel({
+    this.heading,
+    this.compassAccuracy,
+    this.shouldCalibrate,
+    this.position,
+    this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black.withOpacity(0.7),
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: DefaultTextStyle(
+          style: const TextStyle(color: Colors.white, fontSize: 13),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'DEBUG PANEL',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: Colors.amber,
+                    ),
+                  ),
+                  if (onClose != null)
+                    IconButton(
+                      icon: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: onClose,
+                      tooltip: 'Close debug panel',
+                    ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text('Heading: ${heading?.toStringAsFixed(2) ?? "-"}°'),
+              Text(
+                'Compass accuracy: ${compassAccuracy?.toStringAsFixed(2) ?? "-"}',
+              ),
+              Text(
+                'Should calibrate: ${shouldCalibrate == true ? "YES" : "NO"}',
+              ),
+              if (position != null) ...[
+                Text(
+                  'Location: ${position!.latitude.toStringAsFixed(6)}, ${position!.longitude.toStringAsFixed(6)}',
+                ),
+                Text(
+                  'Location accuracy: ${position!.accuracy.toStringAsFixed(2)} m',
+                ),
+                Text('Altitude: ${position!.altitude.toStringAsFixed(2)} m'),
+                Text('Speed: ${position!.speed.toStringAsFixed(2)} m/s'),
+                Text(
+                  'Speed accuracy: ${position!.speedAccuracy.toStringAsFixed(2)} m/s',
+                ),
+                Text('Timestamp: ${position!.timestamp}'),
+              ] else ...[
+                const Text('Location: -'),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
