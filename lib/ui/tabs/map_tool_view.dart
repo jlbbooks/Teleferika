@@ -1343,22 +1343,23 @@ class _StaticArrowPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final double arrowLength = 14;
-    final double arrowWidth = 7;
-
+    final double arrowLength = 20;
+    final double baseRadius = 4;
     final double angle = 0.0; // Upwards
 
+    // Tip of the arrow
     final tip = Offset(
       center.dx + arrowLength * cos(angle),
       center.dy + arrowLength * sin(angle),
     );
+    // Base left/right (flat base at baseRadius from center)
     final left = Offset(
-      center.dx + arrowWidth * cos(angle + 2.5),
-      center.dy + arrowWidth * sin(angle + 2.5),
+      center.dx + baseRadius * cos(angle + 2.5),
+      center.dy + baseRadius * sin(angle + 2.5),
     );
     final right = Offset(
-      center.dx + arrowWidth * cos(angle - 2.5),
-      center.dy + arrowWidth * sin(angle - 2.5),
+      center.dx + baseRadius * cos(angle - 2.5),
+      center.dy + baseRadius * sin(angle - 2.5),
     );
 
     final path = ui.Path()
