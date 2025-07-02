@@ -125,8 +125,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
 
     if (currentProject.id != oldProject.id && !_isLoadingPoints) {
       _loadProjectPoints();
-    } else if (currentProject.azimuth != oldProject.azimuth) {
-      _recalculateAndDrawLines();
     } else if (currentProject.startingPointId != oldProject.startingPointId ||
         currentProject.endingPointId != oldProject.endingPointId) {
       // Project start/end points changed, reload points to get updated data
@@ -432,6 +430,9 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   Widget build(BuildContext context) {
     return Consumer<ProjectStateManager>(
       builder: (context, projectState, child) {
+        // Always recalculate lines when state changes
+        _recalculateAndDrawLines();
+
         if (_isLoadingPoints) {
           return Stack(
             children: [
