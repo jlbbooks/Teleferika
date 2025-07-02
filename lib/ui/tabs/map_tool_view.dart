@@ -25,6 +25,7 @@ import 'map/map_controller.dart';
 import 'map/map_controls.dart';
 import 'map/map_markers.dart';
 import 'map/point_details_panel.dart';
+import 'package:teleferika/ui/widgets/compass_calibration_panel.dart';
 
 class MapToolView extends StatefulWidget {
   final ProjectModel project;
@@ -85,6 +86,8 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   bool _hasClosedDebugPanel = false;
   // Track if we've already shown the calibrate compass notice this session
   bool _hasShownCalibrateCompassNotice = false;
+  // For testing: force show calibration panel
+  bool _forceShowCalibrationPanel = false;
 
   @override
   void initState() {
@@ -613,7 +616,18 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
                                 _hasClosedDebugPanel = true;
                               });
                             },
+                            onTestCalibrationPanel: () {
+                              setState(() {
+                                _forceShowCalibrationPanel = true;
+                              });
+                            },
                           ),
+                        ),
+                      if (_shouldCalibrateCompass == true || _forceShowCalibrationPanel)
+                        CompassCalibrationPanel(
+                          onClose: _forceShowCalibrationPanel
+                              ? () => setState(() => _forceShowCalibrationPanel = false)
+                              : null,
                         ),
                     ],
                   ),
@@ -1277,12 +1291,14 @@ class _DebugPanel extends StatelessWidget {
   final bool? shouldCalibrate;
   final Position? position;
   final VoidCallback? onClose;
+  final VoidCallback? onTestCalibrationPanel;
   const _DebugPanel({
     this.heading,
     this.compassAccuracy,
     this.shouldCalibrate,
     this.position,
     this.onClose,
+    this.onTestCalibrationPanel,
   });
 
   @override
@@ -1320,6 +1336,14 @@ class _DebugPanel extends StatelessWidget {
                       constraints: const BoxConstraints(),
                       onPressed: onClose,
                       tooltip: 'Close debug panel',
+                    ),
+                  if (onTestCalibrationPanel != null)
+                    TextButton(
+                      onPressed: onTestCalibrationPanel,
+                      child: const Text(
+                        'Test Calibration Panel',
+                        style: TextStyle(color: Colors.amber, fontSize: 12),
+                      ),
                     ),
                 ],
               ),
