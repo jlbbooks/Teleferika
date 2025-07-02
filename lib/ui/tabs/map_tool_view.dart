@@ -747,15 +747,12 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
           const MapCompass.cupertino(hideIfRotatedNorth: true),
           CurrentLocationLayer(
             style: LocationMarkerStyle(
-              marker: const DefaultLocationMarker(
-                child: Icon(Icons.my_location, color: Colors.blue, size: 24),
+              marker: _CurrentLocationAccuracyMarker(
+                accuracy: _currentPosition?.accuracy,
               ),
-              markerSize: const Size(40, 40),
+              markerSize: const Size.square(60),
               markerDirection: MarkerDirection.heading,
-              showAccuracyCircle: true,
-              accuracyCircleColor: Colors.blue.withOpacity(0.3),
-              headingSectorColor: Colors.blue.withOpacity(0.5),
-              headingSectorRadius: 60,
+              showAccuracyCircle: false,
             ),
             positionStream: _locationStreamController.stream,
           ),
@@ -1197,4 +1194,44 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   Future<void> undoChanges() async {
     await context.projectState.undoChanges();
   }
+}
+
+// Custom marker: red transparent accuracy circle with current location icon
+class _CurrentLocationAccuracyMarker extends StatelessWidget {
+  final double? accuracy;
+  const _CurrentLocationAccuracyMarker({this.accuracy});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        CustomPaint(
+          size: const Size(60, 60),
+          painter: _AccuracyCirclePainter(accuracy: accuracy),
+        ),
+        Icon(Icons.my_location, color: Colors.black, size: 32),
+      ],
+    );
+  }
+}
+
+class _AccuracyCirclePainter extends CustomPainter {
+  final double? accuracy;
+  _AccuracyCirclePainter({this.accuracy});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final double accuracyRadius = (accuracy != null)
+        ? (accuracy!.clamp(5, 50) / 50.0) * (size.width / 2)
+        : size.width / 2;
+    final paint = Paint()
+      ..color = Colors.red.withOpacity(0.3)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, accuracyRadius, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
