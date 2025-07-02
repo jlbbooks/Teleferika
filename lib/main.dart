@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:teleferika/core/app_config.dart';
 import 'package:teleferika/core/project_state_manager.dart';
 import 'package:teleferika/licensing/feature_registry.dart';
@@ -19,6 +20,16 @@ import 'ui/pages/projects_list_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize FFI for sqflite if needed (e.g., for desktop or tests)
+  // You might want to guard this with platform checks if you only use FFI on certain platforms
+  if (defaultTargetPlatform == TargetPlatform.windows ||
+      defaultTargetPlatform == TargetPlatform.linux ||
+      defaultTargetPlatform == TargetPlatform.macOS) {
+    sqfliteFfiInit(); // Initialize FFI
+    databaseFactory = databaseFactoryFfi; // <--- ADD THIS LINE
+  }
+
   // Call the setupLogging function from logger.dart
   setupLogging();
 
