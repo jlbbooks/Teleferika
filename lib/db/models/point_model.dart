@@ -2,6 +2,7 @@
 // ... other imports
 
 import 'package:teleferika/core/utils/uuid_generator.dart';
+import 'dart:math' as math;
 
 import 'image_model.dart'; // Ensure ImageModel is imported if not already
 
@@ -227,4 +228,41 @@ class PointModel {
 
     return errors;
   }
+
+  /// Calculates the 3D distance to another point using the Haversine formula for horizontal distance
+  /// and Pythagorean theorem for the vertical component. Optionally, altitudes can be overridden.
+  double distanceFromPoint(
+    PointModel other, {
+    double? altitude,
+    double? otherAltitude,
+  }) {
+    // Calculate horizontal distance using Haversine formula
+    const R = 6371000.0; // Earth's radius in meters
+    final lat1Rad = _degreesToRadians(latitude);
+    final lat2Rad = _degreesToRadians(other.latitude);
+    final deltaLat = _degreesToRadians(other.latitude - latitude);
+    final deltaLon = _degreesToRadians(other.longitude - longitude);
+
+    final a =
+        math.sin(deltaLat / 2) * math.sin(deltaLat / 2) +
+        math.cos(lat1Rad) *
+            math.cos(lat2Rad) *
+            math.sin(deltaLon / 2) *
+            math.sin(deltaLon / 2);
+    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+    final horizontalDistance = R * c;
+
+    // Calculate vertical distance
+    final alt1 = altitude ?? this.altitude ?? 0.0;
+    final alt2 = otherAltitude ?? other.altitude ?? 0.0;
+    final verticalDistance = (alt2 - alt1).abs();
+
+    // Calculate 3D distance using Pythagorean theorem
+    return math.sqrt(
+      horizontalDistance * horizontalDistance +
+          verticalDistance * verticalDistance,
+    );
+  }
+
+  double _degreesToRadians(double degrees) => degrees * math.pi / 180.0;
 }

@@ -197,14 +197,11 @@ class ProjectModel {
       final altitude1 = _getInterpolatedAltitude(i);
       final altitude2 = _getInterpolatedAltitude(i + 1);
 
-      // Calculate 3D distance between points
-      final distance = _calculate3DDistance(
-        point1.latitude,
-        point1.longitude,
-        altitude1,
-        point2.latitude,
-        point2.longitude,
-        altitude2,
+      // Calculate 3D distance between points using PointModel
+      final distance = point1.distanceFromPoint(
+        point2,
+        altitude: altitude1,
+        otherAltitude: altitude2,
       );
 
       totalLength += distance;
@@ -258,44 +255,6 @@ class ProjectModel {
     // If no altitude data available anywhere, assume 0
     return 0.0;
   }
-
-  /// Calculates 3D distance between two points using the Haversine formula for horizontal distance
-  /// and Pythagorean theorem for the vertical component
-  double _calculate3DDistance(
-    double lat1,
-    double lon1,
-    double alt1,
-    double lat2,
-    double lon2,
-    double alt2,
-  ) {
-    // Calculate horizontal distance using Haversine formula
-    const R = 6371000.0; // Earth's radius in meters
-    final lat1Rad = _degreesToRadians(lat1);
-    final lat2Rad = _degreesToRadians(lat2);
-    final deltaLat = _degreesToRadians(lat2 - lat1);
-    final deltaLon = _degreesToRadians(lon2 - lon1);
-
-    final a =
-        math.sin(deltaLat / 2) * math.sin(deltaLat / 2) +
-        math.cos(lat1Rad) *
-            math.cos(lat2Rad) *
-            math.sin(deltaLon / 2) *
-            math.sin(deltaLon / 2);
-    final c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
-    final horizontalDistance = R * c;
-
-    // Calculate vertical distance
-    final verticalDistance = (alt2 - alt1).abs();
-
-    // Calculate 3D distance using Pythagorean theorem
-    return math.sqrt(
-      horizontalDistance * horizontalDistance +
-          verticalDistance * verticalDistance,
-    );
-  }
-
-  double _degreesToRadians(double degrees) => degrees * math.pi / 180.0;
 
   /// Validates the project data
   bool get isValid {
