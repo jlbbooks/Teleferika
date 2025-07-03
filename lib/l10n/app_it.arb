@@ -344,13 +344,17 @@
   },
   "last_updated_label": "Ultimo aggiornamento: {date}",
   "@last_updated_label": {
-    "description": "Etichetta che mostra la data dell'ultimo aggiornamento.",
+    "description": "Etichetta per la data e ora dell'ultimo aggiornamento nella scheda elenco progetti.",
     "placeholders": {
       "date": {
         "type": "String",
-        "example": "12/06/2024"
+        "example": "12/06/2024 14:30"
       }
     }
+  },
+  "no_updates": "Nessun aggiornamento",
+  "@no_updates": {
+    "description": "Etichetta mostrata quando non ci sono aggiornamenti per un progetto."
   },
   "not_yet_saved_label": "Non ancora salvato",
   "@not_yet_saved_label": {
@@ -777,7 +781,6 @@
   "delete_projects_title": "Eliminare progetti?",
   "delete_projects_content": "Sei sicuro di voler eliminare {count} progetti selezionati? Questa azione non può essere annullata.",
   "project_id_label": "ID: {id} | {lastUpdateText}",
-  "no_updates": "Nessun aggiornamento",
   "license_information_title": "Informazioni licenza",
   "close_button": "Chiudi",
   "import_new_licence": "Importa nuova licenza",

@@ -403,12 +403,17 @@
   },
   "last_updated_label": "Last updated: {date}",
   "@last_updated_label": {
+    "description": "Label for the last updated date and time in the project list card.",
     "placeholders": {
       "date": {
         "type": "String",
-        "example": "12/06/2024"
+        "example": "12/06/2024 14:30"
       }
     }
+  },
+  "no_updates": "No updates",
+  "@no_updates": {
+    "description": "Label shown when there is no last update for a project."
   },
   "not_yet_saved_label": "Not yet saved",
   "@not_yet_saved_label": {
@@ -915,7 +920,6 @@
       }
     }
   },
-  "no_updates": "No updates",
   "license_information_title": "Licence Information",
   "close_button": "Close",
   "import_new_licence": "Import New Licence",

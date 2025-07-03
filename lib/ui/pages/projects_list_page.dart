@@ -629,27 +629,31 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
   Widget _buildProjectItem(ProjectModel project) {
     // Get the current locale from the context for date formatting
     final locale = Localizations.localeOf(context).toString();
-
-    // Define locale-aware date formatters
-    // For "Proj. Date: MMM d, yyyy | Upd: HH:mm"
-    // We'll use yMMMd for the project date part and Hm for the time part.
     final DateFormat projectDateFormat = DateFormat.yMMMd(locale);
-    final DateFormat timeFormat = DateFormat.Hm(locale); // For HH:mm
 
-    
-    String lastUpdateText;
-    if (project.date != null) {
-      String formattedProjectDate = projectDateFormat.format(project.date!);
-      String formattedUpdateTime = project.lastUpdate != null
-          ? timeFormat.format(project.lastUpdate!)
-          : "-";
-      lastUpdateText =
-          'Proj. Date: $formattedProjectDate\nUpd: $formattedUpdateTime';
-    } else {
-      lastUpdateText = project.lastUpdate != null
-          ? S.of(context)?.no_updates ?? 'No updates'
-          : S.of(context)?.no_updates ?? 'No updates';
+    // Number of points
+    final int numPoints = project.points.length;
+    // Total rope length
+    final double ropeLength = project.currentRopeLength;
+    String ropeLengthStr = ropeLength >= 1000
+        ? (ropeLength / 1000).toStringAsFixed(2) + ' km'
+        : ropeLength.toStringAsFixed(1) + ' m';
+    // Project date
+    String? projectDateStr = project.date != null
+        ? projectDateFormat.format(project.date!)
+        : null;
+    // Last update
+    String? lastUpdateStr;
+    if (project.lastUpdate != null) {
+      final DateFormat dateFormat = DateFormat.yMMMd(locale);
+      final DateFormat timeFormat = DateFormat.Hm(locale);
+      lastUpdateStr =
+          '${dateFormat.format(project.lastUpdate!)} ${timeFormat.format(project.lastUpdate!)}';
     }
+    final String lastUpdateLabel = lastUpdateStr != null
+        ? (S.of(context)?.last_updated_label(lastUpdateStr) ??
+              'Last updated: $lastUpdateStr')
+        : (S.of(context)?.no_updates ?? 'No updates');
 
     // Determine if the item should be highlighted
     bool isHighlighted = project.id == _highlightedProjectId;
@@ -675,15 +679,51 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
               : S.of(context)?.untitled_project ?? 'Untitled Project',
           style: const TextStyle(fontWeight: FontWeight.w500),
         ),
-        subtitle: Text(
-          S
-                  .of(context)
-                  ?.project_id_label(
-                    (project.id).toString(),
-                    lastUpdateText,
-                  ) ??
-              'ID: ${(project.id).toString()} | $lastUpdateText',
-          style: const TextStyle(fontSize: 12.0, color: Colors.grey),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.scatter_plot,
+                  size: 18,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 4),
+                Text('$numPoints'),
+                const SizedBox(width: 12),
+                Icon(
+                  Icons.straighten,
+                  size: 18,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 4),
+                Text(ropeLengthStr),
+                if (projectDateStr != null) ...[
+                  const SizedBox(width: 12),
+                  Icon(
+                    Icons.event,
+                    size: 18,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(projectDateStr),
+                ],
+              ],
+            ),
+            const SizedBox(height: 2),
+            Row(
+              children: [
+                Icon(
+                  Icons.update,
+                  size: 18,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 4),
+                Text(lastUpdateLabel, style: const TextStyle(fontSize: 12)),
+              ],
+            ),
+          ],
         ),
         trailing: !_isSelectionMode
             ? const Icon(Icons.arrow_forward_ios, size: 16.0)
