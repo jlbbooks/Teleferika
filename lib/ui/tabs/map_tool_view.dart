@@ -1,7 +1,7 @@
 // map_tool_view.dart
 
 import 'dart:async';
-import 'dart:math';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -45,7 +45,8 @@ class MapToolView extends StatefulWidget {
   State<MapToolView> createState() => MapToolViewState();
 }
 
-class MapToolViewState extends State<MapToolView> with StatusMixin {
+class MapToolViewState extends State<MapToolView>
+    with StatusMixin, SingleTickerProviderStateMixin {
   final Logger logger = Logger('MapToolView');
 
   // Controller for business logic
@@ -72,7 +73,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   double? _currentCompassAccuracy;
   bool? _shouldCalibrateCompass;
   bool _hasLocationPermission = false;
-  bool _hasSensorPermission = false;
   double? _headingFromFirstToLast;
   Polyline? _projectHeadingLine;
   MapType _currentMapType = MapType.openStreetMap;
@@ -93,10 +93,21 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   // For testing: force show calibration panel
   bool _forceShowCalibrationPanel = false;
 
+  AnimationController? _arrowheadController;
+  Animation<double>? _arrowheadAnimation;
+
   @override
   void initState() {
     super.initState();
     _selectedPointId = widget.selectedPointId;
+    _arrowheadController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat();
+    _arrowheadAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(_arrowheadController!);
   }
 
   @override
@@ -149,6 +160,7 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     _locationStreamController.close();
     _controller.dispose();
     _mapController.dispose();
+    _arrowheadController?.dispose();
     super.dispose();
   }
 
@@ -159,7 +171,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
 
     setState(() {
       _hasLocationPermission = hasLocation;
-      _hasSensorPermission = hasSensor;
     });
 
     if (hasLocation) {
@@ -725,149 +736,183 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
     required String tileLayerUrl,
   }) {
     try {
-      return FlutterMap(
-        mapController: _mapController,
-        options: MapOptions(
-          initialCenter: initialMapCenter,
-          initialZoom: initialMapZoom,
-          keepAlive: true,
-          onTap: (tapPosition, latlng) {
-            if (_isMovePointMode) {
-              if (_selectedPointId != null) {
-                try {
-                  final projectState = Provider.of<ProjectStateManager>(
-                    context,
-                    listen: false,
-                  );
-                  final points = projectState.currentPoints;
-                  final pointToMove = points.firstWhere(
-                    (p) => p.id == _selectedPointId,
-                  );
-                  _handleMovePoint(pointToMove, latlng);
-                } catch (e) {
-                  logger.warning(
-                    "Error finding point to move in onTap: $_selectedPointId. $e",
-                  );
-                  showErrorStatus(
-                    "Error: Selected point not found. Please select again.",
-                  );
-                  setState(() {
-                    _isMovePointMode = false;
-                    _selectedPointId = null;
-                  });
-                }
-              } else {
-                showErrorStatus(
-                  "No point selected to move. Tap a point first, then activate 'Move Point' mode.",
-                );
-              }
-            } else {
-              // Only deselect if we're not dealing with a new point
-              if (_selectedPointId != null) {
-                setState(() {
-                  _selectedPointId = null;
-                });
-              }
-            }
-          },
-          onMapReady: () {
-            logger.info("MapToolView: Map is ready (onMapReady called).");
-            if (mounted) {
-              setState(() {
-                _isMapReady = true;
-              });
-              _fitMapToPoints();
-            }
-          },
-        ),
+      return Stack(
         children: [
-          TileLayer(
-            urlTemplate: tileLayerUrl,
-            userAgentPackageName: 'com.jlbbooks.teleferika',
-          ),
-          RichAttributionWidget(
-            attributions: [
-              TextSourceAttribution(
-                _controller.getTileLayerAttribution(_currentMapType),
-                onTap: () {
-                  final url = _controller.getAttributionUrl(_currentMapType);
-                  if (url.isNotEmpty) {
-                    launchUrl(Uri.parse(url));
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: initialMapCenter,
+              initialZoom: initialMapZoom,
+              keepAlive: true,
+              onTap: (tapPosition, latlng) {
+                if (_isMovePointMode) {
+                  if (_selectedPointId != null) {
+                    try {
+                      final projectState = Provider.of<ProjectStateManager>(
+                        context,
+                        listen: false,
+                      );
+                      final points = projectState.currentPoints;
+                      final pointToMove = points.firstWhere(
+                        (p) => p.id == _selectedPointId,
+                      );
+                      _handleMovePoint(pointToMove, latlng);
+                    } catch (e) {
+                      logger.warning(
+                        "Error finding point to move in onTap: $_selectedPointId. $e",
+                      );
+                      showErrorStatus(
+                        "Error: Selected point not found. Please select again.",
+                      );
+                      setState(() {
+                        _isMovePointMode = false;
+                        _selectedPointId = null;
+                      });
+                    }
+                  } else {
+                    showErrorStatus(
+                      "No point selected to move. Tap a point first, then activate 'Move Point' mode.",
+                    );
                   }
-                },
-              ),
-            ],
-          ),
-          const MapCompass.cupertino(hideIfRotatedNorth: true),
-          // Add azimuth arrow marker on top of current location (drawn first, so it's below the location marker)
-          if (_currentPosition != null &&
-              Provider.of<ProjectStateManager>(
-                    context,
-                    listen: false,
-                  ).currentProject?.azimuth !=
-                  null)
-            MarkerLayer(
-              markers: [
-                Marker(
-                  width: 40,
-                  height: 40,
-                  point: LatLng(
-                    _currentPosition!.latitude,
-                    _currentPosition!.longitude,
-                  ),
-                  child: _ProjectAzimuthArrow(
-                    azimuth: Provider.of<ProjectStateManager>(
-                      context,
-                      listen: false,
-                    ).currentProject!.azimuth!,
-                  ),
-                  alignment: Alignment.center,
-                ),
-              ],
+                } else {
+                  // Only deselect if we're not dealing with a new point
+                  if (_selectedPointId != null) {
+                    setState(() {
+                      _selectedPointId = null;
+                    });
+                  }
+                }
+              },
+              onMapReady: () {
+                logger.info("MapToolView: Map is ready (onMapReady called).");
+                if (mounted) {
+                  setState(() {
+                    _isMapReady = true;
+                  });
+                  _fitMapToPoints();
+                }
+              },
             ),
+            children: [
+              TileLayer(
+                urlTemplate: tileLayerUrl,
+                userAgentPackageName: 'com.jlbbooks.teleferika',
+              ),
+              RichAttributionWidget(
+                attributions: [
+                  TextSourceAttribution(
+                    _controller.getTileLayerAttribution(_currentMapType),
+                    onTap: () {
+                      final url = _controller.getAttributionUrl(
+                        _currentMapType,
+                      );
+                      if (url.isNotEmpty) {
+                        launchUrl(Uri.parse(url));
+                      }
+                    },
+                  ),
+                ],
+              ),
+              const MapCompass.cupertino(hideIfRotatedNorth: true),
+              // Add azimuth arrow marker on top of current location (drawn first, so it's below the location marker)
+              if (_currentPosition != null &&
+                  Provider.of<ProjectStateManager>(
+                        context,
+                        listen: false,
+                      ).currentProject?.azimuth !=
+                      null)
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      width: 40,
+                      height: 40,
+                      point: LatLng(
+                        _currentPosition!.latitude,
+                        _currentPosition!.longitude,
+                      ),
+                      child: _ProjectAzimuthArrow(
+                        azimuth: Provider.of<ProjectStateManager>(
+                          context,
+                          listen: false,
+                        ).currentProject!.azimuth!,
+                      ),
+                      alignment: Alignment.center,
+                    ),
+                  ],
+                ),
 
-          CurrentLocationLayer(
-            style: LocationMarkerStyle(
-              marker: _CurrentLocationAccuracyMarker(
-                accuracy: _currentPosition?.accuracy,
-              ),
-              markerSize: const Size.square(60),
-              markerDirection: MarkerDirection.heading,
-              showAccuracyCircle: false,
-              headingSectorRadius: 40,
-            ),
-            positionStream: _locationStreamController.stream,
-          ),
-          if (_isValidPolyline(polylinePathPoints))
-            PolylineLayer(
-              polylines: [
-                Polyline(
-                  points: polylinePathPoints,
-                  gradientColors: [Colors.green, Colors.yellow, Colors.red],
-                  colorsStop: [0.0, 0.5, 1.0],
-                  strokeWidth: 3.0,
+              CurrentLocationLayer(
+                style: LocationMarkerStyle(
+                  marker: _CurrentLocationAccuracyMarker(
+                    accuracy: _currentPosition?.accuracy,
+                  ),
+                  markerSize: const Size.square(60),
+                  markerDirection: MarkerDirection.heading,
+                  showAccuracyCircle: false,
+                  headingSectorRadius: 40,
                 ),
-              ],
-            ),
-          if (headingLine != null && _isValidPolyline(headingLine.points))
-            PolylineLayer(polylines: [headingLine]),
-          if (_projectHeadingLine != null &&
-              _isValidPolyline(_projectHeadingLine!.points))
-            PolylineLayer(polylines: [_projectHeadingLine!]),
-          MarkerLayer(
-            markers: MapMarkers.buildAllMapMarkers(
-              context: context,
-              projectPoints: allPoints,
-              selectedPointId: _selectedPointId,
-              isMovePointMode: _isMovePointMode,
-              glowAnimationValue: _glowAnimationValue,
-              currentPosition: _currentPosition,
-              hasLocationPermission: _hasLocationPermission,
-              headingFromFirstToLast: _headingFromFirstToLast,
-              onPointTap: _handlePointTap,
-              currentDeviceHeading: _currentDeviceHeading,
-            ),
-            rotate: true,
+                positionStream: _locationStreamController.stream,
+              ),
+              if (_isValidPolyline(polylinePathPoints))
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: polylinePathPoints,
+                      gradientColors: [Colors.green, Colors.yellow, Colors.red],
+                      colorsStop: [0.0, 0.5, 1.0],
+                      strokeWidth: 3.0,
+                    ),
+                  ],
+                ),
+              if (headingLine != null && _isValidPolyline(headingLine.points))
+                PolylineLayer(polylines: [headingLine]),
+              if (_projectHeadingLine != null &&
+                  _isValidPolyline(_projectHeadingLine!.points))
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: _projectHeadingLine!.points,
+                      color: _projectHeadingLine!.color,
+                      gradientColors: _projectHeadingLine!.gradientColors,
+                      colorsStop: _projectHeadingLine!.colorsStop,
+                      strokeWidth: _projectHeadingLine!.strokeWidth,
+                      borderColor: _projectHeadingLine!.borderColor,
+                      borderStrokeWidth: _projectHeadingLine!.borderStrokeWidth,
+                      pattern: StrokePattern.dotted(),
+                    ),
+                  ],
+                ),
+              MarkerLayer(
+                markers: MapMarkers.buildAllMapMarkers(
+                  context: context,
+                  projectPoints: allPoints,
+                  selectedPointId: _selectedPointId,
+                  isMovePointMode: _isMovePointMode,
+                  glowAnimationValue: _glowAnimationValue,
+                  currentPosition: _currentPosition,
+                  hasLocationPermission: _hasLocationPermission,
+                  headingFromFirstToLast: _headingFromFirstToLast,
+                  onPointTap: _handlePointTap,
+                  currentDeviceHeading: _currentDeviceHeading,
+                ),
+                rotate: true,
+              ),
+              if (headingLine != null && headingLine.points.length == 2)
+                AnimatedBuilder(
+                  animation: _arrowheadAnimation!,
+                  builder: (context, child) {
+                    return MarkerLayer(
+                      markers: [
+                        _HeadingLineArrowheadMarker(
+                          start: headingLine.points[0],
+                          end: headingLine.points[1],
+                          t: _arrowheadAnimation!.value,
+                        ),
+                      ],
+                    );
+                  },
+                ),
+            ],
           ),
         ],
       );
@@ -1311,7 +1356,7 @@ class _AccuracyCirclePainter extends CustomPainter {
         ? (accuracy!.clamp(5, 50) / 50.0) * (size.width / 2)
         : size.width / 2;
     final paint = Paint()
-      ..color = Colors.red.withValues(alpha: 0.3)
+      ..color = Colors.red.withValues(alpha: 0.4)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(center, accuracyRadius, paint);
   }
@@ -1348,17 +1393,17 @@ class _StaticArrowPainter extends CustomPainter {
 
     // Tip of the arrow
     final tip = Offset(
-      center.dx + arrowLength * cos(angle),
-      center.dy + arrowLength * sin(angle),
+      center.dx + arrowLength * math.cos(angle),
+      center.dy + arrowLength * math.sin(angle),
     );
     // Base left/right (flat base at baseRadius from center)
     final left = Offset(
-      center.dx + baseRadius * cos(angle + 2.5),
-      center.dy + baseRadius * sin(angle + 2.5),
+      center.dx + baseRadius * math.cos(angle + 2.5),
+      center.dy + baseRadius * math.sin(angle + 2.5),
     );
     final right = Offset(
-      center.dx + baseRadius * cos(angle - 2.5),
-      center.dy + baseRadius * sin(angle - 2.5),
+      center.dx + baseRadius * math.cos(angle - 2.5),
+      center.dy + baseRadius * math.sin(angle - 2.5),
     );
 
     final path = ui.Path()
@@ -1472,4 +1517,69 @@ class _DebugPanel extends StatelessWidget {
       ),
     );
   }
+}
+
+class _HeadingLineArrowheadMarker extends Marker {
+  _HeadingLineArrowheadMarker({
+    required LatLng start,
+    required LatLng end,
+    required double t,
+  }) : super(
+         width: 16,
+         height: 16,
+         point: _interpolateLatLng(start, end, t),
+         child: _ArrowheadWidget(start: start, end: end, t: t),
+       );
+
+  static LatLng _interpolateLatLng(LatLng a, LatLng b, double t) {
+    return LatLng(
+      a.latitude + (b.latitude - a.latitude) * t,
+      a.longitude + (b.longitude - a.longitude) * t,
+    );
+  }
+}
+
+class _ArrowheadWidget extends StatelessWidget {
+  final LatLng start;
+  final LatLng end;
+  final double t;
+
+  const _ArrowheadWidget({
+    required this.start,
+    required this.end,
+    required this.t,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Calculate angle for arrowhead
+    final dx = end.longitude - start.longitude;
+    final dy = end.latitude - start.latitude;
+    final angle = math.atan2(dy, dx);
+    return Transform.rotate(
+      angle: angle + math.pi,
+      child: CustomPaint(
+        size: const Size(16, 16),
+        painter: _ArrowheadPainter(),
+      ),
+    );
+  }
+}
+
+class _ArrowheadPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()
+      ..color = const ui.Color.fromARGB(255, 41, 111, 114)
+      ..style = PaintingStyle.fill;
+    // Draw a filled circle instead of an arrowhead
+    canvas.drawCircle(
+      Offset(size.width / 2, size.height / 2),
+      size.width / 2,
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

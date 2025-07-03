@@ -5,7 +5,6 @@
       "name": "Flutter (Open Source)",
       "request": "launch",
       "type": "dart",
-      "preLaunchTask": "setup-opensource",
       "program": "lib/main.dart",
       "args": [
         "--flavor=opensource",
@@ -15,6 +14,29 @@
     },
     {
       "name": "Flutter (Full Version)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [
+        "--flavor=full",
+        "--dart-define=FLAVOR_NAME=full"
+      ],
+      "console": "debugConsole"
+    },  
+    {
+      "name": "Flutter (Open Source) with setup",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "setup-opensource",
+      "program": "lib/main.dart",
+      "args": [
+        "--flavor=opensource",
+        "--dart-define=FLAVOR_NAME=opensource"
+      ],
+      "console": "debugConsole"
+    },
+    {
+      "name": "Flutter (Full Version) with setup",
       "request": "launch",
       "type": "dart",
       "preLaunchTask": "setup-full",

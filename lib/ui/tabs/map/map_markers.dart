@@ -160,6 +160,4 @@ class MapMarkers {
       ),
     );
   }
-
-  static double _degreesToRadians(double degrees) => degrees * math.pi / 180.0;
 }
