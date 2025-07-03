@@ -316,6 +316,9 @@ class SEn extends S {
   }
 
   @override
+  String get no_updates => 'No updates';
+
+  @override
   String get not_yet_saved_label => 'Not yet saved';
 
   @override
@@ -762,9 +765,6 @@ class SEn extends S {
   String project_id_label(String id, String lastUpdateText) {
     return 'ID: $id | $lastUpdateText';
   }
-
-  @override
-  String get no_updates => 'No updates';
 
   @override
   String get license_information_title => 'Licence Information';

@@ -589,11 +589,17 @@ abstract class S {
   /// **'Save Project'**
   String get save_project_tooltip;
 
-  /// No description provided for @last_updated_label.
+  /// Label for the last updated date and time in the project list card.
   ///
   /// In en, this message translates to:
   /// **'Last updated: {date}'**
   String last_updated_label(String date);
+
+  /// Label shown when there is no last update for a project.
+  ///
+  /// In en, this message translates to:
+  /// **'No updates'**
+  String get no_updates;
 
   /// Label for projects that have not yet been saved.
   ///
@@ -1359,12 +1365,6 @@ abstract class S {
   /// In en, this message translates to:
   /// **'ID: {id} | {lastUpdateText}'**
   String project_id_label(String id, String lastUpdateText);
-
-  /// No description provided for @no_updates.
-  ///
-  /// In en, this message translates to:
-  /// **'No updates'**
-  String get no_updates;
 
   /// No description provided for @license_information_title.
   ///

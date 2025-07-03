@@ -320,6 +320,9 @@ class SIt extends S {
   }
 
   @override
+  String get no_updates => 'Nessun aggiornamento';
+
+  @override
   String get not_yet_saved_label => 'Non ancora salvato';
 
   @override
@@ -770,9 +773,6 @@ class SIt extends S {
   String project_id_label(String id, String lastUpdateText) {
     return 'ID: $id | $lastUpdateText';
   }
-
-  @override
-  String get no_updates => 'Nessun aggiornamento';
 
   @override
   String get license_information_title => 'Informazioni licenza';
