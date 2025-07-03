@@ -276,26 +276,25 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
     // Show confirmation dialog (this part is UI specific and stays here)
     final bool? confirmed = await showDialog<bool>(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
+        final s = S.of(dialogContext);
         return AlertDialog(
-          title: Text(
-            S.of(context)?.confirm_deletion_title ?? 'Confirm Deletion',
-          ),
+          title: Text(s?.confirm_deletion_title ?? 'Confirm Deletion'),
           content: Text(
-            S.of(context)?.confirm_deletion_content(widget.point.name) ??
+            s?.confirm_deletion_content(widget.point.name) ??
                 'Are you sure you want to delete point ${widget.point.name}? This action cannot be undone.',
           ),
           actions: <Widget>[
             TextButton(
-              child: Text(S.of(context)?.dialog_cancel ?? 'Cancel'),
-              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(s?.dialog_cancel ?? 'Cancel'),
+              onPressed: () => Navigator.of(dialogContext).pop(false),
             ),
             TextButton(
               child: Text(
-                S.of(context)?.buttonDelete ?? 'Delete',
+                s?.buttonDelete ?? 'Delete',
                 style: TextStyle(color: Colors.red),
               ),
-              onPressed: () => Navigator.of(context).pop(true),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
             ),
           ],
         );
@@ -341,14 +340,23 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return PopScope(
+      canPop: true,
+      onPopInvoked: (didPop) async {
+        if (!didPop) {
+          final shouldPop = await _onWillPop();
+          if (shouldPop && mounted && Navigator.canPop(this.context)) {
+            Navigator.of(this.context).pop();
+          }
+        }
+      },
       child: Scaffold(
         appBar: AppBar(
           title: Row(
             children: [
               Icon(Icons.edit_location, size: 24),
               const SizedBox(width: 12),
+              // ignore: use_build_context_synchronously
               Text(
                 S.of(context)?.edit_point_title ?? 'Edit Point',
                 style: Theme.of(
