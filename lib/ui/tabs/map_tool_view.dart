@@ -1,7 +1,5 @@
 // map_tool_view.dart
 
-// ignore_for_file: unused_field
-
 import 'dart:async';
 import 'dart:math';
 import 'dart:ui' as ui;
@@ -75,7 +73,6 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
   bool? _shouldCalibrateCompass;
   bool _hasLocationPermission = false;
   bool _hasSensorPermission = false;
-  final bool _isCheckingPermissions = true; // Add loading state for permissions
   double? _headingFromFirstToLast;
   Polyline? _projectHeadingLine;
   MapType _currentMapType = MapType.openStreetMap;

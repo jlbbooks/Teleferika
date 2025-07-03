@@ -19,26 +19,89 @@
     "description": "App bar title for the project details page"
   },
   "tabDetails": "Details",
+  "@tabDetails": {
+    "description": "Tab label for project details."
+  },
   "tabPoints": "Points",
+  "@tabPoints": {
+    "description": "Tab label for project points."
+  },
   "tabCompass": "Compass",
+  "@tabCompass": {
+    "description": "Tab label for compass view."
+  },
   "tabMap": "Map",
+  "@tabMap": {
+    "description": "Tab label for map view."
+  },
   "formFieldNameLabel": "Project Name",
+  "@formFieldNameLabel": {
+    "description": "Label for the project name form field."
+  },
   "formFieldNoteLabel": "Note",
+  "@formFieldNoteLabel": {
+    "description": "Label for the project note form field."
+  },
   "formFieldAzimuthLabel": "Azimuth (°)",
+  "@formFieldAzimuthLabel": {
+    "description": "Label for the azimuth form field."
+  },
   "formFieldProjectDateLabel": "Project Date",
+  "@formFieldProjectDateLabel": {
+    "description": "Label for the project date form field."
+  },
   "formFieldLastUpdatedLabel": "Last Updated",
+  "@formFieldLastUpdatedLabel": {
+    "description": "Label for the last updated form field."
+  },
   "formFieldPresumedTotalLengthLabel": "Presumed Total Length (m)",
+  "@formFieldPresumedTotalLengthLabel": {
+    "description": "Label for the presumed total length form field."
+  },
   "buttonSave": "Save",
+  "@buttonSave": {
+    "description": "Label for the save button."
+  },
   "buttonCalculateAzimuth": "Calculate Azimuth",
+  "@buttonCalculateAzimuth": {
+    "description": "Label for the calculate azimuth button."
+  },
   "buttonCalculate": "Calculate",
+  "@buttonCalculate": {
+    "description": "Label for the calculate button."
+  },
   "buttonSelectDate": "Select Date",
+  "@buttonSelectDate": {
+    "description": "Label for the select date button."
+  },
   "compassAddPointButton": "Add Point",
+  "@compassAddPointButton": {
+    "description": "Button label to add a point from the compass tool."
+  },
   "compassAddAsEndPointButton": "Add as End Point",
+  "@compassAddAsEndPointButton": {
+    "description": "Button label to add a point as the end point from the compass tool."
+  },
   "pointsSetAsStartButton": "Set as Start",
+  "@pointsSetAsStartButton": {
+    "description": "Button label to set a point as the start point."
+  },
   "pointsSetAsEndButton": "Set as End",
+  "@pointsSetAsEndButton": {
+    "description": "Button label to set a point as the end point."
+  },
   "pointsDeleteButton": "Delete",
+  "@pointsDeleteButton": {
+    "description": "Button label to delete a point."
+  },
   "errorSaveProjectBeforeAddingPoints": "Please save the project before adding points.",
+  "@errorSaveProjectBeforeAddingPoints": {
+    "description": "Error message shown when trying to add points before saving the project."
+  },
   "infoFetchingLocation": "Fetching location...",
+  "@infoFetchingLocation": {
+    "description": "Message shown when fetching the user's location."
+  },
   "pointAddedSnackbar": "Point P{ordinalNumber} added.",
   "@pointAddedSnackbar": {
     "description": "Snackbar message when a point is successfully added. The ordinalNumber is the point's number.",
@@ -50,7 +113,13 @@
     }
   },
   "pointAddedSetAsEndSnackbarSuffix": "Set as END point.",
+  "@pointAddedSetAsEndSnackbarSuffix": {
+    "description": "Suffix for snackbar when a point is set as the end point."
+  },
   "pointAddedInsertedBeforeEndSnackbarSuffix": "Inserted before current end point.",
+  "@pointAddedInsertedBeforeEndSnackbarSuffix": {
+    "description": "Suffix for snackbar when a point is inserted before the end point."
+  },
   "pointFromCompassDefaultNote": "Added (H: {altitude}°)",
   "@pointFromCompassDefaultNote": {
     "description": "Default note for a point added using the compass tool, showing the altitude.",
@@ -78,8 +147,17 @@
     }
   },
   "errorAzimuthPointsNotSet": "Starting and/or ending point not set. Cannot calculate azimuth.",
+  "@errorAzimuthPointsNotSet": {
+    "description": "Error message when azimuth calculation is attempted without start/end points."
+  },
   "errorAzimuthPointsSame": "Starting and ending points are the same. Azimuth is undefined or 0.",
+  "@errorAzimuthPointsSame": {
+    "description": "Error message when start and end points are the same for azimuth calculation."
+  },
   "errorAzimuthCouldNotRetrievePoints": "Could not retrieve point data for calculation. Please check points.",
+  "@errorAzimuthCouldNotRetrievePoints": {
+    "description": "Error message when point data cannot be retrieved for azimuth calculation."
+  },
   "errorCalculatingAzimuth": "Error calculating azimuth: {errorMessage}",
   "@errorCalculatingAzimuth": {
     "placeholders": {
@@ -110,8 +188,17 @@
     "description": "Message in the dialog asking for confirmation to overwrite existing azimuth value."
   },
   "projectNameCannotBeEmptyValidator": "Project name cannot be empty.",
+  "@projectNameCannotBeEmptyValidator": {
+    "description": "Validator message for empty project name."
+  },
   "projectSavedSuccessfully": "Project saved successfully.",
+  "@projectSavedSuccessfully": {
+    "description": "Snackbar message when a project is saved successfully."
+  },
   "dialogTitleConfirmDelete": "Confirm Delete",
+  "@dialogTitleConfirmDelete": {
+    "description": "Title for the dialog confirming deletion."
+  },
   "dialogContentConfirmDeletePoint": "Are you sure you want to delete point P{pointOrdinal}? This action cannot be undone.",
   "@dialogContentConfirmDeletePoint": {
     "placeholders": {
@@ -121,7 +208,13 @@
     }
   },
   "buttonCancel": "Cancel",
+  "@buttonCancel": {
+    "description": "Label for the cancel button."
+  },
   "buttonDelete": "Delete",
+  "@buttonDelete": {
+    "description": "Label for the delete button."
+  },
   "pointDeletedSnackbar": "Point P{pointOrdinal} deleted.",
   "@pointDeletedSnackbar": {
     "placeholders": {
@@ -195,6 +288,9 @@
     "description": "Success message shown after the file is ready for sharing via the share dialog."
   },
   "file_saved_successfully": "File saved successfully",
+  "@file_saved_successfully": {
+    "description": "Snackbar message when a file is saved successfully."
+  },
   "file_save_cancelled_or_failed": "File save was cancelled or failed.",
   "@file_save_cancelled_or_failed": {
     "description": "Message shown if the user cancels the save dialog or if saving fails for other reasons."
@@ -270,9 +366,21 @@
     "description": "Message shown when trying to export a brand new, never-saved project."
   },
   "export_requires_licence_title": "Licence Required for Export",
+  "@export_requires_licence_title": {
+    "description": "Title for the dialog shown when a licence is required for export."
+  },
   "export_requires_licence_message": "This feature requires an active licence. Please import a valid licence file to proceed.",
+  "@export_requires_licence_message": {
+    "description": "Message shown when a licence is required for export."
+  },
   "action_import_licence": "Import Licence",
+  "@action_import_licence": {
+    "description": "Label for the import licence action."
+  },
   "edit_project_title": "Edit Project",
+  "@edit_project_title": {
+    "description": "Title for the edit project page."
+  },
   "edit_project_title_named": "Edit: {projectName}",
   "@edit_project_title_named": {
     "placeholders": {
@@ -282,8 +390,17 @@
     }
   },
   "new_project_title": "New Project",
+  "@new_project_title": {
+    "description": "Title for the new project page."
+  },
   "delete_project_tooltip": "Delete Project",
+  "@delete_project_tooltip": {
+    "description": "Tooltip for the delete project button."
+  },
   "save_project_tooltip": "Save Project",
+  "@save_project_tooltip": {
+    "description": "Tooltip for the save project button."
+  },
   "last_updated_label": "Last updated: {date}",
   "@last_updated_label": {
     "placeholders": {
@@ -294,15 +411,48 @@
     }
   },
   "not_yet_saved_label": "Not yet saved",
+  "@not_yet_saved_label": {
+    "description": "Label for projects that have not yet been saved."
+  },
   "tap_to_set_date": "Tap to set date",
+  "@tap_to_set_date": {
+    "description": "Prompt to tap to set the project date."
+  },
   "invalid_number_validator": "Invalid number.",
+  "@invalid_number_validator": {
+    "description": "Validator message for invalid number input."
+  },
   "must_be_359_validator": "Must be +/-359.99",
+  "@must_be_359_validator": {
+    "description": "Validator message for azimuth field range."
+  },
   "please_correct_form_errors": "Please correct the errors in the form.",
+  "@please_correct_form_errors": {
+    "description": "Message prompting user to correct form errors."
+  },
   "project_created_successfully": "Project created successfully!",
+  "@project_created_successfully": {
+    "description": "Snackbar message when a project is created successfully."
+  },
   "project_already_up_to_date": "Project already up to date or not found.",
+  "@project_already_up_to_date": {
+    "description": "Message when a project is already up to date."
+  },
   "cannot_delete_unsaved_project": "Cannot delete a project that has not been saved yet.",
+  "@cannot_delete_unsaved_project": {
+    "description": "Error message when trying to delete an unsaved project."
+  },
   "confirm_delete_project_title": "Confirm Delete",
   "confirm_delete_project_content": "Are you sure you want to delete the project \"{projectName}\"? This action cannot be undone.",
+  "@confirm_delete_project_content": {
+    "description": "Content for the dialog confirming project deletion.",
+    "placeholders": {
+      "projectName": {
+        "type": "String",
+        "example": "My Project"
+      }
+    }
+  },
   "project_deleted_successfully": "Project deleted successfully.",
   "project_not_found_or_deleted": "Project not found or already deleted.",
   "error_saving_project": "Error saving project: {errorMessage}",
@@ -681,9 +831,49 @@
   "save_all_and_exit": "Save All & Exit",
   "confirm_deletion_title": "Confirm Deletion",
   "confirm_deletion_content": "Are you sure you want to delete point {pointName}? This action cannot be undone.",
+  "@confirm_deletion_content": {
+    "description": "Dialog content asking for confirmation to delete a point.",
+    "placeholders": {
+      "pointName": {
+        "type": "String",
+        "example": "P1"
+      }
+    }
+  },
   "point_deleted_success": "Point {pointName} deleted successfully!",
+  "@point_deleted_success": {
+    "description": "Snackbar message when a point is deleted successfully.",
+    "placeholders": {
+      "pointName": {
+        "type": "String",
+        "example": "P1"
+      }
+    }
+  },
   "error_deleting_point": "Error deleting point {pointName}: {errorMessage}",
+  "@error_deleting_point": {
+    "description": "Error message when deleting a point fails.",
+    "placeholders": {
+      "pointName": {
+        "type": "String",
+        "example": "P1"
+      },
+      "errorMessage": {
+        "type": "String",
+        "example": "Database error"
+      }
+    }
+  },
   "error_saving_point": "Error saving point: {errorMessage}",
+  "@error_saving_point": {
+    "description": "Error message when saving a point fails.",
+    "placeholders": {
+      "errorMessage": {
+        "type": "String",
+        "example": "Validation error"
+      }
+    }
+  },
   "point_details_saved": "Point details saved!",
   "undo_changes_tooltip": "Undo Changes",
   "no_projects_yet": "No projects yet. Tap '+' to add one!",
@@ -691,9 +881,40 @@
   "untitled_project": "Untitled Project",
   "delete_selected": "Delete Selected",
   "selected_count": "{count} selected",
+  "@selected_count": {
+    "description": "Label showing the number of selected items.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "2"
+      }
+    }
+  },
   "delete_projects_title": "Delete Project(s)?",
   "delete_projects_content": "Are you sure you want to delete {count} selected project(s)? This action cannot be undone.",
+  "@delete_projects_content": {
+    "description": "Content for the dialog confirming deletion of multiple projects.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
   "project_id_label": "ID: {id} | {lastUpdateText}",
+  "@project_id_label": {
+    "description": "Label showing the project ID and last update text.",
+    "placeholders": {
+      "id": {
+        "type": "String",
+        "example": "123"
+      },
+      "lastUpdateText": {
+        "type": "String",
+        "example": "Proj. Date: Jan 1, 2024 | Upd: 12:00"
+      }
+    }
+  },
   "no_updates": "No updates",
   "license_information_title": "Licence Information",
   "close_button": "Close",
@@ -721,7 +942,7 @@
   "cancel": "Cancel",
   "delete": "Delete",
   "tapOnTheMapToSetNewLocation": "Tap on the map to set new location",
-  "headingLabel": "Heading: {angle}°",
+  "headingLabel": "{angle}°",
   "@headingLabel": {
     "description": "Label for the heading angle marker on the map.",
     "placeholders": {

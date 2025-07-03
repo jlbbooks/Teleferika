@@ -756,6 +756,15 @@
   "confirm_deletion_title": "Conferma eliminazione",
   "confirm_deletion_content": "Sei sicuro di voler eliminare il punto {pointName}? Questa azione non può essere annullata.",
   "point_deleted_success": "Punto {pointName} eliminato con successo!",
+  "@point_deleted_success": {
+    "description": "Snackbar message when a point is deleted successfully.",
+    "placeholders": {
+      "pointName": {
+        "type": "String",
+        "example": "P1"
+      }
+    }
+  },
   "error_deleting_point": "Errore durante l'eliminazione del punto {pointName}: {errorMessage}",
   "error_saving_point": "Errore durante il salvataggio del punto: {errorMessage}",
   "point_details_saved": "Dettagli punto salvati!",
@@ -795,7 +804,7 @@
   "cancel": "Annulla",
   "delete": "Elimina",
   "tapOnTheMapToSetNewLocation": "Tocca sulla mappa per impostare la nuova posizione",
-  "headingLabel": "Direzione: {angle}°",
+  "headingLabel": "{angle}°",
   "@headingLabel": {
     "description": "Etichetta per il marker della direzione sulla mappa.",
     "placeholders": {

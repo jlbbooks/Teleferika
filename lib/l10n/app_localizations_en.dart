@@ -346,7 +346,7 @@ class SEn extends S {
   String get confirm_delete_project_title => 'Confirm Delete';
 
   @override
-  String confirm_delete_project_content(Object projectName) {
+  String confirm_delete_project_content(String projectName) {
     return 'Are you sure you want to delete the project \"$projectName\"? This action cannot be undone.';
   }
 
@@ -708,22 +708,22 @@ class SEn extends S {
   String get confirm_deletion_title => 'Confirm Deletion';
 
   @override
-  String confirm_deletion_content(Object pointName) {
+  String confirm_deletion_content(String pointName) {
     return 'Are you sure you want to delete point $pointName? This action cannot be undone.';
   }
 
   @override
-  String point_deleted_success(Object pointName) {
+  String point_deleted_success(String pointName) {
     return 'Point $pointName deleted successfully!';
   }
 
   @override
-  String error_deleting_point(Object errorMessage, Object pointName) {
+  String error_deleting_point(String pointName, String errorMessage) {
     return 'Error deleting point $pointName: $errorMessage';
   }
 
   @override
-  String error_saving_point(Object errorMessage) {
+  String error_saving_point(String errorMessage) {
     return 'Error saving point: $errorMessage';
   }
 
@@ -746,7 +746,7 @@ class SEn extends S {
   String get delete_selected => 'Delete Selected';
 
   @override
-  String selected_count(Object count) {
+  String selected_count(int count) {
     return '$count selected';
   }
 
@@ -754,12 +754,12 @@ class SEn extends S {
   String get delete_projects_title => 'Delete Project(s)?';
 
   @override
-  String delete_projects_content(Object count) {
+  String delete_projects_content(int count) {
     return 'Are you sure you want to delete $count selected project(s)? This action cannot be undone.';
   }
 
   @override
-  String project_id_label(Object id, Object lastUpdateText) {
+  String project_id_label(String id, String lastUpdateText) {
     return 'ID: $id | $lastUpdateText';
   }
 
@@ -851,7 +851,7 @@ class SEn extends S {
 
   @override
   String headingLabel(String angle) {
-    return 'Heading: $angle°';
+    return '$angle°';
   }
 
   @override

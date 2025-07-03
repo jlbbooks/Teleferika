@@ -342,7 +342,7 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: true,
-      onPopInvoked: (didPop) async {
+      onPopInvokedWithResult: (bool didPop, Object? result) async {
         if (!didPop) {
           final shouldPop = await _onWillPop();
           if (shouldPop && mounted && Navigator.canPop(this.context)) {

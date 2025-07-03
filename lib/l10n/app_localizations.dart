@@ -115,127 +115,127 @@ abstract class S {
   /// **'Project Details'**
   String get projectPageTitle;
 
-  /// No description provided for @tabDetails.
+  /// Tab label for project details.
   ///
   /// In en, this message translates to:
   /// **'Details'**
   String get tabDetails;
 
-  /// No description provided for @tabPoints.
+  /// Tab label for project points.
   ///
   /// In en, this message translates to:
   /// **'Points'**
   String get tabPoints;
 
-  /// No description provided for @tabCompass.
+  /// Tab label for compass view.
   ///
   /// In en, this message translates to:
   /// **'Compass'**
   String get tabCompass;
 
-  /// No description provided for @tabMap.
+  /// Tab label for map view.
   ///
   /// In en, this message translates to:
   /// **'Map'**
   String get tabMap;
 
-  /// No description provided for @formFieldNameLabel.
+  /// Label for the project name form field.
   ///
   /// In en, this message translates to:
   /// **'Project Name'**
   String get formFieldNameLabel;
 
-  /// No description provided for @formFieldNoteLabel.
+  /// Label for the project note form field.
   ///
   /// In en, this message translates to:
   /// **'Note'**
   String get formFieldNoteLabel;
 
-  /// No description provided for @formFieldAzimuthLabel.
+  /// Label for the azimuth form field.
   ///
   /// In en, this message translates to:
   /// **'Azimuth (°)'**
   String get formFieldAzimuthLabel;
 
-  /// No description provided for @formFieldProjectDateLabel.
+  /// Label for the project date form field.
   ///
   /// In en, this message translates to:
   /// **'Project Date'**
   String get formFieldProjectDateLabel;
 
-  /// No description provided for @formFieldLastUpdatedLabel.
+  /// Label for the last updated form field.
   ///
   /// In en, this message translates to:
   /// **'Last Updated'**
   String get formFieldLastUpdatedLabel;
 
-  /// No description provided for @formFieldPresumedTotalLengthLabel.
+  /// Label for the presumed total length form field.
   ///
   /// In en, this message translates to:
   /// **'Presumed Total Length (m)'**
   String get formFieldPresumedTotalLengthLabel;
 
-  /// No description provided for @buttonSave.
+  /// Label for the save button.
   ///
   /// In en, this message translates to:
   /// **'Save'**
   String get buttonSave;
 
-  /// No description provided for @buttonCalculateAzimuth.
+  /// Label for the calculate azimuth button.
   ///
   /// In en, this message translates to:
   /// **'Calculate Azimuth'**
   String get buttonCalculateAzimuth;
 
-  /// No description provided for @buttonCalculate.
+  /// Label for the calculate button.
   ///
   /// In en, this message translates to:
   /// **'Calculate'**
   String get buttonCalculate;
 
-  /// No description provided for @buttonSelectDate.
+  /// Label for the select date button.
   ///
   /// In en, this message translates to:
   /// **'Select Date'**
   String get buttonSelectDate;
 
-  /// No description provided for @compassAddPointButton.
+  /// Button label to add a point from the compass tool.
   ///
   /// In en, this message translates to:
   /// **'Add Point'**
   String get compassAddPointButton;
 
-  /// No description provided for @compassAddAsEndPointButton.
+  /// Button label to add a point as the end point from the compass tool.
   ///
   /// In en, this message translates to:
   /// **'Add as End Point'**
   String get compassAddAsEndPointButton;
 
-  /// No description provided for @pointsSetAsStartButton.
+  /// Button label to set a point as the start point.
   ///
   /// In en, this message translates to:
   /// **'Set as Start'**
   String get pointsSetAsStartButton;
 
-  /// No description provided for @pointsSetAsEndButton.
+  /// Button label to set a point as the end point.
   ///
   /// In en, this message translates to:
   /// **'Set as End'**
   String get pointsSetAsEndButton;
 
-  /// No description provided for @pointsDeleteButton.
+  /// Button label to delete a point.
   ///
   /// In en, this message translates to:
   /// **'Delete'**
   String get pointsDeleteButton;
 
-  /// No description provided for @errorSaveProjectBeforeAddingPoints.
+  /// Error message shown when trying to add points before saving the project.
   ///
   /// In en, this message translates to:
   /// **'Please save the project before adding points.'**
   String get errorSaveProjectBeforeAddingPoints;
 
-  /// No description provided for @infoFetchingLocation.
+  /// Message shown when fetching the user's location.
   ///
   /// In en, this message translates to:
   /// **'Fetching location...'**
@@ -247,13 +247,13 @@ abstract class S {
   /// **'Point P{ordinalNumber} added.'**
   String pointAddedSnackbar(String ordinalNumber);
 
-  /// No description provided for @pointAddedSetAsEndSnackbarSuffix.
+  /// Suffix for snackbar when a point is set as the end point.
   ///
   /// In en, this message translates to:
   /// **'Set as END point.'**
   String get pointAddedSetAsEndSnackbarSuffix;
 
-  /// No description provided for @pointAddedInsertedBeforeEndSnackbarSuffix.
+  /// Suffix for snackbar when a point is inserted before the end point.
   ///
   /// In en, this message translates to:
   /// **'Inserted before current end point.'**
@@ -277,19 +277,19 @@ abstract class S {
   /// **'Error loading project details: {errorMessage}'**
   String errorLoadingProjectDetails(String errorMessage);
 
-  /// No description provided for @errorAzimuthPointsNotSet.
+  /// Error message when azimuth calculation is attempted without start/end points.
   ///
   /// In en, this message translates to:
   /// **'Starting and/or ending point not set. Cannot calculate azimuth.'**
   String get errorAzimuthPointsNotSet;
 
-  /// No description provided for @errorAzimuthPointsSame.
+  /// Error message when start and end points are the same for azimuth calculation.
   ///
   /// In en, this message translates to:
   /// **'Starting and ending points are the same. Azimuth is undefined or 0.'**
   String get errorAzimuthPointsSame;
 
-  /// No description provided for @errorAzimuthCouldNotRetrievePoints.
+  /// Error message when point data cannot be retrieved for azimuth calculation.
   ///
   /// In en, this message translates to:
   /// **'Could not retrieve point data for calculation. Please check points.'**
@@ -325,19 +325,19 @@ abstract class S {
   /// **'The azimuth field already has a value. The new calculated value will overwrite the current value. Do you want to continue?'**
   String get azimuthOverwriteMessage;
 
-  /// No description provided for @projectNameCannotBeEmptyValidator.
+  /// Validator message for empty project name.
   ///
   /// In en, this message translates to:
   /// **'Project name cannot be empty.'**
   String get projectNameCannotBeEmptyValidator;
 
-  /// No description provided for @projectSavedSuccessfully.
+  /// Snackbar message when a project is saved successfully.
   ///
   /// In en, this message translates to:
   /// **'Project saved successfully.'**
   String get projectSavedSuccessfully;
 
-  /// No description provided for @dialogTitleConfirmDelete.
+  /// Title for the dialog confirming deletion.
   ///
   /// In en, this message translates to:
   /// **'Confirm Delete'**
@@ -349,13 +349,13 @@ abstract class S {
   /// **'Are you sure you want to delete point P{pointOrdinal}? This action cannot be undone.'**
   String dialogContentConfirmDeletePoint(String pointOrdinal);
 
-  /// No description provided for @buttonCancel.
+  /// Label for the cancel button.
   ///
   /// In en, this message translates to:
   /// **'Cancel'**
   String get buttonCancel;
 
-  /// No description provided for @buttonDelete.
+  /// Label for the delete button.
   ///
   /// In en, this message translates to:
   /// **'Delete'**
@@ -433,7 +433,7 @@ abstract class S {
   /// **'File prepared for sharing.'**
   String get file_shared_successfully;
 
-  /// No description provided for @file_saved_successfully.
+  /// Snackbar message when a file is saved successfully.
   ///
   /// In en, this message translates to:
   /// **'File saved successfully'**
@@ -541,25 +541,25 @@ abstract class S {
   /// **'Please save the new project first to enable export.'**
   String get please_save_project_first_to_export;
 
-  /// No description provided for @export_requires_licence_title.
+  /// Title for the dialog shown when a licence is required for export.
   ///
   /// In en, this message translates to:
   /// **'Licence Required for Export'**
   String get export_requires_licence_title;
 
-  /// No description provided for @export_requires_licence_message.
+  /// Message shown when a licence is required for export.
   ///
   /// In en, this message translates to:
   /// **'This feature requires an active licence. Please import a valid licence file to proceed.'**
   String get export_requires_licence_message;
 
-  /// No description provided for @action_import_licence.
+  /// Label for the import licence action.
   ///
   /// In en, this message translates to:
   /// **'Import Licence'**
   String get action_import_licence;
 
-  /// No description provided for @edit_project_title.
+  /// Title for the edit project page.
   ///
   /// In en, this message translates to:
   /// **'Edit Project'**
@@ -571,19 +571,19 @@ abstract class S {
   /// **'Edit: {projectName}'**
   String edit_project_title_named(String projectName);
 
-  /// No description provided for @new_project_title.
+  /// Title for the new project page.
   ///
   /// In en, this message translates to:
   /// **'New Project'**
   String get new_project_title;
 
-  /// No description provided for @delete_project_tooltip.
+  /// Tooltip for the delete project button.
   ///
   /// In en, this message translates to:
   /// **'Delete Project'**
   String get delete_project_tooltip;
 
-  /// No description provided for @save_project_tooltip.
+  /// Tooltip for the save project button.
   ///
   /// In en, this message translates to:
   /// **'Save Project'**
@@ -595,49 +595,49 @@ abstract class S {
   /// **'Last updated: {date}'**
   String last_updated_label(String date);
 
-  /// No description provided for @not_yet_saved_label.
+  /// Label for projects that have not yet been saved.
   ///
   /// In en, this message translates to:
   /// **'Not yet saved'**
   String get not_yet_saved_label;
 
-  /// No description provided for @tap_to_set_date.
+  /// Prompt to tap to set the project date.
   ///
   /// In en, this message translates to:
   /// **'Tap to set date'**
   String get tap_to_set_date;
 
-  /// No description provided for @invalid_number_validator.
+  /// Validator message for invalid number input.
   ///
   /// In en, this message translates to:
   /// **'Invalid number.'**
   String get invalid_number_validator;
 
-  /// No description provided for @must_be_359_validator.
+  /// Validator message for azimuth field range.
   ///
   /// In en, this message translates to:
   /// **'Must be +/-359.99'**
   String get must_be_359_validator;
 
-  /// No description provided for @please_correct_form_errors.
+  /// Message prompting user to correct form errors.
   ///
   /// In en, this message translates to:
   /// **'Please correct the errors in the form.'**
   String get please_correct_form_errors;
 
-  /// No description provided for @project_created_successfully.
+  /// Snackbar message when a project is created successfully.
   ///
   /// In en, this message translates to:
   /// **'Project created successfully!'**
   String get project_created_successfully;
 
-  /// No description provided for @project_already_up_to_date.
+  /// Message when a project is already up to date.
   ///
   /// In en, this message translates to:
   /// **'Project already up to date or not found.'**
   String get project_already_up_to_date;
 
-  /// No description provided for @cannot_delete_unsaved_project.
+  /// Error message when trying to delete an unsaved project.
   ///
   /// In en, this message translates to:
   /// **'Cannot delete a project that has not been saved yet.'**
@@ -649,11 +649,11 @@ abstract class S {
   /// **'Confirm Delete'**
   String get confirm_delete_project_title;
 
-  /// No description provided for @confirm_delete_project_content.
+  /// Content for the dialog confirming project deletion.
   ///
   /// In en, this message translates to:
   /// **'Are you sure you want to delete the project \"{projectName}\"? This action cannot be undone.'**
-  String confirm_delete_project_content(Object projectName);
+  String confirm_delete_project_content(String projectName);
 
   /// No description provided for @project_deleted_successfully.
   ///
@@ -1276,29 +1276,29 @@ abstract class S {
   /// **'Confirm Deletion'**
   String get confirm_deletion_title;
 
-  /// No description provided for @confirm_deletion_content.
+  /// Dialog content asking for confirmation to delete a point.
   ///
   /// In en, this message translates to:
   /// **'Are you sure you want to delete point {pointName}? This action cannot be undone.'**
-  String confirm_deletion_content(Object pointName);
+  String confirm_deletion_content(String pointName);
 
-  /// No description provided for @point_deleted_success.
+  /// Snackbar message when a point is deleted successfully.
   ///
   /// In en, this message translates to:
   /// **'Point {pointName} deleted successfully!'**
-  String point_deleted_success(Object pointName);
+  String point_deleted_success(String pointName);
 
-  /// No description provided for @error_deleting_point.
+  /// Error message when deleting a point fails.
   ///
   /// In en, this message translates to:
   /// **'Error deleting point {pointName}: {errorMessage}'**
-  String error_deleting_point(Object errorMessage, Object pointName);
+  String error_deleting_point(String pointName, String errorMessage);
 
-  /// No description provided for @error_saving_point.
+  /// Error message when saving a point fails.
   ///
   /// In en, this message translates to:
   /// **'Error saving point: {errorMessage}'**
-  String error_saving_point(Object errorMessage);
+  String error_saving_point(String errorMessage);
 
   /// No description provided for @point_details_saved.
   ///
@@ -1336,11 +1336,11 @@ abstract class S {
   /// **'Delete Selected'**
   String get delete_selected;
 
-  /// No description provided for @selected_count.
+  /// Label showing the number of selected items.
   ///
   /// In en, this message translates to:
   /// **'{count} selected'**
-  String selected_count(Object count);
+  String selected_count(int count);
 
   /// No description provided for @delete_projects_title.
   ///
@@ -1348,17 +1348,17 @@ abstract class S {
   /// **'Delete Project(s)?'**
   String get delete_projects_title;
 
-  /// No description provided for @delete_projects_content.
+  /// Content for the dialog confirming deletion of multiple projects.
   ///
   /// In en, this message translates to:
   /// **'Are you sure you want to delete {count} selected project(s)? This action cannot be undone.'**
-  String delete_projects_content(Object count);
+  String delete_projects_content(int count);
 
-  /// No description provided for @project_id_label.
+  /// Label showing the project ID and last update text.
   ///
   /// In en, this message translates to:
   /// **'ID: {id} | {lastUpdateText}'**
-  String project_id_label(Object id, Object lastUpdateText);
+  String project_id_label(String id, String lastUpdateText);
 
   /// No description provided for @no_updates.
   ///
@@ -1525,7 +1525,7 @@ abstract class S {
   /// Label for the heading angle marker on the map.
   ///
   /// In en, this message translates to:
-  /// **'Heading: {angle}°'**
+  /// **'{angle}°'**
   String headingLabel(String angle);
 
   /// No description provided for @locationPermissionTitle.

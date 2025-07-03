@@ -136,7 +136,7 @@ class MapMarkers {
   ) {
     if (points.length < 2) {
       throw StateError(
-        'Cannot build heading label marker with less than 2 points',
+        'Cannot build heading label marker with fewer than 2 points',
       );
     }
 
@@ -144,38 +144,18 @@ class MapMarkers {
     final lastP = points.last;
     final midLat = (firstP.latitude + lastP.latitude) / 2;
     final midLon = (firstP.longitude + lastP.longitude) / 2;
-    final angleForRotation = _degreesToRadians(heading);
+    // No rotation for the label itself
 
     return Marker(
       point: LatLng(midLat, midLon),
       width: 120,
       height: 30,
-      child: Transform.rotate(
-        angle: angleForRotation - (math.pi / 2),
-        alignment: Alignment.center,
-        child: Card(
-          elevation: 2.0,
-          color: Colors.white.withAlpha((0.9 * 255).round()),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(6.0),
-            side: BorderSide(
-              color: Colors.purple.withAlpha((0.7 * 255).round()),
-              width: 1,
-            ),
-          ),
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(3, 1, 3, 0),
-            decoration: BoxDecoration(
-              color: Colors.black.withAlpha((0.2 * 255).round()),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Text(
-              S.of(context)?.headingLabel(heading.toStringAsFixed(1)) ??
-                  'Heading: ${heading.toStringAsFixed(1)}°',
-              style: const TextStyle(color: Colors.black, fontSize: 12),
-              textAlign: TextAlign.center,
-            ),
-          ),
+      child: Center(
+        child: Text(
+          S.of(context)?.headingLabel(heading.toStringAsFixed(1)) ??
+              'Heading: ${heading.toStringAsFixed(1)}°',
+          style: const TextStyle(color: Colors.black, fontSize: 12),
+          textAlign: TextAlign.center,
         ),
       ),
     );

@@ -7,7 +7,10 @@
       "type": "dart",
       "preLaunchTask": "setup-opensource",
       "program": "lib/main.dart",
-      "args": ["--dart-define=FLAVOR=opensource"],
+      "args": [
+        "--flavor=opensource",
+        "--dart-define=FLAVOR_NAME=opensource"
+      ],
       "console": "debugConsole"
     },
     {
@@ -16,7 +19,34 @@
       "type": "dart",
       "preLaunchTask": "setup-full",
       "program": "lib/main.dart",
-      "args": ["--dart-define=FLAVOR=full"],
+      "args": [
+        "--flavor=full",
+        "--dart-define=FLAVOR_NAME=full"
+      ],
+      "console": "debugConsole"
+    },
+    {
+      "name": "Flutter (Open Source Clean)",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "clean-setup-opensource",
+      "program": "lib/main.dart",
+      "args": [
+        "--flavor=opensource",
+        "--dart-define=FLAVOR_NAME=opensource"
+      ],
+      "console": "debugConsole"
+    },
+    {
+      "name": "Flutter (Full Version Clean)",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "clean-setup-full",
+      "program": "lib/main.dart",
+      "args": [
+        "--flavor=full",
+        "--dart-define=FLAVOR_NAME=full"
+      ],
       "console": "debugConsole"
     },
     {

@@ -349,7 +349,7 @@ class SIt extends S {
   String get confirm_delete_project_title => 'Conferma eliminazione progetto';
 
   @override
-  String confirm_delete_project_content(Object projectName) {
+  String confirm_delete_project_content(String projectName) {
     return 'Sei sicuro di voler eliminare questo progetto? Questa azione non può essere annullata.';
   }
 
@@ -715,22 +715,22 @@ class SIt extends S {
   String get confirm_deletion_title => 'Conferma eliminazione';
 
   @override
-  String confirm_deletion_content(Object pointName) {
+  String confirm_deletion_content(String pointName) {
     return 'Sei sicuro di voler eliminare il punto $pointName? Questa azione non può essere annullata.';
   }
 
   @override
-  String point_deleted_success(Object pointName) {
+  String point_deleted_success(String pointName) {
     return 'Punto $pointName eliminato con successo!';
   }
 
   @override
-  String error_deleting_point(Object errorMessage, Object pointName) {
+  String error_deleting_point(String pointName, String errorMessage) {
     return 'Errore durante l\'eliminazione del punto $pointName: $errorMessage';
   }
 
   @override
-  String error_saving_point(Object errorMessage) {
+  String error_saving_point(String errorMessage) {
     return 'Errore durante il salvataggio del punto: $errorMessage';
   }
 
@@ -754,7 +754,7 @@ class SIt extends S {
   String get delete_selected => 'Elimina selezionati';
 
   @override
-  String selected_count(Object count) {
+  String selected_count(int count) {
     return '$count selezionati';
   }
 
@@ -762,12 +762,12 @@ class SIt extends S {
   String get delete_projects_title => 'Eliminare progetti?';
 
   @override
-  String delete_projects_content(Object count) {
+  String delete_projects_content(int count) {
     return 'Sei sicuro di voler eliminare $count progetti selezionati? Questa azione non può essere annullata.';
   }
 
   @override
-  String project_id_label(Object id, Object lastUpdateText) {
+  String project_id_label(String id, String lastUpdateText) {
     return 'ID: $id | $lastUpdateText';
   }
 
@@ -860,7 +860,7 @@ class SIt extends S {
 
   @override
   String headingLabel(String angle) {
-    return 'Direzione: $angle°';
+    return '$angle°';
   }
 
   @override
