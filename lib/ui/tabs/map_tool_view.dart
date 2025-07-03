@@ -694,7 +694,11 @@ class MapToolViewState extends State<MapToolView> with StatusMixin {
             LatLng(points.first.latitude, points.first.longitude),
             LatLng(points.last.latitude, points.last.longitude),
           ],
-          color: Colors.purple.withAlpha((0.7 * 255).round()),
+          gradientColors: [
+            Colors.green.withValues(alpha: 0.5),
+            Colors.red.withValues(alpha: 0.5),
+          ],
+          colorsStop: [0.0, 1.0],
           strokeWidth: 3.0,
           pattern: StrokePattern.dotted(),
         );
