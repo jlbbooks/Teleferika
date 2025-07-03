@@ -862,4 +862,9 @@ class SEn extends S {
 
   @override
   String get noNote => 'No note';
+
+  @override
+  String distanceFromPrevious(String pointName) {
+    return 'Distance from $pointName:';
+  }
 }

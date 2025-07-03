@@ -792,6 +792,71 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                               return null;
                             },
                           ),
+                          // Distance from previous point
+                          Builder(
+                            builder: (context) {
+                              final points = context.projectState.currentPoints;
+                              final selected = widget.point;
+                              final idx = points.indexWhere(
+                                (p) => p.id == selected.id,
+                              );
+                              if (idx <= 0) return SizedBox.shrink();
+                              final prev = points[idx - 1];
+                              final dist = prev.distanceFromPoint(selected);
+                              String distStr;
+                              if (dist >= 1000) {
+                                distStr =
+                                    (dist / 1000).toStringAsFixed(2) + ' km';
+                              } else {
+                                distStr = dist.toStringAsFixed(1) + ' m';
+                              }
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 12.0),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.straighten,
+                                      size: 18,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      S
+                                              .of(context)
+                                              ?.distanceFromPrevious(
+                                                prev.name,
+                                              ) ??
+                                          'Distance from ${prev.name}:',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
+                                          ),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      distStr,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            fontFamily: 'monospace',
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
                           const SizedBox(height: 16),
 
                           // Note

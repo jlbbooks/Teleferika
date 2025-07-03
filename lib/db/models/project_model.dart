@@ -1,7 +1,5 @@
 // db/models/project_model.dart
 
-import 'dart:math' as math;
-
 import 'package:teleferika/core/utils/uuid_generator.dart';
 import 'package:teleferika/db/models/point_model.dart';
 

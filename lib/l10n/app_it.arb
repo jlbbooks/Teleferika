@@ -816,5 +816,15 @@
   },
   "locationPermissionTitle": "Permesso di localizzazione",
   "sensorPermissionTitle": "Permesso sensore",
-  "noNote": "Nessuna nota"
+  "noNote": "Nessuna nota",
+  "distanceFromPrevious": "Distanza da {pointName}:",
+  "@distanceFromPrevious": {
+    "description": "Etichetta per la distanza dal punto precedente nel pannello dettagli punto.",
+    "placeholders": {
+      "pointName": {
+        "type": "String",
+        "example": "P1"
+      }
+    }
+  }
 }

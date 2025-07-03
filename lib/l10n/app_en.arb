@@ -954,5 +954,15 @@
   },
   "locationPermissionTitle": "Location Permission",
   "sensorPermissionTitle": "Sensor Permission",
-  "noNote": "No note"
+  "noNote": "No note",
+  "distanceFromPrevious": "Distance from {pointName}:",
+  "@distanceFromPrevious": {
+    "description": "Label for the distance from the previous point in the point details panel.",
+    "placeholders": {
+      "pointName": {
+        "type": "String",
+        "example": "P1"
+      }
+    }
+  }
 }

@@ -871,4 +871,9 @@ class SIt extends S {
 
   @override
   String get noNote => 'Nessuna nota';
+
+  @override
+  String distanceFromPrevious(String pointName) {
+    return 'Distanza da $pointName:';
+  }
 }

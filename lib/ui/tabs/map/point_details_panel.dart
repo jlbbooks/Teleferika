@@ -5,6 +5,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
+import 'package:teleferika/core/project_provider.dart';
 
 class PointDetailsPanel extends StatefulWidget {
   final PointModel? selectedPoint;
@@ -244,6 +245,68 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                       onConfirm: () => _confirmLongitudeChange(),
                       onCancel: () => _cancelLongitudeChange(),
                       isMobile: isMobile,
+                    ),
+                    // Distance from previous point
+                    Builder(
+                      builder: (context) {
+                        final points = context.projectState.currentPoints;
+                        final selected = widget.selectedPoint;
+                        if (selected == null) return SizedBox.shrink();
+                        final idx = points.indexWhere(
+                          (p) => p.id == selected.id,
+                        );
+                        if (idx <= 0) return SizedBox.shrink();
+                        final prev = points[idx - 1];
+                        // Use interpolated altitudes if needed (for now, just use stored altitudes)
+                        final dist = prev.distanceFromPoint(selected);
+                        String distStr;
+                        if (dist >= 1000) {
+                          distStr = '${(dist / 1000).toStringAsFixed(2)} km';
+                        } else {
+                          distStr = '${dist.toStringAsFixed(1)} m';
+                        }
+                        return Padding(
+                          padding: EdgeInsets.only(top: isMobile ? 2 : 4),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.straighten,
+                                size: isMobile ? 14 : 16,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                              SizedBox(width: isMobile ? 6 : 8),
+                              Text(
+                                S
+                                        .of(context)
+                                        ?.distanceFromPrevious(prev.name) ??
+                                    'Distance from ${prev.name}:',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                      fontSize: isMobile ? 10 : null,
+                                    ),
+                              ),
+                              SizedBox(width: isMobile ? 4 : 6),
+                              Text(
+                                distStr,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      fontFamily: 'monospace',
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: isMobile ? 11 : null,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),

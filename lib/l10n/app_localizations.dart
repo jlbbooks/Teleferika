@@ -1545,6 +1545,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'No note'**
   String get noNote;
+
+  /// Label for the distance from the previous point in the point details panel.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance from {pointName}:'**
+  String distanceFromPrevious(String pointName);
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {
