@@ -79,13 +79,8 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
         logger.warning(
           'Point to save is invalid: ${pointToSave.validationErrors}',
         );
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Error saving point: ${pointToSave.validationErrors.join(', ')}',
-            ),
-            backgroundColor: Colors.red,
-          ),
+        showErrorStatus(
+          'Error saving point: ${pointToSave.validationErrors.join(', ')}',
         );
         return;
       }
@@ -102,12 +97,9 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
       widget.onPhotosSavedSuccessfully?.call();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Photo changes saved automatically.'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
+        showSuccessStatus(
+          S.of(context)?.photo_manager_photo_changes_saved ??
+              'Photo changes saved automatically.',
         );
       }
     } catch (e, stackTrace) {
@@ -117,10 +109,11 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
         stackTrace,
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error saving photo changes: ${e.toString()}'),
-          ),
+        showErrorStatus(
+          S
+                  .of(context)
+                  ?.photo_manager_error_saving_photo_changes(e.toString()) ??
+              'Error saving photo changes: ${e.toString()}',
         );
       }
     } finally {
@@ -169,8 +162,9 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
     } catch (e, stackTrace) {
       logger.severe('Error saving image to app storage: $e', e, stackTrace);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving image: ${e.toString()}')),
+        showErrorStatus(
+          S.of(context)?.photo_manager_error_saving_image(e.toString()) ??
+              'Error saving image: ${e.toString()}',
         );
       }
       return null;
@@ -206,13 +200,8 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
             logger.warning(
               'Created invalid ImageModel: ${newImage.validationErrors}',
             );
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Error creating image: ${newImage.validationErrors.join(', ')}',
-                ),
-                backgroundColor: Colors.red,
-              ),
+            showErrorStatus(
+              'Error creating image: ${newImage.validationErrors.join(', ')}',
             );
             return;
           }
@@ -238,8 +227,9 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
     } catch (e, stackTrace) {
       logger.severe('Error picking image: $e', e, stackTrace);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking image: ${e.toString()}')),
+        showErrorStatus(
+          S.of(context)?.photo_manager_error_picking_image(e.toString()) ??
+              'Error picking image: ${e.toString()}',
         );
       }
     }
@@ -251,8 +241,9 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
       logger.warning(
         "Attempted to delete image while auto-save is in progress. Aborting.",
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please wait, photos are being saved...')),
+      showInfoStatus(
+        S.of(context)?.photo_manager_wait_saving ??
+            'Please wait, photos are being saved...',
       );
       return;
     }
@@ -276,7 +267,7 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
             s?.delete_photo_content(
                   (imageToDelete.ordinalNumber + 1).toString(),
                 ) ??
-                'Are you sure you want to delete photo \\${imageToDelete.ordinalNumber + 1}?',
+                'Are you sure you want to delete photo ${imageToDelete.ordinalNumber + 1}?',
           ),
           actions: <Widget>[
             TextButton(
@@ -302,6 +293,8 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
     );
 
     if (confirmed == true) {
+      ImageModel? _lastDeletedImage;
+      int? _lastDeletedIndex;
       try {
         final fileToDelete = File(imageToDelete.imagePath);
         if (await fileToDelete.exists()) {
@@ -316,40 +309,57 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
           );
         }
         setState(() {
+          _lastDeletedImage = _images[index];
+          _lastDeletedIndex = index;
           _images.removeAt(index);
           logger.finer(
             'Image removed from list. Current count: ${_images.length}',
           );
           _updateOrdinalNumbers();
         });
-        // Instead of just widget.onImageListChanged, now call the save method
         await _savePointWithCurrentImages();
-        // widget.onImageListChanged(List<ImageModel>.from(_images));
         logger.info(
           'onImageListChanged callback invoked after deletion. Image count: ${_images.length}',
         );
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                S.of(context)?.photo_manager_photo_deleted ?? 'Photo deleted',
-              ),
-              backgroundColor: Colors.green,
+          final s = S.of(context);
+          final snackBar = SnackBar(
+            content: Text(s?.photo_manager_photo_deleted ?? 'Photo deleted'),
+            backgroundColor: Colors.green,
+            action: SnackBarAction(
+              label:
+                  s?.undo_changes_tooltip ?? s?.discard_button_label ?? 'Undo',
+              textColor: Colors.white,
+              onPressed: () async {
+                if (_lastDeletedImage != null && _lastDeletedIndex != null) {
+                  setState(() {
+                    _images.insert(_lastDeletedIndex!, _lastDeletedImage!);
+                    _updateOrdinalNumbers();
+                  });
+                  await _savePointWithCurrentImages();
+                  logger.info('Undo delete: photo restored.');
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Photo restored'),
+                        backgroundColor: Colors.blue,
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                }
+              },
             ),
+            duration: const Duration(seconds: 5),
           );
+          ScaffoldMessenger.of(context).showSnackBar(snackBar);
         }
       } catch (e, stackTrace) {
         logger.severe('Error deleting photo file: $e', e, stackTrace);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                S
-                        .of(context)
-                        ?.photo_manager_error_deleting_photo(e.toString()) ??
-                    'Error deleting photo: ${e.toString()}',
-              ),
-            ),
+          showErrorStatus(
+            S.of(context)?.photo_manager_error_deleting_photo(e.toString()) ??
+                'Error deleting photo: ${e.toString()}',
           );
         }
       }
@@ -397,8 +407,9 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
       logger.warning(
         "Attempted to show add photo options while auto-save is in progress. Aborting.",
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please wait, photos are being saved...')),
+      showInfoStatus(
+        S.of(context)?.photo_manager_wait_saving ??
+            'Please wait, photos are being saved...',
       );
       return;
     }
@@ -446,218 +457,270 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
     logger.finest(
       'PhotoManagerWidget build called. Image count: ${_images.length}, isSaving: $_isSavingPhotos',
     );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Stack(
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              '${S.of(context)?.photo_manager_title ?? 'Photos'} (${_images.length})',
-              style: Theme.of(context).textTheme.titleMedium,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${S.of(context)?.photo_manager_title ?? 'Photos'} (${_images.length})',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                _isSavingPhotos
+                    ? const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2.0),
+                        ),
+                      )
+                    : IconButton(
+                        icon: const Icon(Icons.add_a_photo_outlined),
+                        tooltip:
+                            S.of(context)?.photo_manager_add_photo_tooltip ??
+                            'Add Photo',
+                        onPressed: _showAddPhotoOptions,
+                      ),
+              ],
             ),
-            _isSavingPhotos
-                ? const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2.0),
+            const SizedBox(height: 8),
+            _images.isEmpty
+                ? Container(
+                    height: 140, // Increased height for button
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey[400]!),
+                    ),
+                    alignment: Alignment.center,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.photo_album_outlined,
+                          size: 30,
+                          color: Colors.grey[600],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          S.of(context)?.photo_manager_no_photos ??
+                              'No photos yet.',
+                          style: TextStyle(color: Colors.grey[700]),
+                        ),
+                        const SizedBox(height: 12),
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.add_a_photo_outlined),
+                          label: Text(
+                            S.of(context)?.photo_manager_add_photo_tooltip ??
+                                'Add Photo',
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.primary,
+                            foregroundColor: Theme.of(
+                              context,
+                            ).colorScheme.onPrimary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 10,
+                            ),
+                            textStyle: Theme.of(context).textTheme.labelLarge,
+                          ),
+                          onPressed: _isSavingPhotos
+                              ? null
+                              : _showAddPhotoOptions,
+                        ),
+                      ],
                     ),
                   )
-                : IconButton(
-                    icon: const Icon(Icons.add_a_photo_outlined),
-                    tooltip:
-                        S.of(context)?.photo_manager_add_photo_tooltip ??
-                        'Add Photo',
-                    onPressed: _showAddPhotoOptions,
-                  ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        _images.isEmpty
-            ? Container(
-                height: 140, // Increased height for button
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey[400]!),
-                ),
-                alignment: Alignment.center,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.photo_album_outlined,
-                      size: 30,
-                      color: Colors.grey[600],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      S.of(context)?.photo_manager_no_photos ??
-                          'No photos yet.',
-                      style: TextStyle(color: Colors.grey[700]),
-                    ),
-                    const SizedBox(height: 12),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.add_a_photo_outlined),
-                      label: Text(
-                        S.of(context)?.photo_manager_add_photo_tooltip ??
-                            'Add Photo',
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Theme.of(
-                          context,
-                        ).colorScheme.onPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 10,
-                        ),
-                        textStyle: Theme.of(context).textTheme.labelLarge,
-                      ),
-                      onPressed: _isSavingPhotos ? null : _showAddPhotoOptions,
-                    ),
-                  ],
-                ),
-              )
-            : LayoutBuilder(
-                builder: (context, constraints) {
-                  // Calculate crossAxisCount for ~80px cells
-                  final cellSize = 80.0;
-                  final crossAxisCount = (constraints.maxWidth / cellSize)
-                      .floor()
-                      .clamp(1, 8);
-                  return SizedBox(
-                    height: 280,
-                    child: ReorderableGridView.count(
-                      crossAxisCount: crossAxisCount,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 1,
-                      onReorder: (oldIndex, newIndex) async {
-                        logger.info(
-                          'onReorder called. Old index: $oldIndex, New index: $newIndex',
-                        );
-                        setState(() {
-                          final ImageModel item = _images.removeAt(oldIndex);
-                          _images.insert(newIndex, item);
-                          logger.finer(
-                            'Image reordered. Image ID: \\${item.id}',
-                          );
-                          _updateOrdinalNumbers();
-                        });
-                        await _savePointWithCurrentImages();
-                        logger.info(
-                          'onImageListChanged callback invoked after reorder. Image count: \\${_images.length}',
-                        );
-                      },
-                      children: List.generate(_images.length, (index) {
-                        final imageModel = _images[index];
-                        return Container(
-                          key: ValueKey(imageModel.id),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.08),
-                                blurRadius: 2,
-                                offset: Offset(0, 1),
-                              ),
-                            ],
-                          ),
-                          child: Stack(
-                            alignment: Alignment.topRight,
-                            children: [
-                              GestureDetector(
-                                onTap: () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (context) => PhotoGalleryDialog(
-                                      images: _images,
-                                      initialIndex: index,
-                                    ),
-                                  );
-                                },
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: SizedBox.expand(
-                                    child: Image.file(
-                                      File(imageModel.imagePath),
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) {
-                                        logger.warning(
-                                          'Error building image for path: \\${imageModel.imagePath}',
-                                          error,
-                                          stackTrace,
-                                        );
-                                        return Container(
-                                          color: Colors.grey[300],
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              Icon(
-                                                Icons.broken_image,
-                                                color: Colors.grey[600],
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                'Error',
-                                                style: TextStyle(
-                                                  fontSize: 10,
-                                                  color: Colors.grey[700],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      },
-                                    ),
+                : LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Calculate crossAxisCount for ~80px cells
+                      final cellSize = 80.0;
+                      final crossAxisCount = (constraints.maxWidth / cellSize)
+                          .floor()
+                          .clamp(1, 8);
+                      return SizedBox(
+                        height: 280,
+                        child: ReorderableGridView.count(
+                          crossAxisCount: crossAxisCount,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 1,
+                          onReorder: (oldIndex, newIndex) async {
+                            logger.info(
+                              'onReorder called. Old index: $oldIndex, New index: $newIndex',
+                            );
+                            setState(() {
+                              final ImageModel item = _images.removeAt(
+                                oldIndex,
+                              );
+                              _images.insert(newIndex, item);
+                              logger.finer(
+                                'Image reordered. Image ID: ${item.id}',
+                              );
+                              _updateOrdinalNumbers();
+                            });
+                            await _savePointWithCurrentImages();
+                            logger.info(
+                              'onImageListChanged callback invoked after reorder. Image count: ${_images.length}',
+                            );
+                          },
+                          children: List.generate(_images.length, (index) {
+                            final imageModel = _images[index];
+                            return Container(
+                              key: ValueKey(imageModel.id),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.08),
+                                    blurRadius: 2,
+                                    offset: Offset(0, 1),
                                   ),
-                                ),
+                                ],
                               ),
-                              Positioned(
-                                top: 2,
-                                right: 2,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withAlpha(
-                                      (0.6 * 255).round(),
-                                    ),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      borderRadius: BorderRadius.circular(12),
-                                      onTap: _isSavingPhotos
-                                          ? null
-                                          : () => _deletePhoto(index),
-                                      child: const Padding(
-                                        padding: EdgeInsets.all(2.0),
-                                        child: Icon(
-                                          Icons.close,
-                                          color: Colors.white,
-                                          size: 16,
+                              child: Stack(
+                                alignment: Alignment.topRight,
+                                children: [
+                                  GestureDetector(
+                                    onTap: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) =>
+                                            PhotoGalleryDialog(
+                                              images: _images,
+                                              initialIndex: index,
+                                            ),
+                                      );
+                                    },
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: SizedBox.expand(
+                                        child: Image.file(
+                                          File(imageModel.imagePath),
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) {
+                                            logger.warning(
+                                              'Error building image for path: ${imageModel.imagePath}',
+                                              error,
+                                              stackTrace,
+                                            );
+                                            // Remove the broken image from the grid and save
+                                            WidgetsBinding.instance.addPostFrameCallback((
+                                              _,
+                                            ) async {
+                                              if (mounted &&
+                                                  _images.contains(
+                                                    imageModel,
+                                                  )) {
+                                                setState(() {
+                                                  _images.remove(imageModel);
+                                                  _updateOrdinalNumbers();
+                                                });
+                                                await _savePointWithCurrentImages();
+                                                showErrorStatus(
+                                                  S
+                                                          .of(context)
+                                                          ?.photo_manager_error_deleting_photo(
+                                                            'File not found',
+                                                          ) ??
+                                                      'Photo file missing and removed.',
+                                                );
+                                              }
+                                            });
+                                            return Container(
+                                              color: Colors.grey[300],
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.broken_image,
+                                                    color: Colors.grey[600],
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    S
+                                                            .of(context)
+                                                            ?.errorGeneric ??
+                                                        'Error',
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      color: Colors.grey[700],
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
                                         ),
                                       ),
                                     ),
                                   ),
-                                ),
+                                  Positioned(
+                                    top: 2,
+                                    right: 2,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withAlpha(
+                                          (0.6 * 255).round(),
+                                        ),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          onTap: _isSavingPhotos
+                                              ? null
+                                              : () => _deletePhoto(index),
+                                          child: const Padding(
+                                            padding: EdgeInsets.all(2.0),
+                                            child: Icon(
+                                              Icons.close,
+                                              color: Colors.white,
+                                              size: 16,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                        );
-                      }),
-                    ),
-                  );
-                },
+                            );
+                          }),
+                        ),
+                      );
+                    },
+                  ),
+          ],
+        ),
+        if (currentStatus != null)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: StatusIndicator(
+                status: currentStatus,
+                onDismiss: hideStatus,
+                margin: const EdgeInsets.only(top: 8),
               ),
+            ),
+          ),
       ],
     );
   }
