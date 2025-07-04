@@ -757,7 +757,7 @@ class SIt extends S {
   String get delete_selected => 'Elimina selezionati';
 
   @override
-  String selected_count(int count) {
+  String selected_count(String count) {
     return '$count selezionati';
   }
 
@@ -765,7 +765,7 @@ class SIt extends S {
   String get delete_projects_title => 'Eliminare progetti?';
 
   @override
-  String delete_projects_content(int count) {
+  String delete_projects_content(String count) {
     return 'Sei sicuro di voler eliminare $count progetti selezionati? Questa azione non può essere annullata.';
   }
 
@@ -995,4 +995,49 @@ class SIt extends S {
   @override
   String get photo_manager_wait_saving =>
       'Attendere, salvataggio foto in corso...';
+
+  @override
+  String app_version_label(String version) {
+    return 'Versione app: $version';
+  }
+
+  @override
+  String licence_active_content(String email, String validUntil) {
+    return 'Licenza a: $email\nStato: Attiva\nValida fino a: $validUntil';
+  }
+
+  @override
+  String licence_expired_content(String email, String validUntil) {
+    return 'Licenza a: $email\nStato: Scaduta\nValida fino a: $validUntil\n\nImporta una licenza valida.';
+  }
+
+  @override
+  String get licence_none_content =>
+      'Nessuna licenza attiva trovata. Importa un file di licenza per sbloccare le funzionalità premium.';
+
+  @override
+  String licence_status(String status) {
+    return 'Stato licenza: $status';
+  }
+
+  @override
+  String feature_demo_failed(String error) {
+    return 'Dimostrazione funzionalità fallita: $error';
+  }
+
+  @override
+  String licence_imported_successfully(String email) {
+    return 'Licenza per $email importata con successo!';
+  }
+
+  @override
+  String get licence_import_cancelled =>
+      'Importazione licenza annullata o fallita.';
+
+  @override
+  String get demo_license_imported_successfully =>
+      'Licenza demo importata con successo!';
+
+  @override
+  String get license_cleared_successfully => 'Licenza rimossa con successo!';
 }
