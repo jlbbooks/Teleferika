@@ -760,80 +760,62 @@ class _PhotoGalleryDialogState extends State<PhotoGalleryDialog> {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    return Semantics(
-      label: s?.photo_manager_title ?? 'Photo Gallery',
-      explicitChildNodes: true,
-      child: Dialog(
-        backgroundColor: Colors.black,
-        insetPadding: const EdgeInsets.all(0),
-        child: Stack(
-          children: [
-            PageView.builder(
-              controller: _pageController,
-              itemCount: widget.images.length,
-              onPageChanged: (index) {
-                setState(() {
-                  _currentIndex = index;
-                });
-              },
-              itemBuilder: (context, index) {
-                final image = widget.images[index];
-                return Center(
-                  child: InteractiveViewer(
-                    child: Semantics(
-                      label:
-                          (s?.photo_manager_title ?? 'Photo') +
-                          ' #${image.ordinalNumber + 1}',
-                      image: true,
-                      child: Image.file(
-                        File(image.imagePath),
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: Colors.grey[900],
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.broken_image,
-                                color: Colors.grey[600],
-                                size: 60,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                s?.errorGeneric ?? 'Error',
-                                style: TextStyle(color: Colors.grey[400]),
-                              ),
-                            ],
+    return Dialog(
+      backgroundColor: Colors.black,
+      insetPadding: const EdgeInsets.all(0),
+      child: Stack(
+        children: [
+          PageView.builder(
+            controller: _pageController,
+            itemCount: widget.images.length,
+            onPageChanged: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              final image = widget.images[index];
+              return Center(
+                child: InteractiveViewer(
+                  child: Image.file(
+                    File(image.imagePath),
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: Colors.grey[900],
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.broken_image,
+                            color: Colors.grey[600],
+                            size: 60,
                           ),
-                        ),
+                          const SizedBox(height: 8),
+                          Text(
+                            s?.errorGeneric ?? 'Error',
+                            style: TextStyle(color: Colors.grey[400]),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                );
-              },
-            ),
-            Positioned(
-              top: 32,
-              right: 32,
-              child: Semantics(
-                label: s?.close_button ?? 'Close',
-                button: true,
-                child: Tooltip(
-                  message: s?.close_button ?? 'Close',
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 32,
-                    ),
-                    tooltip: s?.close_button ?? 'Close',
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
                 ),
+              );
+            },
+          ),
+          Positioned(
+            top: 32,
+            right: 32,
+            child: Tooltip(
+              message: s?.close_button ?? 'Close',
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 32),
+                tooltip: s?.close_button ?? 'Close',
+                onPressed: () => Navigator.of(context).pop(),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
