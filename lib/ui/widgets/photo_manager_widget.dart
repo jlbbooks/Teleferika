@@ -501,121 +501,139 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
                   ],
                 ),
               )
-            : SizedBox(
-                height: 280, // Enough for 3 rows of 80px + spacing
-                child: ReorderableGridView.count(
-                  crossAxisCount: 3,
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 0.85,
-                  onReorder: (oldIndex, newIndex) async {
-                    logger.info(
-                      'onReorder called. Old index: $oldIndex, New index: $newIndex',
-                    );
-                    setState(() {
-                      final ImageModel item = _images.removeAt(oldIndex);
-                      _images.insert(newIndex, item);
-                      logger.finer('Image reordered. Image ID: ${item.id}');
-                      _updateOrdinalNumbers();
-                    });
-                    await _savePointWithCurrentImages();
-                    logger.info(
-                      'onImageListChanged callback invoked after reorder. Image count: ${_images.length}',
-                    );
-                  },
-                  children: List.generate(_images.length, (index) {
-                    final imageModel = _images[index];
-                    return Card(
-                      key: ValueKey(imageModel.id),
-                      elevation: 2.0,
-                      margin: EdgeInsets.zero,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Stack(
-                        alignment: Alignment.topRight,
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) => PhotoGalleryDialog(
-                                  images: _images,
-                                  initialIndex: index,
-                                ),
-                              );
-                            },
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8.0),
-                              child: Image.file(
-                                File(imageModel.imagePath),
-                                width: 80,
-                                height: 80,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  logger.warning(
-                                    'Error building image for path: \\${imageModel.imagePath}',
-                                    error,
-                                    stackTrace,
-                                  );
-                                  return Container(
-                                    width: 80,
-                                    height: 80,
-                                    color: Colors.grey[300],
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.broken_image,
-                                          color: Colors.grey[600],
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'Error',
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            color: Colors.grey[700],
-                                          ),
-                                        ),
-                                      ],
+            : LayoutBuilder(
+                builder: (context, constraints) {
+                  // Calculate crossAxisCount for ~80px cells
+                  final cellSize = 80.0;
+                  final crossAxisCount = (constraints.maxWidth / cellSize)
+                      .floor()
+                      .clamp(1, 8);
+                  return SizedBox(
+                    height: 280,
+                    child: ReorderableGridView.count(
+                      crossAxisCount: crossAxisCount,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 1,
+                      onReorder: (oldIndex, newIndex) async {
+                        logger.info(
+                          'onReorder called. Old index: $oldIndex, New index: $newIndex',
+                        );
+                        setState(() {
+                          final ImageModel item = _images.removeAt(oldIndex);
+                          _images.insert(newIndex, item);
+                          logger.finer(
+                            'Image reordered. Image ID: \\${item.id}',
+                          );
+                          _updateOrdinalNumbers();
+                        });
+                        await _savePointWithCurrentImages();
+                        logger.info(
+                          'onImageListChanged callback invoked after reorder. Image count: \\${_images.length}',
+                        );
+                      },
+                      children: List.generate(_images.length, (index) {
+                        final imageModel = _images[index];
+                        return Container(
+                          key: ValueKey(imageModel.id),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.08),
+                                blurRadius: 2,
+                                offset: Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                          child: Stack(
+                            alignment: Alignment.topRight,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => PhotoGalleryDialog(
+                                      images: _images,
+                                      initialIndex: index,
                                     ),
                                   );
                                 },
-                              ),
-                            ),
-                          ),
-                          Container(
-                            margin: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withAlpha(
-                                (0.6 * 255).round(),
-                              ),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(12),
-                                onTap: _isSavingPhotos
-                                    ? null
-                                    : () => _deletePhoto(index),
-                                child: const Padding(
-                                  padding: EdgeInsets.all(2.0),
-                                  child: Icon(
-                                    Icons.close,
-                                    color: Colors.white,
-                                    size: 16,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: SizedBox.expand(
+                                    child: Image.file(
+                                      File(imageModel.imagePath),
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        logger.warning(
+                                          'Error building image for path: \\${imageModel.imagePath}',
+                                          error,
+                                          stackTrace,
+                                        );
+                                        return Container(
+                                          color: Colors.grey[300],
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              Icon(
+                                                Icons.broken_image,
+                                                color: Colors.grey[600],
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                'Error',
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  color: Colors.grey[700],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
+                              Positioned(
+                                top: 2,
+                                right: 2,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withAlpha(
+                                      (0.6 * 255).round(),
+                                    ),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(12),
+                                      onTap: _isSavingPhotos
+                                          ? null
+                                          : () => _deletePhoto(index),
+                                      child: const Padding(
+                                        padding: EdgeInsets.all(2.0),
+                                        child: Icon(
+                                          Icons.close,
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    );
-                  }),
-                ),
+                        );
+                      }),
+                    ),
+                  );
+                },
               ),
       ],
     );
