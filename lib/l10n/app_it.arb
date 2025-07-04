@@ -778,9 +778,28 @@
   "untitled_project": "Progetto senza titolo",
   "delete_selected": "Elimina selezionati",
   "selected_count": "{count} selezionati",
+  "@selected_count": {
+    "description": "Etichetta che mostra il numero di elementi selezionati.",
+    "placeholders": {
+      "count": {"type": "int", "example": "2"}
+    }
+  },
   "delete_projects_title": "Eliminare progetti?",
   "delete_projects_content": "Sei sicuro di voler eliminare {count} progetti selezionati? Questa azione non può essere annullata.",
+  "@delete_projects_content": {
+    "description": "Contenuto della finestra di dialogo di conferma eliminazione multipla.",
+    "placeholders": {
+      "count": {"type": "int", "example": "3"}
+    }
+  },
   "project_id_label": "ID: {id} | {lastUpdateText}",
+  "@project_id_label": {
+    "description": "Etichetta che mostra l'ID del progetto e il testo dell'ultimo aggiornamento.",
+    "placeholders": {
+      "id": {"type": "String", "example": "123"},
+      "lastUpdateText": {"type": "String", "example": "Data Progetto: 1 Gen 2024 | Agg: 12:00"}
+    }
+  },
   "license_information_title": "Informazioni licenza",
   "close_button": "Chiudi",
   "import_new_licence": "Importa nuova licenza",
@@ -809,12 +828,9 @@
   "tapOnTheMapToSetNewLocation": "Tocca sulla mappa per impostare la nuova posizione",
   "headingLabel": "{angle}°",
   "@headingLabel": {
-    "description": "Etichetta per il marker della direzione sulla mappa.",
+    "description": "Etichetta per il marker dell'angolo di direzione sulla mappa.",
     "placeholders": {
-      "angle": {
-        "type": "String",
-        "example": "123.4"
-      }
+      "angle": {"type": "String", "example": "123.4"}
     }
   },
   "locationPermissionTitle": "Permesso di localizzazione",
@@ -824,10 +840,7 @@
   "@distanceFromPrevious": {
     "description": "Etichetta per la distanza dal punto precedente nel pannello dettagli punto.",
     "placeholders": {
-      "pointName": {
-        "type": "String",
-        "example": "P1"
-      }
+      "pointName": {"type": "String", "example": "P1"}
     }
   },
   "offsetLabel": "Scostamento:",
@@ -992,5 +1005,34 @@
       "errorMessage": { "type": "String", "example": "File non trovato" }
     }
   },
-  "photo_manager_wait_saving": "Attendere, salvataggio foto in corso..."
+  "photo_manager_wait_saving": "Attendere, salvataggio foto in corso...",
+  "app_version_label": "Versione app: {version}",
+  "@app_version_label": {
+    "description": "Etichetta per visualizzare la versione dell'app nei dialoghi.",
+    "placeholders": {"version": {"type": "String", "example": "1.2.3"}}
+  },
+  "licence_active_content": "Licenza a: {email}\nStato: Attiva\nValida fino a: {validUntil}",
+  "@licence_active_content": {
+    "description": "Contenuto per dialogo licenza attiva.",
+    "placeholders": {"email": {"type": "String"}, "validUntil": {"type": "String"}}
+  },
+  "licence_expired_content": "Licenza a: {email}\nStato: Scaduta\nValida fino a: {validUntil}\n\nImporta una licenza valida.",
+  "@licence_expired_content": {
+    "description": "Contenuto per dialogo licenza scaduta.",
+    "placeholders": {"email": {"type": "String"}, "validUntil": {"type": "String"}}
+  },
+  "licence_none_content": "Nessuna licenza attiva trovata. Importa un file di licenza per sbloccare le funzionalità premium.",
+  "@licence_none_content": {"description": "Contenuto per nessuna licenza trovata nel dialogo."},
+  "licence_status": "Stato licenza: {status}",
+  "@licence_status": {"description": "Linea di stato per la licenza.", "placeholders": {"status": {"type": "String"}}},
+  "feature_demo_failed": "Dimostrazione funzionalità fallita: {error}",
+  "@feature_demo_failed": {"description": "Messaggio di errore per demo funzionalità fallita.", "placeholders": {"error": {"type": "String"}}},
+  "licence_imported_successfully": "Licenza per {email} importata con successo!",
+  "@licence_imported_successfully": {"description": "Snackbar per importazione licenza riuscita.", "placeholders": {"email": {"type": "String"}}},
+  "licence_import_cancelled": "Importazione licenza annullata o fallita.",
+  "@licence_import_cancelled": {"description": "Snackbar per importazione licenza annullata o fallita."},
+  "demo_license_imported_successfully": "Licenza demo importata con successo!",
+  "@demo_license_imported_successfully": {"description": "Snackbar per importazione licenza demo riuscita."},
+  "license_cleared_successfully": "Licenza rimossa con successo!",
+  "@license_cleared_successfully": {"description": "Snackbar per rimozione licenza riuscita."}
 }

@@ -96,20 +96,34 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
       // Add version info if available
       String versionInfo = '';
       if (widget.appVersion != null && widget.appVersion!.isNotEmpty) {
-        versionInfo = '\nApp Version: ${widget.appVersion}';
+        versionInfo =
+            '\n${S.of(context)?.app_version_label(widget.appVersion!) ?? 'App Version: ${widget.appVersion}'}';
       }
 
       if (_activeLicence != null && _activeLicence!.isValid) {
         contentText =
-            "Licensed to: ${_activeLicence!.email}\n"
-            "Status: Active\n"
-            "Valid Until: ${DateFormat.yMMMd().add_Hm().format(_activeLicence!.validUntil.toLocal())}$versionInfo";
+            (S
+                    .of(context)
+                    ?.licence_active_content(
+                      _activeLicence!.email,
+                      DateFormat.yMMMd().add_Hm().format(
+                        _activeLicence!.validUntil.toLocal(),
+                      ),
+                    ) ??
+                'Licensed to: ${_activeLicence!.email}\nStatus: Active\nValid Until: ${DateFormat.yMMMd().add_Hm().format(_activeLicence!.validUntil.toLocal())}') +
+            versionInfo;
       } else if (_activeLicence != null && !_activeLicence!.isValid) {
         contentText =
-            "Licensed to: ${_activeLicence!.email}\n"
-            "Status: Expired\n"
-            "Valid Until: ${DateFormat.yMMMd().add_Hm().format(_activeLicence!.validUntil.toLocal())}\n\n"
-            "Please import a valid licence.$versionInfo";
+            (S
+                    .of(context)
+                    ?.licence_expired_content(
+                      _activeLicence!.email,
+                      DateFormat.yMMMd().add_Hm().format(
+                        _activeLicence!.validUntil.toLocal(),
+                      ),
+                    ) ??
+                'Licensed to: ${_activeLicence!.email}\nStatus: Expired\nValid Until: ${DateFormat.yMMMd().add_Hm().format(_activeLicence!.validUntil.toLocal())}\n\nPlease import a valid licence.') +
+            versionInfo;
         actions.insert(
           0,
           TextButton(
@@ -124,7 +138,9 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
         );
       } else {
         contentText =
-            "No active licence found. Please import a licence file to unlock premium features.$versionInfo";
+            (S.of(context)?.licence_none_content ??
+                'No active licence found. Please import a licence file to unlock premium features.') +
+            versionInfo;
         actions.insert(
           0,
           TextButton(
@@ -157,7 +173,8 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
     // Add version info if available
     String versionInfo = '';
     if (widget.appVersion != null && widget.appVersion!.isNotEmpty) {
-      versionInfo = '\nApp Version: ${widget.appVersion}';
+      versionInfo =
+          '\n${S.of(context)?.app_version_label(widget.appVersion!) ?? 'App Version: ${widget.appVersion}'}';
     }
 
     showDialog(
@@ -260,10 +277,16 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
     try {
       final licenceInfo = LicensedFeaturesLoader.getLicenceStatus();
       if (licenceInfo != null) {
-        showSuccessStatus('Licence Status: ${licenceInfo['status']}');
+        showSuccessStatus(
+          S.of(context)?.licence_status(licenceInfo['status']) ??
+              'Licence Status: ${licenceInfo['status']}',
+        );
       }
     } catch (e) {
-      showErrorStatus('Feature demonstration failed: $e');
+      showErrorStatus(
+        S.of(context)?.feature_demo_failed(e.toString()) ??
+            'Feature demonstration failed: $e',
+      );
     }
   }
 
@@ -276,12 +299,18 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
             _activeLicence = importedLicence; // Update local state
           });
           showSuccessStatus(
-            'Licence for ${importedLicence.email} imported successfully!',
+            S
+                    .of(context)
+                    ?.licence_imported_successfully(importedLicence.email) ??
+                'Licence for ${importedLicence.email} imported successfully!',
           );
           _showLicenceInfoDialog(); // Show updated info
         } else {
           // User cancelled or import failed without throwing a specific format exception handled below
-          showInfoStatus('Licence import cancelled or failed.');
+          showInfoStatus(
+            S.of(context)?.licence_import_cancelled ??
+                'Licence import cancelled or failed.',
+          );
         }
       }
     } on FormatException catch (e) {
@@ -600,7 +629,10 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
         setState(() {
           _activeLicence = demoLicence;
         });
-        showSuccessStatus('Demo license imported successfully!');
+        showSuccessStatus(
+          S.of(context)?.demo_license_imported_successfully ??
+              'Demo license imported successfully!',
+        );
       }
     } catch (e, stackTrace) {
       logger.severe('Error testing demo license import', e, stackTrace);
@@ -618,7 +650,10 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
         setState(() {
           _activeLicence = null;
         });
-        showInfoStatus('License cleared successfully!');
+        showInfoStatus(
+          S.of(context)?.license_cleared_successfully ??
+              'License cleared successfully!',
+        );
       }
     } catch (e, stackTrace) {
       logger.severe('Error clearing license', e, stackTrace);

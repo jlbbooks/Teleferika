@@ -889,10 +889,7 @@
   "@selected_count": {
     "description": "Label showing the number of selected items.",
     "placeholders": {
-      "count": {
-        "type": "int",
-        "example": "2"
-      }
+      "count": {"type": "int", "example": "2"}
     }
   },
   "delete_projects_title": "Delete Project(s)?",
@@ -900,24 +897,15 @@
   "@delete_projects_content": {
     "description": "Content for the dialog confirming deletion of multiple projects.",
     "placeholders": {
-      "count": {
-        "type": "int",
-        "example": "3"
-      }
+      "count": {"type": "int", "example": "3"}
     }
   },
   "project_id_label": "ID: {id} | {lastUpdateText}",
   "@project_id_label": {
     "description": "Label showing the project ID and last update text.",
     "placeholders": {
-      "id": {
-        "type": "String",
-        "example": "123"
-      },
-      "lastUpdateText": {
-        "type": "String",
-        "example": "Proj. Date: Jan 1, 2024 | Upd: 12:00"
-      }
+      "id": {"type": "String", "example": "123"},
+      "lastUpdateText": {"type": "String", "example": "Proj. Date: Jan 1, 2024 | Upd: 12:00"}
     }
   },
   "license_information_title": "Licence Information",
@@ -950,10 +938,7 @@
   "@headingLabel": {
     "description": "Label for the heading angle marker on the map.",
     "placeholders": {
-      "angle": {
-        "type": "String",
-        "example": "123.4"
-      }
+      "angle": {"type": "String", "example": "123.4"}
     }
   },
   "locationPermissionTitle": "Location Permission",
@@ -963,10 +948,7 @@
   "@distanceFromPrevious": {
     "description": "Label for the distance from the previous point in the point details panel.",
     "placeholders": {
-      "pointName": {
-        "type": "String",
-        "example": "P1"
-      }
+      "pointName": {"type": "String", "example": "P1"}
     }
   },
   "offsetLabel": "Offset:",
@@ -1134,5 +1116,34 @@
   "photo_manager_wait_saving": "Please wait, photos are being saved...",
   "@photo_manager_wait_saving": {
     "description": "Snackbar message shown when photos are being saved and user tries to interact."
-  }
+  },
+  "app_version_label": "App Version: {version}",
+  "@app_version_label": {
+    "description": "Label for displaying the app version in dialogs.",
+    "placeholders": {"version": {"type": "String", "example": "1.2.3"}}
+  },
+  "licence_active_content": "Licensed to: {email}\nStatus: Active\nValid Until: {validUntil}",
+  "@licence_active_content": {
+    "description": "Content for active licence info dialog.",
+    "placeholders": {"email": {"type": "String"}, "validUntil": {"type": "String"}}
+  },
+  "licence_expired_content": "Licensed to: {email}\nStatus: Expired\nValid Until: {validUntil}\n\nPlease import a valid licence.",
+  "@licence_expired_content": {
+    "description": "Content for expired licence info dialog.",
+    "placeholders": {"email": {"type": "String"}, "validUntil": {"type": "String"}}
+  },
+  "licence_none_content": "No active licence found. Please import a licence file to unlock premium features.",
+  "@licence_none_content": {"description": "Content for no licence found in info dialog."},
+  "licence_status": "Licence Status: {status}",
+  "@licence_status": {"description": "Status line for licence status.", "placeholders": {"status": {"type": "String"}}},
+  "feature_demo_failed": "Feature demonstration failed: {error}",
+  "@feature_demo_failed": {"description": "Error message for failed feature demo.", "placeholders": {"error": {"type": "String"}}},
+  "licence_imported_successfully": "Licence for {email} imported successfully!",
+  "@licence_imported_successfully": {"description": "Snackbar for successful licence import.", "placeholders": {"email": {"type": "String"}}},
+  "licence_import_cancelled": "Licence import cancelled or failed.",
+  "@licence_import_cancelled": {"description": "Snackbar for cancelled or failed licence import."},
+  "demo_license_imported_successfully": "Demo license imported successfully!",
+  "@demo_license_imported_successfully": {"description": "Snackbar for successful demo license import."},
+  "license_cleared_successfully": "License cleared successfully!",
+  "@license_cleared_successfully": {"description": "Snackbar for successful license clear action."}
 }

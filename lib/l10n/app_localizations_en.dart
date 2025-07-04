@@ -986,4 +986,48 @@ class SEn extends S {
   @override
   String get photo_manager_wait_saving =>
       'Please wait, photos are being saved...';
+
+  @override
+  String app_version_label(String version) {
+    return 'App Version: $version';
+  }
+
+  @override
+  String licence_active_content(String email, String validUntil) {
+    return 'Licensed to: $email\nStatus: Active\nValid Until: $validUntil';
+  }
+
+  @override
+  String licence_expired_content(String email, String validUntil) {
+    return 'Licensed to: $email\nStatus: Expired\nValid Until: $validUntil\n\nPlease import a valid licence.';
+  }
+
+  @override
+  String get licence_none_content =>
+      'No active licence found. Please import a licence file to unlock premium features.';
+
+  @override
+  String licence_status(String status) {
+    return 'Licence Status: $status';
+  }
+
+  @override
+  String feature_demo_failed(String error) {
+    return 'Feature demonstration failed: $error';
+  }
+
+  @override
+  String licence_imported_successfully(String email) {
+    return 'Licence for $email imported successfully!';
+  }
+
+  @override
+  String get licence_import_cancelled => 'Licence import cancelled or failed.';
+
+  @override
+  String get demo_license_imported_successfully =>
+      'Demo license imported successfully!';
+
+  @override
+  String get license_cleared_successfully => 'License cleared successfully!';
 }

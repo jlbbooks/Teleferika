@@ -1749,6 +1749,66 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Please wait, photos are being saved...'**
   String get photo_manager_wait_saving;
+
+  /// Label for displaying the app version in dialogs.
+  ///
+  /// In en, this message translates to:
+  /// **'App Version: {version}'**
+  String app_version_label(String version);
+
+  /// Content for active licence info dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Licensed to: {email}\nStatus: Active\nValid Until: {validUntil}'**
+  String licence_active_content(String email, String validUntil);
+
+  /// Content for expired licence info dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Licensed to: {email}\nStatus: Expired\nValid Until: {validUntil}\n\nPlease import a valid licence.'**
+  String licence_expired_content(String email, String validUntil);
+
+  /// Content for no licence found in info dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'No active licence found. Please import a licence file to unlock premium features.'**
+  String get licence_none_content;
+
+  /// Status line for licence status.
+  ///
+  /// In en, this message translates to:
+  /// **'Licence Status: {status}'**
+  String licence_status(String status);
+
+  /// Error message for failed feature demo.
+  ///
+  /// In en, this message translates to:
+  /// **'Feature demonstration failed: {error}'**
+  String feature_demo_failed(String error);
+
+  /// Snackbar for successful licence import.
+  ///
+  /// In en, this message translates to:
+  /// **'Licence for {email} imported successfully!'**
+  String licence_imported_successfully(String email);
+
+  /// Snackbar for cancelled or failed licence import.
+  ///
+  /// In en, this message translates to:
+  /// **'Licence import cancelled or failed.'**
+  String get licence_import_cancelled;
+
+  /// Snackbar for successful demo license import.
+  ///
+  /// In en, this message translates to:
+  /// **'Demo license imported successfully!'**
+  String get demo_license_imported_successfully;
+
+  /// Snackbar for successful license clear action.
+  ///
+  /// In en, this message translates to:
+  /// **'License cleared successfully!'**
+  String get license_cleared_successfully;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {
