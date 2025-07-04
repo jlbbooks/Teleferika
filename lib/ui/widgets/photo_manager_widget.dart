@@ -477,7 +477,7 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
         const SizedBox(height: 8),
         _images.isEmpty
             ? Container(
-                height: 100, // Or some appropriate placeholder size
+                height: 140, // Increased height for button
                 decoration: BoxDecoration(
                   color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(8),
@@ -497,6 +497,29 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
                       S.of(context)?.photo_manager_no_photos ??
                           'No photos yet.',
                       style: TextStyle(color: Colors.grey[700]),
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.add_a_photo_outlined),
+                      label: Text(
+                        S.of(context)?.photo_manager_add_photo_tooltip ??
+                            'Add Photo',
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor: Theme.of(
+                          context,
+                        ).colorScheme.onPrimary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10,
+                        ),
+                        textStyle: Theme.of(context).textTheme.labelLarge,
+                      ),
+                      onPressed: _isSavingPhotos ? null : _showAddPhotoOptions,
                     ),
                   ],
                 ),
