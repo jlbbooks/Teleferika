@@ -43,6 +43,10 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
   bool _isSavingPhotos = false;
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
+  // Multi-select state
+  bool _selectMode = false;
+  final Set<String> _selectedImageIds = {};
+
   @override
   void initState() {
     super.initState();
@@ -444,6 +448,120 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
     );
   }
 
+  void _toggleSelectMode() {
+    setState(() {
+      _selectMode = !_selectMode;
+      if (!_selectMode) {
+        _selectedImageIds.clear();
+      }
+    });
+  }
+
+  void _toggleImageSelection(String imageId) {
+    setState(() {
+      if (_selectedImageIds.contains(imageId)) {
+        _selectedImageIds.remove(imageId);
+      } else {
+        _selectedImageIds.add(imageId);
+      }
+      // Exit selection mode if nothing is selected
+      if (_selectedImageIds.isEmpty) {
+        _selectMode = false;
+      }
+    });
+  }
+
+  void _selectAllImages() {
+    setState(() {
+      _selectedImageIds.addAll(_images.map((img) => img.id));
+    });
+  }
+
+  void _clearSelection() {
+    setState(() {
+      _selectedImageIds.clear();
+    });
+  }
+
+  Future<void> _deleteSelectedImages() async {
+    if (_selectedImageIds.isEmpty) return;
+    final s = S.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(s?.delete_photo_title ?? 'Delete Photos?'),
+        content: Text(
+          s?.delete_photo_content(_selectedImageIds.length.toString()) ??
+              'Delete selected photos?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(s?.buttonCancel ?? 'Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(
+              s?.buttonDelete ?? 'Delete',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      final deletedImages = _images
+          .where((img) => _selectedImageIds.contains(img.id))
+          .toList();
+      setState(() {
+        _images.removeWhere((img) => _selectedImageIds.contains(img.id));
+        _selectedImageIds.clear();
+        _updateOrdinalNumbers();
+      });
+      await _savePointWithCurrentImages();
+      showSuccessStatus(s?.photo_manager_photo_deleted ?? 'Photos deleted');
+      // TODO: Add undo for batch delete
+    }
+  }
+
+  // Add/Edit note for a photo
+  void _editPhotoNote(ImageModel image) async {
+    final s = S.of(context);
+    final controller = TextEditingController(text: image.note);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(s?.addANote ?? 'Add a note'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLines: 3,
+          decoration: InputDecoration(hintText: s?.addANote ?? 'Add a note...'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(s?.buttonCancel ?? 'Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: Text(s?.save ?? 'Save'),
+          ),
+        ],
+      ),
+    );
+    if (result != null && result != image.note) {
+      setState(() {
+        final idx = _images.indexWhere((img) => img.id == image.id);
+        if (idx != -1) {
+          _images[idx] = _images[idx].copyWith(note: result);
+        }
+      });
+      await _savePointWithCurrentImages();
+      showSuccessStatus(s?.save ?? 'Saved');
+    }
+  }
+
   @override
   void dispose() {
     logger.info(
@@ -537,6 +655,7 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
                           onPressed: _isSavingPhotos
                               ? null
                               : _showAddPhotoOptions,
+                          autofocus: true,
                         ),
                       ],
                     ),
@@ -593,15 +712,29 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
                                 alignment: Alignment.topRight,
                                 children: [
                                   GestureDetector(
-                                    onTap: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (context) =>
-                                            PhotoGalleryDialog(
-                                              images: _images,
-                                              initialIndex: index,
-                                            ),
-                                      );
+                                    onTap: _selectMode
+                                        ? () => _toggleImageSelection(
+                                            imageModel.id,
+                                          )
+                                        : () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) =>
+                                                  PhotoGalleryDialog(
+                                                    images: _images,
+                                                    initialIndex: index,
+                                                  ),
+                                            );
+                                          },
+                                    onLongPress: () {
+                                      if (!_selectMode) {
+                                        setState(() {
+                                          _selectMode = true;
+                                          _selectedImageIds.add(imageModel.id);
+                                        });
+                                      } else {
+                                        _toggleImageSelection(imageModel.id);
+                                      }
                                     },
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(8),
@@ -667,37 +800,46 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
                                       ),
                                     ),
                                   ),
-                                  Positioned(
-                                    top: 2,
-                                    right: 2,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.black.withAlpha(
-                                          (0.6 * 255).round(),
-                                        ),
-                                        shape: BoxShape.circle,
+                                  if (_selectMode &&
+                                      _selectedImageIds.contains(imageModel.id))
+                                    Positioned(
+                                      top: 4,
+                                      left: 4,
+                                      child: Icon(
+                                        Icons.check_circle,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
+                                        size: 24,
                                       ),
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          onTap: _isSavingPhotos
-                                              ? null
-                                              : () => _deletePhoto(index),
-                                          child: const Padding(
-                                            padding: EdgeInsets.all(2.0),
-                                            child: Icon(
-                                              Icons.close,
-                                              color: Colors.white,
-                                              size: 16,
+                                    ),
+                                  // Note icon (bottom right)
+                                  if (!_selectMode)
+                                    Positioned(
+                                      bottom: 4,
+                                      right: 4,
+                                      child: GestureDetector(
+                                        onTap: () => _editPhotoNote(imageModel),
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            color: Colors.black.withOpacity(
+                                              0.5,
                                             ),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          padding: const EdgeInsets.all(4),
+                                          child: Icon(
+                                            imageModel.note.isNotEmpty
+                                                ? Icons.sticky_note_2
+                                                : Icons.sticky_note_2_outlined,
+                                            color: Colors.white,
+                                            size: 20,
                                           ),
                                         ),
                                       ),
                                     ),
-                                  ),
                                 ],
                               ),
                             );
@@ -719,6 +861,17 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
                 onDismiss: hideStatus,
                 margin: const EdgeInsets.only(top: 8),
               ),
+            ),
+          ),
+        if (_selectMode && _selectedImageIds.isNotEmpty)
+          Positioned(
+            bottom: 24,
+            right: 24,
+            child: FloatingActionButton.extended(
+              icon: const Icon(Icons.delete),
+              label: Text(S.of(context)?.buttonDelete ?? 'Delete'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+              onPressed: _deleteSelectedImages,
             ),
           ),
       ],
@@ -761,101 +914,80 @@ class _PhotoGalleryDialogState extends State<PhotoGalleryDialog> {
   @override
   Widget build(BuildContext context) {
     final s = S.of(context);
-    return Dialog(
-      backgroundColor: Colors.black,
-      insetPadding: const EdgeInsets.all(0),
-      child: Stack(
-        children: [
-          PageView.builder(
-            controller: _pageController,
-            itemCount: widget.images.length,
-            onPageChanged: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            itemBuilder: (context, index) {
-              final image = widget.images[index];
-              return Center(
-                child: InteractiveViewer(
-                  child: Image.file(
-                    File(image.imagePath),
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: Colors.grey[900],
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.broken_image,
-                            color: Colors.grey[600],
-                            size: 60,
+    return Semantics(
+      label: s?.photo_manager_title ?? 'Photo Gallery',
+      explicitChildNodes: true,
+      child: Dialog(
+        backgroundColor: Colors.black,
+        insetPadding: const EdgeInsets.all(0),
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: _pageController,
+              itemCount: widget.images.length,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              itemBuilder: (context, index) {
+                final image = widget.images[index];
+                return Center(
+                  child: InteractiveViewer(
+                    child: Semantics(
+                      label:
+                          (s?.photo_manager_title ?? 'Photo') +
+                          ' #${image.ordinalNumber + 1}',
+                      image: true,
+                      child: Image.file(
+                        File(image.imagePath),
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: Colors.grey[900],
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.broken_image,
+                                color: Colors.grey[600],
+                                size: 60,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                s?.errorGeneric ?? 'Error',
+                                style: TextStyle(color: Colors.grey[400]),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            s?.errorGeneric ?? 'Error',
-                            style: TextStyle(color: Colors.grey[400]),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              );
-            },
-          ),
-          Positioned(
-            top: 32,
-            right: 32,
-            child: IconButton(
-              icon: const Icon(Icons.close, color: Colors.white, size: 32),
-              tooltip: s?.delete ?? 'Close',
-              onPressed: () => Navigator.of(context).pop(),
+                );
+              },
             ),
-          ),
-          Positioned(
-            bottom: 32,
-            left: 32,
-            right: 32,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 8,
-                    horizontal: 16,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.6),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Photo #${widget.images[_currentIndex].ordinalNumber + 1}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Flexible(
-                        child: Text(
-                          widget.images[_currentIndex].note.isNotEmpty
-                              ? widget.images[_currentIndex].note
-                              : (s?.noNote ?? 'No note'),
-                          style: const TextStyle(color: Colors.white70),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 2,
-                        ),
-                      ),
-                    ],
+            Positioned(
+              top: 32,
+              right: 32,
+              child: Semantics(
+                label: s?.close_button ?? 'Close',
+                button: true,
+                child: Tooltip(
+                  message: s?.close_button ?? 'Close',
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 32,
+                    ),
+                    tooltip: s?.close_button ?? 'Close',
+                    onPressed: () => Navigator.of(context).pop(),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
