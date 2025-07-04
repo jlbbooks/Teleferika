@@ -867,4 +867,7 @@ class SEn extends S {
   String distanceFromPrevious(String pointName) {
     return 'Distance from $pointName:';
   }
+
+  @override
+  String get offsetLabel => 'Offset:';
 }

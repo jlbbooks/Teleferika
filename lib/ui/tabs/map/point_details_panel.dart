@@ -6,6 +6,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/core/project_provider.dart';
+import 'package:teleferika/ui/tabs/map/map_controller.dart';
 
 class PointDetailsPanel extends StatefulWidget {
   final PointModel? selectedPoint;
@@ -123,6 +124,28 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
 
     // Account for floating action buttons - they're on the left side
     final bottomOffset = 100.0; // Space for floating buttons
+
+    // --- Distance to first-last line ---
+    double? distanceToLine;
+    final points = context.projectState.currentPoints;
+    if (widget.selectedPoint != null && points.length >= 2) {
+      final logic = MapControllerLogic(
+        project: context.projectState.currentProject!,
+      );
+      distanceToLine = logic.distanceFromPointToFirstLastLine(
+        widget.selectedPoint!,
+        points,
+      );
+    }
+    String? distanceToLineStr;
+    if (distanceToLine != null) {
+      if (distanceToLine >= 1000) {
+        distanceToLineStr = '${(distanceToLine / 1000).toStringAsFixed(2)} km';
+      } else {
+        distanceToLineStr = '${distanceToLine.toStringAsFixed(1)} m';
+      }
+    }
+    // --- End distance to line ---
 
     return Positioned(
       top: shouldShowAtBottom ? null : 16,
@@ -311,6 +334,38 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                   ],
                 ),
               ),
+
+              // --- Offset ---
+              if (distanceToLine != null && distanceToLine > 0.0) ...[
+                SizedBox(height: isMobile ? 4 : 8),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.straighten,
+                      size: isMobile ? 14 : 16,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    SizedBox(width: isMobile ? 6 : 8),
+                    Text(
+                      S.of(context)?.offsetLabel ?? 'Offset:',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: isMobile ? 10 : null,
+                      ),
+                    ),
+                    SizedBox(width: isMobile ? 4 : 6),
+                    Text(
+                      distanceToLineStr ?? '',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontFamily: 'monospace',
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.bold,
+                        fontSize: isMobile ? 11 : null,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
 
               // Note section - now editable
               SizedBox(height: isMobile ? 8 : 12),

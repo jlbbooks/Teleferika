@@ -876,4 +876,7 @@ class SIt extends S {
   String distanceFromPrevious(String pointName) {
     return 'Distanza da $pointName:';
   }
+
+  @override
+  String get offsetLabel => 'Scostamento:';
 }

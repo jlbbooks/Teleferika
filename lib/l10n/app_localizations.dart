@@ -1551,6 +1551,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Distance from {pointName}:'**
   String distanceFromPrevious(String pointName);
+
+  /// Label for the offset (distance from point to first-last line) in point details and point list UI.
+  ///
+  /// In en, this message translates to:
+  /// **'Offset:'**
+  String get offsetLabel;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

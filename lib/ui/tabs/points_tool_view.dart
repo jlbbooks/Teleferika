@@ -12,6 +12,7 @@ import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/pages/point_details_page.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
+import 'package:teleferika/ui/tabs/map/map_controller.dart';
 
 class PointsToolView extends StatefulWidget {
   final ProjectModel project;
@@ -366,10 +367,79 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
             title: Text(
               '${point.name}: Alt: ${point.altitude?.toStringAsFixed(2) ?? '---'}\nLat: ${point.latitude.toStringAsFixed(5)}\nLon: ${point.longitude.toStringAsFixed(5)}',
             ),
-            subtitle: Text(
-              point.note.isEmpty
-                  ? (S.of(context)?.noNote ?? 'No note')
-                  : point.note,
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  point.note.isEmpty
+                      ? (S.of(context)?.noNote ?? 'No note')
+                      : point.note,
+                ),
+                Builder(
+                  builder: (context) {
+                    final points = Provider.of<ProjectStateManager>(
+                      context,
+                      listen: false,
+                    ).currentPoints;
+                    double? distanceToLine;
+                    if (points.length >= 2) {
+                      final logic = MapControllerLogic(
+                        project: Provider.of<ProjectStateManager>(
+                          context,
+                          listen: false,
+                        ).currentProject!,
+                      );
+                      distanceToLine = logic.distanceFromPointToFirstLastLine(
+                        point,
+                        points,
+                      );
+                    }
+                    String? distanceToLineStr;
+                    if (distanceToLine != null) {
+                      if (distanceToLine >= 1000) {
+                        distanceToLineStr =
+                            '${(distanceToLine / 1000).toStringAsFixed(2)} km';
+                      } else {
+                        distanceToLineStr =
+                            '${distanceToLine.toStringAsFixed(1)} m';
+                      }
+                    }
+                    if (distanceToLine == null || distanceToLine <= 0.0)
+                      return SizedBox.shrink();
+                    return Row(
+                      children: [
+                        Icon(
+                          Icons.straighten,
+                          size: 14,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          S.of(context)?.offsetLabel ?? 'Offset:',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          distanceToLineStr ?? '',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                fontFamily: 'monospace',
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
             ),
             trailing: !_isSelectionMode
                 ? IconButton(

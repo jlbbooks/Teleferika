@@ -968,5 +968,9 @@
         "example": "P1"
       }
     }
+  },
+  "offsetLabel": "Offset:",
+  "@offsetLabel": {
+    "description": "Label for the offset (distance from point to first-last line) in point details and point list UI."
   }
 }

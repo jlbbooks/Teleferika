@@ -10,6 +10,7 @@ import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/widgets/photo_manager_widget.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
+import 'package:teleferika/ui/tabs/map/map_controller.dart';
 
 class PointDetailsPage extends StatefulWidget {
   final PointModel point;
@@ -841,6 +842,76 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                                     SizedBox(width: 8),
                                     Text(
                                       distStr,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            fontFamily: 'monospace',
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                          // Offset
+                          Builder(
+                            builder: (context) {
+                              final points = context.projectState.currentPoints;
+                              double? distanceToLine;
+                              if (points.length >= 2) {
+                                final logic = MapControllerLogic(
+                                  project: context.projectState.currentProject!,
+                                );
+                                distanceToLine = logic
+                                    .distanceFromPointToFirstLastLine(
+                                      widget.point,
+                                      points,
+                                    );
+                              }
+                              String? distanceToLineStr;
+                              if (distanceToLine != null) {
+                                if (distanceToLine >= 1000) {
+                                  distanceToLineStr =
+                                      '${(distanceToLine / 1000).toStringAsFixed(2)} km';
+                                } else {
+                                  distanceToLineStr =
+                                      '${distanceToLine.toStringAsFixed(1)} m';
+                                }
+                              }
+                              if (distanceToLine == null ||
+                                  distanceToLine <= 0.0)
+                                return SizedBox.shrink();
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.straighten,
+                                      size: 18,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      S.of(context)?.offsetLabel ?? 'Offset:',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
+                                          ),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      distanceToLineStr ?? '',
                                       style: Theme.of(context)
                                           .textTheme
                                           .bodyMedium

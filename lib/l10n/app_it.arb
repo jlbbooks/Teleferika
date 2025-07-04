@@ -829,5 +829,9 @@
         "example": "P1"
       }
     }
+  },
+  "offsetLabel": "Scostamento:",
+  "@offsetLabel": {
+    "description": "Etichetta per lo scostamento (distanza dal punto alla linea primo-ultimo) nei dettagli punto e nella lista punti."
   }
 }
