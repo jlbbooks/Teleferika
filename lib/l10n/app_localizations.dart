@@ -1346,7 +1346,7 @@ abstract class S {
   ///
   /// In en, this message translates to:
   /// **'{count} selected'**
-  String selected_count(String count);
+  String selected_count(int count);
 
   /// No description provided for @delete_projects_title.
   ///
@@ -1358,7 +1358,7 @@ abstract class S {
   ///
   /// In en, this message translates to:
   /// **'Are you sure you want to delete {count} selected project(s)? This action cannot be undone.'**
-  String delete_projects_content(String count);
+  String delete_projects_content(int count);
 
   /// Label showing the project ID and last update text.
   ///
