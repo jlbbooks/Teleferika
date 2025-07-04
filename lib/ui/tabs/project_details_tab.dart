@@ -882,7 +882,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    '${project.currentRopeLength.toStringAsFixed(2)} \\${s?.unit_meter ?? 'm'}',
+                                    '${project.currentRopeLength.toStringAsFixed(2)} ${s?.unit_meter ?? 'm'}',
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleMedium

@@ -13,6 +13,7 @@ import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/pages/point_details_page.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 import 'package:teleferika/ui/tabs/map/map_controller.dart';
+import 'dart:io';
 
 class PointsToolView extends StatefulWidget {
   final ProjectModel project;
@@ -35,6 +36,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
   bool _isLoading = true;
   bool _isSelectionMode = false;
   final Set<String> _selectedPointIds = {};
+  final Set<String> _expandedPointIds = {};
 
   // Store previous project data for comparison
   ProjectModel? _previousProject;
@@ -133,6 +135,16 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
         }
       } else {
         _selectedPointIds.add(pointId);
+      }
+    });
+  }
+
+  void _toggleExpanded(String pointId) {
+    setState(() {
+      if (_expandedPointIds.contains(pointId)) {
+        _expandedPointIds.remove(pointId);
+      } else {
+        _expandedPointIds.add(pointId);
       }
     });
   }
@@ -350,6 +362,8 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       offset = logic.distanceFromPointToFirstLastLine(point, points);
     }
 
+    final isExpanded = _expandedPointIds.contains(point.id);
+
     return Card(
       key: ValueKey(point.id),
       margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
@@ -364,119 +378,240 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
           ? baseSelectionColor.withAlpha((selectedOpacity * 255).round())
           : null,
       child: InkWell(
-        onTap: () => _handlePointTap(point),
+        onTap: () {
+          if (_isSelectionMode) {
+            _togglePointSelection(point.id);
+          }
+        },
         onLongPress: () => _handlePointLongPress(point),
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Name (centered)
-              Center(
-                child: Text(
-                  point.name,
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ),
-              // Altitude
-              if (point.altitude != null)
-                Row(
-                  children: [
-                    const Icon(Icons.terrain, size: 18, color: Colors.brown),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Alt: ${point.altitude!.toStringAsFixed(2)} m',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ),
-              // Distance from previous point
-              if (distanceFromPrev != null && prevPoint != null)
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.swap_horiz,
-                      size: 18,
-                      color: Colors.blueGrey,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Distance: '
-                      '${distanceFromPrev >= 1000 ? (distanceFromPrev / 1000).toStringAsFixed(2) + " km" : distanceFromPrev.toStringAsFixed(1) + " m"}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ),
-              // Offset from heading line
-              if (offset != null && offset > 0.0)
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.straighten,
-                      size: 18,
-                      color: Colors.deepPurple,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Offset: '
-                      '${offset >= 1000 ? (offset / 1000).toStringAsFixed(2) + " km" : offset.toStringAsFixed(1) + " m"}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ),
-              // Note (if present)
-              if (point.note.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 6.0, left: 2.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.notes, size: 18, color: Colors.teal),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          point.note,
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
+        borderRadius: BorderRadius.circular(8.0),
+        child: Column(
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Drag handle (only when not in selection mode)
+                if (!_isSelectionMode)
+                  ReorderableDragStartListener(
+                    index: index,
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 4.0),
+                      child: Icon(
+                        Icons.drag_handle,
+                        color: Colors.grey,
+                        size: 24,
                       ),
-                    ],
+                    ),
+                  ),
+                // Edit icon on the left
+                IconButton(
+                  icon: const Icon(Icons.edit, color: Colors.blueGrey),
+                  tooltip: 'Edit Point',
+                  onPressed: () async {
+                    final result = await Navigator.push<Map<String, dynamic>>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PointDetailsPage(point: point),
+                      ),
+                    );
+                    if (result != null && mounted) {
+                      final String? action = result['action'] as String?;
+                      final PointModel? updatedPoint =
+                          result['point'] as PointModel?;
+                      if ((action == 'updated' || action == 'created') &&
+                          updatedPoint != null) {
+                        // Use Provider to update global state
+                        context.projectState.updatePointInEditingState(
+                          updatedPoint,
+                        );
+                      }
+                    }
+                  },
+                ),
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      point.name,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                   ),
                 ),
-            ],
-          ),
+                IconButton(
+                  icon: Icon(
+                    isExpanded ? Icons.expand_less : Icons.expand_more,
+                  ),
+                  onPressed: () => _toggleExpanded(point.id),
+                  tooltip: isExpanded ? 'Collapse' : 'Expand',
+                ),
+              ],
+            ),
+            // Always show basic info lines
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8.0,
+                vertical: 4.0,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Distance
+                  if (distanceFromPrev != null && prevPoint != null)
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.swap_horiz,
+                          size: 18,
+                          color: Colors.blueGrey,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Distance: '
+                          '${distanceFromPrev >= 1000 ? (distanceFromPrev / 1000).toStringAsFixed(2) + " km" : distanceFromPrev.toStringAsFixed(1) + " m"}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  // Offset
+                  if (offset != null && offset > 0.0)
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.straighten,
+                          size: 18,
+                          color: Colors.deepPurple,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Offset: '
+                          '${offset >= 1000 ? (offset / 1000).toStringAsFixed(2) + " km" : offset.toStringAsFixed(1) + " m"}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  // Note preview removed from basic info
+                ],
+              ),
+            ),
+            // Expanded section: full note, altitude, and images
+            AnimatedCrossFade(
+              firstChild: const SizedBox.shrink(),
+              secondChild: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8.0,
+                  vertical: 4.0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Latitude
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.my_location,
+                          size: 18,
+                          color: Colors.green,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Lat: ${point.latitude.toStringAsFixed(5)}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                    // Longitude
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.my_location,
+                          size: 18,
+                          color: Colors.orange,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Lon: ${point.longitude.toStringAsFixed(5)}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                    // Altitude (already here)
+                    if (point.altitude != null)
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.terrain,
+                            size: 18,
+                            color: Colors.brown,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Alt: ${point.altitude!.toStringAsFixed(2)} m',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    // Full note (untruncated)
+                    if (point.note.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6.0, left: 2.0),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              Icons.notes,
+                              size: 18,
+                              color: Colors.teal,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                point.note,
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    // Images (miniatures)
+                    if (point.images.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: SizedBox(
+                          height: 60,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: point.images.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: 8),
+                            itemBuilder: (context, imgIdx) {
+                              final img = point.images[imgIdx];
+                              return ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.file(
+                                  File(img.imagePath),
+                                  width: 60,
+                                  height: 60,
+                                  fit: BoxFit.cover,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              crossFadeState: isExpanded
+                  ? CrossFadeState.showSecond
+                  : CrossFadeState.showFirst,
+              duration: const Duration(milliseconds: 200),
+            ),
+          ],
         ),
       ),
     );
   }
 
   // --- End Widget Building Helper Methods ---
-
-  // --- Point Item Interaction Handlers ---
-  Future<void> _handlePointTap(PointModel point) async {
-    // Make it async
-    if (_isSelectionMode) {
-      _togglePointSelection(point.id);
-    } else {
-      // Non-selection mode tap: Navigate to detail page
-      if (!mounted) return; // Guard against navigation if widget is disposed
-
-      // Navigate to PointDetailsPage and wait for a result
-      final result = await Navigator.push<Map<String, dynamic>>(
-        context,
-        MaterialPageRoute(builder: (context) => PointDetailsPage(point: point)),
-      );
-
-      if (result != null && mounted) {
-        final String? action = result['action'] as String?;
-        if (action == 'deleted' || action == 'updated') {
-          // Do NOT reload points from DB; just let the Consumer rebuild from in-memory state
-          // await _loadPoints();
-        }
-      }
-    }
-  }
 
   void _handlePointLongPress(PointModel point) {
     setState(() {
