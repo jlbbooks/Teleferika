@@ -711,26 +711,6 @@ class SEn extends S {
   String get confirm_deletion_title => 'Confirm Deletion';
 
   @override
-  String confirm_deletion_content(String pointName) {
-    return 'Are you sure you want to delete point $pointName? This action cannot be undone.';
-  }
-
-  @override
-  String point_deleted_success(String pointName) {
-    return 'Point $pointName deleted successfully!';
-  }
-
-  @override
-  String error_deleting_point(String pointName, String errorMessage) {
-    return 'Error deleting point $pointName: $errorMessage';
-  }
-
-  @override
-  String error_saving_point(String errorMessage) {
-    return 'Error saving point: $errorMessage';
-  }
-
-  @override
   String get point_details_saved => 'Point details saved!';
 
   @override
@@ -749,22 +729,7 @@ class SEn extends S {
   String get delete_selected => 'Delete Selected';
 
   @override
-  String selected_count(int count) {
-    return '$count selected';
-  }
-
-  @override
   String get delete_projects_title => 'Delete Project(s)?';
-
-  @override
-  String delete_projects_content(int count) {
-    return 'Are you sure you want to delete $count selected project(s)? This action cannot be undone.';
-  }
-
-  @override
-  String project_id_label(String id, String lastUpdateText) {
-    return 'ID: $id | $lastUpdateText';
-  }
 
   @override
   String get license_information_title => 'Licence Information';
@@ -848,11 +813,6 @@ class SEn extends S {
   @override
   String get tapOnTheMapToSetNewLocation =>
       'Tap on the map to set new location';
-
-  @override
-  String headingLabel(String angle) {
-    return '$angle°';
-  }
 
   @override
   String get locationPermissionTitle => 'Location Permission';
@@ -1030,4 +990,44 @@ class SEn extends S {
 
   @override
   String get license_cleared_successfully => 'License cleared successfully!';
+
+  @override
+  String confirm_deletion_content(String pointName) {
+    return 'Are you sure you want to delete point $pointName? This action cannot be undone.';
+  }
+
+  @override
+  String point_deleted_success(String pointName) {
+    return 'Point $pointName deleted successfully!';
+  }
+
+  @override
+  String error_deleting_point(String pointName, String errorMessage) {
+    return 'Error deleting point $pointName: $errorMessage';
+  }
+
+  @override
+  String error_saving_point(String errorMessage) {
+    return 'Error saving point: $errorMessage';
+  }
+
+  @override
+  String selected_count(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String delete_projects_content(int count) {
+    return 'Are you sure you want to delete $count selected project(s)? This action cannot be undone.';
+  }
+
+  @override
+  String project_id_label(String id, String lastUpdateText) {
+    return 'ID: $id | $lastUpdateText';
+  }
+
+  @override
+  String headingLabel(String angle) {
+    return '$angle°';
+  }
 }

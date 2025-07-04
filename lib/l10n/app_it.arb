@@ -693,6 +693,9 @@
     "description": "Etichetta per il selettore del tipo di mappa."
   },
   "must_be_positive_validator": "Deve essere positivo.",
+  "@must_be_positive_validator": {
+    "description": "Messaggio di validazione per numero positivo."
+  },
   "mapNewPointLabel": "NUOVO",
   "@mapNewPointLabel": {
     "description": "Etichetta per un nuovo punto non salvato sulla mappa."
@@ -731,111 +734,261 @@
     "description": "Etichetta per l'indicatore nord sulla freccia della bussola."
   },
   "errorLocationUnavailable": "Posizione non disponibile.",
-  "infoPointAddedPendingSave": "Punto aggiunto (in attesa di salvataggio)",
-  "errorGeneric": "Errore",
-  "edit_point_title": "Modifica Punto",
-  "coordinates_section_title": "Coordinate",
-  "latitude_label": "Latitudine",
-  "latitude_hint": "es. 45.12345",
-  "latitude_empty_validator": "La latitudine non può essere vuota",
-  "latitude_invalid_validator": "Formato numero non valido",
-  "latitude_range_validator": "La latitudine deve essere tra -90 e 90",
-  "longitude_label": "Longitudine",
-  "longitude_hint": "es. -12.54321",
-  "longitude_empty_validator": "La longitudine non può essere vuota",
-  "longitude_invalid_validator": "Formato numero non valido",
-  "longitude_range_validator": "La longitudine deve essere tra -180 e 180",
-  "additional_data_section_title": "Dati aggiuntivi",
-  "altitude_label": "Altitudine (m)",
-  "altitude_hint": "es. 1203.5 (Opzionale)",
-  "altitude_invalid_validator": "Formato numero non valido",
-  "altitude_range_validator": "L'altitudine deve essere tra -1000 e 8849 metri",
-  "note_label": "Note (Opzionale)",
-  "note_hint": "Osservazioni o dettagli...",
-  "photos_section_title": "Foto",
-  "unsaved_point_details_title": "Modifiche non salvate",
-  "unsaved_point_details_content": "Hai modifiche non salvate ai dettagli del punto. Vuoi salvarle?",
-  "discard_text_changes": "Scarta modifiche testo",
-  "save_all_and_exit": "Salva tutto ed esci",
-  "confirm_deletion_title": "Conferma eliminazione",
-  "confirm_deletion_content": "Sei sicuro di voler eliminare il punto {pointName}? Questa azione non può essere annullata.",
-  "point_deleted_success": "Punto {pointName} eliminato con successo!",
-  "@point_deleted_success": {
-    "description": "Snackbar message when a point is deleted successfully.",
-    "placeholders": {
-      "pointName": {
-        "type": "String",
-        "example": "P1"
-      }
-    }
+  "@errorLocationUnavailable": {
+    "description": "Messaggio di errore quando la posizione non è disponibile."
   },
-  "error_deleting_point": "Errore durante l'eliminazione del punto {pointName}: {errorMessage}",
-  "error_saving_point": "Errore durante il salvataggio del punto: {errorMessage}",
+  "infoPointAddedPendingSave": "Punto aggiunto (in attesa di salvataggio)",
+  "@infoPointAddedPendingSave": {
+    "description": "Messaggio informativo quando un punto è aggiunto ma non ancora salvato."
+  },
+  "errorGeneric": "Errore",
+  "@errorGeneric": {
+    "description": "Messaggio di errore generico."
+  },
+  "edit_point_title": "Modifica Punto",
+  "@edit_point_title": {
+    "description": "Titolo per la pagina di modifica punto."
+  },
+  "coordinates_section_title": "Coordinate",
+  "@coordinates_section_title": {
+    "description": "Titolo sezione coordinate nei dettagli punto."
+  },
+  "latitude_label": "Latitudine",
+  "@latitude_label": {
+    "description": "Etichetta per il campo latitudine."
+  },
+  "latitude_hint": "es. 45.12345",
+  "@latitude_hint": {
+    "description": "Suggerimento per il campo latitudine."
+  },
+  "latitude_empty_validator": "La latitudine non può essere vuota",
+  "@latitude_empty_validator": {
+    "description": "Messaggio di validazione per latitudine vuota."
+  },
+  "latitude_invalid_validator": "Formato numero non valido",
+  "@latitude_invalid_validator": {
+    "description": "Messaggio di validazione per formato latitudine non valido."
+  },
+  "latitude_range_validator": "La latitudine deve essere tra -90 e 90",
+  "@latitude_range_validator": {
+    "description": "Messaggio di validazione per latitudine fuori intervallo."
+  },
+  "longitude_label": "Longitudine",
+  "@longitude_label": {
+    "description": "Etichetta per il campo longitudine."
+  },
+  "longitude_hint": "es. -12.54321",
+  "@longitude_hint": {
+    "description": "Suggerimento per il campo longitudine."
+  },
+  "longitude_empty_validator": "La longitudine non può essere vuota",
+  "@longitude_empty_validator": {
+    "description": "Messaggio di validazione per longitudine vuota."
+  },
+  "longitude_invalid_validator": "Formato numero non valido",
+  "@longitude_invalid_validator": {
+    "description": "Messaggio di validazione per formato longitudine non valido."
+  },
+  "longitude_range_validator": "La longitudine deve essere tra -180 e 180",
+  "@longitude_range_validator": {
+    "description": "Messaggio di validazione per longitudine fuori intervallo."
+  },
+  "additional_data_section_title": "Dati aggiuntivi",
+  "@additional_data_section_title": {
+    "description": "Titolo sezione dati aggiuntivi nei dettagli punto."
+  },
+  "altitude_label": "Altitudine (m)",
+  "@altitude_label": {
+    "description": "Etichetta per il campo altitudine."
+  },
+  "altitude_hint": "es. 1203.5 (Opzionale)",
+  "@altitude_hint": {
+    "description": "Suggerimento per il campo altitudine."
+  },
+  "altitude_invalid_validator": "Formato numero non valido",
+  "@altitude_invalid_validator": {
+    "description": "Messaggio di validazione per formato altitudine non valido."
+  },
+  "altitude_range_validator": "L'altitudine deve essere tra -1000 e 8849 metri",
+  "@altitude_range_validator": {
+    "description": "Messaggio di validazione per altitudine fuori intervallo."
+  },
+  "note_label": "Note (Opzionale)",
+  "@note_label": {
+    "description": "Etichetta per il campo note."
+  },
+  "note_hint": "Osservazioni o dettagli...",
+  "@note_hint": {
+    "description": "Suggerimento per il campo note."
+  },
+  "photos_section_title": "Foto",
+  "@photos_section_title": {
+    "description": "Titolo sezione foto nei dettagli punto."
+  },
+  "unsaved_point_details_title": "Modifiche non salvate",
+  "@unsaved_point_details_title": {
+    "description": "Titolo per dialogo modifiche non salvate nei dettagli punto."
+  },
+  "unsaved_point_details_content": "Hai modifiche non salvate ai dettagli del punto. Vuoi salvarle?",
+  "@unsaved_point_details_content": {
+    "description": "Contenuto per dialogo modifiche non salvate nei dettagli punto."
+  },
+  "discard_text_changes": "Scarta modifiche testo",
+  "@discard_text_changes": {
+    "description": "Etichetta per il pulsante scarta modifiche testo."
+  },
+  "save_all_and_exit": "Salva tutto ed esci",
+  "@save_all_and_exit": {
+    "description": "Etichetta per il pulsante salva tutto ed esci."
+  },
+  "confirm_deletion_title": "Conferma eliminazione",
+  "@confirm_deletion_title": {
+    "description": "Titolo per la finestra di dialogo di conferma eliminazione punto."
+  },
   "point_details_saved": "Dettagli punto salvati!",
+  "@point_details_saved": {
+    "description": "Messaggio snackbar quando i dettagli punto sono salvati."
+  },
   "undo_changes_tooltip": "Annulla modifiche",
+  "@undo_changes_tooltip": {
+    "description": "Tooltip per il pulsante annulla modifiche."
+  },
   "no_projects_yet": "Nessun progetto ancora. Tocca '+' per aggiungerne uno!",
+  "@no_projects_yet": {
+    "description": "Messaggio mostrato quando non ci sono progetti ancora."
+  },
   "add_new_project_tooltip": "Aggiungi nuovo progetto",
+  "@add_new_project_tooltip": {
+    "description": "Tooltip per il pulsante aggiungi nuovo progetto."
+  },
   "untitled_project": "Progetto senza titolo",
+  "@untitled_project": {
+    "description": "Etichetta per progetto senza titolo."
+  },
   "delete_selected": "Elimina selezionati",
-  "selected_count": "{count} selezionati",
-  "@selected_count": {
-    "description": "Etichetta che mostra il numero di elementi selezionati.",
-    "placeholders": {
-      "count": {"type": "int", "example": "2"}
-    }
+  "@delete_selected": {
+    "description": "Etichetta per il pulsante elimina selezionati."
   },
   "delete_projects_title": "Eliminare progetti?",
-  "delete_projects_content": "Sei sicuro di voler eliminare {count} progetti selezionati? Questa azione non può essere annullata.",
-  "@delete_projects_content": {
-    "description": "Contenuto della finestra di dialogo di conferma eliminazione multipla.",
-    "placeholders": {
-      "count": {"type": "int", "example": "3"}
-    }
-  },
-  "project_id_label": "ID: {id} | {lastUpdateText}",
-  "@project_id_label": {
-    "description": "Etichetta che mostra l'ID del progetto e il testo dell'ultimo aggiornamento.",
-    "placeholders": {
-      "id": {"type": "String", "example": "123"},
-      "lastUpdateText": {"type": "String", "example": "Data Progetto: 1 Gen 2024 | Agg: 12:00"}
-    }
+  "@delete_projects_title": {
+    "description": "Titolo per la finestra di dialogo di conferma eliminazione multipla."
   },
   "license_information_title": "Informazioni licenza",
+  "@license_information_title": {
+    "description": "Titolo per la finestra di dialogo informazioni licenza."
+  },
   "close_button": "Chiudi",
+  "@close_button": {
+    "description": "Etichetta per il pulsante chiudi nelle finestre di dialogo."
+  },
   "import_new_licence": "Importa nuova licenza",
+  "@import_new_licence": {
+    "description": "Etichetta per il pulsante importa nuova licenza."
+  },
   "import_licence": "Importa licenza",
+  "@import_licence": {
+    "description": "Etichetta per il pulsante importa licenza."
+  },
   "premium_features_title": "Funzionalità Premium",
+  "@premium_features_title": {
+    "description": "Titolo per la sezione funzionalità premium."
+  },
   "premium_features_available": "Le funzionalità premium sono disponibili in questa versione!",
+  "@premium_features_available": {
+    "description": "Messaggio quando le funzionalità premium sono disponibili."
+  },
   "available_features": "Funzionalità disponibili:",
+  "@available_features": {
+    "description": "Etichetta per la lista funzionalità disponibili."
+  },
   "premium_features_not_available": "Le funzionalità premium non sono disponibili in questa versione.",
+  "@premium_features_not_available": {
+    "description": "Messaggio quando le funzionalità premium non sono disponibili."
+  },
   "opensource_version": "Questa è la versione open source dell'app.",
+  "@opensource_version": {
+    "description": "Messaggio per la versione open source dell'app."
+  },
   "try_feature": "Prova funzionalità",
+  "@try_feature": {
+    "description": "Etichetta per il pulsante prova funzionalità."
+  },
   "install_demo_license": "Installa licenza demo",
+  "@install_demo_license": {
+    "description": "Etichetta per il pulsante installa licenza demo."
+  },
   "clear_license": "Cancella licenza",
+  "@clear_license": {
+    "description": "Etichetta per il pulsante cancella licenza."
+  },
   "invalid_latitude_or_longitude_format": "Formato latitudine o longitudine non valido.",
+  "@invalid_latitude_or_longitude_format": {
+    "description": "Messaggio di errore per formato latitudine o longitudine non valido."
+  },
   "invalid_altitude_format": "Formato altitudine non valido. Inserisci un numero o lascia vuoto.",
+  "@invalid_altitude_format": {
+    "description": "Messaggio di errore per formato altitudine non valido."
+  },
   "coordinates": "Coordinate",
+  "@coordinates": {
+    "description": "Etichetta per la sezione coordinate."
+  },
   "lat": "Lat:",
+  "@lat": {
+    "description": "Etichetta per abbreviazione latitudine."
+  },
   "lon": "Lon:",
+  "@lon": {
+    "description": "Etichetta per abbreviazione longitudine."
+  },
   "addANote": "Aggiungi una nota...",
+  "@addANote": {
+    "description": "Prompt per aggiungere una nota."
+  },
   "tapToAddNote": "Tocca per aggiungere una nota...",
+  "@tapToAddNote": {
+    "description": "Prompt per toccare e aggiungere una nota."
+  },
   "save": "Salva",
+  "@save": {
+    "description": "Etichetta per il pulsante salva."
+  },
   "discard": "Scarta",
+  "@discard": {
+    "description": "Etichetta per il pulsante scarta."
+  },
   "edit": "Modifica",
+  "@edit": {
+    "description": "Etichetta per il pulsante modifica."
+  },
   "move": "Sposta",
+  "@move": {
+    "description": "Etichetta per il pulsante sposta."
+  },
   "cancel": "Annulla",
+  "@cancel": {
+    "description": "Etichetta per il pulsante annulla."
+  },
   "delete": "Elimina",
+  "@delete": {
+    "description": "Etichetta per il pulsante elimina."
+  },
   "tapOnTheMapToSetNewLocation": "Tocca sulla mappa per impostare la nuova posizione",
-  "headingLabel": "{angle}°",
-  "@headingLabel": {
-    "description": "Etichetta per il marker dell'angolo di direzione sulla mappa.",
-    "placeholders": {
-      "angle": {"type": "String", "example": "123.4"}
-    }
+  "@tapOnTheMapToSetNewLocation": {
+    "description": "Prompt per toccare la mappa e impostare una nuova posizione."
   },
   "locationPermissionTitle": "Permesso di localizzazione",
+  "@locationPermissionTitle": {
+    "description": "Titolo per la finestra di dialogo permesso localizzazione."
+  },
   "sensorPermissionTitle": "Permesso sensore",
+  "@sensorPermissionTitle": {
+    "description": "Titolo per la finestra di dialogo permesso sensore."
+  },
   "noNote": "Nessuna nota",
+  "@noNote": {
+    "description": "Etichetta per nessuna nota presente."
+  },
   "distanceFromPrevious": "Distanza da {pointName}:",
   "@distanceFromPrevious": {
     "description": "Etichetta per la distanza dal punto precedente nel pannello dettagli punto.",
@@ -1034,5 +1187,78 @@
   "demo_license_imported_successfully": "Licenza demo importata con successo!",
   "@demo_license_imported_successfully": {"description": "Snackbar per importazione licenza demo riuscita."},
   "license_cleared_successfully": "Licenza rimossa con successo!",
-  "@license_cleared_successfully": {"description": "Snackbar per rimozione licenza riuscita."}
+  "@license_cleared_successfully": {"description": "Snackbar per rimozione licenza riuscita."},
+  "confirm_deletion_content": "Sei sicuro di voler eliminare il punto {pointName}? Questa azione non può essere annullata.",
+  "@confirm_deletion_content": {
+    "description": "Contenuto della finestra di dialogo di conferma eliminazione punto.",
+    "placeholders": {
+      "pointName": {
+        "type": "String",
+        "example": "P1"
+      }
+    }
+  },
+  "point_deleted_success": "Punto {pointName} eliminato con successo!",
+  "@point_deleted_success": {
+    "description": "Snackbar message when a point is deleted successfully.",
+    "placeholders": {
+      "pointName": {
+        "type": "String",
+        "example": "P1"
+      }
+    }
+  },
+  "error_deleting_point": "Errore durante l'eliminazione del punto {pointName}: {errorMessage}",
+  "@error_deleting_point": {
+    "description": "Messaggio di errore quando l'eliminazione di un punto fallisce.",
+    "placeholders": {
+      "pointName": {
+        "type": "String",
+        "example": "P1"
+      },
+      "errorMessage": {
+        "type": "String",
+        "example": "Errore database"
+      }
+    }
+  },
+  "error_saving_point": "Errore durante il salvataggio del punto: {errorMessage}",
+  "@error_saving_point": {
+    "description": "Messaggio di errore quando il salvataggio di un punto fallisce.",
+    "placeholders": {
+      "errorMessage": {
+        "type": "String",
+        "example": "Errore di validazione"
+      }
+    }
+  },
+  "selected_count": "{count} selezionati",
+  "@selected_count": {
+    "description": "Etichetta che mostra il numero di elementi selezionati.",
+    "placeholders": {
+      "count": {"type": "int", "example": "2"}
+    }
+  },
+  "delete_projects_content": "Sei sicuro di voler eliminare {count} progetti selezionati? Questa azione non può essere annullata.",
+  "@delete_projects_content": {
+    "description": "Contenuto della finestra di dialogo di conferma eliminazione multipla.",
+    "placeholders": {
+      "count": {"type": "int", "example": "3"}
+    }
+  },
+  "project_id_label": "ID: {id} | {lastUpdateText}",
+  "@project_id_label": {
+    "description": "Etichetta che mostra l'ID del progetto e il testo dell'ultimo aggiornamento.",
+    "placeholders": {
+      "id": {"type": "String", "example": "123"},
+      "lastUpdateText": {"type": "String", "example": "Data Progetto: 1 Gen 2024 | Agg: 12:00"}
+    }
+  },
+  "headingLabel": "{angle}°",
+  "@headingLabel": {
+    "description": "Etichetta per il marker dell'angolo di direzione sulla mappa.",
+    "placeholders": {
+      "angle": {"type": "String", "example": "123.4"}
+    }
+  }
 }

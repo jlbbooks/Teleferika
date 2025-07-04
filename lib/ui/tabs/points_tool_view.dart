@@ -222,6 +222,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
   // --- Action Bar for Normal and Selection Mode ---
   Widget _buildTopBar(BuildContext context) {
     if (_isSelectionMode) {
+      final s = S.of(context);
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
         child: Row(
@@ -229,18 +230,21 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
           children: [
             IconButton(
               icon: const Icon(Icons.close),
-              tooltip: 'Cancel Selection',
+              tooltip: s?.buttonCancel ?? 'Cancel',
               onPressed:
                   _toggleSelectionMode, // Exits selection mode & clears selection
             ),
-            Text('${_selectedPointIds.length} selected'),
+            Text(
+              s?.selected_count(_selectedPointIds.length) ??
+                  '${_selectedPointIds.length} selected',
+            ),
             TextButton.icon(
               icon: Icon(
                 Icons.delete_outline,
                 color: Theme.of(context).colorScheme.error,
               ),
               label: Text(
-                'Delete',
+                s?.buttonDelete ?? 'Delete',
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
               onPressed: _selectedPointIds.isEmpty
@@ -262,17 +266,19 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
   Future<void> _confirmDeleteSelectedPoints() async {
     if (_selectedPointIds.isEmpty) return;
 
+    final s = S.of(context);
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Confirm Deletion'),
+          title: Text(s?.confirm_deletion_title ?? 'Confirm Deletion'),
           content: Text(
-            'Are you sure you want to delete ${_selectedPointIds.length} selected point(s)? This action cannot be undone.',
+            s?.confirm_deletion_content(_selectedPointIds.length.toString()) ??
+                'Are you sure you want to delete ${_selectedPointIds.length} selected point(s)? This action cannot be undone.',
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancel'),
+              child: Text(s?.buttonCancel ?? 'Cancel'),
               onPressed: () {
                 Navigator.of(context).pop(false);
               },
@@ -281,7 +287,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
               style: TextButton.styleFrom(
                 foregroundColor: Theme.of(context).colorScheme.error,
               ),
-              child: const Text('Delete'),
+              child: Text(s?.buttonDelete ?? 'Delete'),
               onPressed: () {
                 Navigator.of(context).pop(true);
               },
@@ -406,7 +412,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                 // Edit icon on the left
                 IconButton(
                   icon: const Icon(Icons.edit, color: Colors.blueGrey),
-                  tooltip: 'Edit Point',
+                  tooltip: S.of(context)?.edit_point_title ?? 'Edit Point',
                   onPressed: () async {
                     final result = await Navigator.push<Map<String, dynamic>>(
                       context,
@@ -465,8 +471,20 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'Distance: '
-                          '${distanceFromPrev >= 1000 ? (distanceFromPrev / 1000).toStringAsFixed(2) + " km" : distanceFromPrev.toStringAsFixed(1) + " m"}',
+                          (S
+                                      .of(context)
+                                      ?.distanceFromPrevious(prevPoint.name) ??
+                                  'Distance:') +
+                              ' ' +
+                              (distanceFromPrev >= 1000
+                                  ? (distanceFromPrev / 1000).toStringAsFixed(
+                                          2,
+                                        ) +
+                                        ' ' +
+                                        (S.of(context)?.unit_kilometer ?? 'km')
+                                  : distanceFromPrev.toStringAsFixed(1) +
+                                        ' ' +
+                                        (S.of(context)?.unit_meter ?? 'm')),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
@@ -482,8 +500,14 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'Offset: '
-                          '${offset >= 1000 ? (offset / 1000).toStringAsFixed(2) + " km" : offset.toStringAsFixed(1) + " m"}',
+                          ((S.of(context)?.offsetLabel ?? 'Offset:') + ' ') +
+                              (offset >= 1000
+                                  ? (offset / 1000).toStringAsFixed(2) +
+                                        ' ' +
+                                        (S.of(context)?.unit_kilometer ?? 'km')
+                                  : offset.toStringAsFixed(1) +
+                                        ' ' +
+                                        (S.of(context)?.unit_meter ?? 'm')),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
@@ -513,7 +537,9 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'Lat: ${point.latitude.toStringAsFixed(5)}',
+                          (S.of(context)?.latitude_label ?? 'Lat') +
+                              ': ' +
+                              point.latitude.toStringAsFixed(5),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
@@ -528,7 +554,8 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'Lon: ${point.longitude.toStringAsFixed(5)}',
+                          ((S.of(context)?.longitude_label ?? 'Lon:') + ': ') +
+                              point.longitude.toStringAsFixed(5),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
@@ -544,7 +571,10 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Alt: ${point.altitude!.toStringAsFixed(2)} m',
+                            ((S.of(context)?.altitude_label ?? 'Alt:') + ': ') +
+                                point.altitude!.toStringAsFixed(2) +
+                                ' ' +
+                                (S.of(context)?.unit_meter ?? 'm'),
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ],

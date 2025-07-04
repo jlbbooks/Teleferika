@@ -459,7 +459,13 @@
     }
   },
   "project_deleted_successfully": "Project deleted successfully.",
+  "@project_deleted_successfully": {
+    "description": "Snackbar message when a project is deleted successfully."
+  },
   "project_not_found_or_deleted": "Project not found or already deleted.",
+  "@project_not_found_or_deleted": {
+    "description": "Message when a project is not found or already deleted."
+  },
   "error_saving_project": "Error saving project: {errorMessage}",
   "@error_saving_project": {
     "placeholders": {
@@ -478,11 +484,29 @@
   },
   "unsaved_changes_dialog_title": "Unsaved Changes",
   "unsaved_changes_dialog_content": "You have unsaved changes. Do you want to discard them and leave?",
+  "@unsaved_changes_dialog_content": {
+    "description": "Content for the dialog warning about unsaved changes."
+  },
   "discard_button_label": "Discard",
+  "@discard_button_label": {
+    "description": "Label for the discard button in dialogs."
+  },
   "details_tab_label": "Details",
+  "@details_tab_label": {
+    "description": "Tab label for project details."
+  },
   "points_tab_label": "Points",
+  "@points_tab_label": {
+    "description": "Tab label for project points."
+  },
   "compass_tab_label": "Compass",
+  "@compass_tab_label": {
+    "description": "Tab label for compass view."
+  },
   "map_tab_label": "Map",
+  "@map_tab_label": {
+    "description": "Tab label for map view."
+  },
   "export_page_title": "Export Project Data",
   "@export_page_title": {
     "description": "Title for the export data page."
@@ -770,6 +794,9 @@
     "description": "Label for the map type selector."
   },
   "must_be_positive_validator": "Must be positive.",
+  "@must_be_positive_validator": {
+    "description": "Validator message for positive number input."
+  },
   "mapNewPointLabel": "NEW",
   "@mapNewPointLabel": {
     "description": "Label for a new unsaved point on the map."
@@ -808,142 +835,261 @@
     "description": "Label for the north indicator on the compass arrow."
   },
   "errorLocationUnavailable": "Location unavailable.",
+  "@errorLocationUnavailable": {
+    "description": "Error message when location is unavailable."
+  },
   "infoPointAddedPendingSave": "Point added (pending save)",
+  "@infoPointAddedPendingSave": {
+    "description": "Info message when a point is added but not yet saved."
+  },
   "errorGeneric": "Error",
+  "@errorGeneric": {
+    "description": "Generic error message."
+  },
   "edit_point_title": "Edit Point",
+  "@edit_point_title": {
+    "description": "Title for the edit point page."
+  },
   "coordinates_section_title": "Coordinates",
+  "@coordinates_section_title": {
+    "description": "Section title for coordinates in point details."
+  },
   "latitude_label": "Latitude",
+  "@latitude_label": {
+    "description": "Label for latitude field."
+  },
   "latitude_hint": "e.g. 45.12345",
+  "@latitude_hint": {
+    "description": "Hint for latitude input field."
+  },
   "latitude_empty_validator": "Latitude cannot be empty",
+  "@latitude_empty_validator": {
+    "description": "Validator message for empty latitude."
+  },
   "latitude_invalid_validator": "Invalid number format",
+  "@latitude_invalid_validator": {
+    "description": "Validator message for invalid latitude format."
+  },
   "latitude_range_validator": "Latitude must be between -90 and 90",
+  "@latitude_range_validator": {
+    "description": "Validator message for latitude out of range."
+  },
   "longitude_label": "Longitude",
+  "@longitude_label": {
+    "description": "Label for longitude field."
+  },
   "longitude_hint": "e.g. -12.54321",
+  "@longitude_hint": {
+    "description": "Hint for longitude input field."
+  },
   "longitude_empty_validator": "Longitude cannot be empty",
+  "@longitude_empty_validator": {
+    "description": "Validator message for empty longitude."
+  },
   "longitude_invalid_validator": "Invalid number format",
+  "@longitude_invalid_validator": {
+    "description": "Validator message for invalid longitude format."
+  },
   "longitude_range_validator": "Longitude must be between -180 and 180",
+  "@longitude_range_validator": {
+    "description": "Validator message for longitude out of range."
+  },
   "additional_data_section_title": "Additional Data",
+  "@additional_data_section_title": {
+    "description": "Section title for additional data in point details."
+  },
   "altitude_label": "Altitude (m)",
+  "@altitude_label": {
+    "description": "Label for altitude field."
+  },
   "altitude_hint": "e.g. 1203.5 (Optional)",
+  "@altitude_hint": {
+    "description": "Hint for altitude input field."
+  },
   "altitude_invalid_validator": "Invalid number format",
+  "@altitude_invalid_validator": {
+    "description": "Validator message for invalid altitude format."
+  },
   "altitude_range_validator": "Altitude must be between -1000 and 8849 meters",
+  "@altitude_range_validator": {
+    "description": "Validator message for altitude out of range."
+  },
   "note_label": "Note (Optional)",
+  "@note_label": {
+    "description": "Label for note field."
+  },
   "note_hint": "Any observations or details...",
+  "@note_hint": {
+    "description": "Hint for note input field."
+  },
   "photos_section_title": "Photos",
+  "@photos_section_title": {
+    "description": "Section title for photos in point details."
+  },
   "unsaved_point_details_title": "Unsaved Changes",
+  "@unsaved_point_details_title": {
+    "description": "Title for unsaved changes dialog in point details."
+  },
   "unsaved_point_details_content": "You have unsaved changes to point details. Save them?",
+  "@unsaved_point_details_content": {
+    "description": "Content for unsaved changes dialog in point details."
+  },
   "discard_text_changes": "Discard Text Changes",
+  "@discard_text_changes": {
+    "description": "Label for discard text changes button."
+  },
   "save_all_and_exit": "Save All & Exit",
+  "@save_all_and_exit": {
+    "description": "Label for save all and exit button."
+  },
   "confirm_deletion_title": "Confirm Deletion",
-  "confirm_deletion_content": "Are you sure you want to delete point {pointName}? This action cannot be undone.",
-  "@confirm_deletion_content": {
-    "description": "Dialog content asking for confirmation to delete a point.",
-    "placeholders": {
-      "pointName": {
-        "type": "String",
-        "example": "P1"
-      }
-    }
-  },
-  "point_deleted_success": "Point {pointName} deleted successfully!",
-  "@point_deleted_success": {
-    "description": "Snackbar message when a point is deleted successfully.",
-    "placeholders": {
-      "pointName": {
-        "type": "String",
-        "example": "P1"
-      }
-    }
-  },
-  "error_deleting_point": "Error deleting point {pointName}: {errorMessage}",
-  "@error_deleting_point": {
-    "description": "Error message when deleting a point fails.",
-    "placeholders": {
-      "pointName": {
-        "type": "String",
-        "example": "P1"
-      },
-      "errorMessage": {
-        "type": "String",
-        "example": "Database error"
-      }
-    }
-  },
-  "error_saving_point": "Error saving point: {errorMessage}",
-  "@error_saving_point": {
-    "description": "Error message when saving a point fails.",
-    "placeholders": {
-      "errorMessage": {
-        "type": "String",
-        "example": "Validation error"
-      }
-    }
+  "@confirm_deletion_title": {
+    "description": "Title for the dialog confirming point deletion."
   },
   "point_details_saved": "Point details saved!",
+  "@point_details_saved": {
+    "description": "Snackbar message when point details are saved."
+  },
   "undo_changes_tooltip": "Undo Changes",
+  "@undo_changes_tooltip": {
+    "description": "Tooltip for undo changes button."
+  },
   "no_projects_yet": "No projects yet. Tap '+' to add one!",
+  "@no_projects_yet": {
+    "description": "Message shown when there are no projects yet."
+  },
   "add_new_project_tooltip": "Add New Project",
+  "@add_new_project_tooltip": {
+    "description": "Tooltip for add new project button."
+  },
   "untitled_project": "Untitled Project",
+  "@untitled_project": {
+    "description": "Label for untitled project."
+  },
   "delete_selected": "Delete Selected",
-  "selected_count": "{count} selected",
-  "@selected_count": {
-    "description": "Label showing the number of selected items.",
-    "placeholders": {
-      "count": {"type": "int", "example": "2"}
-    }
+  "@delete_selected": {
+    "description": "Label for delete selected button."
   },
   "delete_projects_title": "Delete Project(s)?",
-  "delete_projects_content": "Are you sure you want to delete {count} selected project(s)? This action cannot be undone.",
-  "@delete_projects_content": {
-    "description": "Content for the dialog confirming deletion of multiple projects.",
-    "placeholders": {
-      "count": {"type": "int", "example": "3"}
-    }
-  },
-  "project_id_label": "ID: {id} | {lastUpdateText}",
-  "@project_id_label": {
-    "description": "Label showing the project ID and last update text.",
-    "placeholders": {
-      "id": {"type": "String", "example": "123"},
-      "lastUpdateText": {"type": "String", "example": "Proj. Date: Jan 1, 2024 | Upd: 12:00"}
-    }
+  "@delete_projects_title": {
+    "description": "Title for the dialog confirming deletion of multiple projects."
   },
   "license_information_title": "Licence Information",
+  "@license_information_title": {
+    "description": "Title for the licence information dialog."
+  },
   "close_button": "Close",
+  "@close_button": {
+    "description": "Label for close button in dialogs."
+  },
   "import_new_licence": "Import New Licence",
+  "@import_new_licence": {
+    "description": "Label for import new licence button."
+  },
   "import_licence": "Import Licence",
+  "@import_licence": {
+    "description": "Label for import licence button."
+  },
   "premium_features_title": "Premium Features",
+  "@premium_features_title": {
+    "description": "Title for premium features section."
+  },
   "premium_features_available": "Premium features are available in this build!",
+  "@premium_features_available": {
+    "description": "Message when premium features are available."
+  },
   "available_features": "Available Features:",
+  "@available_features": {
+    "description": "Label for available features list."
+  },
   "premium_features_not_available": "Premium features are not available in this build.",
+  "@premium_features_not_available": {
+    "description": "Message when premium features are not available."
+  },
   "opensource_version": "This is the opensource version of the app.",
+  "@opensource_version": {
+    "description": "Message for opensource version of the app."
+  },
   "try_feature": "Try Feature",
+  "@try_feature": {
+    "description": "Label for try feature button."
+  },
   "install_demo_license": "Install Demo License",
+  "@install_demo_license": {
+    "description": "Label for install demo license button."
+  },
   "clear_license": "Clear License",
+  "@clear_license": {
+    "description": "Label for clear license button."
+  },
   "invalid_latitude_or_longitude_format": "Invalid latitude or longitude format.",
+  "@invalid_latitude_or_longitude_format": {
+    "description": "Error message for invalid latitude or longitude format."
+  },
   "invalid_altitude_format": "Invalid altitude format. Please enter a number or leave it empty.",
+  "@invalid_altitude_format": {
+    "description": "Error message for invalid altitude format."
+  },
   "coordinates": "Coordinates",
+  "@coordinates": {
+    "description": "Label for coordinates section."
+  },
   "lat": "Lat:",
+  "@lat": {
+    "description": "Label for latitude abbreviation."
+  },
   "lon": "Lon:",
+  "@lon": {
+    "description": "Label for longitude abbreviation."
+  },
   "addANote": "Add a note...",
+  "@addANote": {
+    "description": "Prompt to add a note."
+  },
   "tapToAddNote": "Tap to add note...",
+  "@tapToAddNote": {
+    "description": "Prompt to tap to add a note."
+  },
   "save": "Save",
+  "@save": {
+    "description": "Label for save button."
+  },
   "discard": "Discard",
+  "@discard": {
+    "description": "Label for discard button."
+  },
   "edit": "Edit",
+  "@edit": {
+    "description": "Label for edit button."
+  },
   "move": "Move",
+  "@move": {
+    "description": "Label for move button."
+  },
   "cancel": "Cancel",
+  "@cancel": {
+    "description": "Label for cancel button."
+  },
   "delete": "Delete",
+  "@delete": {
+    "description": "Label for delete button."
+  },
   "tapOnTheMapToSetNewLocation": "Tap on the map to set new location",
-  "headingLabel": "{angle}°",
-  "@headingLabel": {
-    "description": "Label for the heading angle marker on the map.",
-    "placeholders": {
-      "angle": {"type": "String", "example": "123.4"}
-    }
+  "@tapOnTheMapToSetNewLocation": {
+    "description": "Prompt to tap on the map to set a new location."
   },
   "locationPermissionTitle": "Location Permission",
+  "@locationPermissionTitle": {
+    "description": "Title for location permission dialog."
+  },
   "sensorPermissionTitle": "Sensor Permission",
+  "@sensorPermissionTitle": {
+    "description": "Title for sensor permission dialog."
+  },
   "noNote": "No note",
+  "@noNote": {
+    "description": "Label for no note present."
+  },
   "distanceFromPrevious": "Distance from {pointName}:",
   "@distanceFromPrevious": {
     "description": "Label for the distance from the previous point in the point details panel.",
@@ -1145,5 +1291,78 @@
   "demo_license_imported_successfully": "Demo license imported successfully!",
   "@demo_license_imported_successfully": {"description": "Snackbar for successful demo license import."},
   "license_cleared_successfully": "License cleared successfully!",
-  "@license_cleared_successfully": {"description": "Snackbar for successful license clear action."}
+  "@license_cleared_successfully": {"description": "Snackbar for successful license clear action."},
+  "confirm_deletion_content": "Are you sure you want to delete point {pointName}? This action cannot be undone.",
+  "@confirm_deletion_content": {
+    "description": "Dialog content asking for confirmation to delete a point.",
+    "placeholders": {
+      "pointName": {
+        "type": "String",
+        "example": "P1"
+      }
+    }
+  },
+  "point_deleted_success": "Point {pointName} deleted successfully!",
+  "@point_deleted_success": {
+    "description": "Snackbar message when a point is deleted successfully.",
+    "placeholders": {
+      "pointName": {
+        "type": "String",
+        "example": "P1"
+      }
+    }
+  },
+  "error_deleting_point": "Error deleting point {pointName}: {errorMessage}",
+  "@error_deleting_point": {
+    "description": "Error message when deleting a point fails.",
+    "placeholders": {
+      "pointName": {
+        "type": "String",
+        "example": "P1"
+      },
+      "errorMessage": {
+        "type": "String",
+        "example": "Database error"
+      }
+    }
+  },
+  "error_saving_point": "Error saving point: {errorMessage}",
+  "@error_saving_point": {
+    "description": "Error message when saving a point fails.",
+    "placeholders": {
+      "errorMessage": {
+        "type": "String",
+        "example": "Validation error"
+      }
+    }
+  },
+  "selected_count": "{count} selected",
+  "@selected_count": {
+    "description": "Label showing the number of selected items.",
+    "placeholders": {
+      "count": {"type": "int", "example": "2"}
+    }
+  },
+  "delete_projects_content": "Are you sure you want to delete {count} selected project(s)? This action cannot be undone.",
+  "@delete_projects_content": {
+    "description": "Content for the dialog confirming deletion of multiple projects.",
+    "placeholders": {
+      "count": {"type": "int", "example": "3"}
+    }
+  },
+  "project_id_label": "ID: {id} | {lastUpdateText}",
+  "@project_id_label": {
+    "description": "Label showing the project ID and last update text.",
+    "placeholders": {
+      "id": {"type": "String", "example": "123"},
+      "lastUpdateText": {"type": "String", "example": "Proj. Date: Jan 1, 2024 | Upd: 12:00"}
+    }
+  },
+  "headingLabel": "{angle}°",
+  "@headingLabel": {
+    "description": "Label for the heading angle marker on the map.",
+    "placeholders": {
+      "angle": {"type": "String", "example": "123.4"}
+    }
+  }
 }

@@ -661,13 +661,13 @@ abstract class S {
   /// **'Are you sure you want to delete the project \"{projectName}\"? This action cannot be undone.'**
   String confirm_delete_project_content(String projectName);
 
-  /// No description provided for @project_deleted_successfully.
+  /// Snackbar message when a project is deleted successfully.
   ///
   /// In en, this message translates to:
   /// **'Project deleted successfully.'**
   String get project_deleted_successfully;
 
-  /// No description provided for @project_not_found_or_deleted.
+  /// Message when a project is not found or already deleted.
   ///
   /// In en, this message translates to:
   /// **'Project not found or already deleted.'**
@@ -691,37 +691,37 @@ abstract class S {
   /// **'Unsaved Changes'**
   String get unsaved_changes_dialog_title;
 
-  /// No description provided for @unsaved_changes_dialog_content.
+  /// Content for the dialog warning about unsaved changes.
   ///
   /// In en, this message translates to:
   /// **'You have unsaved changes. Do you want to discard them and leave?'**
   String get unsaved_changes_dialog_content;
 
-  /// No description provided for @discard_button_label.
+  /// Label for the discard button in dialogs.
   ///
   /// In en, this message translates to:
   /// **'Discard'**
   String get discard_button_label;
 
-  /// No description provided for @details_tab_label.
+  /// Tab label for project details.
   ///
   /// In en, this message translates to:
   /// **'Details'**
   String get details_tab_label;
 
-  /// No description provided for @points_tab_label.
+  /// Tab label for project points.
   ///
   /// In en, this message translates to:
   /// **'Points'**
   String get points_tab_label;
 
-  /// No description provided for @compass_tab_label.
+  /// Tab label for compass view.
   ///
   /// In en, this message translates to:
   /// **'Compass'**
   String get compass_tab_label;
 
-  /// No description provided for @map_tab_label.
+  /// Tab label for map view.
   ///
   /// In en, this message translates to:
   /// **'Map'**
@@ -1060,7 +1060,7 @@ abstract class S {
   /// **'Map Type'**
   String get mapTypeSelector;
 
-  /// No description provided for @must_be_positive_validator.
+  /// Validator message for positive number input.
   ///
   /// In en, this message translates to:
   /// **'Must be positive.'**
@@ -1114,433 +1114,385 @@ abstract class S {
   /// **'North'**
   String get mapCompassNorthIndicator;
 
-  /// No description provided for @errorLocationUnavailable.
+  /// Error message when location is unavailable.
   ///
   /// In en, this message translates to:
   /// **'Location unavailable.'**
   String get errorLocationUnavailable;
 
-  /// No description provided for @infoPointAddedPendingSave.
+  /// Info message when a point is added but not yet saved.
   ///
   /// In en, this message translates to:
   /// **'Point added (pending save)'**
   String get infoPointAddedPendingSave;
 
-  /// No description provided for @errorGeneric.
+  /// Generic error message.
   ///
   /// In en, this message translates to:
   /// **'Error'**
   String get errorGeneric;
 
-  /// No description provided for @edit_point_title.
+  /// Title for the edit point page.
   ///
   /// In en, this message translates to:
   /// **'Edit Point'**
   String get edit_point_title;
 
-  /// No description provided for @coordinates_section_title.
+  /// Section title for coordinates in point details.
   ///
   /// In en, this message translates to:
   /// **'Coordinates'**
   String get coordinates_section_title;
 
-  /// No description provided for @latitude_label.
+  /// Label for latitude field.
   ///
   /// In en, this message translates to:
   /// **'Latitude'**
   String get latitude_label;
 
-  /// No description provided for @latitude_hint.
+  /// Hint for latitude input field.
   ///
   /// In en, this message translates to:
   /// **'e.g. 45.12345'**
   String get latitude_hint;
 
-  /// No description provided for @latitude_empty_validator.
+  /// Validator message for empty latitude.
   ///
   /// In en, this message translates to:
   /// **'Latitude cannot be empty'**
   String get latitude_empty_validator;
 
-  /// No description provided for @latitude_invalid_validator.
+  /// Validator message for invalid latitude format.
   ///
   /// In en, this message translates to:
   /// **'Invalid number format'**
   String get latitude_invalid_validator;
 
-  /// No description provided for @latitude_range_validator.
+  /// Validator message for latitude out of range.
   ///
   /// In en, this message translates to:
   /// **'Latitude must be between -90 and 90'**
   String get latitude_range_validator;
 
-  /// No description provided for @longitude_label.
+  /// Label for longitude field.
   ///
   /// In en, this message translates to:
   /// **'Longitude'**
   String get longitude_label;
 
-  /// No description provided for @longitude_hint.
+  /// Hint for longitude input field.
   ///
   /// In en, this message translates to:
   /// **'e.g. -12.54321'**
   String get longitude_hint;
 
-  /// No description provided for @longitude_empty_validator.
+  /// Validator message for empty longitude.
   ///
   /// In en, this message translates to:
   /// **'Longitude cannot be empty'**
   String get longitude_empty_validator;
 
-  /// No description provided for @longitude_invalid_validator.
+  /// Validator message for invalid longitude format.
   ///
   /// In en, this message translates to:
   /// **'Invalid number format'**
   String get longitude_invalid_validator;
 
-  /// No description provided for @longitude_range_validator.
+  /// Validator message for longitude out of range.
   ///
   /// In en, this message translates to:
   /// **'Longitude must be between -180 and 180'**
   String get longitude_range_validator;
 
-  /// No description provided for @additional_data_section_title.
+  /// Section title for additional data in point details.
   ///
   /// In en, this message translates to:
   /// **'Additional Data'**
   String get additional_data_section_title;
 
-  /// No description provided for @altitude_label.
+  /// Label for altitude field.
   ///
   /// In en, this message translates to:
   /// **'Altitude (m)'**
   String get altitude_label;
 
-  /// No description provided for @altitude_hint.
+  /// Hint for altitude input field.
   ///
   /// In en, this message translates to:
   /// **'e.g. 1203.5 (Optional)'**
   String get altitude_hint;
 
-  /// No description provided for @altitude_invalid_validator.
+  /// Validator message for invalid altitude format.
   ///
   /// In en, this message translates to:
   /// **'Invalid number format'**
   String get altitude_invalid_validator;
 
-  /// No description provided for @altitude_range_validator.
+  /// Validator message for altitude out of range.
   ///
   /// In en, this message translates to:
   /// **'Altitude must be between -1000 and 8849 meters'**
   String get altitude_range_validator;
 
-  /// No description provided for @note_label.
+  /// Label for note field.
   ///
   /// In en, this message translates to:
   /// **'Note (Optional)'**
   String get note_label;
 
-  /// No description provided for @note_hint.
+  /// Hint for note input field.
   ///
   /// In en, this message translates to:
   /// **'Any observations or details...'**
   String get note_hint;
 
-  /// No description provided for @photos_section_title.
+  /// Section title for photos in point details.
   ///
   /// In en, this message translates to:
   /// **'Photos'**
   String get photos_section_title;
 
-  /// No description provided for @unsaved_point_details_title.
+  /// Title for unsaved changes dialog in point details.
   ///
   /// In en, this message translates to:
   /// **'Unsaved Changes'**
   String get unsaved_point_details_title;
 
-  /// No description provided for @unsaved_point_details_content.
+  /// Content for unsaved changes dialog in point details.
   ///
   /// In en, this message translates to:
   /// **'You have unsaved changes to point details. Save them?'**
   String get unsaved_point_details_content;
 
-  /// No description provided for @discard_text_changes.
+  /// Label for discard text changes button.
   ///
   /// In en, this message translates to:
   /// **'Discard Text Changes'**
   String get discard_text_changes;
 
-  /// No description provided for @save_all_and_exit.
+  /// Label for save all and exit button.
   ///
   /// In en, this message translates to:
   /// **'Save All & Exit'**
   String get save_all_and_exit;
 
-  /// No description provided for @confirm_deletion_title.
+  /// Title for the dialog confirming point deletion.
   ///
   /// In en, this message translates to:
   /// **'Confirm Deletion'**
   String get confirm_deletion_title;
 
-  /// Dialog content asking for confirmation to delete a point.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to delete point {pointName}? This action cannot be undone.'**
-  String confirm_deletion_content(String pointName);
-
-  /// Snackbar message when a point is deleted successfully.
-  ///
-  /// In en, this message translates to:
-  /// **'Point {pointName} deleted successfully!'**
-  String point_deleted_success(String pointName);
-
-  /// Error message when deleting a point fails.
-  ///
-  /// In en, this message translates to:
-  /// **'Error deleting point {pointName}: {errorMessage}'**
-  String error_deleting_point(String pointName, String errorMessage);
-
-  /// Error message when saving a point fails.
-  ///
-  /// In en, this message translates to:
-  /// **'Error saving point: {errorMessage}'**
-  String error_saving_point(String errorMessage);
-
-  /// No description provided for @point_details_saved.
+  /// Snackbar message when point details are saved.
   ///
   /// In en, this message translates to:
   /// **'Point details saved!'**
   String get point_details_saved;
 
-  /// No description provided for @undo_changes_tooltip.
+  /// Tooltip for undo changes button.
   ///
   /// In en, this message translates to:
   /// **'Undo Changes'**
   String get undo_changes_tooltip;
 
-  /// No description provided for @no_projects_yet.
+  /// Message shown when there are no projects yet.
   ///
   /// In en, this message translates to:
   /// **'No projects yet. Tap \'+\' to add one!'**
   String get no_projects_yet;
 
-  /// No description provided for @add_new_project_tooltip.
+  /// Tooltip for add new project button.
   ///
   /// In en, this message translates to:
   /// **'Add New Project'**
   String get add_new_project_tooltip;
 
-  /// No description provided for @untitled_project.
+  /// Label for untitled project.
   ///
   /// In en, this message translates to:
   /// **'Untitled Project'**
   String get untitled_project;
 
-  /// No description provided for @delete_selected.
+  /// Label for delete selected button.
   ///
   /// In en, this message translates to:
   /// **'Delete Selected'**
   String get delete_selected;
 
-  /// Label showing the number of selected items.
-  ///
-  /// In en, this message translates to:
-  /// **'{count} selected'**
-  String selected_count(int count);
-
-  /// No description provided for @delete_projects_title.
+  /// Title for the dialog confirming deletion of multiple projects.
   ///
   /// In en, this message translates to:
   /// **'Delete Project(s)?'**
   String get delete_projects_title;
 
-  /// Content for the dialog confirming deletion of multiple projects.
-  ///
-  /// In en, this message translates to:
-  /// **'Are you sure you want to delete {count} selected project(s)? This action cannot be undone.'**
-  String delete_projects_content(int count);
-
-  /// Label showing the project ID and last update text.
-  ///
-  /// In en, this message translates to:
-  /// **'ID: {id} | {lastUpdateText}'**
-  String project_id_label(String id, String lastUpdateText);
-
-  /// No description provided for @license_information_title.
+  /// Title for the licence information dialog.
   ///
   /// In en, this message translates to:
   /// **'Licence Information'**
   String get license_information_title;
 
-  /// No description provided for @close_button.
+  /// Label for close button in dialogs.
   ///
   /// In en, this message translates to:
   /// **'Close'**
   String get close_button;
 
-  /// No description provided for @import_new_licence.
+  /// Label for import new licence button.
   ///
   /// In en, this message translates to:
   /// **'Import New Licence'**
   String get import_new_licence;
 
-  /// No description provided for @import_licence.
+  /// Label for import licence button.
   ///
   /// In en, this message translates to:
   /// **'Import Licence'**
   String get import_licence;
 
-  /// No description provided for @premium_features_title.
+  /// Title for premium features section.
   ///
   /// In en, this message translates to:
   /// **'Premium Features'**
   String get premium_features_title;
 
-  /// No description provided for @premium_features_available.
+  /// Message when premium features are available.
   ///
   /// In en, this message translates to:
   /// **'Premium features are available in this build!'**
   String get premium_features_available;
 
-  /// No description provided for @available_features.
+  /// Label for available features list.
   ///
   /// In en, this message translates to:
   /// **'Available Features:'**
   String get available_features;
 
-  /// No description provided for @premium_features_not_available.
+  /// Message when premium features are not available.
   ///
   /// In en, this message translates to:
   /// **'Premium features are not available in this build.'**
   String get premium_features_not_available;
 
-  /// No description provided for @opensource_version.
+  /// Message for opensource version of the app.
   ///
   /// In en, this message translates to:
   /// **'This is the opensource version of the app.'**
   String get opensource_version;
 
-  /// No description provided for @try_feature.
+  /// Label for try feature button.
   ///
   /// In en, this message translates to:
   /// **'Try Feature'**
   String get try_feature;
 
-  /// No description provided for @install_demo_license.
+  /// Label for install demo license button.
   ///
   /// In en, this message translates to:
   /// **'Install Demo License'**
   String get install_demo_license;
 
-  /// No description provided for @clear_license.
+  /// Label for clear license button.
   ///
   /// In en, this message translates to:
   /// **'Clear License'**
   String get clear_license;
 
-  /// No description provided for @invalid_latitude_or_longitude_format.
+  /// Error message for invalid latitude or longitude format.
   ///
   /// In en, this message translates to:
   /// **'Invalid latitude or longitude format.'**
   String get invalid_latitude_or_longitude_format;
 
-  /// No description provided for @invalid_altitude_format.
+  /// Error message for invalid altitude format.
   ///
   /// In en, this message translates to:
   /// **'Invalid altitude format. Please enter a number or leave it empty.'**
   String get invalid_altitude_format;
 
-  /// No description provided for @coordinates.
+  /// Label for coordinates section.
   ///
   /// In en, this message translates to:
   /// **'Coordinates'**
   String get coordinates;
 
-  /// No description provided for @lat.
+  /// Label for latitude abbreviation.
   ///
   /// In en, this message translates to:
   /// **'Lat:'**
   String get lat;
 
-  /// No description provided for @lon.
+  /// Label for longitude abbreviation.
   ///
   /// In en, this message translates to:
   /// **'Lon:'**
   String get lon;
 
-  /// No description provided for @addANote.
+  /// Prompt to add a note.
   ///
   /// In en, this message translates to:
   /// **'Add a note...'**
   String get addANote;
 
-  /// No description provided for @tapToAddNote.
+  /// Prompt to tap to add a note.
   ///
   /// In en, this message translates to:
   /// **'Tap to add note...'**
   String get tapToAddNote;
 
-  /// No description provided for @save.
+  /// Label for save button.
   ///
   /// In en, this message translates to:
   /// **'Save'**
   String get save;
 
-  /// No description provided for @discard.
+  /// Label for discard button.
   ///
   /// In en, this message translates to:
   /// **'Discard'**
   String get discard;
 
-  /// No description provided for @edit.
+  /// Label for edit button.
   ///
   /// In en, this message translates to:
   /// **'Edit'**
   String get edit;
 
-  /// No description provided for @move.
+  /// Label for move button.
   ///
   /// In en, this message translates to:
   /// **'Move'**
   String get move;
 
-  /// No description provided for @cancel.
+  /// Label for cancel button.
   ///
   /// In en, this message translates to:
   /// **'Cancel'**
   String get cancel;
 
-  /// No description provided for @delete.
+  /// Label for delete button.
   ///
   /// In en, this message translates to:
   /// **'Delete'**
   String get delete;
 
-  /// No description provided for @tapOnTheMapToSetNewLocation.
+  /// Prompt to tap on the map to set a new location.
   ///
   /// In en, this message translates to:
   /// **'Tap on the map to set new location'**
   String get tapOnTheMapToSetNewLocation;
 
-  /// Label for the heading angle marker on the map.
-  ///
-  /// In en, this message translates to:
-  /// **'{angle}°'**
-  String headingLabel(String angle);
-
-  /// No description provided for @locationPermissionTitle.
+  /// Title for location permission dialog.
   ///
   /// In en, this message translates to:
   /// **'Location Permission'**
   String get locationPermissionTitle;
 
-  /// No description provided for @sensorPermissionTitle.
+  /// Title for sensor permission dialog.
   ///
   /// In en, this message translates to:
   /// **'Sensor Permission'**
   String get sensorPermissionTitle;
 
-  /// No description provided for @noNote.
+  /// Label for no note present.
   ///
   /// In en, this message translates to:
   /// **'No note'**
@@ -1809,6 +1761,54 @@ abstract class S {
   /// In en, this message translates to:
   /// **'License cleared successfully!'**
   String get license_cleared_successfully;
+
+  /// Dialog content asking for confirmation to delete a point.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete point {pointName}? This action cannot be undone.'**
+  String confirm_deletion_content(String pointName);
+
+  /// Snackbar message when a point is deleted successfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Point {pointName} deleted successfully!'**
+  String point_deleted_success(String pointName);
+
+  /// Error message when deleting a point fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Error deleting point {pointName}: {errorMessage}'**
+  String error_deleting_point(String pointName, String errorMessage);
+
+  /// Error message when saving a point fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Error saving point: {errorMessage}'**
+  String error_saving_point(String errorMessage);
+
+  /// Label showing the number of selected items.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String selected_count(int count);
+
+  /// Content for the dialog confirming deletion of multiple projects.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete {count} selected project(s)? This action cannot be undone.'**
+  String delete_projects_content(int count);
+
+  /// Label showing the project ID and last update text.
+  ///
+  /// In en, this message translates to:
+  /// **'ID: {id} | {lastUpdateText}'**
+  String project_id_label(String id, String lastUpdateText);
+
+  /// Label for the heading angle marker on the map.
+  ///
+  /// In en, this message translates to:
+  /// **'{angle}°'**
+  String headingLabel(String angle);
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

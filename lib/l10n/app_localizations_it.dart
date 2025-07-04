@@ -718,26 +718,6 @@ class SIt extends S {
   String get confirm_deletion_title => 'Conferma eliminazione';
 
   @override
-  String confirm_deletion_content(String pointName) {
-    return 'Sei sicuro di voler eliminare il punto $pointName? Questa azione non può essere annullata.';
-  }
-
-  @override
-  String point_deleted_success(String pointName) {
-    return 'Punto $pointName eliminato con successo!';
-  }
-
-  @override
-  String error_deleting_point(String pointName, String errorMessage) {
-    return 'Errore durante l\'eliminazione del punto $pointName: $errorMessage';
-  }
-
-  @override
-  String error_saving_point(String errorMessage) {
-    return 'Errore durante il salvataggio del punto: $errorMessage';
-  }
-
-  @override
   String get point_details_saved => 'Dettagli punto salvati!';
 
   @override
@@ -757,22 +737,7 @@ class SIt extends S {
   String get delete_selected => 'Elimina selezionati';
 
   @override
-  String selected_count(int count) {
-    return '$count selezionati';
-  }
-
-  @override
   String get delete_projects_title => 'Eliminare progetti?';
-
-  @override
-  String delete_projects_content(int count) {
-    return 'Sei sicuro di voler eliminare $count progetti selezionati? Questa azione non può essere annullata.';
-  }
-
-  @override
-  String project_id_label(String id, String lastUpdateText) {
-    return 'ID: $id | $lastUpdateText';
-  }
 
   @override
   String get license_information_title => 'Informazioni licenza';
@@ -857,11 +822,6 @@ class SIt extends S {
   @override
   String get tapOnTheMapToSetNewLocation =>
       'Tocca sulla mappa per impostare la nuova posizione';
-
-  @override
-  String headingLabel(String angle) {
-    return '$angle°';
-  }
 
   @override
   String get locationPermissionTitle => 'Permesso di localizzazione';
@@ -1040,4 +1000,44 @@ class SIt extends S {
 
   @override
   String get license_cleared_successfully => 'Licenza rimossa con successo!';
+
+  @override
+  String confirm_deletion_content(String pointName) {
+    return 'Sei sicuro di voler eliminare il punto $pointName? Questa azione non può essere annullata.';
+  }
+
+  @override
+  String point_deleted_success(String pointName) {
+    return 'Punto $pointName eliminato con successo!';
+  }
+
+  @override
+  String error_deleting_point(String pointName, String errorMessage) {
+    return 'Errore durante l\'eliminazione del punto $pointName: $errorMessage';
+  }
+
+  @override
+  String error_saving_point(String errorMessage) {
+    return 'Errore durante il salvataggio del punto: $errorMessage';
+  }
+
+  @override
+  String selected_count(int count) {
+    return '$count selezionati';
+  }
+
+  @override
+  String delete_projects_content(int count) {
+    return 'Sei sicuro di voler eliminare $count progetti selezionati? Questa azione non può essere annullata.';
+  }
+
+  @override
+  String project_id_label(String id, String lastUpdateText) {
+    return 'ID: $id | $lastUpdateText';
+  }
+
+  @override
+  String headingLabel(String angle) {
+    return '$angle°';
+  }
 }

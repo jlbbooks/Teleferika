@@ -85,7 +85,7 @@ class MapToolViewState extends State<MapToolView>
   bool _didInitialLoad = false;
 
   // Debug panel state
-  bool _hasClosedDebugPanel = false;
+  bool _hasClosedDebugPanel = true;
 
   // Track if we've already shown the calibrate compass notice this session
   bool _hasShownCalibrateCompassNotice = false;
@@ -117,11 +117,6 @@ class MapToolViewState extends State<MapToolView>
     final currentProject =
         context.projectStateListen.currentProject ?? widget.project;
     _controller = MapControllerLogic(project: currentProject);
-
-    // Reset debug panel closed state every time we re-enter
-    _hasClosedDebugPanel = false;
-    // Reset calibrate compass notice flag every time we re-enter
-    _hasShownCalibrateCompassNotice = false;
 
     if (!_didInitialLoad) {
       _didInitialLoad = true;
@@ -601,49 +596,45 @@ class MapToolViewState extends State<MapToolView>
                         },
                         context: context,
                       ),
-                      // Debug button below map type selector (less visible)
-                      if (kDebugMode)
-                        Positioned(
-                          top: 60,
-                          left: 16,
-                          child: OutlinedButton.icon(
-                            icon: const Icon(
-                              Icons.bug_report_outlined,
-                              size: 18,
-                              color: Colors.grey,
-                            ),
-                            label: const Text(
-                              'Debug',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(
-                                color: Colors.grey,
-                                width: 1,
-                              ),
-                              backgroundColor: Colors.transparent,
-                              foregroundColor: Colors.grey,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              minimumSize: Size(0, 0),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              visualDensity: VisualDensity.compact,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _hasClosedDebugPanel = false;
-                              });
-                            },
+                      // Debug button below map type selector (always visible)
+                      Positioned(
+                        top: 60,
+                        left: 16,
+                        child: OutlinedButton.icon(
+                          icon: const Icon(
+                            Icons.bug_report_outlined,
+                            size: 18,
+                            color: Colors.grey,
                           ),
+                          label: const Text(
+                            'Debug',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(
+                              color: Colors.grey,
+                              width: 1,
+                            ),
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: Colors.grey,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            minimumSize: Size(0, 0),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            visualDensity: VisualDensity.compact,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _hasClosedDebugPanel = false;
+                            });
+                          },
                         ),
+                      ),
                       _buildPointDetailsPanel(selectedPoint),
                       Positioned(
                         bottom: 24,
@@ -659,7 +650,8 @@ class MapToolViewState extends State<MapToolView>
                               _isAddingNewPoint || _newPoint != null,
                         ),
                       ),
-                      if (kDebugMode && !_hasClosedDebugPanel)
+                      // Debug panel only appears if _hasClosedDebugPanel is false
+                      if (!_hasClosedDebugPanel)
                         Positioned(
                           top: 16,
                           left: 16,
