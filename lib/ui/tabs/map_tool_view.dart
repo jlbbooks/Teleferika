@@ -601,6 +601,49 @@ class MapToolViewState extends State<MapToolView>
                         },
                         context: context,
                       ),
+                      // Debug button below map type selector (less visible)
+                      if (kDebugMode)
+                        Positioned(
+                          top: 60,
+                          left: 16,
+                          child: OutlinedButton.icon(
+                            icon: const Icon(
+                              Icons.bug_report_outlined,
+                              size: 18,
+                              color: Colors.grey,
+                            ),
+                            label: const Text(
+                              'Debug',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(
+                                color: Colors.grey,
+                                width: 1,
+                              ),
+                              backgroundColor: Colors.transparent,
+                              foregroundColor: Colors.grey,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              minimumSize: Size(0, 0),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: VisualDensity.compact,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _hasClosedDebugPanel = false;
+                              });
+                            },
+                          ),
+                        ),
                       _buildPointDetailsPanel(selectedPoint),
                       Positioned(
                         bottom: 24,
