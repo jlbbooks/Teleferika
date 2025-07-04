@@ -239,8 +239,10 @@ class MapToolViewState extends State<MapToolView>
           if (shouldCalibrate == true &&
               prevShouldCalibrate != true &&
               !_hasShownCalibrateCompassNotice) {
+            final s = S.of(context);
             showErrorStatus(
-              'Compass sensor needs calibration. Please move your device in a figure-8 motion.',
+              s?.compass_calibration_notice ??
+                  'Compass sensor needs calibration. Please move your device in a figure-8 motion.',
             );
             _hasShownCalibrateCompassNotice = true;
           }
@@ -364,8 +366,10 @@ class MapToolViewState extends State<MapToolView>
     } catch (e) {
       logger.severe('Failed to move point ${pointToMove.name}: $e');
       if (!mounted) return;
+      final s = S.of(context);
       showErrorStatus(
-        'Error moving point ${pointToMove.name}: ${e.toString()}',
+        s?.error_deleting_point_generic(pointToMove.name, e.toString()) ??
+            'Error moving point \\${pointToMove.name}: \\${e.toString()}',
       );
     } finally {
       if (mounted) {
@@ -1182,7 +1186,7 @@ class MapToolViewState extends State<MapToolView>
           title: Text(s?.mapDeletePointDialogTitle ?? 'Delete Point'),
           content: Text(
             s?.mapDeletePointDialogContent(pointToDelete.name) ??
-                'Are you sure you want to delete point ${pointToDelete.name}?',
+                'Are you sure you want to delete point \\${pointToDelete.name}?',
           ),
           actions: <Widget>[
             TextButton(
@@ -1218,7 +1222,8 @@ class MapToolViewState extends State<MapToolView>
         });
 
         showSuccessStatus(
-          'Point ${pointToDelete.name} deleted (pending save).',
+          s?.point_deleted_pending_save(pointToDelete.name) ??
+              'Point \\${pointToDelete.name} deleted (pending save).',
         );
       } catch (e) {
         if (!mounted) return;
@@ -1226,7 +1231,10 @@ class MapToolViewState extends State<MapToolView>
           'Failed to delete point ${pointToDelete.name} from panel: $e',
         );
 
-        showErrorStatus('Error deleting point ${pointToDelete.name}: $e');
+        showErrorStatus(
+          s?.error_deleting_point_generic(pointToDelete.name, e.toString()) ??
+              'Error deleting point \\${pointToDelete.name}: \\${e.toString()}',
+        );
       }
     }
   }

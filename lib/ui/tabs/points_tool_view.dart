@@ -563,13 +563,13 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
     bool hasUnsavedNewPoint,
   ) {
     return points.isEmpty
-        ? const Center(
+        ? Center(
             child: Padding(
-              padding: EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(16.0),
               child: Text(
-                'No points added yet.\nTap "Add Point" to get started.',
+                S.of(context)?.points_list_title ?? 'Points List',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+                style: const TextStyle(fontSize: 16, color: Colors.grey),
               ),
             ),
           )
@@ -587,23 +587,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                   },
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.add_location_alt_outlined),
-                  label: const Text('Add Point'),
-                  onPressed: hasUnsavedNewPoint
-                      ? null
-                      : () => _handleAddPoint(),
-                ),
-              ),
             ],
           );
-  }
-
-  void _handleAddPoint() {
-    // This should trigger the add point flow, e.g., open a dialog or navigate
-    // For now, just show a message
-    showInfoStatus('Add Point pressed');
   }
 }

@@ -274,7 +274,7 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
     switch (permission) {
       case PermissionType.location:
         icon = Icons.location_on_outlined;
-        title = 'Location Permission';
+        title = s?.locationPermissionTitle ?? 'Location Permission';
         description =
             s?.mapLocationPermissionInfoText ??
             "Location permission is needed to show your current position and for some map features.";
@@ -282,7 +282,7 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
         break;
       case PermissionType.sensor:
         icon = Icons.compass_calibration_outlined;
-        title = 'Sensor Permission';
+        title = s?.sensorPermissionTitle ?? 'Sensor Permission';
         description =
             s?.mapSensorPermissionInfoText ??
             "Sensor (compass) permission is needed for direction-based features.";
@@ -290,20 +290,26 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
         break;
       case PermissionType.camera:
         icon = Icons.camera_alt_outlined;
-        title = 'Camera Permission';
-        description = "Camera permission is needed to take photos.";
+        title = s?.camera_permission_title ?? 'Camera Permission';
+        description =
+            s?.camera_permission_description ??
+            "Camera permission is needed to take photos.";
         color = Colors.purple;
         break;
       case PermissionType.microphone:
         icon = Icons.mic_outlined;
-        title = 'Microphone Permission';
-        description = "Microphone permission is needed to record audio.";
+        title = s?.microphone_permission_title ?? 'Microphone Permission';
+        description =
+            s?.microphone_permission_description ??
+            "Microphone permission is needed to record audio.";
         color = Colors.orange;
         break;
       case PermissionType.storage:
         icon = Icons.folder_outlined;
-        title = 'Storage Permission';
-        description = "Storage permission is needed to save files.";
+        title = s?.storage_permission_title ?? 'Storage Permission';
+        description =
+            s?.storage_permission_description ??
+            "Storage permission is needed to save files.";
         color = Colors.teal;
         break;
     }

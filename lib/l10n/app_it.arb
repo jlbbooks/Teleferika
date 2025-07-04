@@ -833,5 +833,164 @@
   "offsetLabel": "Scostamento:",
   "@offsetLabel": {
     "description": "Etichetta per lo scostamento (distanza dal punto alla linea primo-ultimo) nei dettagli punto e nella lista punti."
-  }
+  },
+  "delete_photo_title": "Eliminare foto?",
+  "@delete_photo_title": {
+    "description": "Titolo per la finestra di dialogo di conferma eliminazione foto."
+  },
+  "delete_photo_content": "Sei sicuro di voler eliminare la foto {photoNumber}?",
+  "@delete_photo_content": {
+    "description": "Contenuto della finestra di dialogo di conferma eliminazione foto.",
+    "placeholders": {
+      "photoNumber": {
+        "type": "String",
+        "example": "1"
+      }
+    }
+  },
+  "camera_permission_title": "Permesso fotocamera",
+  "@camera_permission_title": {
+    "description": "Titolo per la richiesta di permesso fotocamera."
+  },
+  "camera_permission_description": "Il permesso fotocamera è necessario per scattare foto.",
+  "@camera_permission_description": {
+    "description": "Descrizione per la richiesta di permesso fotocamera."
+  },
+  "microphone_permission_title": "Permesso microfono",
+  "@microphone_permission_title": {
+    "description": "Titolo per la richiesta di permesso microfono."
+  },
+  "microphone_permission_description": "Il permesso microfono è necessario per registrare audio.",
+  "@microphone_permission_description": {
+    "description": "Descrizione per la richiesta di permesso microfono."
+  },
+  "storage_permission_title": "Permesso archiviazione",
+  "@storage_permission_title": {
+    "description": "Titolo per la richiesta di permesso archiviazione."
+  },
+  "storage_permission_description": "Il permesso archiviazione è necessario per salvare file.",
+  "@storage_permission_description": {
+    "description": "Descrizione per la richiesta di permesso archiviazione."
+  },
+  "current_rope_length_label": "Lunghezza attuale della fune",
+  "@current_rope_length_label": {
+    "description": "Etichetta per la statistica della lunghezza attuale della fune."
+  },
+  "unit_meter": "m",
+  "@unit_meter": {
+    "description": "Abbreviazione per metri."
+  },
+  "unit_kilometer": "km",
+  "@unit_kilometer": {
+    "description": "Abbreviazione per chilometri."
+  },
+  "point_deleted_pending_save": "Punto {pointName} eliminato (in attesa di salvataggio).",
+  "@point_deleted_pending_save": {
+    "description": "Messaggio snackbar quando un punto è eliminato ma non ancora salvato.",
+    "placeholders": {
+      "pointName": {
+        "type": "String",
+        "example": "P1"
+      }
+    }
+  },
+  "error_deleting_point_generic": "Errore durante l'eliminazione del punto {pointName}: {errorMessage}",
+  "@error_deleting_point_generic": {
+    "description": "Messaggio di errore quando l'eliminazione di un punto fallisce.",
+    "placeholders": {
+      "pointName": {
+        "type": "String",
+        "example": "P1"
+      },
+      "errorMessage": {
+        "type": "String",
+        "example": "Errore database"
+      }
+    }
+  },
+  "compass_calibration_notice": "Il sensore bussola necessita di calibrazione. Muovi il dispositivo a forma di 8.",
+  "@compass_calibration_notice": {
+    "description": "Avviso all'utente di calibrare il sensore bussola."
+  },
+  "project_statistics_title": "Statistiche Progetto",
+  "@project_statistics_title": {
+    "description": "Titolo per la sezione statistiche progetto nella scheda dettagli progetto."
+  },
+  "project_statistics_points": "Punti",
+  "@project_statistics_points": {
+    "description": "Etichetta per il numero di punti nella sezione statistiche progetto."
+  },
+  "project_statistics_images": "Immagini",
+  "@project_statistics_images": {
+    "description": "Etichetta per il numero di immagini nella sezione statistiche progetto."
+  },
+  "project_statistics_current_length": "Lunghezza Attuale",
+  "@project_statistics_current_length": {
+    "description": "Etichetta per la lunghezza attuale nella sezione statistiche progetto."
+  },
+  "project_statistics_measurements": "Misurazioni",
+  "@project_statistics_measurements": {
+    "description": "Etichetta per la sezione misurazioni nella scheda dettagli progetto."
+  },
+  "points_list_title": "Elenco Punti",
+  "@points_list_title": {
+    "description": "Titolo per la sezione elenco punti in PointsToolView."
+  },
+  "photo_manager_title": "Foto",
+  "@photo_manager_title": {
+    "description": "Titolo per la sezione gestione foto, mostrato sopra la lista delle foto."
+  },
+  "photo_manager_no_photos": "Nessuna foto ancora.",
+  "@photo_manager_no_photos": {
+    "description": "Messaggio mostrato quando non ci sono foto nella gestione foto."
+  },
+  "photo_manager_gallery": "Galleria",
+  "@photo_manager_gallery": {
+    "description": "Etichetta per l'opzione galleria nel menu aggiungi foto."
+  },
+  "photo_manager_camera": "Fotocamera",
+  "@photo_manager_camera": {
+    "description": "Etichetta per l'opzione fotocamera nel menu aggiungi foto."
+  },
+  "photo_manager_add_photo_tooltip": "Aggiungi foto",
+  "@photo_manager_add_photo_tooltip": {
+    "description": "Tooltip per il pulsante aggiungi foto."
+  },
+  "photo_manager_photo_deleted": "Foto eliminata",
+  "@photo_manager_photo_deleted": {
+    "description": "Messaggio snackbar quando una foto viene eliminata."
+  },
+  "photo_manager_photo_changes_saved": "Modifiche alle foto salvate automaticamente.",
+  "@photo_manager_photo_changes_saved": {
+    "description": "Messaggio snackbar quando le modifiche alle foto sono salvate automaticamente."
+  },
+  "photo_manager_error_saving_photo_changes": "Errore durante il salvataggio delle modifiche alle foto: {errorMessage}",
+  "@photo_manager_error_saving_photo_changes": {
+    "description": "Messaggio di errore quando il salvataggio delle modifiche alle foto fallisce.",
+    "placeholders": {
+      "errorMessage": { "type": "String", "example": "Disco pieno" }
+    }
+  },
+  "photo_manager_error_saving_image": "Errore durante il salvataggio dell'immagine: {errorMessage}",
+  "@photo_manager_error_saving_image": {
+    "description": "Messaggio di errore quando il salvataggio di un'immagine fallisce.",
+    "placeholders": {
+      "errorMessage": { "type": "String", "example": "Disco pieno" }
+    }
+  },
+  "photo_manager_error_picking_image": "Errore durante la selezione dell'immagine: {errorMessage}",
+  "@photo_manager_error_picking_image": {
+    "description": "Messaggio di errore quando la selezione di un'immagine fallisce.",
+    "placeholders": {
+      "errorMessage": { "type": "String", "example": "Permesso negato" }
+    }
+  },
+  "photo_manager_error_deleting_photo": "Errore durante l'eliminazione della foto: {errorMessage}",
+  "@photo_manager_error_deleting_photo": {
+    "description": "Messaggio di errore quando l'eliminazione di una foto fallisce.",
+    "placeholders": {
+      "errorMessage": { "type": "String", "example": "File non trovato" }
+    }
+  },
+  "photo_manager_wait_saving": "Attendere, salvataggio foto in corso..."
 }

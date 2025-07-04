@@ -1557,6 +1557,198 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Offset:'**
   String get offsetLabel;
+
+  /// Title for the dialog to confirm photo deletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Photo?'**
+  String get delete_photo_title;
+
+  /// Content for the dialog to confirm photo deletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete photo {photoNumber}?'**
+  String delete_photo_content(String photoNumber);
+
+  /// Title for camera permission request.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera Permission'**
+  String get camera_permission_title;
+
+  /// Description for camera permission request.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera permission is needed to take photos.'**
+  String get camera_permission_description;
+
+  /// Title for microphone permission request.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone Permission'**
+  String get microphone_permission_title;
+
+  /// Description for microphone permission request.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone permission is needed to record audio.'**
+  String get microphone_permission_description;
+
+  /// Title for storage permission request.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage Permission'**
+  String get storage_permission_title;
+
+  /// Description for storage permission request.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage permission is needed to save files.'**
+  String get storage_permission_description;
+
+  /// Label for the current rope length statistic.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Rope Length'**
+  String get current_rope_length_label;
+
+  /// Abbreviation for meters.
+  ///
+  /// In en, this message translates to:
+  /// **'m'**
+  String get unit_meter;
+
+  /// Abbreviation for kilometers.
+  ///
+  /// In en, this message translates to:
+  /// **'km'**
+  String get unit_kilometer;
+
+  /// Snackbar message when a point is deleted but not yet saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Point {pointName} deleted (pending save).'**
+  String point_deleted_pending_save(String pointName);
+
+  /// Error message when deleting a point fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Error deleting point {pointName}: {errorMessage}'**
+  String error_deleting_point_generic(String pointName, String errorMessage);
+
+  /// Notice to the user to calibrate the compass sensor.
+  ///
+  /// In en, this message translates to:
+  /// **'Compass sensor needs calibration. Please move your device in a figure-8 motion.'**
+  String get compass_calibration_notice;
+
+  /// Title for the project statistics section in the project details tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Project Statistics'**
+  String get project_statistics_title;
+
+  /// Label for the number of points in the project statistics section.
+  ///
+  /// In en, this message translates to:
+  /// **'Points'**
+  String get project_statistics_points;
+
+  /// Label for the number of images in the project statistics section.
+  ///
+  /// In en, this message translates to:
+  /// **'Images'**
+  String get project_statistics_images;
+
+  /// Label for the current length in the project statistics section.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Length'**
+  String get project_statistics_current_length;
+
+  /// Label for the measurements section in the project details tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Measurements'**
+  String get project_statistics_measurements;
+
+  /// Title for the points list section in PointsToolView.
+  ///
+  /// In en, this message translates to:
+  /// **'Points List'**
+  String get points_list_title;
+
+  /// Title for the photo manager section, shown above the photo list.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get photo_manager_title;
+
+  /// Message shown when there are no photos in the photo manager.
+  ///
+  /// In en, this message translates to:
+  /// **'No photos yet.'**
+  String get photo_manager_no_photos;
+
+  /// Label for the gallery option in the add photo menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get photo_manager_gallery;
+
+  /// Label for the camera option in the add photo menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get photo_manager_camera;
+
+  /// Tooltip for the add photo button.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Photo'**
+  String get photo_manager_add_photo_tooltip;
+
+  /// Snackbar message when a photo is deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo deleted'**
+  String get photo_manager_photo_deleted;
+
+  /// Snackbar message when photo changes are auto-saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo changes saved automatically.'**
+  String get photo_manager_photo_changes_saved;
+
+  /// Error message when saving photo changes fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Error saving photo changes: {errorMessage}'**
+  String photo_manager_error_saving_photo_changes(String errorMessage);
+
+  /// Error message when saving an image fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Error saving image: {errorMessage}'**
+  String photo_manager_error_saving_image(String errorMessage);
+
+  /// Error message when picking an image fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Error picking image: {errorMessage}'**
+  String photo_manager_error_picking_image(String errorMessage);
+
+  /// Error message when deleting a photo fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Error deleting photo: {errorMessage}'**
+  String photo_manager_error_deleting_photo(String errorMessage);
+
+  /// Snackbar message shown when photos are being saved and user tries to interact.
+  ///
+  /// In en, this message translates to:
+  /// **'Please wait, photos are being saved...'**
+  String get photo_manager_wait_saving;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

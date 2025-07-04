@@ -282,7 +282,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Project Statistics',
+                S.of(context)?.project_statistics_title ?? 'Project Statistics',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: Theme.of(context).colorScheme.onSurface,
@@ -303,7 +303,9 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                     Expanded(
                       child: _buildStatCard(
                         icon: Icons.location_on,
-                        title: 'Points',
+                        title:
+                            S.of(context)?.project_statistics_points ??
+                            'Points',
                         value: '${points.length}',
                         color: Theme.of(context).colorScheme.primary,
                       ),
@@ -312,7 +314,9 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                     Expanded(
                       child: _buildStatCard(
                         icon: Icons.photo,
-                        title: 'Images',
+                        title:
+                            S.of(context)?.project_statistics_images ??
+                            'Images',
                         value: '$totalImages',
                         color: Theme.of(context).colorScheme.secondary,
                       ),
@@ -323,7 +327,9 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                 if (currentProject.presumedTotalLength != null)
                   _buildStatCard(
                     icon: Icons.straighten,
-                    title: 'Presumed Length',
+                    title:
+                        S.of(context)?.formFieldPresumedTotalLengthLabel ??
+                        'Presumed Length',
                     value:
                         '${currentProject.presumedTotalLength!.toStringAsFixed(1)} m',
                     color: Theme.of(context).colorScheme.tertiary,
@@ -332,7 +338,9 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                 if (currentProject.currentRopeLength > 0)
                   _buildStatCard(
                     icon: Icons.calculate,
-                    title: 'Current Length',
+                    title:
+                        S.of(context)?.project_statistics_current_length ??
+                        'Current Length',
                     value:
                         '${currentProject.currentRopeLength.toStringAsFixed(1)} m',
                     color: Theme.of(context).colorScheme.primary,
@@ -724,7 +732,8 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Measurements',
+                            S.of(context)?.project_statistics_measurements ??
+                                'Measurements',
                             style: Theme.of(context).textTheme.titleSmall
                                 ?.copyWith(fontWeight: FontWeight.w600),
                           ),
@@ -861,7 +870,8 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Current Rope Length',
+                                    s?.current_rope_length_label ??
+                                        'Current Rope Length',
                                     style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
                                           fontWeight: FontWeight.w500,
@@ -872,7 +882,7 @@ class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    '${project.currentRopeLength.toStringAsFixed(2)} m',
+                                    '${project.currentRopeLength.toStringAsFixed(2)} \\${s?.unit_meter ?? 'm'}',
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleMedium

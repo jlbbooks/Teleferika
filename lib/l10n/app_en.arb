@@ -972,5 +972,167 @@
   "offsetLabel": "Offset:",
   "@offsetLabel": {
     "description": "Label for the offset (distance from point to first-last line) in point details and point list UI."
+  },
+  "delete_photo_title": "Delete Photo?",
+  "@delete_photo_title": {
+    "description": "Title for the dialog to confirm photo deletion."
+  },
+  "delete_photo_content": "Are you sure you want to delete photo {photoNumber}?",
+  "@delete_photo_content": {
+    "description": "Content for the dialog to confirm photo deletion.",
+    "placeholders": {
+      "photoNumber": {
+        "type": "String",
+        "example": "1"
+      }
+    }
+  },
+  "camera_permission_title": "Camera Permission",
+  "@camera_permission_title": {
+    "description": "Title for camera permission request."
+  },
+  "camera_permission_description": "Camera permission is needed to take photos.",
+  "@camera_permission_description": {
+    "description": "Description for camera permission request."
+  },
+  "microphone_permission_title": "Microphone Permission",
+  "@microphone_permission_title": {
+    "description": "Title for microphone permission request."
+  },
+  "microphone_permission_description": "Microphone permission is needed to record audio.",
+  "@microphone_permission_description": {
+    "description": "Description for microphone permission request."
+  },
+  "storage_permission_title": "Storage Permission",
+  "@storage_permission_title": {
+    "description": "Title for storage permission request."
+  },
+  "storage_permission_description": "Storage permission is needed to save files.",
+  "@storage_permission_description": {
+    "description": "Description for storage permission request."
+  },
+  "current_rope_length_label": "Current Rope Length",
+  "@current_rope_length_label": {
+    "description": "Label for the current rope length statistic."
+  },
+  "unit_meter": "m",
+  "@unit_meter": {
+    "description": "Abbreviation for meters."
+  },
+  "unit_kilometer": "km",
+  "@unit_kilometer": {
+    "description": "Abbreviation for kilometers."
+  },
+  "point_deleted_pending_save": "Point {pointName} deleted (pending save).",
+  "@point_deleted_pending_save": {
+    "description": "Snackbar message when a point is deleted but not yet saved.",
+    "placeholders": {
+      "pointName": {
+        "type": "String",
+        "example": "P1"
+      }
+    }
+  },
+  "error_deleting_point_generic": "Error deleting point {pointName}: {errorMessage}",
+  "@error_deleting_point_generic": {
+    "description": "Error message when deleting a point fails.",
+    "placeholders": {
+      "pointName": {
+        "type": "String",
+        "example": "P1"
+      },
+      "errorMessage": {
+        "type": "String",
+        "example": "Database error"
+      }
+    }
+  },
+  "compass_calibration_notice": "Compass sensor needs calibration. Please move your device in a figure-8 motion.",
+  "@compass_calibration_notice": {
+    "description": "Notice to the user to calibrate the compass sensor."
+  },
+  "project_statistics_title": "Project Statistics",
+  "@project_statistics_title": {
+    "description": "Title for the project statistics section in the project details tab."
+  },
+  "project_statistics_points": "Points",
+  "@project_statistics_points": {
+    "description": "Label for the number of points in the project statistics section."
+  },
+  "project_statistics_images": "Images",
+  "@project_statistics_images": {
+    "description": "Label for the number of images in the project statistics section."
+  },
+  "project_statistics_current_length": "Current Length",
+  "@project_statistics_current_length": {
+    "description": "Label for the current length in the project statistics section."
+  },
+  "project_statistics_measurements": "Measurements",
+  "@project_statistics_measurements": {
+    "description": "Label for the measurements section in the project details tab."
+  },
+  "points_list_title": "Points List",
+  "@points_list_title": {
+    "description": "Title for the points list section in PointsToolView."
+  },
+  "photo_manager_title": "Photos",
+  "@photo_manager_title": {
+    "description": "Title for the photo manager section, shown above the photo list."
+  },
+  "photo_manager_no_photos": "No photos yet.",
+  "@photo_manager_no_photos": {
+    "description": "Message shown when there are no photos in the photo manager."
+  },
+  "photo_manager_gallery": "Gallery",
+  "@photo_manager_gallery": {
+    "description": "Label for the gallery option in the add photo menu."
+  },
+  "photo_manager_camera": "Camera",
+  "@photo_manager_camera": {
+    "description": "Label for the camera option in the add photo menu."
+  },
+  "photo_manager_add_photo_tooltip": "Add Photo",
+  "@photo_manager_add_photo_tooltip": {
+    "description": "Tooltip for the add photo button."
+  },
+  "photo_manager_photo_deleted": "Photo deleted",
+  "@photo_manager_photo_deleted": {
+    "description": "Snackbar message when a photo is deleted."
+  },
+  "photo_manager_photo_changes_saved": "Photo changes saved automatically.",
+  "@photo_manager_photo_changes_saved": {
+    "description": "Snackbar message when photo changes are auto-saved."
+  },
+  "photo_manager_error_saving_photo_changes": "Error saving photo changes: {errorMessage}",
+  "@photo_manager_error_saving_photo_changes": {
+    "description": "Error message when saving photo changes fails.",
+    "placeholders": {
+      "errorMessage": { "type": "String", "example": "Disk full" }
+    }
+  },
+  "photo_manager_error_saving_image": "Error saving image: {errorMessage}",
+  "@photo_manager_error_saving_image": {
+    "description": "Error message when saving an image fails.",
+    "placeholders": {
+      "errorMessage": { "type": "String", "example": "Disk full" }
+    }
+  },
+  "photo_manager_error_picking_image": "Error picking image: {errorMessage}",
+  "@photo_manager_error_picking_image": {
+    "description": "Error message when picking an image fails.",
+    "placeholders": {
+      "errorMessage": { "type": "String", "example": "Permission denied" }
+    }
+  },
+  "photo_manager_error_deleting_photo": "Error deleting photo: {errorMessage}",
+  "@photo_manager_error_deleting_photo": {
+    "description": "Error message when deleting a photo fails.",
+    "placeholders": {
+      "errorMessage": { "type": "String", "example": "File not found" }
+    }
+  },
+  "photo_manager_wait_saving": "Please wait, photos are being saved...",
+  "@photo_manager_wait_saving": {
+    "description": "Snackbar message shown when photos are being saved and user tries to interact."
   }
 }

@@ -879,4 +879,120 @@ class SIt extends S {
 
   @override
   String get offsetLabel => 'Scostamento:';
+
+  @override
+  String get delete_photo_title => 'Eliminare foto?';
+
+  @override
+  String delete_photo_content(String photoNumber) {
+    return 'Sei sicuro di voler eliminare la foto $photoNumber?';
+  }
+
+  @override
+  String get camera_permission_title => 'Permesso fotocamera';
+
+  @override
+  String get camera_permission_description =>
+      'Il permesso fotocamera è necessario per scattare foto.';
+
+  @override
+  String get microphone_permission_title => 'Permesso microfono';
+
+  @override
+  String get microphone_permission_description =>
+      'Il permesso microfono è necessario per registrare audio.';
+
+  @override
+  String get storage_permission_title => 'Permesso archiviazione';
+
+  @override
+  String get storage_permission_description =>
+      'Il permesso archiviazione è necessario per salvare file.';
+
+  @override
+  String get current_rope_length_label => 'Lunghezza attuale della fune';
+
+  @override
+  String get unit_meter => 'm';
+
+  @override
+  String get unit_kilometer => 'km';
+
+  @override
+  String point_deleted_pending_save(String pointName) {
+    return 'Punto $pointName eliminato (in attesa di salvataggio).';
+  }
+
+  @override
+  String error_deleting_point_generic(String pointName, String errorMessage) {
+    return 'Errore durante l\'eliminazione del punto $pointName: $errorMessage';
+  }
+
+  @override
+  String get compass_calibration_notice =>
+      'Il sensore bussola necessita di calibrazione. Muovi il dispositivo a forma di 8.';
+
+  @override
+  String get project_statistics_title => 'Statistiche Progetto';
+
+  @override
+  String get project_statistics_points => 'Punti';
+
+  @override
+  String get project_statistics_images => 'Immagini';
+
+  @override
+  String get project_statistics_current_length => 'Lunghezza Attuale';
+
+  @override
+  String get project_statistics_measurements => 'Misurazioni';
+
+  @override
+  String get points_list_title => 'Elenco Punti';
+
+  @override
+  String get photo_manager_title => 'Foto';
+
+  @override
+  String get photo_manager_no_photos => 'Nessuna foto ancora.';
+
+  @override
+  String get photo_manager_gallery => 'Galleria';
+
+  @override
+  String get photo_manager_camera => 'Fotocamera';
+
+  @override
+  String get photo_manager_add_photo_tooltip => 'Aggiungi foto';
+
+  @override
+  String get photo_manager_photo_deleted => 'Foto eliminata';
+
+  @override
+  String get photo_manager_photo_changes_saved =>
+      'Modifiche alle foto salvate automaticamente.';
+
+  @override
+  String photo_manager_error_saving_photo_changes(String errorMessage) {
+    return 'Errore durante il salvataggio delle modifiche alle foto: $errorMessage';
+  }
+
+  @override
+  String photo_manager_error_saving_image(String errorMessage) {
+    return 'Errore durante il salvataggio dell\'immagine: $errorMessage';
+  }
+
+  @override
+  String photo_manager_error_picking_image(String errorMessage) {
+    return 'Errore durante la selezione dell\'immagine: $errorMessage';
+  }
+
+  @override
+  String photo_manager_error_deleting_photo(String errorMessage) {
+    return 'Errore durante l\'eliminazione della foto: $errorMessage';
+  }
+
+  @override
+  String get photo_manager_wait_saving =>
+      'Attendere, salvataggio foto in corso...';
 }

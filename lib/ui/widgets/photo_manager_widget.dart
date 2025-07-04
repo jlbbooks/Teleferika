@@ -13,6 +13,7 @@ import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/image_model.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
+import 'package:teleferika/l10n/app_localizations.dart';
 
 // import 'package:teleferika/utils/uuid_generator.dart'; // Assuming ImageModel handles this
 
@@ -267,14 +268,18 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext dialogContext) {
+        final s = S.of(dialogContext);
         return AlertDialog(
-          title: const Text('Delete Photo?'),
+          title: Text(s?.delete_photo_title ?? 'Delete Photo?'),
           content: Text(
-            'Are you sure you want to delete photo ${imageToDelete.ordinalNumber + 1}?',
+            s?.delete_photo_content(
+                  (imageToDelete.ordinalNumber + 1).toString(),
+                ) ??
+                'Are you sure you want to delete photo \\${imageToDelete.ordinalNumber + 1}?',
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancel'),
+              child: Text(s?.buttonCancel ?? 'Cancel'),
               onPressed: () {
                 logger.info('Photo deletion cancelled by user.');
                 Navigator.of(dialogContext).pop(false);
@@ -282,7 +287,7 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
             ),
             TextButton(
               child: Text(
-                'Delete',
+                s?.buttonDelete ?? 'Delete',
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
               onPressed: () {
@@ -324,8 +329,10 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Photo deleted'),
+            SnackBar(
+              content: Text(
+                S.of(context)?.photo_manager_photo_deleted ?? 'Photo deleted',
+              ),
               backgroundColor: Colors.green,
             ),
           );
@@ -334,7 +341,14 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
         logger.severe('Error deleting photo file: $e', e, stackTrace);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error deleting photo: ${e.toString()}')),
+            SnackBar(
+              content: Text(
+                S
+                        .of(context)
+                        ?.photo_manager_error_deleting_photo(e.toString()) ??
+                    'Error deleting photo: ${e.toString()}',
+              ),
+            ),
           );
         }
       }
@@ -395,7 +409,7 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
             children: <Widget>[
               ListTile(
                 leading: const Icon(Icons.photo_library),
-                title: const Text('Gallery'),
+                title: Text(S.of(context)?.photo_manager_gallery ?? 'Gallery'),
                 onTap: () {
                   logger.info('Gallery option selected.');
                   Navigator.of(context).pop();
@@ -404,7 +418,7 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
               ),
               ListTile(
                 leading: const Icon(Icons.photo_camera),
-                title: const Text('Camera'),
+                title: Text(S.of(context)?.photo_manager_camera ?? 'Camera'),
                 onTap: () {
                   logger.info('Camera option selected.');
                   Navigator.of(context).pop();
@@ -438,7 +452,7 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Photos (${_images.length})',
+              '${S.of(context)?.photo_manager_title ?? 'Photos'} (${_images.length})',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             _isSavingPhotos
@@ -452,7 +466,9 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
                   )
                 : IconButton(
                     icon: const Icon(Icons.add_a_photo_outlined),
-                    tooltip: 'Add Photo',
+                    tooltip:
+                        S.of(context)?.photo_manager_add_photo_tooltip ??
+                        'Add Photo',
                     onPressed: _showAddPhotoOptions,
                   ),
           ],
@@ -477,7 +493,8 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'No photos yet.',
+                      S.of(context)?.photo_manager_no_photos ??
+                          'No photos yet.',
                       style: TextStyle(color: Colors.grey[700]),
                     ),
                   ],

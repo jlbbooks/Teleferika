@@ -105,7 +105,8 @@ class PointsTabState extends State<PointsTab> with StatusMixin {
                                 ),
                                 const SizedBox(width: 12),
                                 Text(
-                                  'Points List',
+                                  S.of(context)?.points_list_title ??
+                                      'Points List',
                                   style: Theme.of(context).textTheme.titleMedium
                                       ?.copyWith(
                                         fontWeight: FontWeight.w600,

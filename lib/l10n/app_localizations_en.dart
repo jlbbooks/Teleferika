@@ -870,4 +870,120 @@ class SEn extends S {
 
   @override
   String get offsetLabel => 'Offset:';
+
+  @override
+  String get delete_photo_title => 'Delete Photo?';
+
+  @override
+  String delete_photo_content(String photoNumber) {
+    return 'Are you sure you want to delete photo $photoNumber?';
+  }
+
+  @override
+  String get camera_permission_title => 'Camera Permission';
+
+  @override
+  String get camera_permission_description =>
+      'Camera permission is needed to take photos.';
+
+  @override
+  String get microphone_permission_title => 'Microphone Permission';
+
+  @override
+  String get microphone_permission_description =>
+      'Microphone permission is needed to record audio.';
+
+  @override
+  String get storage_permission_title => 'Storage Permission';
+
+  @override
+  String get storage_permission_description =>
+      'Storage permission is needed to save files.';
+
+  @override
+  String get current_rope_length_label => 'Current Rope Length';
+
+  @override
+  String get unit_meter => 'm';
+
+  @override
+  String get unit_kilometer => 'km';
+
+  @override
+  String point_deleted_pending_save(String pointName) {
+    return 'Point $pointName deleted (pending save).';
+  }
+
+  @override
+  String error_deleting_point_generic(String pointName, String errorMessage) {
+    return 'Error deleting point $pointName: $errorMessage';
+  }
+
+  @override
+  String get compass_calibration_notice =>
+      'Compass sensor needs calibration. Please move your device in a figure-8 motion.';
+
+  @override
+  String get project_statistics_title => 'Project Statistics';
+
+  @override
+  String get project_statistics_points => 'Points';
+
+  @override
+  String get project_statistics_images => 'Images';
+
+  @override
+  String get project_statistics_current_length => 'Current Length';
+
+  @override
+  String get project_statistics_measurements => 'Measurements';
+
+  @override
+  String get points_list_title => 'Points List';
+
+  @override
+  String get photo_manager_title => 'Photos';
+
+  @override
+  String get photo_manager_no_photos => 'No photos yet.';
+
+  @override
+  String get photo_manager_gallery => 'Gallery';
+
+  @override
+  String get photo_manager_camera => 'Camera';
+
+  @override
+  String get photo_manager_add_photo_tooltip => 'Add Photo';
+
+  @override
+  String get photo_manager_photo_deleted => 'Photo deleted';
+
+  @override
+  String get photo_manager_photo_changes_saved =>
+      'Photo changes saved automatically.';
+
+  @override
+  String photo_manager_error_saving_photo_changes(String errorMessage) {
+    return 'Error saving photo changes: $errorMessage';
+  }
+
+  @override
+  String photo_manager_error_saving_image(String errorMessage) {
+    return 'Error saving image: $errorMessage';
+  }
+
+  @override
+  String photo_manager_error_picking_image(String errorMessage) {
+    return 'Error picking image: $errorMessage';
+  }
+
+  @override
+  String photo_manager_error_deleting_photo(String errorMessage) {
+    return 'Error deleting photo: $errorMessage';
+  }
+
+  @override
+  String get photo_manager_wait_saving =>
+      'Please wait, photos are being saved...';
 }
