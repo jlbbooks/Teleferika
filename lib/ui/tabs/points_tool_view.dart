@@ -322,14 +322,36 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
     int index,
     ProjectModel project,
   ) {
-    // index needed for Key
     final bool isSelectedForDelete = _selectedPointIds.contains(point.id);
     final Color baseSelectionColor = Theme.of(context).primaryColorLight;
     const double selectedOpacity = 0.3;
 
+    final points = Provider.of<ProjectStateManager>(
+      context,
+      listen: false,
+    ).currentPoints;
+
+    // Get previous point if exists
+    PointModel? prevPoint;
+    if (index > 0 && index < points.length) {
+      prevPoint = points[index - 1];
+    }
+
+    // Calculate distance from previous point
+    double? distanceFromPrev;
+    if (prevPoint != null) {
+      distanceFromPrev = point.distanceFromPoint(prevPoint);
+    }
+
+    // Offset from heading line
+    double? offset;
+    if (points.length >= 2) {
+      final logic = MapControllerLogic(project: project);
+      offset = logic.distanceFromPointToFirstLastLine(point, points);
+    }
+
     return Card(
       key: ValueKey(point.id),
-      // Crucial for ReorderableListView
       margin: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
       elevation: _isSelectionMode && isSelectedForDelete ? 4.0 : 1.0,
       shape: RoundedRectangleBorder(
@@ -341,135 +363,90 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
       color: _isSelectionMode && isSelectedForDelete
           ? baseSelectionColor.withAlpha((selectedOpacity * 255).round())
           : null,
-      child: Stack(
-        // Use Stack to overlay the "New" badge
-        children: [
-          ListTile(
-            leading: _isSelectionMode
-                ? Checkbox(
-                    value: isSelectedForDelete,
-                    activeColor: Theme.of(context).primaryColor,
-                    onChanged: (bool? value) {
-                      _togglePointSelection(point.id);
-                    },
-                  )
-                : ReorderableDragStartListener(
-                    index: index,
-                    child: Padding(
-                      // Add some padding around the handle for easier touch
-                      padding: const EdgeInsets.all(8.0),
-                      child: Icon(
-                        Icons.drag_handle,
-                        color: Theme.of(context).hintColor, // Subtle color
-                      ),
+      child: InkWell(
+        onTap: () => _handlePointTap(point),
+        onLongPress: () => _handlePointLongPress(point),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Name (centered)
+              Center(
+                child: Text(
+                  point.name,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              // Altitude
+              if (point.altitude != null)
+                Row(
+                  children: [
+                    const Icon(Icons.terrain, size: 18, color: Colors.brown),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Alt: ${point.altitude!.toStringAsFixed(2)} m',
+                      style: Theme.of(context).textTheme.bodySmall,
                     ),
-                  ),
-            title: Text(
-              '${point.name}: Alt: ${point.altitude?.toStringAsFixed(2) ?? '---'}\nLat: ${point.latitude.toStringAsFixed(5)}\nLon: ${point.longitude.toStringAsFixed(5)}',
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  point.note.isEmpty
-                      ? (S.of(context)?.noNote ?? 'No note')
-                      : point.note,
+                  ],
                 ),
-                Builder(
-                  builder: (context) {
-                    final points = Provider.of<ProjectStateManager>(
-                      context,
-                      listen: false,
-                    ).currentPoints;
-                    double? distanceToLine;
-                    if (points.length >= 2) {
-                      final logic = MapControllerLogic(
-                        project: Provider.of<ProjectStateManager>(
-                          context,
-                          listen: false,
-                        ).currentProject!,
-                      );
-                      distanceToLine = logic.distanceFromPointToFirstLastLine(
-                        point,
-                        points,
-                      );
-                    }
-                    String? distanceToLineStr;
-                    if (distanceToLine != null) {
-                      if (distanceToLine >= 1000) {
-                        distanceToLineStr =
-                            '${(distanceToLine / 1000).toStringAsFixed(2)} km';
-                      } else {
-                        distanceToLineStr =
-                            '${distanceToLine.toStringAsFixed(1)} m';
-                      }
-                    }
-                    if (distanceToLine == null || distanceToLine <= 0.0)
-                      return SizedBox.shrink();
-                    return Row(
-                      children: [
-                        Icon(
-                          Icons.straighten,
-                          size: 14,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                        SizedBox(width: 6),
-                        Text(
-                          S.of(context)?.offsetLabel ?? 'Offset:',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              ),
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          distanceToLineStr ?? '',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                fontFamily: 'monospace',
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ],
-            ),
-            trailing: !_isSelectionMode
-                ? IconButton(
-                    icon: const Icon(
-                      Icons.edit_note_outlined,
+              // Distance from previous point
+              if (distanceFromPrev != null && prevPoint != null)
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.swap_horiz,
+                      size: 18,
                       color: Colors.blueGrey,
                     ),
-                    tooltip: 'Edit Point',
-                    onPressed: () {
-                      _handlePointTap(point);
-                    },
-                  )
-                : null,
-            onTap: () => _handlePointTap(point),
-            // ReorderableListView handles long press for drag if not in selection mode.
-            // If you need specific long press logic, it might conflict or need careful handling.
-            // For simplicity, we let ReorderableListView manage the drag on long press
-            // via the ReorderableDragStartListener.
-            onLongPress: _isSelectionMode
-                ? () =>
-                      _handlePointLongPress(
-                        point,
-                      ) // Allow long press toggle within selection mode
-                : () {
-                    // If not in selection mode, long press on ListTile body should enable it
-                    // and select the item. Drag handle is separate.
-                    _handlePointLongPress(point);
-                  },
+                    const SizedBox(width: 6),
+                    Text(
+                      'Distance: '
+                      '${distanceFromPrev >= 1000 ? (distanceFromPrev / 1000).toStringAsFixed(2) + " km" : distanceFromPrev.toStringAsFixed(1) + " m"}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              // Offset from heading line
+              if (offset != null && offset > 0.0)
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.straighten,
+                      size: 18,
+                      color: Colors.deepPurple,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Offset: '
+                      '${offset >= 1000 ? (offset / 1000).toStringAsFixed(2) + " km" : offset.toStringAsFixed(1) + " m"}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              // Note (if present)
+              if (point.note.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6.0, left: 2.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.notes, size: 18, color: Colors.teal),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          point.note,
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
