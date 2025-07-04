@@ -636,8 +636,8 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
     // Total rope length
     final double ropeLength = project.currentRopeLength;
     String ropeLengthStr = ropeLength >= 1000
-        ? (ropeLength / 1000).toStringAsFixed(2) + ' km'
-        : ropeLength.toStringAsFixed(1) + ' m';
+        ? '${(ropeLength / 1000).toStringAsFixed(2)} km'
+        : '${ropeLength.toStringAsFixed(1)} m';
     // Project date
     String? projectDateStr = project.date != null
         ? projectDateFormat.format(project.date!)

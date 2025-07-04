@@ -806,9 +806,9 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                               String distStr;
                               if (dist >= 1000) {
                                 distStr =
-                                    (dist / 1000).toStringAsFixed(2) + ' km';
+                                    '${(dist / 1000).toStringAsFixed(2)} km';
                               } else {
-                                distStr = dist.toStringAsFixed(1) + ' m';
+                                distStr = '${dist.toStringAsFixed(1)} m';
                               }
                               return Padding(
                                 padding: const EdgeInsets.only(top: 12.0),
