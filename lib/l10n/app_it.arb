@@ -1004,7 +1004,7 @@
   "@delete_photo_title": {
     "description": "Titolo per la finestra di dialogo di conferma eliminazione foto."
   },
-  "delete_photo_content": "Sei sicuro di voler eliminare la foto {photoNumber}?",
+  "delete_photo_content": "Sei sicuro di voler eliminare {photoNumber} foto?",
   "@delete_photo_content": {
     "description": "Contenuto della finestra di dialogo di conferma eliminazione foto.",
     "placeholders": {

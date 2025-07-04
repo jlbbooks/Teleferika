@@ -1519,7 +1519,7 @@ abstract class S {
   /// Content for the dialog to confirm photo deletion.
   ///
   /// In en, this message translates to:
-  /// **'Are you sure you want to delete photo {photoNumber}?'**
+  /// **'Are you sure you want to delete {photoNumber} photo(s)?'**
   String delete_photo_content(String photoNumber);
 
   /// Title for camera permission request.

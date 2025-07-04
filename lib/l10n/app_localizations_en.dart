@@ -836,7 +836,7 @@ class SEn extends S {
 
   @override
   String delete_photo_content(String photoNumber) {
-    return 'Are you sure you want to delete photo $photoNumber?';
+    return 'Are you sure you want to delete $photoNumber photo(s)?';
   }
 
   @override

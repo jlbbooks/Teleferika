@@ -14,7 +14,6 @@ import 'package:teleferika/db/models/image_model.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
-import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 // import 'package:teleferika/utils/uuid_generator.dart'; // Assuming ImageModel handles this
 
@@ -239,139 +238,6 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
     }
   }
 
-  void _deletePhoto(int index) async {
-    logger.info('_deletePhoto called for index: $index');
-    if (_isSavingPhotos) {
-      logger.warning(
-        "Attempted to delete image while auto-save is in progress. Aborting.",
-      );
-      showInfoStatus(
-        S.of(context)?.photo_manager_wait_saving ??
-            'Please wait, photos are being saved...',
-      );
-      return;
-    }
-    if (index < 0 || index >= _images.length) {
-      logger.warning(
-        'Delete photo called with invalid index: $index. Image count: ${_images.length}',
-      );
-      return;
-    }
-
-    final ImageModel imageToDelete = _images[index];
-    logger.info('Attempting to delete image: $imageToDelete');
-
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        final s = S.of(dialogContext);
-        return AlertDialog(
-          title: Text(s?.delete_photo_title ?? 'Delete Photo?'),
-          content: Text(
-            s?.delete_photo_content(
-                  (imageToDelete.ordinalNumber + 1).toString(),
-                ) ??
-                'Are you sure you want to delete photo ${imageToDelete.ordinalNumber + 1}?',
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text(s?.buttonCancel ?? 'Cancel'),
-              onPressed: () {
-                logger.info('Photo deletion cancelled by user.');
-                Navigator.of(dialogContext).pop(false);
-              },
-            ),
-            TextButton(
-              child: Text(
-                s?.buttonDelete ?? 'Delete',
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
-              onPressed: () {
-                logger.info('Photo deletion confirmed by user.');
-                Navigator.of(dialogContext).pop(true);
-              },
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmed == true) {
-      ImageModel? _lastDeletedImage;
-      int? _lastDeletedIndex;
-      try {
-        final fileToDelete = File(imageToDelete.imagePath);
-        if (await fileToDelete.exists()) {
-          logger.info(
-            'Physical file exists, deleting: ${imageToDelete.imagePath}',
-          );
-          await fileToDelete.delete();
-          logger.info('Physical file deleted.');
-        } else {
-          logger.warning(
-            'Physical file not found for deletion: ${imageToDelete.imagePath}',
-          );
-        }
-        setState(() {
-          _lastDeletedImage = _images[index];
-          _lastDeletedIndex = index;
-          _images.removeAt(index);
-          logger.finer(
-            'Image removed from list. Current count: ${_images.length}',
-          );
-          _updateOrdinalNumbers();
-        });
-        await _savePointWithCurrentImages();
-        logger.info(
-          'onImageListChanged callback invoked after deletion. Image count: ${_images.length}',
-        );
-        if (mounted) {
-          final s = S.of(context);
-          final snackBar = SnackBar(
-            content: Text(s?.photo_manager_photo_deleted ?? 'Photo deleted'),
-            backgroundColor: Colors.green,
-            action: SnackBarAction(
-              label:
-                  s?.undo_changes_tooltip ?? s?.discard_button_label ?? 'Undo',
-              textColor: Colors.white,
-              onPressed: () async {
-                if (_lastDeletedImage != null && _lastDeletedIndex != null) {
-                  setState(() {
-                    _images.insert(_lastDeletedIndex!, _lastDeletedImage!);
-                    _updateOrdinalNumbers();
-                  });
-                  await _savePointWithCurrentImages();
-                  logger.info('Undo delete: photo restored.');
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Photo restored'),
-                        backgroundColor: Colors.blue,
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  }
-                }
-              },
-            ),
-            duration: const Duration(seconds: 5),
-          );
-          ScaffoldMessenger.of(context).showSnackBar(snackBar);
-        }
-      } catch (e, stackTrace) {
-        logger.severe('Error deleting photo file: $e', e, stackTrace);
-        if (mounted) {
-          showErrorStatus(
-            S.of(context)?.photo_manager_error_deleting_photo(e.toString()) ??
-                'Error deleting photo: ${e.toString()}',
-          );
-        }
-      }
-    } else {
-      logger.info('Photo deletion was not confirmed.');
-    }
-  }
-
   void _updateOrdinalNumbers() {
     logger.info(
       '_updateOrdinalNumbers called. Current image count: ${_images.length}',
@@ -448,15 +314,6 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
     );
   }
 
-  void _toggleSelectMode() {
-    setState(() {
-      _selectMode = !_selectMode;
-      if (!_selectMode) {
-        _selectedImageIds.clear();
-      }
-    });
-  }
-
   void _toggleImageSelection(String imageId) {
     setState(() {
       if (_selectedImageIds.contains(imageId)) {
@@ -471,28 +328,17 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
     });
   }
 
-  void _selectAllImages() {
-    setState(() {
-      _selectedImageIds.addAll(_images.map((img) => img.id));
-    });
-  }
-
-  void _clearSelection() {
-    setState(() {
-      _selectedImageIds.clear();
-    });
-  }
-
   Future<void> _deleteSelectedImages() async {
     if (_selectedImageIds.isEmpty) return;
     final s = S.of(context);
+    final selectedCount = _selectedImageIds.length;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(s?.delete_photo_title ?? 'Delete Photos?'),
         content: Text(
-          s?.delete_photo_content(_selectedImageIds.length.toString()) ??
-              'Delete selected photos?',
+          s?.delete_photo_content(selectedCount.toString()) ??
+              'Are you sure you want to delete $selectedCount photo${selectedCount == 1 ? '' : 's'}?',
         ),
         actions: [
           TextButton(
@@ -510,17 +356,14 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
       ),
     );
     if (confirmed == true) {
-      final deletedImages = _images
-          .where((img) => _selectedImageIds.contains(img.id))
-          .toList();
       setState(() {
         _images.removeWhere((img) => _selectedImageIds.contains(img.id));
         _selectedImageIds.clear();
+        _selectMode = false; // Exit selection mode after deletion
         _updateOrdinalNumbers();
       });
       await _savePointWithCurrentImages();
       showSuccessStatus(s?.photo_manager_photo_deleted ?? 'Photos deleted');
-      // TODO: Add undo for batch delete
     }
   }
 
@@ -596,6 +439,35 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
                           child: CircularProgressIndicator(strokeWidth: 2.0),
                         ),
                       )
+                    : _selectMode
+                    ? Row(
+                        children: [
+                          TextButton(
+                            onPressed: _selectedImageIds.isEmpty
+                                ? null
+                                : _deleteSelectedImages,
+                            child: Text(
+                              S.of(context)?.buttonDelete ?? 'Delete',
+                              style: TextStyle(
+                                color: _selectedImageIds.isEmpty
+                                    ? Colors.grey
+                                    : Theme.of(context).colorScheme.error,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _selectMode = false;
+                                _selectedImageIds.clear();
+                              });
+                            },
+                            child: Text(
+                              S.of(context)?.buttonCancel ?? 'Cancel',
+                            ),
+                          ),
+                        ],
+                      )
                     : IconButton(
                         icon: const Icon(Icons.add_a_photo_outlined),
                         tooltip:
@@ -669,31 +541,16 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
                           .clamp(1, 8);
                       return SizedBox(
                         height: 280,
-                        child: ReorderableGridView.count(
-                          crossAxisCount: crossAxisCount,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 1,
-                          onReorder: (oldIndex, newIndex) async {
-                            logger.info(
-                              'onReorder called. Old index: $oldIndex, New index: $newIndex',
-                            );
-                            setState(() {
-                              final ImageModel item = _images.removeAt(
-                                oldIndex,
-                              );
-                              _images.insert(newIndex, item);
-                              logger.finer(
-                                'Image reordered. Image ID: ${item.id}',
-                              );
-                              _updateOrdinalNumbers();
-                            });
-                            await _savePointWithCurrentImages();
-                            logger.info(
-                              'onImageListChanged callback invoked after reorder. Image count: ${_images.length}',
-                            );
-                          },
-                          children: List.generate(_images.length, (index) {
+                        child: GridView.builder(
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: crossAxisCount,
+                                mainAxisSpacing: 12,
+                                crossAxisSpacing: 12,
+                                childAspectRatio: 1,
+                              ),
+                          itemCount: _images.length,
+                          itemBuilder: (context, index) {
                             final imageModel = _images[index];
                             return Container(
                               key: ValueKey(imageModel.id),
@@ -843,7 +700,7 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
                                 ],
                               ),
                             );
-                          }),
+                          },
                         ),
                       );
                     },
@@ -861,17 +718,6 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
                 onDismiss: hideStatus,
                 margin: const EdgeInsets.only(top: 8),
               ),
-            ),
-          ),
-        if (_selectMode && _selectedImageIds.isNotEmpty)
-          Positioned(
-            bottom: 24,
-            right: 24,
-            child: FloatingActionButton.extended(
-              icon: const Icon(Icons.delete),
-              label: Text(S.of(context)?.buttonDelete ?? 'Delete'),
-              backgroundColor: Theme.of(context).colorScheme.error,
-              onPressed: _deleteSelectedImages,
             ),
           ),
       ],

@@ -845,7 +845,7 @@ class SIt extends S {
 
   @override
   String delete_photo_content(String photoNumber) {
-    return 'Sei sicuro di voler eliminare la foto $photoNumber?';
+    return 'Sei sicuro di voler eliminare $photoNumber foto?';
   }
 
   @override
