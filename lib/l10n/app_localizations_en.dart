@@ -312,7 +312,7 @@ class SEn extends S {
 
   @override
   String last_updated_label(String date) {
-    return 'Last updated: $date';
+    return 'Updated: $date';
   }
 
   @override

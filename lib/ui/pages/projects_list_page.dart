@@ -662,36 +662,89 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
   }
 
   Widget _buildProjectItem(ProjectModel project) {
-    // Get the current locale from the context for date formatting
-    final locale = Localizations.localeOf(context).toString();
-    final DateFormat projectDateFormat = DateFormat.yMMMd(locale);
-
-    // Number of points
-    final int numPoints = project.points.length;
-    // Total rope length
-    final double ropeLength = project.currentRopeLength;
-    String ropeLengthStr = ropeLength >= 1000
-        ? '${(ropeLength / 1000).toStringAsFixed(2)} km'
-        : '${ropeLength.toStringAsFixed(1)} m';
-    // Project date
-    String? projectDateStr = project.date != null
-        ? projectDateFormat.format(project.date!)
-        : null;
-    // Last update
-    String? lastUpdateStr;
-    if (project.lastUpdate != null) {
-      final DateFormat dateFormat = DateFormat.yMMMd(locale);
-      final DateFormat timeFormat = DateFormat.Hm(locale);
-      lastUpdateStr =
-          '${dateFormat.format(project.lastUpdate!)} ${timeFormat.format(project.lastUpdate!)}';
-    }
-    final String lastUpdateLabel = lastUpdateStr != null
-        ? (S.of(context)?.last_updated_label(lastUpdateStr) ??
-              'Last updated: $lastUpdateStr')
-        : (S.of(context)?.no_updates ?? 'No updates');
-
     // Determine if the item should be highlighted
     bool isHighlighted = project.id == _highlightedProjectId;
+
+    // Build info lines dynamically
+    List<Widget> infoLines = [];
+    // 1. Name (always shown) - now in title
+    Widget projectNameRow = Row(
+      children: [
+        const Icon(Icons.folder_outlined, size: 18),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            project.name.isNotEmpty
+                ? project.name
+                : S.of(context)?.untitled_project ?? 'Untitled Project',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+    // 2. Rope length if > 0
+    if (project.currentRopeLength > 0) {
+      String ropeLengthStr = project.currentRopeLength >= 1000
+          ? '${(project.currentRopeLength / 1000).toStringAsFixed(2)} km'
+          : '${project.currentRopeLength.toStringAsFixed(1)} m';
+      infoLines.add(
+        Row(
+          children: [
+            const Icon(Icons.straighten, size: 18),
+            const SizedBox(width: 6),
+            Text(ropeLengthStr),
+          ],
+        ),
+      );
+    }
+    // 3. Number of points if > 0
+    if (project.points.length > 0) {
+      infoLines.add(
+        Row(
+          children: [
+            const Icon(Icons.scatter_plot, size: 18),
+            const SizedBox(width: 6),
+            Text('${project.points.length}'),
+          ],
+        ),
+      );
+    }
+    // 4. Date if available
+    if (project.date != null) {
+      final locale = Localizations.localeOf(context).toString();
+      final DateFormat projectDateFormat = DateFormat.yMMMd(locale);
+      infoLines.add(
+        Row(
+          children: [
+            const Icon(Icons.event, size: 18),
+            const SizedBox(width: 6),
+            Text(projectDateFormat.format(project.date!)),
+          ],
+        ),
+      );
+    }
+    // 5. Last update if available
+    if (project.lastUpdate != null) {
+      final locale = Localizations.localeOf(context).toString();
+      final DateFormat dateFormat = DateFormat.yMMMd(locale);
+      final DateFormat timeFormat = DateFormat.Hm(locale);
+      String lastUpdateStr =
+          '${dateFormat.format(project.lastUpdate!)} ${timeFormat.format(project.lastUpdate!)}';
+      infoLines.add(
+        Row(
+          children: [
+            const Icon(Icons.update, size: 18),
+            const SizedBox(width: 6),
+            Text(
+              S.of(context)?.last_updated_label(lastUpdateStr) ??
+                  'Last updated: $lastUpdateStr',
+              style: const TextStyle(fontSize: 12),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Card(
       elevation: 2.0,
@@ -707,57 +760,19 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
                   _toggleSelection(project.id);
                 },
               )
-            : const Icon(Icons.folder_outlined, size: 30),
-        title: Text(
-          project.name.isNotEmpty
-              ? project.name
-              : S.of(context)?.untitled_project ?? 'Untitled Project',
-          style: const TextStyle(fontWeight: FontWeight.w500),
-        ),
+            : null,
+        title: projectNameRow,
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.scatter_plot,
-                  size: 18,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(width: 4),
-                Text('$numPoints'),
-                const SizedBox(width: 12),
-                Icon(
-                  Icons.straighten,
-                  size: 18,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(width: 4),
-                Text(ropeLengthStr),
-                if (projectDateStr != null) ...[
-                  const SizedBox(width: 12),
-                  Icon(
-                    Icons.event,
-                    size: 18,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(projectDateStr),
-                ],
-              ],
+            const SizedBox(height: 4),
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 2),
+              height: 1,
+              color: Colors.black12,
             ),
-            const SizedBox(height: 2),
-            Row(
-              children: [
-                Icon(
-                  Icons.update,
-                  size: 18,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(width: 4),
-                Text(lastUpdateLabel, style: const TextStyle(fontSize: 12)),
-              ],
-            ),
+            const SizedBox(height: 4),
+            ...infoLines,
           ],
         ),
         trailing: !_isSelectionMode

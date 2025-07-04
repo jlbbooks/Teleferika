@@ -342,7 +342,7 @@
   "@save_project_tooltip": {
     "description": "Tooltip per il pulsante di salvataggio progetto."
   },
-  "last_updated_label": "Ultimo aggiornamento: {date}",
+  "last_updated_label": "Aggiornato: {date}",
   "@last_updated_label": {
     "description": "Etichetta per la data e ora dell'ultimo aggiornamento nella scheda elenco progetti.",
     "placeholders": {

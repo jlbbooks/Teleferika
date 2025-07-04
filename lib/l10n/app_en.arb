@@ -401,7 +401,7 @@
   "@save_project_tooltip": {
     "description": "Tooltip for the save project button."
   },
-  "last_updated_label": "Last updated: {date}",
+  "last_updated_label": "Updated: {date}",
   "@last_updated_label": {
     "description": "Label for the last updated date and time in the project list card.",
     "placeholders": {

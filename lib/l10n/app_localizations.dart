@@ -592,7 +592,7 @@ abstract class S {
   /// Label for the last updated date and time in the project list card.
   ///
   /// In en, this message translates to:
-  /// **'Last updated: {date}'**
+  /// **'Updated: {date}'**
   String last_updated_label(String date);
 
   /// Label shown when there is no last update for a project.

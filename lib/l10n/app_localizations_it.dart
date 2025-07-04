@@ -316,7 +316,7 @@ class SIt extends S {
 
   @override
   String last_updated_label(String date) {
-    return 'Ultimo aggiornamento: $date';
+    return 'Aggiornato: $date';
   }
 
   @override
