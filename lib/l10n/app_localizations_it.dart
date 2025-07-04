@@ -757,7 +757,7 @@ class SIt extends S {
   String get delete_selected => 'Elimina selezionati';
 
   @override
-  String selected_count(int count) {
+  String selected_count(String count) {
     return '$count selezionati';
   }
 
@@ -765,7 +765,7 @@ class SIt extends S {
   String get delete_projects_title => 'Eliminare progetti?';
 
   @override
-  String delete_projects_content(int count) {
+  String delete_projects_content(String count) {
     return 'Sei sicuro di voler eliminare $count progetti selezionati? Questa azione non può essere annullata.';
   }
 

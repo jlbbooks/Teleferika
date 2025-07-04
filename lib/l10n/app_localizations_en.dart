@@ -749,7 +749,7 @@ class SEn extends S {
   String get delete_selected => 'Delete Selected';
 
   @override
-  String selected_count(int count) {
+  String selected_count(String count) {
     return '$count selected';
   }
 
@@ -757,7 +757,7 @@ class SEn extends S {
   String get delete_projects_title => 'Delete Project(s)?';
 
   @override
-  String delete_projects_content(int count) {
+  String delete_projects_content(String count) {
     return 'Are you sure you want to delete $count selected project(s)? This action cannot be undone.';
   }
 
