@@ -467,7 +467,7 @@ packages:
       path: licensed_features_package
       relative: true
     source: path
-    version: "0.3.2+8"
+    version: "0.3.3+9"
   lints:
     dependency: transitive
     description:
