@@ -14,6 +14,7 @@ import 'package:teleferika/db/models/image_model.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
+import 'package:reorderable_grid_view/reorderable_grid_view.dart';
 
 // import 'package:teleferika/utils/uuid_generator.dart'; // Assuming ImageModel handles this
 
@@ -501,65 +502,87 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
                 ),
               )
             : SizedBox(
-                height: 120, // Adjust as needed
-                child: ReorderableListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _images.length,
-                  itemBuilder: (context, index) {
-                    final imageModel = _images[index];
-                    logger.finest(
-                      'Building item for ReorderableListView at index $index, image ID: ${imageModel.id}',
+                height: 280, // Enough for 3 rows of 80px + spacing
+                child: ReorderableGridView.count(
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 0.85,
+                  onReorder: (oldIndex, newIndex) async {
+                    logger.info(
+                      'onReorder called. Old index: $oldIndex, New index: $newIndex',
                     );
+                    setState(() {
+                      final ImageModel item = _images.removeAt(oldIndex);
+                      _images.insert(newIndex, item);
+                      logger.finer('Image reordered. Image ID: ${item.id}');
+                      _updateOrdinalNumbers();
+                    });
+                    await _savePointWithCurrentImages();
+                    logger.info(
+                      'onImageListChanged callback invoked after reorder. Image count: ${_images.length}',
+                    );
+                  },
+                  children: List.generate(_images.length, (index) {
+                    final imageModel = _images[index];
                     return Card(
                       key: ValueKey(imageModel.id),
-                      // Use unique ID from ImageModel
                       elevation: 2.0,
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 4,
-                      ),
+                      margin: EdgeInsets.zero,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Stack(
                         alignment: Alignment.topRight,
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8.0),
-                            child: Image.file(
-                              File(imageModel.imagePath),
-                              width: 100,
-                              height: 100,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                logger.warning(
-                                  'Error building image for path: ${imageModel.imagePath}',
-                                  error,
-                                  stackTrace,
-                                );
-                                return Container(
-                                  width: 100,
-                                  height: 100,
-                                  color: Colors.grey[300],
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.broken_image,
-                                        color: Colors.grey[600],
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Error',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          color: Colors.grey[700],
+                          GestureDetector(
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => PhotoGalleryDialog(
+                                  images: _images,
+                                  initialIndex: index,
+                                ),
+                              );
+                            },
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8.0),
+                              child: Image.file(
+                                File(imageModel.imagePath),
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  logger.warning(
+                                    'Error building image for path: \\${imageModel.imagePath}',
+                                    error,
+                                    stackTrace,
+                                  );
+                                  return Container(
+                                    width: 80,
+                                    height: 80,
+                                    color: Colors.grey[300],
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.broken_image,
+                                          color: Colors.grey[600],
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Error',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            color: Colors.grey[700],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
                           ),
                           Container(
@@ -567,27 +590,22 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
                             decoration: BoxDecoration(
                               color: Colors.black.withAlpha(
                                 (0.6 * 255).round(),
-                              ), // Using withAlpha
+                              ),
                               shape: BoxShape.circle,
                             ),
                             child: Material(
-                              // Added Material for InkWell splash effect
                               color: Colors.transparent,
                               child: InkWell(
-                                borderRadius: BorderRadius.circular(
-                                  12,
-                                ), // Match shape
+                                borderRadius: BorderRadius.circular(12),
                                 onTap: _isSavingPhotos
                                     ? null
                                     : () => _deletePhoto(index),
                                 child: const Padding(
-                                  padding: EdgeInsets.all(
-                                    2.0,
-                                  ), // Padding inside the circle
+                                  padding: EdgeInsets.all(2.0),
                                   child: Icon(
                                     Icons.close,
                                     color: Colors.white,
-                                    size: 16, // Adjusted for padding
+                                    size: 16,
                                   ),
                                 ),
                               ),
@@ -596,29 +614,145 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
                         ],
                       ),
                     );
-                  },
-                  onReorder: (int oldIndex, int newIndex) async {
-                    logger.info(
-                      'onReorder called. Old index: $oldIndex, New index: $newIndex',
-                    );
-                    setState(() {
-                      if (newIndex > oldIndex) {
-                        newIndex -= 1;
-                      }
-                      final ImageModel item = _images.removeAt(oldIndex);
-                      _images.insert(newIndex, item);
-                      logger.finer('Image reordered. Image ID: ${item.id}');
-                      _updateOrdinalNumbers();
-                    });
-                    await _savePointWithCurrentImages();
-                    // widget.onImageListChanged(List<ImageModel>.from(_images));
-                    logger.info(
-                      'onImageListChanged callback invoked after reorder. Image count: ${_images.length}',
-                    );
-                  },
+                  }),
                 ),
               ),
       ],
+    );
+  }
+}
+
+// Add PhotoGalleryDialog widget for fullscreen preview
+class PhotoGalleryDialog extends StatefulWidget {
+  final List<ImageModel> images;
+  final int initialIndex;
+
+  const PhotoGalleryDialog({
+    Key? key,
+    required this.images,
+    required this.initialIndex,
+  }) : super(key: key);
+
+  @override
+  State<PhotoGalleryDialog> createState() => _PhotoGalleryDialogState();
+}
+
+class _PhotoGalleryDialogState extends State<PhotoGalleryDialog> {
+  late PageController _pageController;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: _currentIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    return Dialog(
+      backgroundColor: Colors.black,
+      insetPadding: const EdgeInsets.all(0),
+      child: Stack(
+        children: [
+          PageView.builder(
+            controller: _pageController,
+            itemCount: widget.images.length,
+            onPageChanged: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              final image = widget.images[index];
+              return Center(
+                child: InteractiveViewer(
+                  child: Image.file(
+                    File(image.imagePath),
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: Colors.grey[900],
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.broken_image,
+                            color: Colors.grey[600],
+                            size: 60,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            s?.errorGeneric ?? 'Error',
+                            style: TextStyle(color: Colors.grey[400]),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          Positioned(
+            top: 32,
+            right: 32,
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.white, size: 32),
+              tooltip: s?.delete ?? 'Close',
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ),
+          Positioned(
+            bottom: 32,
+            left: 32,
+            right: 32,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.6),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Photo #${widget.images[_currentIndex].ordinalNumber + 1}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Flexible(
+                        child: Text(
+                          widget.images[_currentIndex].note.isNotEmpty
+                              ? widget.images[_currentIndex].note
+                              : (s?.noNote ?? 'No note'),
+                          style: const TextStyle(color: Colors.white70),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
