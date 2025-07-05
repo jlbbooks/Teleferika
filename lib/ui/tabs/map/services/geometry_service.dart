@@ -222,7 +222,7 @@ class GeometryService {
   Color getPointColor(PointModel point, List<PointModel> allPoints) {
     final angleDeg = calculateAngleAtPoint(point, allPoints);
     if (angleDeg == null) {
-      return Colors.green; // First or last point
+      return AppConfig.angleColorGood; // First or last point
     }
     return angleColor(angleDeg);
   }

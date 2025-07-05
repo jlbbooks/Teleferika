@@ -7,6 +7,7 @@ import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/core/project_state_manager.dart';
+import 'package:teleferika/core/app_config.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
@@ -622,8 +623,8 @@ class MapToolViewState extends State<MapToolView>
             LatLng(points.last.latitude, points.last.longitude),
           ],
           gradientColors: [
-            Colors.green.withValues(alpha: 0.5),
-            Colors.red.withValues(alpha: 0.5),
+            AppConfig.angleColorGood.withValues(alpha: 0.5),
+            AppConfig.angleColorBad.withValues(alpha: 0.5),
           ],
           colorsStop: [0.0, 1.0],
           strokeWidth: 3.0,
