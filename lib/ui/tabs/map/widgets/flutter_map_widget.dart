@@ -12,7 +12,6 @@ import 'package:provider/provider.dart';
 import 'package:teleferika/core/project_state_manager.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/db/models/point_model.dart';
-import 'package:teleferika/db/models/project_model.dart';
 
 import 'package:teleferika/ui/tabs/map/markers/map_markers.dart';
 import 'package:teleferika/ui/tabs/map/markers/azimuth_arrow.dart';

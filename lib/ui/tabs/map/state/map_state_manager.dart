@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
 import 'package:geolocator/geolocator.dart';
@@ -16,7 +17,7 @@ import 'package:teleferika/ui/tabs/map/map_controller.dart';
 import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
 import 'package:teleferika/core/app_config.dart';
 
-class MapStateManager {
+class MapStateManager extends ChangeNotifier {
   final Logger logger = Logger('MapStateManager');
 
   // Controller for business logic
@@ -92,6 +93,7 @@ class MapStateManager {
     _isInitialized = true;
   }
 
+  @override
   void dispose() {
     locationStreamController.close();
     _controller.dispose();
@@ -99,6 +101,7 @@ class MapStateManager {
     arrowheadController?.dispose();
     _glowAnimationTimer?.cancel();
     _isInitialized = false;
+    super.dispose();
   }
 
   // Handle permission results from the PermissionHandlerWidget
@@ -124,6 +127,7 @@ class MapStateManager {
     _controller.startListeningToLocation(
       (position) {
         currentPosition = position;
+        notifyListeners();
 
         // Send location data to CurrentLocationLayer
         locationStreamController.add(
@@ -139,6 +143,7 @@ class MapStateManager {
         S.of(context);
         // Status will be handled by the parent component
         currentPosition = null;
+        notifyListeners();
       },
     );
   }
@@ -150,6 +155,7 @@ class MapStateManager {
         currentDeviceHeading = heading;
         currentCompassAccuracy = accuracy;
         shouldCalibrateCompass = shouldCalibrate;
+        notifyListeners();
 
         // Show calibrate compass notice if it just became true
         if (shouldCalibrate == true &&
@@ -178,6 +184,7 @@ class MapStateManager {
         currentDeviceHeading = null;
         currentCompassAccuracy = null;
         shouldCalibrateCompass = null;
+        notifyListeners();
       },
     );
   }

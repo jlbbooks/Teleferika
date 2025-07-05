@@ -337,231 +337,42 @@ class MapToolViewState extends State<MapToolView>
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ProjectStateManager>(
-      builder: (context, projectState, child) {
-        // Always recalculate lines when state changes
-        _stateManager.recalculateAndDrawLines(context);
+    return ChangeNotifierProvider.value(
+      value: _stateManager,
+      child: Consumer<ProjectStateManager>(
+        builder: (context, projectState, child) {
+          // Always recalculate lines when state changes
+          _stateManager.recalculateAndDrawLines(context);
 
-        if (_stateManager.isLoadingPoints) {
-          return MapLoadingWidget(
-            currentStatus: currentStatus,
-            onDismissStatus: hideStatus,
-          );
-        }
-
-        // Get points from global state
-        final points = projectState.currentPoints;
-
-        final List<LatLng> polylinePathPoints = _buildPolylinePathPoints();
-        final connectingLine = _buildConnectingLine();
-
-        LatLng initialMapCenter = _stateManager.controller.getInitialCenter(
-          points,
-          _stateManager.currentPosition,
-        );
-        double initialMapZoom = _stateManager.controller.getInitialZoom(
-          points,
-          _stateManager.currentPosition,
-        );
-
-        if (initialMapCenter.latitude.isNaN ||
-            initialMapCenter.longitude.isNaN ||
-            initialMapZoom.isNaN ||
-            initialMapZoom.isInfinite) {
-          return Stack(
-            children: [
-              const Center(child: Text('Waiting for valid map data...')),
-              Positioned(
-                top: 24,
-                right: 24,
-                child: StatusIndicator(
-                  status: currentStatus,
-                  onDismiss: hideStatus,
-                ),
-              ),
-            ],
-          );
-        }
-
-        // Get the selected point from the latest global state
-        PointModel? selectedPoint;
-        if (_stateManager.selectedPointId != null) {
-          if (_stateManager.newPoint != null &&
-              _stateManager.newPoint!.id == _stateManager.selectedPointId) {
-            selectedPoint = _stateManager.newPoint;
-          } else {
-            try {
-              selectedPoint = points.firstWhere(
-                (p) => p.id == _stateManager.selectedPointId,
-              );
-            } catch (_) {
-              selectedPoint = null;
-            }
+          if (_stateManager.isLoadingPoints) {
+            return MapLoadingWidget(
+              currentStatus: currentStatus,
+              onDismissStatus: hideStatus,
+            );
           }
-        }
 
-        try {
-          return PermissionHandlerWidget(
-            requiredPermissions: [
-              PermissionType.location,
-              PermissionType.sensor,
-            ],
-            onPermissionsResult: _handlePermissionResults,
-            showOverlay: true,
-            child: Stack(
+          // Get points from global state
+          final points = projectState.currentPoints;
+
+          final List<LatLng> polylinePathPoints = _buildPolylinePathPoints();
+          final connectingLine = _buildConnectingLine();
+
+          LatLng initialMapCenter = _stateManager.controller.getInitialCenter(
+            points,
+            _stateManager.currentPosition,
+          );
+          double initialMapZoom = _stateManager.controller.getInitialZoom(
+            points,
+            _stateManager.currentPosition,
+          );
+
+          if (initialMapCenter.latitude.isNaN ||
+              initialMapCenter.longitude.isNaN ||
+              initialMapZoom.isNaN ||
+              initialMapZoom.isInfinite) {
+            return Stack(
               children: [
-                Scaffold(
-                  body: Stack(
-                    children: [
-                      FlutterMapWidget(
-                        polylinePathPoints: polylinePathPoints,
-                        connectingLine: connectingLine,
-                        projectHeadingLine: _stateManager.projectHeadingLine,
-                        initialMapCenter: initialMapCenter,
-                        initialMapZoom: initialMapZoom,
-                        tileLayerUrl: _stateManager.controller.getTileLayerUrl(
-                          _stateManager.currentMapType,
-                        ),
-                        tileLayerAttribution: _stateManager.controller
-                            .getTileLayerAttribution(
-                              _stateManager.currentMapType,
-                            ),
-                        attributionUrl: _stateManager.controller
-                            .getAttributionUrl(_stateManager.currentMapType),
-                        mapController: _stateManager.mapController,
-                        isMapReady: _stateManager.isMapReady,
-                        isLoadingPoints: _stateManager.isLoadingPoints,
-                        isMovePointMode: _stateManager.isMovePointMode,
-                        selectedPointId: _stateManager.selectedPointId,
-                        currentPosition: _stateManager.currentPosition,
-                        hasLocationPermission:
-                            _stateManager.hasLocationPermission,
-                        connectingLineFromFirstToLast:
-                            _stateManager.connectingLineFromFirstToLast,
-                        glowAnimationValue: _stateManager.glowAnimationValue,
-                        currentDeviceHeading:
-                            _stateManager.currentDeviceHeading,
-                        locationStreamController:
-                            _stateManager.locationStreamController,
-                        arrowheadAnimation: _stateManager.arrowheadAnimation,
-                        onPointTap: _handlePointTap,
-                        onMovePoint: _handleMovePoint,
-                        onMapReady: () {
-                          setState(() {
-                            _stateManager.isMapReady = true;
-                          });
-                          _stateManager.fitMapToPoints(context);
-                        },
-                        onDeselectPoint: () {
-                          setState(() {
-                            _stateManager.selectedPointId = null;
-                          });
-                        },
-                      ),
-                      MapTypeSelector.build(
-                        currentMapType: _stateManager.currentMapType,
-                        onMapTypeChanged: (mapType) {
-                          setState(() {
-                            _stateManager.currentMapType = mapType;
-                          });
-                        },
-                        context: context,
-                      ),
-                      // Debug button below map type selector (always visible)
-                      Positioned(
-                        top: 60,
-                        left: 16,
-                        child: OutlinedButton.icon(
-                          icon: const Icon(
-                            Icons.bug_report_outlined,
-                            size: 18,
-                            color: Colors.grey,
-                          ),
-                          label: const Text(
-                            'Debug',
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(
-                              color: Colors.grey,
-                              width: 1,
-                            ),
-                            backgroundColor: Colors.transparent,
-                            foregroundColor: Colors.grey,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            minimumSize: Size(0, 0),
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            visualDensity: VisualDensity.compact,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _stateManager.hasClosedDebugPanel = false;
-                            });
-                          },
-                        ),
-                      ),
-                      _buildPointDetailsPanel(selectedPoint),
-                      Positioned(
-                        bottom: 24,
-                        left: 24,
-                        child: FloatingActionButtons.build(
-                          context: context,
-                          hasLocationPermission:
-                              _stateManager.hasLocationPermission,
-                          currentPosition: _stateManager.currentPosition,
-                          onCenterOnLocation: _centerOnCurrentLocation,
-                          onAddPoint: _handleAddPointButtonPressed,
-                          onCenterOnPoints: () =>
-                              _stateManager.fitMapToPoints(context),
-                          isAddingNewPoint:
-                              _stateManager.isAddingNewPoint ||
-                              _stateManager.newPoint != null,
-                        ),
-                      ),
-                      // Debug panel only appears if _hasClosedDebugPanel is false
-                      if (!_stateManager.hasClosedDebugPanel)
-                        Positioned(
-                          top: 16,
-                          left: 16,
-                          child: DebugPanel(
-                            heading: _stateManager.currentDeviceHeading,
-                            compassAccuracy:
-                                _stateManager.currentCompassAccuracy,
-                            shouldCalibrate:
-                                _stateManager.shouldCalibrateCompass,
-                            position: _stateManager.currentPosition,
-                            onClose: () {
-                              setState(() {
-                                _stateManager.hasClosedDebugPanel = true;
-                              });
-                            },
-                            onTestCalibrationPanel: () {
-                              setState(() {
-                                _stateManager.forceShowCalibrationPanel = true;
-                              });
-                            },
-                          ),
-                        ),
-                      if (_stateManager.shouldCalibrateCompass == true ||
-                          _stateManager.forceShowCalibrationPanel)
-                        CompassCalibrationPanel(
-                          onClose: _stateManager.forceShowCalibrationPanel
-                              ? () => setState(
-                                  () =>
-                                      _stateManager.forceShowCalibrationPanel =
-                                          false,
-                                )
-                              : null,
-                        ),
-                    ],
-                  ),
-                ),
+                const Center(child: Text('Waiting for valid map data...')),
                 Positioned(
                   top: 24,
                   right: 24,
@@ -571,25 +382,217 @@ class MapToolViewState extends State<MapToolView>
                   ),
                 ),
               ],
-            ),
-          );
-        } catch (e, st) {
-          logger.severe('MapToolView: Exception building FlutterMap: $e\n$st');
-          return Stack(
-            children: [
-              const Center(child: Text('Error building map. See logs.')),
-              Positioned(
-                top: 24,
-                right: 24,
-                child: StatusIndicator(
-                  status: currentStatus,
-                  onDismiss: hideStatus,
-                ),
+            );
+          }
+
+          // Get the selected point from the latest global state
+          PointModel? selectedPoint;
+          if (_stateManager.selectedPointId != null) {
+            if (_stateManager.newPoint != null &&
+                _stateManager.newPoint!.id == _stateManager.selectedPointId) {
+              selectedPoint = _stateManager.newPoint;
+            } else {
+              try {
+                selectedPoint = points.firstWhere(
+                  (p) => p.id == _stateManager.selectedPointId,
+                );
+              } catch (_) {
+                selectedPoint = null;
+              }
+            }
+          }
+
+          try {
+            return PermissionHandlerWidget(
+              requiredPermissions: [
+                PermissionType.location,
+                PermissionType.sensor,
+              ],
+              onPermissionsResult: _handlePermissionResults,
+              showOverlay: true,
+              child: Stack(
+                children: [
+                  Scaffold(
+                    body: Stack(
+                      children: [
+                        FlutterMapWidget(
+                          polylinePathPoints: polylinePathPoints,
+                          connectingLine: connectingLine,
+                          projectHeadingLine: _stateManager.projectHeadingLine,
+                          initialMapCenter: initialMapCenter,
+                          initialMapZoom: initialMapZoom,
+                          tileLayerUrl: _stateManager.controller
+                              .getTileLayerUrl(_stateManager.currentMapType),
+                          tileLayerAttribution: _stateManager.controller
+                              .getTileLayerAttribution(
+                                _stateManager.currentMapType,
+                              ),
+                          attributionUrl: _stateManager.controller
+                              .getAttributionUrl(_stateManager.currentMapType),
+                          mapController: _stateManager.mapController,
+                          isMapReady: _stateManager.isMapReady,
+                          isLoadingPoints: _stateManager.isLoadingPoints,
+                          isMovePointMode: _stateManager.isMovePointMode,
+                          selectedPointId: _stateManager.selectedPointId,
+                          currentPosition: _stateManager.currentPosition,
+                          hasLocationPermission:
+                              _stateManager.hasLocationPermission,
+                          connectingLineFromFirstToLast:
+                              _stateManager.connectingLineFromFirstToLast,
+                          glowAnimationValue: _stateManager.glowAnimationValue,
+                          currentDeviceHeading:
+                              _stateManager.currentDeviceHeading,
+                          locationStreamController:
+                              _stateManager.locationStreamController,
+                          arrowheadAnimation: _stateManager.arrowheadAnimation,
+                          onPointTap: _handlePointTap,
+                          onMovePoint: _handleMovePoint,
+                          onMapReady: () {
+                            setState(() {
+                              _stateManager.isMapReady = true;
+                            });
+                            _stateManager.fitMapToPoints(context);
+                          },
+                          onDeselectPoint: () {
+                            setState(() {
+                              _stateManager.selectedPointId = null;
+                            });
+                          },
+                        ),
+                        MapTypeSelector.build(
+                          currentMapType: _stateManager.currentMapType,
+                          onMapTypeChanged: (mapType) {
+                            setState(() {
+                              _stateManager.currentMapType = mapType;
+                            });
+                          },
+                          context: context,
+                        ),
+                        // Debug button below map type selector (always visible)
+                        Positioned(
+                          top: 60,
+                          left: 16,
+                          child: OutlinedButton.icon(
+                            icon: const Icon(
+                              Icons.bug_report_outlined,
+                              size: 18,
+                              color: Colors.grey,
+                            ),
+                            label: const Text(
+                              'Debug',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(
+                                color: Colors.grey,
+                                width: 1,
+                              ),
+                              backgroundColor: Colors.transparent,
+                              foregroundColor: Colors.grey,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              minimumSize: Size(0, 0),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: VisualDensity.compact,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _stateManager.hasClosedDebugPanel = false;
+                              });
+                            },
+                          ),
+                        ),
+                        _buildPointDetailsPanel(selectedPoint),
+                        Positioned(
+                          bottom: 24,
+                          left: 24,
+                          child: FloatingActionButtons.build(
+                            context: context,
+                            hasLocationPermission:
+                                _stateManager.hasLocationPermission,
+                            currentPosition: _stateManager.currentPosition,
+                            onCenterOnLocation: _centerOnCurrentLocation,
+                            onAddPoint: _handleAddPointButtonPressed,
+                            onCenterOnPoints: () =>
+                                _stateManager.fitMapToPoints(context),
+                            isAddingNewPoint:
+                                _stateManager.isAddingNewPoint ||
+                                _stateManager.newPoint != null,
+                          ),
+                        ),
+                        // Debug panel only appears if _hasClosedDebugPanel is false
+                        if (!_stateManager.hasClosedDebugPanel)
+                          Positioned(
+                            top: 16,
+                            left: 16,
+                            child: DebugPanel(
+                              onClose: () {
+                                setState(() {
+                                  _stateManager.hasClosedDebugPanel = true;
+                                });
+                              },
+                              onTestCalibrationPanel: () {
+                                setState(() {
+                                  _stateManager.forceShowCalibrationPanel =
+                                      true;
+                                });
+                              },
+                            ),
+                          ),
+                        if (_stateManager.shouldCalibrateCompass == true ||
+                            _stateManager.forceShowCalibrationPanel)
+                          CompassCalibrationPanel(
+                            onClose: _stateManager.forceShowCalibrationPanel
+                                ? () => setState(
+                                    () =>
+                                        _stateManager
+                                                .forceShowCalibrationPanel =
+                                            false,
+                                  )
+                                : null,
+                          ),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    top: 24,
+                    right: 24,
+                    child: StatusIndicator(
+                      status: currentStatus,
+                      onDismiss: hideStatus,
+                    ),
+                  ),
+                ],
               ),
-            ],
-          );
-        }
-      },
+            );
+          } catch (e, st) {
+            logger.severe(
+              'MapToolView: Exception building FlutterMap: $e\n$st',
+            );
+            return Stack(
+              children: [
+                const Center(child: Text('Error building map. See logs.')),
+                Positioned(
+                  top: 24,
+                  right: 24,
+                  child: StatusIndicator(
+                    status: currentStatus,
+                    onDismiss: hideStatus,
+                  ),
+                ),
+              ],
+            );
+          }
+        },
+      ),
     );
   }
 
