@@ -1629,8 +1629,8 @@ class _PolylinePathArrowheadMarker extends Marker {
       totalLength += _calculateDistance(pathPoints[i], pathPoints[i + 1]);
     }
 
-    // Find the target distance along the path
-    double targetDistance = totalLength * t;
+    // Find the target distance along the path (reversed: start from end)
+    double targetDistance = totalLength * (1.0 - t);
 
     // Find the segment and position within that segment
     double currentDistance = 0.0;
@@ -1649,8 +1649,8 @@ class _PolylinePathArrowheadMarker extends Marker {
       currentDistance += segmentLength;
     }
 
-    // If we reach here, we're at the end of the path
-    return pathPoints.last;
+    // If we reach here, we're at the beginning of the path
+    return pathPoints.first;
   }
 
   static double _calculateDistance(LatLng a, LatLng b) {
@@ -1718,8 +1718,8 @@ class _PolylinePathArrowheadWidget extends StatelessWidget {
       totalLength += _calculateDistance(pathPoints[i], pathPoints[i + 1]);
     }
 
-    // Find the target distance along the path
-    double targetDistance = totalLength * t;
+    // Find the target distance along the path (reversed: start from end)
+    double targetDistance = totalLength * (1.0 - t);
 
     // Find the segment and position within that segment
     double currentDistance = 0.0;
@@ -1737,8 +1737,8 @@ class _PolylinePathArrowheadWidget extends StatelessWidget {
       currentDistance += segmentLength;
     }
 
-    // If we reach here, we're at the end of the path
-    return (pathPoints[pathPoints.length - 2], pathPoints.last);
+    // If we reach here, we're at the beginning of the path
+    return (pathPoints[0], pathPoints[1]);
   }
 
   double _calculateDistance(LatLng a, LatLng b) {
