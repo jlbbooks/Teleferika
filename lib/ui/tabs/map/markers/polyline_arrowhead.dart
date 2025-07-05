@@ -9,11 +9,16 @@ class PolylinePathArrowheadMarker extends Marker {
   PolylinePathArrowheadMarker({
     required List<LatLng> pathPoints,
     required double t,
+    required Color color,
   }) : super(
          width: 16,
          height: 16,
          point: _interpolateAlongPath(pathPoints, t),
-         child: PolylinePathArrowheadWidget(pathPoints: pathPoints, t: t),
+         child: PolylinePathArrowheadWidget(
+           pathPoints: pathPoints,
+           t: t,
+           color: color,
+         ),
        );
 
   static LatLng _interpolateAlongPath(List<LatLng> pathPoints, double t) {
@@ -80,11 +85,13 @@ class PolylinePathArrowheadMarker extends Marker {
 class PolylinePathArrowheadWidget extends StatelessWidget {
   final List<LatLng> pathPoints;
   final double t;
+  final Color color;
 
   const PolylinePathArrowheadWidget({
     super.key,
     required this.pathPoints,
     required this.t,
+    required this.color,
   });
 
   @override
@@ -99,7 +106,10 @@ class PolylinePathArrowheadWidget extends StatelessWidget {
 
     return Transform.rotate(
       angle: angle + math.pi,
-      child: CustomPaint(size: const Size(16, 16), painter: ArrowheadPainter()),
+      child: CustomPaint(
+        size: const Size(16, 16),
+        painter: ArrowheadPainter(color: color),
+      ),
     );
   }
 
@@ -157,10 +167,13 @@ class PolylinePathArrowheadWidget extends StatelessWidget {
 }
 
 class ArrowheadPainter extends CustomPainter {
+  final Color color;
+  ArrowheadPainter({required this.color});
+
   @override
   void paint(Canvas canvas, Size size) {
     final Paint paint = Paint()
-      ..color = const ui.Color.fromARGB(255, 41, 111, 114)
+      ..color = color
       ..style = PaintingStyle.fill;
     // Draw a filled circle instead of an arrowhead
     canvas.drawCircle(

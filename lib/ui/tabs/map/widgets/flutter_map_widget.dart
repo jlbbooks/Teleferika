@@ -250,11 +250,48 @@ class FlutterMapWidget extends StatelessWidget {
                 AnimatedBuilder(
                   animation: arrowheadAnimation!,
                   builder: (context, child) {
+                    // Compute color for each point
+                    final List<Color> pointColors = [
+                      for (int i = 0; i < allPoints.length; i++)
+                        _pointColor(i, allPoints),
+                    ];
+                    // Find which segment the marker is on and local t
+                    final t = arrowheadAnimation!.value;
+                    final n = polylinePathPoints.length;
+                    double totalLength = 0.0;
+                    final List<double> segmentLengths = [];
+                    for (int i = 0; i < n - 1; i++) {
+                      final a = polylinePathPoints[i];
+                      final b = polylinePathPoints[i + 1];
+                      final d = math.sqrt(
+                        math.pow(b.latitude - a.latitude, 2) +
+                            math.pow(b.longitude - a.longitude, 2),
+                      );
+                      segmentLengths.add(d);
+                      totalLength += d;
+                    }
+                    double target = t * totalLength;
+                    double acc = 0.0;
+                    int segIdx = 0;
+                    double localT = 0.0;
+                    for (int i = 0; i < segmentLengths.length; i++) {
+                      if (acc + segmentLengths[i] >= target) {
+                        segIdx = i;
+                        localT = (target - acc) / segmentLengths[i];
+                        break;
+                      }
+                      acc += segmentLengths[i];
+                    }
+                    final colorStart = pointColors[segIdx];
+                    final colorEnd = pointColors[segIdx + 1];
+                    final markerColor =
+                        Color.lerp(colorStart, colorEnd, localT) ?? colorStart;
                     return MarkerLayer(
                       markers: [
                         PolylinePathArrowheadMarker(
                           pathPoints: polylinePathPoints,
                           t: arrowheadAnimation!.value,
+                          color: markerColor,
                         ),
                       ],
                     );
