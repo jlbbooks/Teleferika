@@ -50,6 +50,7 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
   bool _isEditingLatitude = false;
   bool _isEditingLongitude = false;
   bool _isEditingNote = false;
+  bool _isCoordinatesExpanded = false; // Track coordinates section expansion
 
   // Controllers for text fields
   late TextEditingController _latitudeController;
@@ -85,11 +86,8 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
 
   void _updateControllers() {
     if (widget.selectedPoint != null) {
-      _latitudeController.text = widget.selectedPoint!.latitude.toStringAsFixed(
-        6,
-      );
-      _longitudeController.text = widget.selectedPoint!.longitude
-          .toStringAsFixed(6);
+      _latitudeController.text = widget.selectedPoint!.latitude.toString();
+      _longitudeController.text = widget.selectedPoint!.longitude.toString();
       _noteController.text = widget.selectedPoint!.note;
     }
   }
@@ -213,7 +211,7 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
 
               SizedBox(height: isMobile ? 8 : 12),
 
-              // Coordinates - now editable
+              // Coordinates - now foldable
               Container(
                 padding: EdgeInsets.all(isMobile ? 6 : 8),
                 decoration: BoxDecoration(
@@ -225,156 +223,183 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    // Header with expand/collapse
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _isCoordinatesExpanded = !_isCoordinatesExpanded;
+                        });
+                      },
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: isMobile ? 14 : 16,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
+                          SizedBox(width: isMobile ? 6 : 8),
+                          Text(
+                            S.of(context)?.coordinates ?? 'Coordinates',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w500,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                  fontSize: isMobile ? 11 : null,
+                                ),
+                          ),
+                          const Spacer(),
+                          Icon(
+                            _isCoordinatesExpanded
+                                ? Icons.expand_less
+                                : Icons.expand_more,
+                            size: isMobile ? 16 : 18,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Expandable content
+                    AnimatedCrossFade(
+                      firstChild: const SizedBox.shrink(),
+                      secondChild: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(height: isMobile ? 4 : 6),
+                          // Latitude
+                          Row(
+                            children: [
+                              Icon(
+                                AppConfig.latitudeIcon,
+                                size: isMobile ? 14 : 16,
+                                color: AppConfig.latitudeColor,
+                              ),
+                              SizedBox(width: isMobile ? 6 : 8),
+                              _buildEditableCoordinate(
+                                label: S.of(context)?.lat ?? 'Lat:',
+                                controller: _latitudeController,
+                                focusNode: _latitudeFocusNode,
+                                isEditing: _isEditingLatitude,
+                                onTap: () => _startEditingLatitude(),
+                                onConfirm: () => _confirmLatitudeChange(),
+                                onCancel: () => _cancelLatitudeChange(),
+                                isMobile: isMobile,
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: isMobile ? 2 : 4),
+                          // Longitude
+                          Row(
+                            children: [
+                              Icon(
+                                AppConfig.longitudeIcon,
+                                size: isMobile ? 14 : 16,
+                                color: AppConfig.longitudeColor,
+                              ),
+                              SizedBox(width: isMobile ? 6 : 8),
+                              _buildEditableCoordinate(
+                                label: S.of(context)?.lon ?? 'Lon:',
+                                controller: _longitudeController,
+                                focusNode: _longitudeFocusNode,
+                                isEditing: _isEditingLongitude,
+                                onTap: () => _startEditingLongitude(),
+                                onConfirm: () => _confirmLongitudeChange(),
+                                onCancel: () => _cancelLongitudeChange(),
+                                isMobile: isMobile,
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: isMobile ? 2 : 4),
+                          // Altitude
+                          if (widget.selectedPoint?.altitude != null)
+                            Row(
+                              children: [
+                                Icon(
+                                  AppConfig.altitudeIcon,
+                                  size: isMobile ? 14 : 16,
+                                  color: AppConfig.altitudeColor,
+                                ),
+                                SizedBox(width: isMobile ? 6 : 8),
+                                Text(
+                                  '${S.of(context)?.altitude_label ?? 'Alt:'}: '
+                                  '${widget.selectedPoint!.altitude!.toStringAsFixed(2)} ${S.of(context)?.unit_meter ?? 'm'}',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: AppConfig.altitudeColor,
+                                        fontSize: isMobile ? 10 : null,
+                                      ),
+                                ),
+                              ],
+                            ),
+                        ],
+                      ),
+                      crossFadeState: _isCoordinatesExpanded
+                          ? CrossFadeState.showSecond
+                          : CrossFadeState.showFirst,
+                      duration: const Duration(milliseconds: 200),
+                    ),
+                  ],
+                ),
+              ),
+
+              // --- Distance from previous point ---
+              Builder(
+                builder: (context) {
+                  final points = context.projectState.currentPoints;
+                  final selected = widget.selectedPoint;
+                  if (selected == null) return SizedBox.shrink();
+                  final idx = points.indexWhere((p) => p.id == selected.id);
+                  if (idx <= 0) return SizedBox.shrink();
+                  final prev = points[idx - 1];
+                  final dist = prev.distanceFromPoint(selected);
+                  String distStr;
+                  if (dist >= 1000) {
+                    distStr = '${(dist / 1000).toStringAsFixed(2)} km';
+                  } else {
+                    distStr = '${dist.toStringAsFixed(1)} m';
+                  }
+                  return Padding(
+                    padding: EdgeInsets.only(top: isMobile ? 4 : 8),
+                    child: Row(
                       children: [
                         Icon(
-                          Icons.location_on_outlined,
+                          Icons.straighten,
                           size: isMobile ? 14 : 16,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                         SizedBox(width: isMobile ? 6 : 8),
                         Text(
-                          S.of(context)?.coordinates ?? 'Coordinates',
+                          S.of(context)?.distanceFromPrevious(prev.name) ??
+                              'Distance from ${prev.name}:',
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
-                                fontWeight: FontWeight.w500,
                                 color: Theme.of(
                                   context,
                                 ).colorScheme.onSurfaceVariant,
+                                fontSize: isMobile ? 10 : null,
+                              ),
+                        ),
+                        SizedBox(width: isMobile ? 4 : 6),
+                        Text(
+                          distStr,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.bold,
                                 fontSize: isMobile ? 11 : null,
                               ),
                         ),
                       ],
                     ),
-                    SizedBox(height: isMobile ? 4 : 6),
-                    // Latitude
-                    Row(
-                      children: [
-                        Icon(
-                          AppConfig.latitudeIcon,
-                          size: isMobile ? 14 : 16,
-                          color: AppConfig.latitudeColor,
-                        ),
-                        SizedBox(width: isMobile ? 6 : 8),
-                        _buildEditableCoordinate(
-                          label: S.of(context)?.lat ?? 'Lat:',
-                          controller: _latitudeController,
-                          focusNode: _latitudeFocusNode,
-                          isEditing: _isEditingLatitude,
-                          onTap: () => _startEditingLatitude(),
-                          onConfirm: () => _confirmLatitudeChange(),
-                          onCancel: () => _cancelLatitudeChange(),
-                          isMobile: isMobile,
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: isMobile ? 2 : 4),
-                    // Longitude
-                    Row(
-                      children: [
-                        Icon(
-                          AppConfig.longitudeIcon,
-                          size: isMobile ? 14 : 16,
-                          color: AppConfig.longitudeColor,
-                        ),
-                        SizedBox(width: isMobile ? 6 : 8),
-                        _buildEditableCoordinate(
-                          label: S.of(context)?.lon ?? 'Lon:',
-                          controller: _longitudeController,
-                          focusNode: _longitudeFocusNode,
-                          isEditing: _isEditingLongitude,
-                          onTap: () => _startEditingLongitude(),
-                          onConfirm: () => _confirmLongitudeChange(),
-                          onCancel: () => _cancelLongitudeChange(),
-                          isMobile: isMobile,
-                        ),
-                      ],
-                    ),
-                    // Altitude
-                    if (widget.selectedPoint?.altitude != null)
-                      Row(
-                        children: [
-                          Icon(
-                            AppConfig.altitudeIcon,
-                            size: isMobile ? 14 : 16,
-                            color: AppConfig.altitudeColor,
-                          ),
-                          SizedBox(width: isMobile ? 6 : 8),
-                          Text(
-                            '${S.of(context)?.altitude_label ?? 'Alt:'}: '
-                            '${widget.selectedPoint!.altitude!.toStringAsFixed(2)} ${S.of(context)?.unit_meter ?? 'm'}',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: AppConfig.altitudeColor,
-                                  fontSize: isMobile ? 10 : null,
-                                ),
-                          ),
-                        ],
-                      ),
-                    // Distance from previous point
-                    Builder(
-                      builder: (context) {
-                        final points = context.projectState.currentPoints;
-                        final selected = widget.selectedPoint;
-                        if (selected == null) return SizedBox.shrink();
-                        final idx = points.indexWhere(
-                          (p) => p.id == selected.id,
-                        );
-                        if (idx <= 0) return SizedBox.shrink();
-                        final prev = points[idx - 1];
-                        // Use interpolated altitudes if needed (for now, just use stored altitudes)
-                        final dist = prev.distanceFromPoint(selected);
-                        String distStr;
-                        if (dist >= 1000) {
-                          distStr = '${(dist / 1000).toStringAsFixed(2)} km';
-                        } else {
-                          distStr = '${dist.toStringAsFixed(1)} m';
-                        }
-                        return Padding(
-                          padding: EdgeInsets.only(top: isMobile ? 2 : 4),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.straighten,
-                                size: isMobile ? 14 : 16,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              ),
-                              SizedBox(width: isMobile ? 6 : 8),
-                              Text(
-                                S
-                                        .of(context)
-                                        ?.distanceFromPrevious(prev.name) ??
-                                    'Distance from ${prev.name}:',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                                      fontSize: isMobile ? 10 : null,
-                                    ),
-                              ),
-                              SizedBox(width: isMobile ? 4 : 6),
-                              Text(
-                                distStr,
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      fontFamily: 'monospace',
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: isMobile ? 11 : null,
-                                    ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
 
               // --- Offset ---
@@ -399,7 +424,6 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                     Text(
                       distanceToLineStr ?? '',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontFamily: 'monospace',
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.bold,
                         fontSize: isMobile ? 11 : null,
@@ -493,7 +517,6 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
         Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            fontFamily: 'monospace',
             color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontSize: isMobile ? 10 : null,
           ),
@@ -509,7 +532,6 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                         controller: controller,
                         focusNode: focusNode,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontFamily: 'monospace',
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                           fontSize: isMobile ? 11 : null,
                         ),
@@ -567,7 +589,6 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                   child: Text(
                     controller.text,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontFamily: 'monospace',
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: isMobile ? 11 : null,
                     ),
