@@ -313,9 +313,9 @@ class _AngleArcPainter extends CustomPainter {
 
   // Helper to interpolate label color from black (0°) to red (20° or more)
   Color _labelColor(double angleDeg) {
-    if (angleDeg <= 0) return Colors.black;
+    if (angleDeg <= 0) return Colors.green;
     if (angleDeg >= 20) return Colors.red;
     final t = (angleDeg / 20).clamp(0.0, 1.0);
-    return Color.lerp(Colors.black, Colors.red, t)!;
+    return Color.lerp(Colors.green, Colors.red, t)!;
   }
 }
