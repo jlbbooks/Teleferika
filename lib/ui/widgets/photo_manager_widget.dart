@@ -8,12 +8,14 @@ import 'package:logging/logging.dart';
 import 'package:path/path.dart' as p; // For p.basename, p.join
 import 'package:path_provider/path_provider.dart';
 import 'package:teleferika/core/project_provider.dart';
+import 'package:teleferika/core/project_state_manager.dart';
 import 'package:teleferika/core/utils/uuid_generator.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/image_model.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
+import 'package:provider/provider.dart';
 
 // import 'package:teleferika/utils/uuid_generator.dart'; // Assuming ImageModel handles this
 
@@ -52,10 +54,20 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
     logger.info(
       'PhotoManagerWidget initState called. Point ID: ${widget.point.id}, Initial images from point.images count: ${widget.point.images.length}',
     );
-    // Create a mutable copy from widget.point.images
-    _images = List<ImageModel>.from(widget.point.images);
+    _updateImagesFromGlobalState();
+  }
+
+  void _updateImagesFromGlobalState() {
+    // Get the current point from global state
+    final currentPoint = context.projectState.currentPoints.firstWhere(
+      (point) => point.id == widget.point.id,
+      orElse: () => widget.point,
+    );
+
+    // Create a mutable copy from the global state
+    _images = List<ImageModel>.from(currentPoint.images);
     _images.sort((a, b) => a.ordinalNumber.compareTo(b.ordinalNumber));
-    logger.finer('Initial images sorted: $_images');
+    logger.finer('Images updated from global state: $_images');
   }
 
   // This method will now handle the saving of the point with its current images
@@ -418,309 +430,340 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
     logger.finest(
       'PhotoManagerWidget build called. Image count: ${_images.length}, isSaving: $_isSavingPhotos',
     );
-    return Stack(
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+
+    return Consumer<ProjectStateManager>(
+      builder: (context, projectState, child) {
+        // Update images from global state when project state changes
+        _updateImagesFromGlobalState();
+
+        return Stack(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '${S.of(context)?.photo_manager_title ?? 'Photos'} (${_images.length})',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                _isSavingPhotos
-                    ? const Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2.0),
-                        ),
-                      )
-                    : _selectMode
-                    ? Row(
-                        children: [
-                          TextButton(
-                            onPressed: _selectedImageIds.isEmpty
-                                ? null
-                                : _deleteSelectedImages,
-                            child: Text(
-                              S.of(context)?.buttonDelete ?? 'Delete',
-                              style: TextStyle(
-                                color: _selectedImageIds.isEmpty
-                                    ? Colors.grey
-                                    : Theme.of(context).colorScheme.error,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '${S.of(context)?.photo_manager_title ?? 'Photos'} (${_images.length})',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    _isSavingPhotos
+                        ? const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.0,
                               ),
                             ),
+                          )
+                        : _selectMode
+                        ? Row(
+                            children: [
+                              TextButton(
+                                onPressed: _selectedImageIds.isEmpty
+                                    ? null
+                                    : _deleteSelectedImages,
+                                child: Text(
+                                  S.of(context)?.buttonDelete ?? 'Delete',
+                                  style: TextStyle(
+                                    color: _selectedImageIds.isEmpty
+                                        ? Colors.grey
+                                        : Theme.of(context).colorScheme.error,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _selectMode = false;
+                                    _selectedImageIds.clear();
+                                  });
+                                },
+                                child: Text(
+                                  S.of(context)?.buttonCancel ?? 'Cancel',
+                                ),
+                              ),
+                            ],
+                          )
+                        : IconButton(
+                            icon: const Icon(Icons.add_a_photo_outlined),
+                            tooltip:
+                                S
+                                    .of(context)
+                                    ?.photo_manager_add_photo_tooltip ??
+                                'Add Photo',
+                            onPressed: _showAddPhotoOptions,
                           ),
-                          TextButton(
-                            onPressed: () {
-                              setState(() {
-                                _selectMode = false;
-                                _selectedImageIds.clear();
-                              });
-                            },
-                            child: Text(
-                              S.of(context)?.buttonCancel ?? 'Cancel',
+                  ],
+                ),
+                const SizedBox(height: 8),
+                _images.isEmpty
+                    ? Container(
+                        height: 140, // Increased height for button
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey[400]!),
+                        ),
+                        alignment: Alignment.center,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.photo_album_outlined,
+                              size: 30,
+                              color: Colors.grey[600],
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 4),
+                            Text(
+                              S.of(context)?.photo_manager_no_photos ??
+                                  'No photos yet.',
+                              style: TextStyle(color: Colors.grey[700]),
+                            ),
+                            const SizedBox(height: 12),
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.add_a_photo_outlined),
+                              label: Text(
+                                S
+                                        .of(context)
+                                        ?.photo_manager_add_photo_tooltip ??
+                                    'Add Photo',
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.primary,
+                                foregroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.onPrimary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 10,
+                                ),
+                                textStyle: Theme.of(
+                                  context,
+                                ).textTheme.labelLarge,
+                              ),
+                              onPressed: _isSavingPhotos
+                                  ? null
+                                  : _showAddPhotoOptions,
+                              autofocus: true,
+                            ),
+                          ],
+                        ),
                       )
-                    : IconButton(
-                        icon: const Icon(Icons.add_a_photo_outlined),
-                        tooltip:
-                            S.of(context)?.photo_manager_add_photo_tooltip ??
-                            'Add Photo',
-                        onPressed: _showAddPhotoOptions,
+                    : LayoutBuilder(
+                        builder: (context, constraints) {
+                          // Calculate crossAxisCount for ~80px cells
+                          final cellSize = 80.0;
+                          final crossAxisCount =
+                              (constraints.maxWidth / cellSize).floor().clamp(
+                                1,
+                                8,
+                              );
+                          return SizedBox(
+                            height: 280,
+                            child: GridView.builder(
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: crossAxisCount,
+                                    mainAxisSpacing: 12,
+                                    crossAxisSpacing: 12,
+                                    childAspectRatio: 1,
+                                  ),
+                              itemCount: _images.length,
+                              itemBuilder: (context, index) {
+                                final imageModel = _images[index];
+                                return Container(
+                                  key: ValueKey(imageModel.id),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.08),
+                                        blurRadius: 2,
+                                        offset: Offset(0, 1),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Stack(
+                                    alignment: Alignment.topRight,
+                                    children: [
+                                      GestureDetector(
+                                        onTap: _selectMode
+                                            ? () => _toggleImageSelection(
+                                                imageModel.id,
+                                              )
+                                            : () {
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) =>
+                                                      PhotoGalleryDialog(
+                                                        images: _images,
+                                                        initialIndex: index,
+                                                      ),
+                                                );
+                                              },
+                                        onLongPress: () {
+                                          if (!_selectMode) {
+                                            setState(() {
+                                              _selectMode = true;
+                                              _selectedImageIds.add(
+                                                imageModel.id,
+                                              );
+                                            });
+                                          } else {
+                                            _toggleImageSelection(
+                                              imageModel.id,
+                                            );
+                                          }
+                                        },
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          child: SizedBox.expand(
+                                            child: Image.file(
+                                              File(imageModel.imagePath),
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (context, error, stackTrace) {
+                                                logger.warning(
+                                                  'Error building image for path: ${imageModel.imagePath}',
+                                                  error,
+                                                  stackTrace,
+                                                );
+                                                // Remove the broken image from the grid and save
+                                                WidgetsBinding.instance.addPostFrameCallback((
+                                                  _,
+                                                ) async {
+                                                  if (mounted &&
+                                                      _images.contains(
+                                                        imageModel,
+                                                      )) {
+                                                    setState(() {
+                                                      _images.remove(
+                                                        imageModel,
+                                                      );
+                                                      _updateOrdinalNumbers();
+                                                    });
+                                                    await _savePointWithCurrentImages();
+                                                    showErrorStatus(
+                                                      S
+                                                              .of(context)
+                                                              ?.photo_manager_error_deleting_photo(
+                                                                'File not found',
+                                                              ) ??
+                                                          'Photo file missing and removed.',
+                                                    );
+                                                  }
+                                                });
+                                                return Container(
+                                                  color: Colors.grey[300],
+                                                  child: Column(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      Icon(
+                                                        Icons.broken_image,
+                                                        color: Colors.grey[600],
+                                                      ),
+                                                      const SizedBox(height: 4),
+                                                      Text(
+                                                        S
+                                                                .of(context)
+                                                                ?.errorGeneric ??
+                                                            'Error',
+                                                        style: TextStyle(
+                                                          fontSize: 10,
+                                                          color:
+                                                              Colors.grey[700],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      if (_selectMode &&
+                                          _selectedImageIds.contains(
+                                            imageModel.id,
+                                          ))
+                                        Positioned(
+                                          top: 4,
+                                          left: 4,
+                                          child: Icon(
+                                            Icons.check_circle,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.primary,
+                                            size: 24,
+                                          ),
+                                        ),
+                                      // Note icon (bottom right)
+                                      if (!_selectMode)
+                                        Positioned(
+                                          bottom: 4,
+                                          right: 4,
+                                          child: GestureDetector(
+                                            onTap: () =>
+                                                _editPhotoNote(imageModel),
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.black.withOpacity(
+                                                  0.5,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                              padding: const EdgeInsets.all(4),
+                                              child: Icon(
+                                                imageModel.note.isNotEmpty
+                                                    ? Icons.sticky_note_2
+                                                    : Icons
+                                                          .sticky_note_2_outlined,
+                                                color: Colors.white,
+                                                size: 20,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        },
                       ),
               ],
             ),
-            const SizedBox(height: 8),
-            _images.isEmpty
-                ? Container(
-                    height: 140, // Increased height for button
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey[400]!),
-                    ),
-                    alignment: Alignment.center,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.photo_album_outlined,
-                          size: 30,
-                          color: Colors.grey[600],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          S.of(context)?.photo_manager_no_photos ??
-                              'No photos yet.',
-                          style: TextStyle(color: Colors.grey[700]),
-                        ),
-                        const SizedBox(height: 12),
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.add_a_photo_outlined),
-                          label: Text(
-                            S.of(context)?.photo_manager_add_photo_tooltip ??
-                                'Add Photo',
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(
-                              context,
-                            ).colorScheme.primary,
-                            foregroundColor: Theme.of(
-                              context,
-                            ).colorScheme.onPrimary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 10,
-                            ),
-                            textStyle: Theme.of(context).textTheme.labelLarge,
-                          ),
-                          onPressed: _isSavingPhotos
-                              ? null
-                              : _showAddPhotoOptions,
-                          autofocus: true,
-                        ),
-                      ],
-                    ),
-                  )
-                : LayoutBuilder(
-                    builder: (context, constraints) {
-                      // Calculate crossAxisCount for ~80px cells
-                      final cellSize = 80.0;
-                      final crossAxisCount = (constraints.maxWidth / cellSize)
-                          .floor()
-                          .clamp(1, 8);
-                      return SizedBox(
-                        height: 280,
-                        child: GridView.builder(
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: crossAxisCount,
-                                mainAxisSpacing: 12,
-                                crossAxisSpacing: 12,
-                                childAspectRatio: 1,
-                              ),
-                          itemCount: _images.length,
-                          itemBuilder: (context, index) {
-                            final imageModel = _images[index];
-                            return Container(
-                              key: ValueKey(imageModel.id),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.08),
-                                    blurRadius: 2,
-                                    offset: Offset(0, 1),
-                                  ),
-                                ],
-                              ),
-                              child: Stack(
-                                alignment: Alignment.topRight,
-                                children: [
-                                  GestureDetector(
-                                    onTap: _selectMode
-                                        ? () => _toggleImageSelection(
-                                            imageModel.id,
-                                          )
-                                        : () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (context) =>
-                                                  PhotoGalleryDialog(
-                                                    images: _images,
-                                                    initialIndex: index,
-                                                  ),
-                                            );
-                                          },
-                                    onLongPress: () {
-                                      if (!_selectMode) {
-                                        setState(() {
-                                          _selectMode = true;
-                                          _selectedImageIds.add(imageModel.id);
-                                        });
-                                      } else {
-                                        _toggleImageSelection(imageModel.id);
-                                      }
-                                    },
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: SizedBox.expand(
-                                        child: Image.file(
-                                          File(imageModel.imagePath),
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) {
-                                            logger.warning(
-                                              'Error building image for path: ${imageModel.imagePath}',
-                                              error,
-                                              stackTrace,
-                                            );
-                                            // Remove the broken image from the grid and save
-                                            WidgetsBinding.instance.addPostFrameCallback((
-                                              _,
-                                            ) async {
-                                              if (mounted &&
-                                                  _images.contains(
-                                                    imageModel,
-                                                  )) {
-                                                setState(() {
-                                                  _images.remove(imageModel);
-                                                  _updateOrdinalNumbers();
-                                                });
-                                                await _savePointWithCurrentImages();
-                                                showErrorStatus(
-                                                  S
-                                                          .of(context)
-                                                          ?.photo_manager_error_deleting_photo(
-                                                            'File not found',
-                                                          ) ??
-                                                      'Photo file missing and removed.',
-                                                );
-                                              }
-                                            });
-                                            return Container(
-                                              color: Colors.grey[300],
-                                              child: Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  Icon(
-                                                    Icons.broken_image,
-                                                    color: Colors.grey[600],
-                                                  ),
-                                                  const SizedBox(height: 4),
-                                                  Text(
-                                                    S
-                                                            .of(context)
-                                                            ?.errorGeneric ??
-                                                        'Error',
-                                                    style: TextStyle(
-                                                      fontSize: 10,
-                                                      color: Colors.grey[700],
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  if (_selectMode &&
-                                      _selectedImageIds.contains(imageModel.id))
-                                    Positioned(
-                                      top: 4,
-                                      left: 4,
-                                      child: Icon(
-                                        Icons.check_circle,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.primary,
-                                        size: 24,
-                                      ),
-                                    ),
-                                  // Note icon (bottom right)
-                                  if (!_selectMode)
-                                    Positioned(
-                                      bottom: 4,
-                                      right: 4,
-                                      child: GestureDetector(
-                                        onTap: () => _editPhotoNote(imageModel),
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            color: Colors.black.withOpacity(
-                                              0.5,
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
-                                          ),
-                                          padding: const EdgeInsets.all(4),
-                                          child: Icon(
-                                            imageModel.note.isNotEmpty
-                                                ? Icons.sticky_note_2
-                                                : Icons.sticky_note_2_outlined,
-                                            color: Colors.white,
-                                            size: 20,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    },
+            if (currentStatus != null)
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: StatusIndicator(
+                    status: currentStatus,
+                    onDismiss: hideStatus,
+                    margin: const EdgeInsets.only(top: 8),
                   ),
-          ],
-        ),
-        if (currentStatus != null)
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: StatusIndicator(
-                status: currentStatus,
-                onDismiss: hideStatus,
-                margin: const EdgeInsets.only(top: 8),
+                ),
               ),
-            ),
-          ),
-      ],
+          ],
+        );
+      },
     );
   }
 }
@@ -731,10 +774,10 @@ class PhotoGalleryDialog extends StatefulWidget {
   final int initialIndex;
 
   const PhotoGalleryDialog({
-    Key? key,
+    super.key,
     required this.images,
     required this.initialIndex,
-  }) : super(key: key);
+  });
 
   @override
   State<PhotoGalleryDialog> createState() => _PhotoGalleryDialogState();
@@ -743,18 +786,79 @@ class PhotoGalleryDialog extends StatefulWidget {
 class _PhotoGalleryDialogState extends State<PhotoGalleryDialog> {
   late PageController _pageController;
   late int _currentIndex;
+  bool _isEditingNote = false;
+  late TextEditingController _noteController;
+  late List<ImageModel> _localImages;
 
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: _currentIndex);
+    _localImages = List<ImageModel>.from(widget.images);
+    _noteController = TextEditingController(
+      text: _localImages[_currentIndex].note,
+    );
   }
 
   @override
   void dispose() {
     _pageController.dispose();
+    _noteController.dispose();
     super.dispose();
+  }
+
+  void _updateNoteController() {
+    _noteController.text = _localImages[_currentIndex].note;
+  }
+
+  void _saveNote() {
+    if (_isEditingNote) {
+      final newNote = _noteController.text.trim();
+      if (newNote != _localImages[_currentIndex].note) {
+        // Update the image note through global state
+        final updatedImage = _localImages[_currentIndex].copyWith(
+          note: newNote,
+        );
+
+        // Find the point that contains this image and update it through global state
+        final currentImage = _localImages[_currentIndex];
+        final point = context.projectState.currentPoints.firstWhere(
+          (point) => point.images.any((img) => img.id == currentImage.id),
+          orElse: () =>
+              throw Exception('Point not found for image ${currentImage.id}'),
+        );
+
+        // Create updated point with the modified image
+        final updatedImages = point.images.map((img) {
+          if (img.id == currentImage.id) {
+            return updatedImage;
+          }
+          return img;
+        }).toList();
+
+        final updatedPoint = point.copyWith(images: updatedImages);
+
+        // Update through global state
+        context.projectState.updatePointInEditingState(updatedPoint);
+
+        // Update the local images list to reflect the change immediately
+        setState(() {
+          _localImages[_currentIndex] = updatedImage;
+          _isEditingNote = false;
+        });
+      } else {
+        setState(() {
+          _isEditingNote = false;
+        });
+      }
+    }
+  }
+
+  void _startEditingNote() {
+    setState(() {
+      _isEditingNote = true;
+    });
   }
 
   @override
@@ -767,14 +871,15 @@ class _PhotoGalleryDialogState extends State<PhotoGalleryDialog> {
         children: [
           PageView.builder(
             controller: _pageController,
-            itemCount: widget.images.length,
+            itemCount: _localImages.length,
             onPageChanged: (index) {
               setState(() {
                 _currentIndex = index;
               });
+              _updateNoteController();
             },
             itemBuilder: (context, index) {
-              final image = widget.images[index];
+              final image = _localImages[index];
               return Center(
                 child: InteractiveViewer(
                   child: Image.file(
@@ -803,6 +908,125 @@ class _PhotoGalleryDialogState extends State<PhotoGalleryDialog> {
               );
             },
           ),
+          // Note display (bottom center)
+          if (_localImages[_currentIndex].note.isNotEmpty || _isEditingNote)
+            Positioned(
+              bottom: 32,
+              left: 32,
+              right: 32,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.sticky_note_2,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        if (_localImages[_currentIndex].note.isEmpty &&
+                            !_isEditingNote) ...[
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              s?.addANote ?? 'Note',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ] else
+                          const Expanded(child: SizedBox()),
+                        if (!_isEditingNote)
+                          IconButton(
+                            icon: const Icon(
+                              Icons.edit,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                            onPressed: _startEditingNote,
+                            tooltip: s?.edit ?? 'Edit',
+                          ),
+                        if (_isEditingNote) ...[
+                          IconButton(
+                            icon: const Icon(
+                              Icons.check,
+                              color: Colors.green,
+                              size: 16,
+                            ),
+                            onPressed: _saveNote,
+                            tooltip: s?.save ?? 'Save',
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.close,
+                              color: Colors.red,
+                              size: 16,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _isEditingNote = false;
+                                _updateNoteController();
+                              });
+                            },
+                            tooltip: s?.buttonCancel ?? 'Cancel',
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    if (_isEditingNote)
+                      TextField(
+                        controller: _noteController,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          hintStyle: TextStyle(color: Colors.white70),
+                          filled: true,
+                          fillColor: Colors.white24,
+                        ),
+                        maxLines: 3,
+                        autofocus: true,
+                        cursorColor: Colors.white,
+                      )
+                    else
+                      Text(
+                        _localImages[_currentIndex].note,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            )
+          else
+            // Add note button when no note exists
+            Positioned(
+              bottom: 32,
+              right: 32,
+              child: FloatingActionButton.small(
+                onPressed: _startEditingNote,
+                backgroundColor: Colors.black.withOpacity(0.7),
+                foregroundColor: Colors.white,
+                child: const Icon(Icons.add_comment, size: 20),
+              ),
+            ),
+
+          // Close button (top right)
           Positioned(
             top: 32,
             right: 32,

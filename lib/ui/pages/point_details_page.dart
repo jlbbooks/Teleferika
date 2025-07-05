@@ -884,8 +884,9 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                                 }
                               }
                               if (distanceToLine == null ||
-                                  distanceToLine <= 0.0)
+                                  distanceToLine <= 0.0) {
                                 return SizedBox.shrink();
+                              }
                               return Padding(
                                 padding: const EdgeInsets.only(top: 8.0),
                                 child: Row(

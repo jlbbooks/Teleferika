@@ -471,20 +471,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          (S
-                                      .of(context)
-                                      ?.distanceFromPrevious(prevPoint.name) ??
-                                  'Distance:') +
-                              ' ' +
-                              (distanceFromPrev >= 1000
-                                  ? (distanceFromPrev / 1000).toStringAsFixed(
-                                          2,
-                                        ) +
-                                        ' ' +
-                                        (S.of(context)?.unit_kilometer ?? 'km')
-                                  : distanceFromPrev.toStringAsFixed(1) +
-                                        ' ' +
-                                        (S.of(context)?.unit_meter ?? 'm')),
+                          '${S.of(context)?.distanceFromPrevious(prevPoint.name) ?? 'Distance:'} ${distanceFromPrev >= 1000 ? '${(distanceFromPrev / 1000).toStringAsFixed(2)} ${S.of(context)?.unit_kilometer ?? 'km'}' : '${distanceFromPrev.toStringAsFixed(1)} ${S.of(context)?.unit_meter ?? 'm'}'}',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
@@ -500,14 +487,10 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          ((S.of(context)?.offsetLabel ?? 'Offset:') + ' ') +
+                          ('${S.of(context)?.offsetLabel ?? 'Offset:'} ') +
                               (offset >= 1000
-                                  ? (offset / 1000).toStringAsFixed(2) +
-                                        ' ' +
-                                        (S.of(context)?.unit_kilometer ?? 'km')
-                                  : offset.toStringAsFixed(1) +
-                                        ' ' +
-                                        (S.of(context)?.unit_meter ?? 'm')),
+                                  ? '${(offset / 1000).toStringAsFixed(2)} ${S.of(context)?.unit_kilometer ?? 'km'}'
+                                  : '${offset.toStringAsFixed(1)} ${S.of(context)?.unit_meter ?? 'm'}'),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
@@ -537,9 +520,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          (S.of(context)?.latitude_label ?? 'Lat') +
-                              ': ' +
-                              point.latitude.toStringAsFixed(5),
+                          '${S.of(context)?.latitude_label ?? 'Lat'}: ${point.latitude.toStringAsFixed(5)}',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
@@ -554,7 +535,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          ((S.of(context)?.longitude_label ?? 'Lon:') + ': ') +
+                          ('${S.of(context)?.longitude_label ?? 'Lon:'}: ') +
                               point.longitude.toStringAsFixed(5),
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
@@ -571,10 +552,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            ((S.of(context)?.altitude_label ?? 'Alt:') + ': ') +
-                                point.altitude!.toStringAsFixed(2) +
-                                ' ' +
-                                (S.of(context)?.unit_meter ?? 'm'),
+                            '${S.of(context)?.altitude_label ?? 'Alt:'}: ${point.altitude!.toStringAsFixed(2)} ${S.of(context)?.unit_meter ?? 'm'}',
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ],
@@ -610,7 +588,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
                             itemCount: point.images.length,
-                            separatorBuilder: (_, __) =>
+                            separatorBuilder: (_, _) =>
                                 const SizedBox(width: 8),
                             itemBuilder: (context, imgIdx) {
                               final img = point.images[imgIdx];

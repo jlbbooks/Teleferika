@@ -699,7 +699,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
       );
     }
     // 3. Number of points if > 0
-    if (project.points.length > 0) {
+    if (project.points.isNotEmpty) {
       infoLines.add(
         Row(
           children: [
