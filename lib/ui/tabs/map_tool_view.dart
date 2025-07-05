@@ -1769,7 +1769,7 @@ class _ArrowheadPainter extends CustomPainter {
     // Draw a filled circle instead of an arrowhead
     canvas.drawCircle(
       Offset(size.width / 2, size.height / 2),
-      size.width / 2,
+      size.width / 3,
       paint,
     );
   }
