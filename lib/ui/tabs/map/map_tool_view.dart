@@ -16,11 +16,12 @@ import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 
 import 'debug/debug_panel.dart';
-import 'map_controls.dart';
-import 'point_details_panel.dart';
 import 'state/map_state_manager.dart';
 import 'widgets/flutter_map_widget.dart';
 import 'widgets/map_loading_widget.dart';
+import 'widgets/point_details_panel.dart';
+import 'widgets/floating_action_buttons.dart';
+import 'widgets/map_type_selector.dart';
 
 class MapToolView extends StatefulWidget {
   final ProjectModel project;
@@ -462,7 +463,7 @@ class MapToolViewState extends State<MapToolView>
                           });
                         },
                       ),
-                      MapControls.buildMapTypeSelector(
+                      MapTypeSelector.build(
                         currentMapType: _stateManager.currentMapType,
                         onMapTypeChanged: (mapType) {
                           setState(() {
@@ -514,7 +515,7 @@ class MapToolViewState extends State<MapToolView>
                       Positioned(
                         bottom: 24,
                         left: 24,
-                        child: MapControls.buildFloatingActionButtons(
+                        child: FloatingActionButtons.build(
                           context: context,
                           hasLocationPermission:
                               _stateManager.hasLocationPermission,
