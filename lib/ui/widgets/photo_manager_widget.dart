@@ -381,29 +381,9 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
 
   // Add/Edit note for a photo
   void _editPhotoNote(ImageModel image) async {
-    final s = S.of(context);
-    final controller = TextEditingController(text: image.note);
     final result = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(s?.addANote ?? 'Add a note'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          maxLines: 3,
-          decoration: InputDecoration(hintText: s?.addANote ?? 'Add a note...'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(s?.buttonCancel ?? 'Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(controller.text),
-            child: Text(s?.save ?? 'Save'),
-          ),
-        ],
-      ),
+      builder: (context) => NoteEditDialog(initialNote: image.note),
     );
     if (result != null && result != image.note) {
       setState(() {
@@ -413,7 +393,7 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
         }
       });
       await _savePointWithCurrentImages();
-      showSuccessStatus(s?.save ?? 'Saved');
+      showSuccessStatus(S.of(context)?.save ?? 'Saved');
     }
   }
 
@@ -768,6 +748,117 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
   }
 }
 
+// Shared note edit dialog widget
+class NoteEditDialog extends StatefulWidget {
+  final String initialNote;
+
+  const NoteEditDialog({Key? key, required this.initialNote}) : super(key: key);
+
+  @override
+  State<NoteEditDialog> createState() => _NoteEditDialogState();
+}
+
+class _NoteEditDialogState extends State<NoteEditDialog> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialNote);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.of(context);
+    return Dialog(
+      backgroundColor: Colors.black,
+      insetPadding: const EdgeInsets.all(32),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header with icon and conditional title
+            Row(
+              children: [
+                Icon(Icons.sticky_note_2, color: Colors.white, size: 24),
+                if (widget.initialNote.isEmpty) ...[
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      s?.addANote ?? 'Add a note',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ),
+                ] else
+                  const Expanded(child: SizedBox()),
+                // Close button
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white, size: 24),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            // Text field
+            TextField(
+              controller: _controller,
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                hintStyle: TextStyle(color: Colors.white70),
+                filled: true,
+                fillColor: Colors.white24,
+              ),
+              maxLines: 5,
+              autofocus: true,
+              cursorColor: Colors.white,
+            ),
+            const SizedBox(height: 20),
+            // Action buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(
+                    s?.buttonCancel ?? 'Cancel',
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(_controller.text),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                  ),
+                  child: Text(s?.save ?? 'Save'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // Add PhotoGalleryDialog widget for fullscreen preview
 class PhotoGalleryDialog extends StatefulWidget {
   final List<ImageModel> images;
@@ -786,8 +877,6 @@ class PhotoGalleryDialog extends StatefulWidget {
 class _PhotoGalleryDialogState extends State<PhotoGalleryDialog> {
   late PageController _pageController;
   late int _currentIndex;
-  bool _isEditingNote = false;
-  late TextEditingController _noteController;
   late List<ImageModel> _localImages;
 
   @override
@@ -796,69 +885,50 @@ class _PhotoGalleryDialogState extends State<PhotoGalleryDialog> {
     _currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: _currentIndex);
     _localImages = List<ImageModel>.from(widget.images);
-    _noteController = TextEditingController(
-      text: _localImages[_currentIndex].note,
-    );
   }
 
   @override
   void dispose() {
     _pageController.dispose();
-    _noteController.dispose();
     super.dispose();
   }
 
-  void _updateNoteController() {
-    _noteController.text = _localImages[_currentIndex].note;
-  }
+  void _editNoteInFullScreen() async {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) =>
+          NoteEditDialog(initialNote: _localImages[_currentIndex].note),
+    );
+    if (result != null && result != _localImages[_currentIndex].note) {
+      // Update the image note through global state
+      final updatedImage = _localImages[_currentIndex].copyWith(note: result);
 
-  void _saveNote() {
-    if (_isEditingNote) {
-      final newNote = _noteController.text.trim();
-      if (newNote != _localImages[_currentIndex].note) {
-        // Update the image note through global state
-        final updatedImage = _localImages[_currentIndex].copyWith(
-          note: newNote,
-        );
+      // Find the point that contains this image and update it through global state
+      final currentImage = _localImages[_currentIndex];
+      final point = context.projectState.currentPoints.firstWhere(
+        (point) => point.images.any((img) => img.id == currentImage.id),
+        orElse: () =>
+            throw Exception('Point not found for image ${currentImage.id}'),
+      );
 
-        // Find the point that contains this image and update it through global state
-        final currentImage = _localImages[_currentIndex];
-        final point = context.projectState.currentPoints.firstWhere(
-          (point) => point.images.any((img) => img.id == currentImage.id),
-          orElse: () =>
-              throw Exception('Point not found for image ${currentImage.id}'),
-        );
+      // Create updated point with the modified image
+      final updatedImages = point.images.map((img) {
+        if (img.id == currentImage.id) {
+          return updatedImage;
+        }
+        return img;
+      }).toList();
 
-        // Create updated point with the modified image
-        final updatedImages = point.images.map((img) {
-          if (img.id == currentImage.id) {
-            return updatedImage;
-          }
-          return img;
-        }).toList();
+      final updatedPoint = point.copyWith(images: updatedImages);
 
-        final updatedPoint = point.copyWith(images: updatedImages);
+      // Update through global state
+      context.projectState.updatePointInEditingState(updatedPoint);
 
-        // Update through global state
-        context.projectState.updatePointInEditingState(updatedPoint);
-
-        // Update the local images list to reflect the change immediately
-        setState(() {
-          _localImages[_currentIndex] = updatedImage;
-          _isEditingNote = false;
-        });
-      } else {
-        setState(() {
-          _isEditingNote = false;
-        });
-      }
+      // Update the local images list to reflect the change immediately
+      setState(() {
+        _localImages[_currentIndex] = updatedImage;
+      });
     }
-  }
-
-  void _startEditingNote() {
-    setState(() {
-      _isEditingNote = true;
-    });
   }
 
   @override
@@ -876,7 +946,6 @@ class _PhotoGalleryDialogState extends State<PhotoGalleryDialog> {
               setState(() {
                 _currentIndex = index;
               });
-              _updateNoteController();
             },
             itemBuilder: (context, index) {
               final image = _localImages[index];
@@ -909,7 +978,7 @@ class _PhotoGalleryDialogState extends State<PhotoGalleryDialog> {
             },
           ),
           // Note display (bottom center)
-          if (_localImages[_currentIndex].note.isNotEmpty || _isEditingNote)
+          if (_localImages[_currentIndex].note.isNotEmpty)
             Positioned(
               bottom: 32,
               left: 32,
@@ -931,8 +1000,7 @@ class _PhotoGalleryDialogState extends State<PhotoGalleryDialog> {
                           color: Colors.white,
                           size: 20,
                         ),
-                        if (_localImages[_currentIndex].note.isEmpty &&
-                            !_isEditingNote) ...[
+                        if (_localImages[_currentIndex].note.isEmpty) ...[
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -946,69 +1014,23 @@ class _PhotoGalleryDialogState extends State<PhotoGalleryDialog> {
                           ),
                         ] else
                           const Expanded(child: SizedBox()),
-                        if (!_isEditingNote)
-                          IconButton(
-                            icon: const Icon(
-                              Icons.edit,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                            onPressed: _startEditingNote,
-                            tooltip: s?.edit ?? 'Edit',
+
+                        IconButton(
+                          icon: const Icon(
+                            Icons.edit,
+                            color: Colors.white,
+                            size: 16,
                           ),
-                        if (_isEditingNote) ...[
-                          IconButton(
-                            icon: const Icon(
-                              Icons.check,
-                              color: Colors.green,
-                              size: 16,
-                            ),
-                            onPressed: _saveNote,
-                            tooltip: s?.save ?? 'Save',
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.close,
-                              color: Colors.red,
-                              size: 16,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _isEditingNote = false;
-                                _updateNoteController();
-                              });
-                            },
-                            tooltip: s?.buttonCancel ?? 'Cancel',
-                          ),
-                        ],
+                          onPressed: () => _editNoteInFullScreen(),
+                          tooltip: s?.edit ?? 'Edit',
+                        ),
                       ],
                     ),
                     const SizedBox(height: 8),
-                    if (_isEditingNote)
-                      TextField(
-                        controller: _noteController,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                        ),
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          hintStyle: TextStyle(color: Colors.white70),
-                          filled: true,
-                          fillColor: Colors.white24,
-                        ),
-                        maxLines: 3,
-                        autofocus: true,
-                        cursorColor: Colors.white,
-                      )
-                    else
-                      Text(
-                        _localImages[_currentIndex].note,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                        ),
-                      ),
+                    Text(
+                      _localImages[_currentIndex].note,
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                    ),
                   ],
                 ),
               ),
@@ -1019,7 +1041,7 @@ class _PhotoGalleryDialogState extends State<PhotoGalleryDialog> {
               bottom: 32,
               right: 32,
               child: FloatingActionButton.small(
-                onPressed: _startEditingNote,
+                onPressed: () => _editNoteInFullScreen(),
                 backgroundColor: Colors.black.withOpacity(0.7),
                 foregroundColor: Colors.white,
                 child: const Icon(Icons.add_comment, size: 20),
