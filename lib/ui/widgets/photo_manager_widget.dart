@@ -752,7 +752,7 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
 class NoteEditDialog extends StatefulWidget {
   final String initialNote;
 
-  const NoteEditDialog({Key? key, required this.initialNote}) : super(key: key);
+  const NoteEditDialog({super.key, required this.initialNote});
 
   @override
   State<NoteEditDialog> createState() => _NoteEditDialogState();

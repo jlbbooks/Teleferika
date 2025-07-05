@@ -153,7 +153,7 @@ class MapControllerLogic {
   }
 
   // Map calculations
-  double? recalculateHeadingLine(List<PointModel> projectPoints) {
+  double? recalculateConnectingLine(List<PointModel> projectPoints) {
     if (projectPoints.length >= 2) {
       return calculateBearing(
         LatLng(projectPoints.first.latitude, projectPoints.first.longitude),

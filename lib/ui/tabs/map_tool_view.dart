@@ -73,7 +73,7 @@ class MapToolViewState extends State<MapToolView>
   double? _currentCompassAccuracy;
   bool? _shouldCalibrateCompass;
   bool _hasLocationPermission = false;
-  double? _headingFromFirstToLast;
+  double? _connectingLineFromFirstToLast;
   Polyline? _projectHeadingLine;
   MapType _currentMapType = MapType.openStreetMap;
   double _glowAnimationValue = 0.0;
@@ -321,7 +321,9 @@ class MapToolViewState extends State<MapToolView>
     );
     final points = projectState.currentPoints;
 
-    _headingFromFirstToLast = _controller.recalculateHeadingLine(points);
+    _connectingLineFromFirstToLast = _controller.recalculateConnectingLine(
+      points,
+    );
     _projectHeadingLine = _controller.recalculateProjectHeadingLine(points);
   }
 
@@ -518,7 +520,7 @@ class MapToolViewState extends State<MapToolView>
         }
 
         final List<LatLng> polylinePathPoints = _buildPolylinePathPoints();
-        final headingLine = _buildHeadingLine();
+        final connectingLine = _buildConnectingLine();
 
         LatLng initialMapCenter = _controller.getInitialCenter(
           points,
@@ -580,7 +582,7 @@ class MapToolViewState extends State<MapToolView>
                       _buildFlutterMapWidget(
                         allPoints,
                         polylinePathPoints,
-                        headingLine,
+                        connectingLine,
                         initialMapCenter: initialMapCenter,
                         initialMapZoom: initialMapZoom,
                         tileLayerUrl: _controller.getTileLayerUrl(
@@ -730,8 +732,8 @@ class MapToolViewState extends State<MapToolView>
     return [];
   }
 
-  Polyline? _buildHeadingLine() {
-    if (_headingFromFirstToLast != null) {
+  Polyline? _buildConnectingLine() {
+    if (_connectingLineFromFirstToLast != null) {
       final projectState = Provider.of<ProjectStateManager>(
         context,
         listen: false,
@@ -769,7 +771,7 @@ class MapToolViewState extends State<MapToolView>
   Widget _buildFlutterMapWidget(
     List<PointModel> allPoints,
     List<LatLng> polylinePathPoints,
-    Polyline? headingLine, {
+    Polyline? connectingLine, {
     required LatLng initialMapCenter,
     required double initialMapZoom,
     required String tileLayerUrl,
@@ -903,8 +905,9 @@ class MapToolViewState extends State<MapToolView>
                     ),
                   ],
                 ),
-              if (headingLine != null && _isValidPolyline(headingLine.points))
-                PolylineLayer(polylines: [headingLine]),
+              if (connectingLine != null &&
+                  _isValidPolyline(connectingLine.points))
+                PolylineLayer(polylines: [connectingLine]),
               if (_projectHeadingLine != null &&
                   _isValidPolyline(_projectHeadingLine!.points))
                 PolylineLayer(
@@ -930,21 +933,21 @@ class MapToolViewState extends State<MapToolView>
                   glowAnimationValue: _glowAnimationValue,
                   currentPosition: _currentPosition,
                   hasLocationPermission: _hasLocationPermission,
-                  headingFromFirstToLast: _headingFromFirstToLast,
+                  headingFromFirstToLast: _connectingLineFromFirstToLast,
                   onPointTap: _handlePointTap,
                   currentDeviceHeading: _currentDeviceHeading,
                 ),
                 rotate: true,
               ),
-              if (headingLine != null && headingLine.points.length == 2)
+              if (connectingLine != null && connectingLine.points.length == 2)
                 AnimatedBuilder(
                   animation: _arrowheadAnimation!,
                   builder: (context, child) {
                     return MarkerLayer(
                       markers: [
-                        _HeadingLineArrowheadMarker(
-                          start: headingLine.points[0],
-                          end: headingLine.points[1],
+                        _ConnectingLineArrowheadMarker(
+                          start: connectingLine.points[0],
+                          end: connectingLine.points[1],
                           t: _arrowheadAnimation!.value,
                         ),
                       ],
@@ -1604,8 +1607,8 @@ class _DebugPanel extends StatelessWidget {
   }
 }
 
-class _HeadingLineArrowheadMarker extends Marker {
-  _HeadingLineArrowheadMarker({
+class _ConnectingLineArrowheadMarker extends Marker {
+  _ConnectingLineArrowheadMarker({
     required LatLng start,
     required LatLng end,
     required double t,
