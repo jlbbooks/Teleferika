@@ -6,19 +6,12 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
-
-// Shared color interpolation for angle-based coloring (black/green to red)
-Color angleColor(double angleDeg) {
-  if (angleDeg <= 0) return Colors.green;
-  if (angleDeg >= 20) return Colors.red;
-  final t = (angleDeg / 20).clamp(0.0, 1.0);
-  return Color.lerp(Colors.green, Colors.red, t)!;
-}
+import 'package:teleferika/ui/tabs/map/services/geometry_service.dart';
+import 'package:teleferika/core/project_provider.dart';
 
 class MapMarkers {
   static List<Marker> buildAllMapMarkers({
     required BuildContext context,
-    required List<PointModel> projectPoints,
     required String? selectedPointId,
     required bool isMovePointMode,
     required double glowAnimationValue,
@@ -28,17 +21,22 @@ class MapMarkers {
     required Function(PointModel) onPointTap,
     double? currentDeviceHeading,
   }) {
+    // Get points from global state
+    final projectPoints = context.projectStateListen.currentPoints;
+
     List<Marker> projectPointMarkers = projectPoints.map((point) {
       return Marker(
         width: 60,
         height: 58,
         point: LatLng(point.latitude, point.longitude),
         child: _buildProjectPointMarker(
+          context: context,
           point: point,
           isSelected: point.id == selectedPointId,
           isInMoveMode: isMovePointMode && point.id == selectedPointId,
           glowAnimationValue: glowAnimationValue,
           onTap: onPointTap,
+          allPoints: projectPoints,
         ),
       );
     }).toList();
@@ -86,11 +84,13 @@ class MapMarkers {
   }
 
   static Widget _buildProjectPointMarker({
+    required BuildContext context,
     required PointModel point,
     required bool isSelected,
     required bool isInMoveMode,
     required double glowAnimationValue,
     required Function(PointModel) onTap,
+    required List<PointModel> allPoints,
   }) {
     // Calculate glow color for move mode
     Color? glowColor;
@@ -112,7 +112,11 @@ class MapMarkers {
     } else if (isSelected) {
       markerColor = Colors.blue;
     } else {
-      markerColor = Colors.red;
+      // Use angle-based color for regular points
+      final geometryService = GeometryService(
+        project: context.projectStateListen.currentProject!,
+      );
+      markerColor = geometryService.getPointColor(point, allPoints);
     }
 
     return GestureDetector(

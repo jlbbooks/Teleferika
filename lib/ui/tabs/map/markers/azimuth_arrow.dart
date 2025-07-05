@@ -3,11 +3,11 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
-// Moving marker widget for project azimuth
-class MovingMarker extends StatelessWidget {
+// Azimuth arrow widget for project azimuth
+class AzimuthArrow extends StatelessWidget {
   final double azimuth;
 
-  const MovingMarker({super.key, required this.azimuth});
+  const AzimuthArrow({super.key, required this.azimuth});
 
   @override
   Widget build(BuildContext context) {

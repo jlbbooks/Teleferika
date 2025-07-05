@@ -132,6 +132,15 @@ class AppConfig {
   ];
   static const bool saveButtonSavesWholeProject = true;
 
+  static const Duration polylineArrowheadAnimationDuration = Duration(
+    seconds: 7,
+  );
+
+  static const double angleToRedThreshold = 20.0;
+
+  static const Color angleColorGood = Colors.green;
+  static const Color angleColorBad = Colors.red;
+
   // Private constructor to prevent instantiation if all members are static
   AppConfig._();
 }

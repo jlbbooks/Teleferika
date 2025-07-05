@@ -10,16 +10,18 @@ import 'package:latlong2/latlong.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:teleferika/core/project_state_manager.dart';
+import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/db/models/point_model.dart';
+import 'package:teleferika/db/models/project_model.dart';
 
 import 'package:teleferika/ui/tabs/map/markers/map_markers.dart';
-import 'package:teleferika/ui/tabs/map/markers/moving_marker.dart';
+import 'package:teleferika/ui/tabs/map/markers/azimuth_arrow.dart';
 import 'package:teleferika/ui/tabs/map/markers/location_markers.dart';
 import 'package:teleferika/ui/tabs/map/markers/polyline_arrowhead.dart';
+import 'package:teleferika/ui/tabs/map/services/geometry_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class FlutterMapWidget extends StatelessWidget {
-  final List<PointModel> allPoints;
   final List<LatLng> polylinePathPoints;
   final Polyline? connectingLine;
   final Polyline? projectHeadingLine;
@@ -47,7 +49,6 @@ class FlutterMapWidget extends StatelessWidget {
 
   const FlutterMapWidget({
     super.key,
-    required this.allPoints,
     required this.polylinePathPoints,
     required this.connectingLine,
     required this.projectHeadingLine,
@@ -155,7 +156,7 @@ class FlutterMapWidget extends StatelessWidget {
                         currentPosition!.latitude,
                         currentPosition!.longitude,
                       ),
-                      child: MovingMarker(
+                      child: AzimuthArrow(
                         azimuth: Provider.of<ProjectStateManager>(
                           context,
                           listen: false,
@@ -180,10 +181,14 @@ class FlutterMapWidget extends StatelessWidget {
               ),
               ...(_isValidPolyline(polylinePathPoints)
                   ? () {
+                      // Get points from global state to match MapMarkers
+                      final projectPoints =
+                          context.projectStateListen.currentPoints;
+
                       // Compute color for each point
                       final List<Color> pointColors = [
-                        for (int i = 0; i < allPoints.length; i++)
-                          _pointColor(i, allPoints),
+                        for (int i = 0; i < projectPoints.length; i++)
+                          _pointColor(context, i, projectPoints),
                       ];
                       return [
                         PolylineLayer(
@@ -232,7 +237,6 @@ class FlutterMapWidget extends StatelessWidget {
               MarkerLayer(
                 markers: MapMarkers.buildAllMapMarkers(
                   context: context,
-                  projectPoints: allPoints,
                   selectedPointId: selectedPointId,
                   isMovePointMode: isMovePointMode,
                   glowAnimationValue: glowAnimationValue,
@@ -250,48 +254,12 @@ class FlutterMapWidget extends StatelessWidget {
                 AnimatedBuilder(
                   animation: arrowheadAnimation!,
                   builder: (context, child) {
-                    // Compute color for each point
-                    final List<Color> pointColors = [
-                      for (int i = 0; i < allPoints.length; i++)
-                        _pointColor(i, allPoints),
-                    ];
-                    // Find which segment the marker is on and local t
-                    final t = arrowheadAnimation!.value;
-                    final n = polylinePathPoints.length;
-                    double totalLength = 0.0;
-                    final List<double> segmentLengths = [];
-                    for (int i = 0; i < n - 1; i++) {
-                      final a = polylinePathPoints[i];
-                      final b = polylinePathPoints[i + 1];
-                      final d = math.sqrt(
-                        math.pow(b.latitude - a.latitude, 2) +
-                            math.pow(b.longitude - a.longitude, 2),
-                      );
-                      segmentLengths.add(d);
-                      totalLength += d;
-                    }
-                    double target = t * totalLength;
-                    double acc = 0.0;
-                    int segIdx = 0;
-                    double localT = 0.0;
-                    for (int i = 0; i < segmentLengths.length; i++) {
-                      if (acc + segmentLengths[i] >= target) {
-                        segIdx = i;
-                        localT = (target - acc) / segmentLengths[i];
-                        break;
-                      }
-                      acc += segmentLengths[i];
-                    }
-                    final colorStart = pointColors[segIdx];
-                    final colorEnd = pointColors[segIdx + 1];
-                    final markerColor =
-                        Color.lerp(colorStart, colorEnd, localT) ?? colorStart;
                     return MarkerLayer(
                       markers: [
                         PolylinePathArrowheadMarker(
                           pathPoints: polylinePathPoints,
                           t: arrowheadAnimation!.value,
-                          color: markerColor,
+                          color: Colors.blue, // Fixed color for now
                         ),
                       ],
                     );
@@ -318,26 +286,10 @@ class FlutterMapWidget extends StatelessWidget {
     );
   }
 
-  Color _pointColor(int i, List<PointModel> points) {
-    if (i == 0 || i == points.length - 1) {
-      return Colors.green;
-    }
-    // Calculate angle at points[i]
-    final prev = points[i - 1];
-    final curr = points[i];
-    final next = points[i + 1];
-    // Vector math (lat/lon as y/x)
-    final v1x = prev.longitude - curr.longitude;
-    final v1y = prev.latitude - curr.latitude;
-    final v2x = next.longitude - curr.longitude;
-    final v2y = next.latitude - curr.latitude;
-    final angle1 = math.atan2(v1y, v1x);
-    final angle2 = math.atan2(v2y, v2x);
-    double sweep = angle2 - angle1;
-    if (sweep <= -math.pi) sweep += 2 * math.pi;
-    if (sweep > math.pi) sweep -= 2 * math.pi;
-    if (sweep < 0) sweep = -sweep;
-    final angleDeg = (180.0 - (sweep * 180 / math.pi).abs()).abs();
-    return angleColor(angleDeg);
+  Color _pointColor(BuildContext context, int i, List<PointModel> points) {
+    final geometryService = GeometryService(
+      project: context.projectStateListen.currentProject!,
+    );
+    return geometryService.getPointColor(points[i], points);
   }
 }

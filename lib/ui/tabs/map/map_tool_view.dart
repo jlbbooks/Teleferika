@@ -350,11 +350,6 @@ class MapToolViewState extends State<MapToolView>
 
         // Get points from global state
         final points = projectState.currentPoints;
-        // Combine project points with new point if it exists
-        final allPoints = [...points];
-        if (_stateManager.newPoint != null) {
-          allPoints.add(_stateManager.newPoint!);
-        }
 
         final List<LatLng> polylinePathPoints = _buildPolylinePathPoints();
         final connectingLine = _buildConnectingLine();
@@ -418,7 +413,6 @@ class MapToolViewState extends State<MapToolView>
                   body: Stack(
                     children: [
                       FlutterMapWidget(
-                        allPoints: allPoints,
                         polylinePathPoints: polylinePathPoints,
                         connectingLine: connectingLine,
                         projectHeadingLine: _stateManager.projectHeadingLine,

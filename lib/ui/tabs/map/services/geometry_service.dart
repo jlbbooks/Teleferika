@@ -6,6 +6,21 @@ import 'package:latlong2/latlong.dart';
 import 'package:teleferika/core/logger.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
+import 'package:teleferika/core/app_config.dart';
+
+// Shared color interpolation for angle-based coloring (black/green to red)
+Color angleColor(double angleDeg) {
+  if (angleDeg <= 0) return AppConfig.angleColorGood;
+  if (angleDeg >= AppConfig.angleToRedThreshold) return AppConfig.angleColorBad;
+  // Use a non-linear interpolation: ease-in (t^2)
+  final t = (angleDeg / AppConfig.angleToRedThreshold).clamp(0.0, 1.0);
+  final curvedT = t * t; // Quadratic ease-in
+  return Color.lerp(
+    AppConfig.angleColorGood,
+    AppConfig.angleColorBad,
+    curvedT,
+  )!;
+}
 
 class GeometryService {
   final ProjectModel project;
@@ -172,5 +187,43 @@ class GeometryService {
     final diff = sub(pEcef, closest);
     final distance = math.sqrt(norm2(diff));
     return distance;
+  }
+
+  /// Calculate the angle at a point between two connecting polylines
+  /// Returns the angle in degrees (0-180, where 180 is a straight line)
+  /// Returns null if the point is not an intermediate point (first or last)
+  double? calculateAngleAtPoint(PointModel point, List<PointModel> allPoints) {
+    final pointIndex = allPoints.indexWhere((p) => p.id == point.id);
+    if (pointIndex <= 0 || pointIndex >= allPoints.length - 1) {
+      return null; // First or last point
+    }
+
+    final prev = allPoints[pointIndex - 1];
+    final curr = allPoints[pointIndex];
+    final next = allPoints[pointIndex + 1];
+
+    // Vector math (lat/lon as y/x)
+    final v1x = prev.longitude - curr.longitude;
+    final v1y = prev.latitude - curr.latitude;
+    final v2x = next.longitude - curr.longitude;
+    final v2y = next.latitude - curr.latitude;
+    final angle1 = math.atan2(v1y, v1x);
+    final angle2 = math.atan2(v2y, v2x);
+    double sweep = angle2 - angle1;
+    if (sweep <= -math.pi) sweep += 2 * math.pi;
+    if (sweep > math.pi) sweep -= 2 * math.pi;
+    if (sweep < 0) sweep = -sweep;
+    final angleDeg = (180.0 - (sweep * 180 / math.pi).abs()).abs();
+    return angleDeg;
+  }
+
+  /// Get the color for a point based on its angle
+  /// Returns green for first/last points, angle-based color for intermediate points
+  Color getPointColor(PointModel point, List<PointModel> allPoints) {
+    final angleDeg = calculateAngleAtPoint(point, allPoints);
+    if (angleDeg == null) {
+      return Colors.green; // First or last point
+    }
+    return angleColor(angleDeg);
   }
 }
