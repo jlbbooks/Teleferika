@@ -13,7 +13,7 @@ import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/licensing/licence_service.dart';
 import 'package:teleferika/licensing/licensed_features_loader.dart';
-import 'package:teleferika/ui/tabs/map_tool_view.dart';
+import 'package:teleferika/ui/tabs/map/map_tool_view.dart';
 import 'package:teleferika/ui/tabs/points_tab.dart';
 import 'package:teleferika/ui/tabs/points_tool_view.dart';
 import 'package:teleferika/ui/tabs/project_details_tab.dart';
