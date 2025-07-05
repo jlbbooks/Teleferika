@@ -939,15 +939,15 @@ class MapToolViewState extends State<MapToolView>
                 ),
                 rotate: true,
               ),
-              if (connectingLine != null && connectingLine.points.length == 2)
+              if (_isValidPolyline(polylinePathPoints) &&
+                  polylinePathPoints.length >= 2)
                 AnimatedBuilder(
                   animation: _arrowheadAnimation!,
                   builder: (context, child) {
                     return MarkerLayer(
                       markers: [
-                        _ConnectingLineArrowheadMarker(
-                          start: connectingLine.points[0],
-                          end: connectingLine.points[1],
+                        _PolylinePathArrowheadMarker(
+                          pathPoints: polylinePathPoints,
                           t: _arrowheadAnimation!.value,
                         ),
                       ],
@@ -1607,17 +1607,69 @@ class _DebugPanel extends StatelessWidget {
   }
 }
 
-class _ConnectingLineArrowheadMarker extends Marker {
-  _ConnectingLineArrowheadMarker({
-    required LatLng start,
-    required LatLng end,
+class _PolylinePathArrowheadMarker extends Marker {
+  _PolylinePathArrowheadMarker({
+    required List<LatLng> pathPoints,
     required double t,
   }) : super(
          width: 16,
          height: 16,
-         point: _interpolateLatLng(start, end, t),
-         child: _ArrowheadWidget(start: start, end: end, t: t),
+         point: _interpolateAlongPath(pathPoints, t),
+         child: _PolylinePathArrowheadWidget(pathPoints: pathPoints, t: t),
        );
+
+  static LatLng _interpolateAlongPath(List<LatLng> pathPoints, double t) {
+    if (pathPoints.length < 2) {
+      return pathPoints.first;
+    }
+
+    // Calculate total path length
+    double totalLength = 0.0;
+    for (int i = 0; i < pathPoints.length - 1; i++) {
+      totalLength += _calculateDistance(pathPoints[i], pathPoints[i + 1]);
+    }
+
+    // Find the target distance along the path
+    double targetDistance = totalLength * t;
+
+    // Find the segment and position within that segment
+    double currentDistance = 0.0;
+    for (int i = 0; i < pathPoints.length - 1; i++) {
+      double segmentLength = _calculateDistance(
+        pathPoints[i],
+        pathPoints[i + 1],
+      );
+
+      if (currentDistance + segmentLength >= targetDistance) {
+        // We're in this segment
+        double segmentT = (targetDistance - currentDistance) / segmentLength;
+        return _interpolateLatLng(pathPoints[i], pathPoints[i + 1], segmentT);
+      }
+
+      currentDistance += segmentLength;
+    }
+
+    // If we reach here, we're at the end of the path
+    return pathPoints.last;
+  }
+
+  static double _calculateDistance(LatLng a, LatLng b) {
+    const double earthRadius = 6371000; // meters
+    final double lat1 = a.latitude * math.pi / 180;
+    final double lat2 = b.latitude * math.pi / 180;
+    final double deltaLat = (b.latitude - a.latitude) * math.pi / 180;
+    final double deltaLon = (b.longitude - a.longitude) * math.pi / 180;
+
+    final double a1 =
+        math.sin(deltaLat / 2) * math.sin(deltaLat / 2) +
+        math.cos(lat1) *
+            math.cos(lat2) *
+            math.sin(deltaLon / 2) *
+            math.sin(deltaLon / 2);
+    final double c = 2 * math.atan2(math.sqrt(a1), math.sqrt(1 - a1));
+
+    return earthRadius * c;
+  }
 
   static LatLng _interpolateLatLng(LatLng a, LatLng b, double t) {
     return LatLng(
@@ -1627,23 +1679,25 @@ class _ConnectingLineArrowheadMarker extends Marker {
   }
 }
 
-class _ArrowheadWidget extends StatelessWidget {
-  final LatLng start;
-  final LatLng end;
+class _PolylinePathArrowheadWidget extends StatelessWidget {
+  final List<LatLng> pathPoints;
   final double t;
 
-  const _ArrowheadWidget({
-    required this.start,
-    required this.end,
+  const _PolylinePathArrowheadWidget({
+    required this.pathPoints,
     required this.t,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Find the current segment and calculate the direction
+    final (currentPoint, nextPoint) = _getCurrentSegment();
+
     // Calculate angle for arrowhead
-    final dx = end.longitude - start.longitude;
-    final dy = end.latitude - start.latitude;
+    final dx = nextPoint.longitude - currentPoint.longitude;
+    final dy = nextPoint.latitude - currentPoint.latitude;
     final angle = math.atan2(dy, dx);
+
     return Transform.rotate(
       angle: angle + math.pi,
       child: CustomPaint(
@@ -1651,6 +1705,58 @@ class _ArrowheadWidget extends StatelessWidget {
         painter: _ArrowheadPainter(),
       ),
     );
+  }
+
+  (LatLng, LatLng) _getCurrentSegment() {
+    if (pathPoints.length < 2) {
+      return (pathPoints.first, pathPoints.first);
+    }
+
+    // Calculate total path length
+    double totalLength = 0.0;
+    for (int i = 0; i < pathPoints.length - 1; i++) {
+      totalLength += _calculateDistance(pathPoints[i], pathPoints[i + 1]);
+    }
+
+    // Find the target distance along the path
+    double targetDistance = totalLength * t;
+
+    // Find the segment and position within that segment
+    double currentDistance = 0.0;
+    for (int i = 0; i < pathPoints.length - 1; i++) {
+      double segmentLength = _calculateDistance(
+        pathPoints[i],
+        pathPoints[i + 1],
+      );
+
+      if (currentDistance + segmentLength >= targetDistance) {
+        // We're in this segment
+        return (pathPoints[i], pathPoints[i + 1]);
+      }
+
+      currentDistance += segmentLength;
+    }
+
+    // If we reach here, we're at the end of the path
+    return (pathPoints[pathPoints.length - 2], pathPoints.last);
+  }
+
+  double _calculateDistance(LatLng a, LatLng b) {
+    const double earthRadius = 6371000; // meters
+    final double lat1 = a.latitude * math.pi / 180;
+    final double lat2 = b.latitude * math.pi / 180;
+    final double deltaLat = (b.latitude - a.latitude) * math.pi / 180;
+    final double deltaLon = (b.longitude - a.longitude) * math.pi / 180;
+
+    final double a1 =
+        math.sin(deltaLat / 2) * math.sin(deltaLat / 2) +
+        math.cos(lat1) *
+            math.cos(lat2) *
+            math.sin(deltaLon / 2) *
+            math.sin(deltaLon / 2);
+    final double c = 2 * math.atan2(math.sqrt(a1), math.sqrt(1 - a1));
+
+    return earthRadius * c;
   }
 }
 
