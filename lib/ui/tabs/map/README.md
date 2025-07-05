@@ -9,9 +9,9 @@ map/
 ├── debug/
 │   └── debug_panel.dart              # Debug panel widget for development
 ├── markers/
-│   ├── azimuth_arrow.dart            # Project azimuth arrow marker
 │   ├── location_markers.dart         # Current location accuracy marker
 │   ├── map_markers.dart              # Project point markers
+│   ├── moving_marker.dart            # Moving marker for project azimuth
 │   └── polyline_arrowhead.dart       # Polyline path arrowhead marker
 ├── services/
 │   ├── geometry_service.dart         # Geometry calculations and map math
@@ -40,9 +40,9 @@ map/
 - **`debug_panel.dart`**: Debug panel widget that displays sensor data, location information, and compass accuracy for development purposes.
 
 ### Marker Components (`markers/`)
-- **`azimuth_arrow.dart`**: Custom marker that displays the project azimuth direction as an arrow overlay on the current location.
 - **`location_markers.dart`**: Custom location marker with accuracy circle visualization.
 - **`map_markers.dart`**: Project point marker generation and styling (moved from root).
+- **`moving_marker.dart`**: Moving marker that displays the project azimuth direction as an arrow overlay on the current location.
 - **`polyline_arrowhead.dart`**: Animated arrowhead marker that moves along polyline paths.
 
 ### Service Components (`services/`)

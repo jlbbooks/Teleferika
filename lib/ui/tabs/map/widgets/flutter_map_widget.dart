@@ -12,7 +12,7 @@ import 'package:teleferika/core/project_state_manager.dart';
 import 'package:teleferika/db/models/point_model.dart';
 
 import 'package:teleferika/ui/tabs/map/markers/map_markers.dart';
-import 'package:teleferika/ui/tabs/map/markers/azimuth_arrow.dart';
+import 'package:teleferika/ui/tabs/map/markers/moving_marker.dart';
 import 'package:teleferika/ui/tabs/map/markers/location_markers.dart';
 import 'package:teleferika/ui/tabs/map/markers/polyline_arrowhead.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -154,7 +154,7 @@ class FlutterMapWidget extends StatelessWidget {
                         currentPosition!.latitude,
                         currentPosition!.longitude,
                       ),
-                      child: ProjectAzimuthArrow(
+                      child: MovingMarker(
                         azimuth: Provider.of<ProjectStateManager>(
                           context,
                           listen: false,
