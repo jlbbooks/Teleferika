@@ -233,18 +233,28 @@ class FlutterMapWidget extends StatelessWidget {
                     ),
                   ],
                 ),
+              // Angle arcs as polylines (so they rotate with the map)
+              if (_isValidPolyline(polylinePathPoints) &&
+                  polylinePathPoints.length > 2)
+                PolylineLayer(polylines: _buildAngleArcPolylines(context)),
               MarkerLayer(
-                markers: MapMarkers.buildAllMapMarkers(
-                  context: context,
-                  selectedPointId: selectedPointId,
-                  isMovePointMode: isMovePointMode,
-                  glowAnimationValue: glowAnimationValue,
-                  currentPosition: currentPosition,
-                  hasLocationPermission: hasLocationPermission,
-                  headingFromFirstToLast: connectingLineFromFirstToLast,
-                  onPointTap: onPointTap,
-                  currentDeviceHeading: currentDeviceHeading,
-                ),
+                markers: [
+                  ...MapMarkers.buildAllMapMarkers(
+                    context: context,
+                    selectedPointId: selectedPointId,
+                    isMovePointMode: isMovePointMode,
+                    glowAnimationValue: glowAnimationValue,
+                    currentPosition: currentPosition,
+                    hasLocationPermission: hasLocationPermission,
+                    headingFromFirstToLast: connectingLineFromFirstToLast,
+                    onPointTap: onPointTap,
+                    currentDeviceHeading: currentDeviceHeading,
+                  ),
+                  // Angle labels as markers (don't rotate with the map)
+                  if (_isValidPolyline(polylinePathPoints) &&
+                      polylinePathPoints.length > 2)
+                    ..._buildAngleLabelMarkers(context),
+                ],
                 rotate: true,
               ),
               if (_isValidPolyline(polylinePathPoints) &&
@@ -337,5 +347,262 @@ class FlutterMapWidget extends StatelessWidget {
       project: context.projectStateListen.currentProject!,
     );
     return geometryService.getPointColor(points[i], points);
+  }
+
+  List<Polyline> _buildAngleArcPolylines(BuildContext context) {
+    final projectPoints = context.projectStateListen.currentPoints;
+    final List<Polyline> angleArcs = [];
+
+    // Generate angle arcs for intermediate points
+    for (int i = 1; i < projectPoints.length - 1; i++) {
+      final prev = projectPoints[i - 1];
+      final curr = projectPoints[i];
+      final next = projectPoints[i + 1];
+
+      // Calculate the angle at this point
+      final angleDeg = _calculateAngleAtPoint(prev, curr, next);
+      if (angleDeg != null) {
+        // Generate arc points
+        final arcPoints = _generateArcPoints(prev, curr, next, 36.0);
+        if (arcPoints.isNotEmpty) {
+          angleArcs.add(
+            Polyline(
+              points: arcPoints,
+              color: angleColor(angleDeg).withValues(alpha: 0.4),
+              strokeWidth: 2.0,
+            ),
+          );
+        }
+      }
+    }
+
+    return angleArcs;
+  }
+
+  double? _calculateAngleAtPoint(
+    PointModel prev,
+    PointModel curr,
+    PointModel next,
+  ) {
+    // Vector math (lat/lon as y/x)
+    final v1x = prev.longitude - curr.longitude;
+    final v1y = prev.latitude - curr.latitude;
+    final v2x = next.longitude - curr.longitude;
+    final v2y = next.latitude - curr.latitude;
+    final angle1 = math.atan2(v1y, v1x);
+    final angle2 = math.atan2(v2y, v2x);
+    double sweep = angle2 - angle1;
+    if (sweep <= -math.pi) sweep += 2 * math.pi;
+    if (sweep > math.pi) sweep -= 2 * math.pi;
+    if (sweep < 0) sweep = -sweep;
+    final angleDeg = (180.0 - (sweep * 180 / math.pi).abs()).abs();
+    return angleDeg;
+  }
+
+  List<LatLng> _generateArcPoints(
+    PointModel prev,
+    PointModel curr,
+    PointModel next,
+    double radius,
+  ) {
+    // Calculate bearings from current point to previous and next points
+    final bearingToPrev = _calculateBearing(curr, prev);
+    final bearingToNext = _calculateBearing(curr, next);
+
+    // Determine the sweep direction (convex)
+    double startAngle = bearingToPrev;
+    double endAngle = bearingToNext;
+    double sweep = endAngle - startAngle;
+
+    // Normalize sweep to be positive and convex
+    if (sweep <= -180) sweep += 360;
+    if (sweep > 180) sweep -= 360;
+    if (sweep < 0) {
+      final temp = startAngle;
+      startAngle = endAngle;
+      endAngle = temp;
+      sweep = -sweep;
+    }
+
+    // Generate arc points
+    final List<LatLng> arcPoints = [];
+    const int numPoints = 20; // Number of points to approximate the arc
+
+    for (int i = 0; i <= numPoints; i++) {
+      final t = i / numPoints;
+      final angle = startAngle + sweep * t;
+      final point = _calculateDestinationPoint(
+        LatLng(curr.latitude, curr.longitude),
+        angle,
+        radius / 1000.0, // Convert meters to kilometers
+      );
+      arcPoints.add(point);
+    }
+
+    return arcPoints;
+  }
+
+  double _calculateBearing(PointModel from, PointModel to) {
+    final lat1 = from.latitude * math.pi / 180;
+    final lon1 = from.longitude * math.pi / 180;
+    final lat2 = to.latitude * math.pi / 180;
+    final lon2 = to.longitude * math.pi / 180;
+
+    final dLon = lon2 - lon1;
+    final y = math.sin(dLon) * math.cos(lat2);
+    final x =
+        math.cos(lat1) * math.sin(lat2) -
+        math.sin(lat1) * math.cos(lat2) * math.cos(dLon);
+
+    var bearing = math.atan2(y, x) * 180 / math.pi;
+    return (bearing + 360) % 360; // Normalize to 0-360
+  }
+
+  LatLng _calculateDestinationPoint(
+    LatLng start,
+    double bearingDegrees,
+    double distanceKm,
+  ) {
+    const R = 6371.0; // Earth's radius in kilometers
+    final lat1 = start.latitude * math.pi / 180;
+    final lon1 = start.longitude * math.pi / 180;
+    final bearingRad = bearingDegrees * math.pi / 180;
+
+    final lat2 = math.asin(
+      math.sin(lat1) * math.cos(distanceKm / R) +
+          math.cos(lat1) * math.sin(distanceKm / R) * math.cos(bearingRad),
+    );
+    final lon2 =
+        lon1 +
+        math.atan2(
+          math.sin(bearingRad) * math.sin(distanceKm / R) * math.cos(lat1),
+          math.cos(distanceKm / R) - math.sin(lat1) * math.sin(lat2),
+        );
+
+    return LatLng(lat2 * 180 / math.pi, lon2 * 180 / math.pi);
+  }
+
+  List<Marker> _buildAngleLabelMarkers(BuildContext context) {
+    final projectPoints = context.projectStateListen.currentPoints;
+    final List<Marker> angleLabels = [];
+
+    // Get current zoom level for scaling with safety check
+    double currentZoom;
+    try {
+      currentZoom = mapController.camera.zoom;
+    } catch (e) {
+      // Fallback to initial zoom if map controller is not ready
+      currentZoom = initialMapZoom;
+    }
+    final baseZoom = 14.0; // Base zoom level for normal size
+    final zoomFactor = (currentZoom / baseZoom).clamp(
+      0.5,
+      2.0,
+    ); // Scale between 0.5x and 2x
+
+    // Generate angle labels for intermediate points
+    for (int i = 1; i < projectPoints.length - 1; i++) {
+      final prev = projectPoints[i - 1];
+      final curr = projectPoints[i];
+      final next = projectPoints[i + 1];
+
+      // Calculate the angle at this point
+      final angleDeg = _calculateAngleAtPoint(prev, curr, next);
+      if (angleDeg != null) {
+        // Calculate the position for the label (outside the arc)
+        final labelPosition = _calculateAngleLabelPosition(
+          prev,
+          curr,
+          next,
+          52.0,
+        ); // Slightly larger than arc radius
+
+        // Scale dimensions based on zoom
+        final markerWidth = (40 * zoomFactor).round();
+        final markerHeight = (16 * zoomFactor).round();
+        final fontSize = (8 * zoomFactor).clamp(6.0, 14.0);
+        final padding = (2 * zoomFactor).clamp(1.0, 4.0);
+        final borderRadius = (2 * zoomFactor).clamp(1.0, 4.0);
+        final borderWidth = (0.5 * zoomFactor).clamp(0.5, 1.0);
+
+        angleLabels.add(
+          Marker(
+            width: markerWidth.toDouble(),
+            height: markerHeight.toDouble(),
+            point: labelPosition,
+            child: Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: padding,
+                vertical: padding * 0.5,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.8),
+                borderRadius: BorderRadius.circular(borderRadius),
+                border: Border.all(
+                  color: angleColor(angleDeg).withValues(alpha: 0.6),
+                  width: borderWidth,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: zoomFactor,
+                    offset: Offset(0, zoomFactor * 0.5),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  '${angleDeg.toStringAsFixed(1)}°',
+                  style: TextStyle(
+                    color: angleColor(angleDeg),
+                    fontSize: fontSize,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ),
+        );
+      }
+    }
+
+    return angleLabels;
+  }
+
+  LatLng _calculateAngleLabelPosition(
+    PointModel prev,
+    PointModel curr,
+    PointModel next,
+    double radius,
+  ) {
+    // Calculate bearings from current point to previous and next points
+    final bearingToPrev = _calculateBearing(curr, prev);
+    final bearingToNext = _calculateBearing(curr, next);
+
+    // Determine the sweep direction (convex)
+    double startAngle = bearingToPrev;
+    double endAngle = bearingToNext;
+    double sweep = endAngle - startAngle;
+
+    // Normalize sweep to be positive and convex
+    if (sweep <= -180) sweep += 360;
+    if (sweep > 180) sweep -= 360;
+    if (sweep < 0) {
+      final temp = startAngle;
+      startAngle = endAngle;
+      endAngle = temp;
+      sweep = -sweep;
+    }
+
+    // Calculate the midpoint angle of the arc
+    final midAngle = startAngle + sweep / 2;
+
+    // Calculate the label position at the midpoint angle, outside the arc
+    return _calculateDestinationPoint(
+      LatLng(curr.latitude, curr.longitude),
+      midAngle,
+      radius / 1000.0, // Convert meters to kilometers
+    );
   }
 }
