@@ -7,6 +7,14 @@ import 'package:latlong2/latlong.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 
+// Shared color interpolation for angle-based coloring (black/green to red)
+Color angleColor(double angleDeg) {
+  if (angleDeg <= 0) return Colors.green;
+  if (angleDeg >= 20) return Colors.red;
+  final t = (angleDeg / 20).clamp(0.0, 1.0);
+  return Color.lerp(Colors.green, Colors.red, t)!;
+}
+
 class MapMarkers {
   static List<Marker> buildAllMapMarkers({
     required BuildContext context,
@@ -294,7 +302,7 @@ class _AngleArcPainter extends CustomPainter {
       text: TextSpan(
         text: '${angleDeg.toStringAsFixed(1)}°',
         style: TextStyle(
-          color: _labelColor(angleDeg),
+          color: angleColor(angleDeg),
           fontSize: 12,
           fontWeight: FontWeight.bold,
         ),
@@ -310,12 +318,4 @@ class _AngleArcPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-
-  // Helper to interpolate label color from black (0°) to red (20° or more)
-  Color _labelColor(double angleDeg) {
-    if (angleDeg <= 0) return Colors.green;
-    if (angleDeg >= 20) return Colors.red;
-    final t = (angleDeg / 20).clamp(0.0, 1.0);
-    return Color.lerp(Colors.green, Colors.red, t)!;
-  }
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -177,17 +178,38 @@ class FlutterMapWidget extends StatelessWidget {
                 ),
                 positionStream: locationStreamController.stream,
               ),
-              if (_isValidPolyline(polylinePathPoints))
-                PolylineLayer(
-                  polylines: [
-                    Polyline(
-                      points: polylinePathPoints,
-                      gradientColors: [Colors.green, Colors.yellow, Colors.red],
-                      colorsStop: [0.0, 0.5, 1.0],
-                      strokeWidth: 3.0,
-                    ),
-                  ],
-                ),
+              ...(_isValidPolyline(polylinePathPoints)
+                  ? () {
+                      // Compute color for each point
+                      final List<Color> pointColors = [
+                        for (int i = 0; i < allPoints.length; i++)
+                          _pointColor(i, allPoints),
+                      ];
+                      return [
+                        PolylineLayer(
+                          polylines: [
+                            for (
+                              int i = 0;
+                              i < polylinePathPoints.length - 1;
+                              i++
+                            )
+                              Polyline(
+                                points: [
+                                  polylinePathPoints[i],
+                                  polylinePathPoints[i + 1],
+                                ],
+                                gradientColors: [
+                                  pointColors[i],
+                                  pointColors[i + 1],
+                                ],
+                                colorsStop: [0.0, 1.0],
+                                strokeWidth: 3.0,
+                              ),
+                          ],
+                        ),
+                      ];
+                    }()
+                  : []),
               if (connectingLine != null &&
                   _isValidPolyline(connectingLine!.points))
                 PolylineLayer(polylines: [connectingLine!]),
@@ -257,5 +279,28 @@ class FlutterMapWidget extends StatelessWidget {
     return points.any(
       (p) => p.latitude != first.latitude || p.longitude != first.longitude,
     );
+  }
+
+  Color _pointColor(int i, List<PointModel> points) {
+    if (i == 0 || i == points.length - 1) {
+      return Colors.green;
+    }
+    // Calculate angle at points[i]
+    final prev = points[i - 1];
+    final curr = points[i];
+    final next = points[i + 1];
+    // Vector math (lat/lon as y/x)
+    final v1x = prev.longitude - curr.longitude;
+    final v1y = prev.latitude - curr.latitude;
+    final v2x = next.longitude - curr.longitude;
+    final v2y = next.latitude - curr.latitude;
+    final angle1 = math.atan2(v1y, v1x);
+    final angle2 = math.atan2(v2y, v2x);
+    double sweep = angle2 - angle1;
+    if (sweep <= -math.pi) sweep += 2 * math.pi;
+    if (sweep > math.pi) sweep -= 2 * math.pi;
+    if (sweep < 0) sweep = -sweep;
+    final angleDeg = (180.0 - (sweep * 180 / math.pi).abs()).abs();
+    return angleColor(angleDeg);
   }
 }
