@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
+import 'package:teleferika/core/app_config.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/image_model.dart';
@@ -534,10 +535,8 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                                   S.of(context)?.latitude_hint ??
                                   'e.g. 45.12345',
                               prefixIcon: Icon(
-                                Icons.pin_drop_outlined,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
+                                AppConfig.latitudeIcon,
+                                color: AppConfig.latitudeColor,
                                 size: 20,
                               ),
                               border: OutlineInputBorder(
@@ -609,10 +608,8 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                                   S.of(context)?.longitude_hint ??
                                   'e.g. -12.54321',
                               prefixIcon: Icon(
-                                Icons.pin_drop_outlined,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
+                                AppConfig.longitudeIcon,
+                                color: AppConfig.longitudeColor,
                                 size: 20,
                               ),
                               border: OutlineInputBorder(
@@ -733,10 +730,8 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                                   S.of(context)?.altitude_hint ??
                                   'e.g. 1203.5 (Optional)',
                               prefixIcon: Icon(
-                                Icons.layers,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
+                                AppConfig.altitudeIcon,
+                                color: AppConfig.altitudeColor,
                                 size: 20,
                               ),
                               border: OutlineInputBorder(

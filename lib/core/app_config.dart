@@ -7,6 +7,16 @@ import 'package:teleferika/l10n/app_localizations.dart';
 class AppConfig {
   static const String appName = 'TeleferiKa';
 
+  // Coordinate icons and colors for consistency across the app
+  static const IconData latitudeIcon = Icons.swap_vert;
+  static const Color latitudeColor = Colors.green;
+
+  static const IconData longitudeIcon = Icons.swap_horiz;
+  static const Color longitudeColor = Colors.orange;
+
+  static const IconData altitudeIcon = Icons.terrain;
+  static const Color altitudeColor = Colors.brown;
+
   static final ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,

@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
+import 'package:teleferika/core/app_config.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/core/project_state_manager.dart';
 import 'package:teleferika/db/database_helper.dart';
@@ -513,10 +514,10 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                     // Latitude
                     Row(
                       children: [
-                        const Icon(
-                          Icons.my_location,
+                        Icon(
+                          AppConfig.latitudeIcon,
                           size: 18,
-                          color: Colors.green,
+                          color: AppConfig.latitudeColor,
                         ),
                         const SizedBox(width: 6),
                         Text(
@@ -528,10 +529,10 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                     // Longitude
                     Row(
                       children: [
-                        const Icon(
-                          Icons.my_location,
+                        Icon(
+                          AppConfig.longitudeIcon,
                           size: 18,
-                          color: Colors.orange,
+                          color: AppConfig.longitudeColor,
                         ),
                         const SizedBox(width: 6),
                         Text(
@@ -545,10 +546,10 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                     if (point.altitude != null)
                       Row(
                         children: [
-                          const Icon(
-                            Icons.terrain,
+                          Icon(
+                            AppConfig.altitudeIcon,
                             size: 18,
-                            color: Colors.brown,
+                            color: AppConfig.altitudeColor,
                           ),
                           const SizedBox(width: 6),
                           Text(

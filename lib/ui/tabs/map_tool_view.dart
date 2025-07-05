@@ -22,6 +22,7 @@ import 'package:teleferika/ui/widgets/compass_calibration_panel.dart';
 import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:teleferika/core/app_config.dart';
 
 import 'map/map_controller.dart';
 import 'map/map_controls.dart';
@@ -363,7 +364,7 @@ class MapToolViewState extends State<MapToolView>
       final s = S.of(context);
       showErrorStatus(
         s?.error_deleting_point_generic(pointToMove.name, e.toString()) ??
-            'Error moving point \\${pointToMove.name}: \\${e.toString()}',
+            'Error moving point ${pointToMove.name}: ${e.toString()}',
       );
     } finally {
       if (mounted) {
@@ -1220,7 +1221,7 @@ class MapToolViewState extends State<MapToolView>
           title: Text(s?.mapDeletePointDialogTitle ?? 'Delete Point'),
           content: Text(
             s?.mapDeletePointDialogContent(pointToDelete.name) ??
-                'Are you sure you want to delete point \\${pointToDelete.name}?',
+                'Are you sure you want to delete point ${pointToDelete.name}?',
           ),
           actions: <Widget>[
             TextButton(
@@ -1257,7 +1258,7 @@ class MapToolViewState extends State<MapToolView>
 
         showSuccessStatus(
           s?.point_deleted_pending_save(pointToDelete.name) ??
-              'Point \\${pointToDelete.name} deleted (pending save).',
+              'Point ${pointToDelete.name} deleted (pending save).',
         );
       } catch (e) {
         if (!mounted) return;
@@ -1267,7 +1268,7 @@ class MapToolViewState extends State<MapToolView>
 
         showErrorStatus(
           s?.error_deleting_point_generic(pointToDelete.name, e.toString()) ??
-              'Error deleting point \\${pointToDelete.name}: \\${e.toString()}',
+              'Error deleting point ${pointToDelete.name}: ${e.toString()}',
         );
       }
     }
@@ -1538,13 +1539,55 @@ class _DebugPanel extends StatelessWidget {
                 'Should calibrate: ${shouldCalibrate == true ? "YES" : "NO"}',
               ),
               if (position != null) ...[
-                Text(
-                  'Location: ${position!.latitude.toStringAsFixed(6)}, ${position!.longitude.toStringAsFixed(6)}',
+                Row(
+                  children: [
+                    Icon(
+                      AppConfig.latitudeIcon,
+                      size: 14,
+                      color: AppConfig.latitudeColor,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      'Lat: ',
+                      style: TextStyle(color: AppConfig.latitudeColor),
+                    ),
+                    Text(position!.latitude.toStringAsFixed(6)),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Icon(
+                      AppConfig.longitudeIcon,
+                      size: 14,
+                      color: AppConfig.longitudeColor,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      'Lon: ',
+                      style: TextStyle(color: AppConfig.longitudeColor),
+                    ),
+                    Text(position!.longitude.toStringAsFixed(6)),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Icon(
+                      AppConfig.altitudeIcon,
+                      size: 14,
+                      color: AppConfig.altitudeColor,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      'Alt: ',
+                      style: TextStyle(color: AppConfig.altitudeColor),
+                    ),
+                    Text(position!.altitude.toStringAsFixed(2)),
+                    Text(' m'),
+                  ],
                 ),
                 Text(
                   'Location accuracy: ${position!.accuracy.toStringAsFixed(2)} m',
                 ),
-                Text('Altitude: ${position!.altitude.toStringAsFixed(2)} m'),
                 Text('Speed: ${position!.speed.toStringAsFixed(2)} m/s'),
                 Text(
                   'Speed accuracy: ${position!.speedAccuracy.toStringAsFixed(2)} m/s',

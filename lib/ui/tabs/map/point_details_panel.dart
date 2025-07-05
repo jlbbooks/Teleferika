@@ -7,6 +7,7 @@ import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/ui/tabs/map/map_controller.dart';
+import 'package:teleferika/core/app_config.dart';
 
 class PointDetailsPanel extends StatefulWidget {
   final PointModel? selectedPoint;
@@ -247,28 +248,69 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                     ),
                     SizedBox(height: isMobile ? 4 : 6),
                     // Latitude
-                    _buildEditableCoordinate(
-                      label: S.of(context)?.lat ?? 'Lat:',
-                      controller: _latitudeController,
-                      focusNode: _latitudeFocusNode,
-                      isEditing: _isEditingLatitude,
-                      onTap: () => _startEditingLatitude(),
-                      onConfirm: () => _confirmLatitudeChange(),
-                      onCancel: () => _cancelLatitudeChange(),
-                      isMobile: isMobile,
+                    Row(
+                      children: [
+                        Icon(
+                          AppConfig.latitudeIcon,
+                          size: isMobile ? 14 : 16,
+                          color: AppConfig.latitudeColor,
+                        ),
+                        SizedBox(width: isMobile ? 6 : 8),
+                        _buildEditableCoordinate(
+                          label: S.of(context)?.lat ?? 'Lat:',
+                          controller: _latitudeController,
+                          focusNode: _latitudeFocusNode,
+                          isEditing: _isEditingLatitude,
+                          onTap: () => _startEditingLatitude(),
+                          onConfirm: () => _confirmLatitudeChange(),
+                          onCancel: () => _cancelLatitudeChange(),
+                          isMobile: isMobile,
+                        ),
+                      ],
                     ),
                     SizedBox(height: isMobile ? 2 : 4),
                     // Longitude
-                    _buildEditableCoordinate(
-                      label: S.of(context)?.lon ?? 'Lon:',
-                      controller: _longitudeController,
-                      focusNode: _longitudeFocusNode,
-                      isEditing: _isEditingLongitude,
-                      onTap: () => _startEditingLongitude(),
-                      onConfirm: () => _confirmLongitudeChange(),
-                      onCancel: () => _cancelLongitudeChange(),
-                      isMobile: isMobile,
+                    Row(
+                      children: [
+                        Icon(
+                          AppConfig.longitudeIcon,
+                          size: isMobile ? 14 : 16,
+                          color: AppConfig.longitudeColor,
+                        ),
+                        SizedBox(width: isMobile ? 6 : 8),
+                        _buildEditableCoordinate(
+                          label: S.of(context)?.lon ?? 'Lon:',
+                          controller: _longitudeController,
+                          focusNode: _longitudeFocusNode,
+                          isEditing: _isEditingLongitude,
+                          onTap: () => _startEditingLongitude(),
+                          onConfirm: () => _confirmLongitudeChange(),
+                          onCancel: () => _cancelLongitudeChange(),
+                          isMobile: isMobile,
+                        ),
+                      ],
                     ),
+                    // Altitude
+                    if (widget.selectedPoint?.altitude != null)
+                      Row(
+                        children: [
+                          Icon(
+                            AppConfig.altitudeIcon,
+                            size: isMobile ? 14 : 16,
+                            color: AppConfig.altitudeColor,
+                          ),
+                          SizedBox(width: isMobile ? 6 : 8),
+                          Text(
+                            '${S.of(context)?.altitude_label ?? 'Alt:'}: '
+                            '${widget.selectedPoint!.altitude!.toStringAsFixed(2)} ${S.of(context)?.unit_meter ?? 'm'}',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: AppConfig.altitudeColor,
+                                  fontSize: isMobile ? 10 : null,
+                                ),
+                          ),
+                        ],
+                      ),
                     // Distance from previous point
                     Builder(
                       builder: (context) {
@@ -446,6 +488,7 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
     required bool isMobile,
   }) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           label,
@@ -456,11 +499,12 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
           ),
         ),
         SizedBox(width: isMobile ? 4 : 6),
-        Expanded(
+        Flexible(
           child: isEditing
               ? Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
+                    Flexible(
                       child: TextField(
                         controller: controller,
                         focusNode: focusNode,
