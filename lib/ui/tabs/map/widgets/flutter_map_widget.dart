@@ -45,6 +45,12 @@ class FlutterMapWidget extends StatefulWidget {
   final Function(PointModel, LatLng) onMovePoint;
   final VoidCallback onMapReady;
   final VoidCallback onDeselectPoint;
+  // Slide functionality callbacks
+  final Function(PointModel, LongPressStartDetails) onLongPressStart;
+  final Function(PointModel, LongPressMoveUpdateDetails) onLongPressMoveUpdate;
+  final Function(PointModel, LongPressEndDetails) onLongPressEnd;
+  final bool isSlidingMarker;
+  final String? slidingPointId;
 
   const FlutterMapWidget({
     super.key,
@@ -72,6 +78,12 @@ class FlutterMapWidget extends StatefulWidget {
     required this.onMovePoint,
     required this.onMapReady,
     required this.onDeselectPoint,
+    // Slide functionality parameters
+    required this.onLongPressStart,
+    required this.onLongPressMoveUpdate,
+    required this.onLongPressEnd,
+    required this.isSlidingMarker,
+    required this.slidingPointId,
   });
 
   @override
@@ -281,6 +293,12 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
                   headingFromFirstToLast: widget.connectingLineFromFirstToLast,
                   onPointTap: widget.onPointTap,
                   currentDeviceHeading: widget.currentDeviceHeading,
+                  // Slide functionality parameters
+                  onLongPressStart: widget.onLongPressStart,
+                  onLongPressMoveUpdate: widget.onLongPressMoveUpdate,
+                  onLongPressEnd: widget.onLongPressEnd,
+                  isSlidingMarker: widget.isSlidingMarker,
+                  slidingPointId: widget.slidingPointId,
                 ),
                 rotate: true,
               ),

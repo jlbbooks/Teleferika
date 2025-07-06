@@ -20,6 +20,13 @@ class MapMarkers {
     required double? headingFromFirstToLast,
     required Function(PointModel) onPointTap,
     double? currentDeviceHeading,
+    // New slide functionality parameters
+    required Function(PointModel, LongPressStartDetails) onLongPressStart,
+    required Function(PointModel, LongPressMoveUpdateDetails)
+    onLongPressMoveUpdate,
+    required Function(PointModel, LongPressEndDetails) onLongPressEnd,
+    required bool isSlidingMarker,
+    required String? slidingPointId,
   }) {
     // Get points from global state
     final projectPoints = context.projectStateListen.currentPoints;
@@ -37,6 +44,12 @@ class MapMarkers {
           glowAnimationValue: glowAnimationValue,
           onTap: onPointTap,
           allPoints: projectPoints,
+          // Slide functionality parameters
+          onLongPressStart: onLongPressStart,
+          onLongPressMoveUpdate: onLongPressMoveUpdate,
+          onLongPressEnd: onLongPressEnd,
+          isSlidingMarker: isSlidingMarker,
+          slidingPointId: slidingPointId,
         ),
       );
     }).toList();
@@ -71,6 +84,13 @@ class MapMarkers {
     required double glowAnimationValue,
     required Function(PointModel) onTap,
     required List<PointModel> allPoints,
+    // Slide functionality parameters
+    required Function(PointModel, LongPressStartDetails) onLongPressStart,
+    required Function(PointModel, LongPressMoveUpdateDetails)
+    onLongPressMoveUpdate,
+    required Function(PointModel, LongPressEndDetails) onLongPressEnd,
+    required bool isSlidingMarker,
+    required String? slidingPointId,
   }) {
     // Calculate glow color for move mode
     Color? glowColor;
@@ -87,6 +107,8 @@ class MapMarkers {
     Color markerColor;
     if (point.isUnsaved) {
       markerColor = Colors.orange; // Orange for new unsaved points
+    } else if (isSlidingMarker && point.id == slidingPointId) {
+      markerColor = Colors.purple; // Purple for sliding marker
     } else if (isInMoveMode) {
       markerColor = glowColor ?? Colors.purpleAccent;
     } else if (isSelected) {
@@ -107,6 +129,9 @@ class MapMarkers {
 
     return GestureDetector(
       onTap: () => onTap(point),
+      onLongPressStart: (details) => onLongPressStart(point, details),
+      onLongPressMoveUpdate: (details) => onLongPressMoveUpdate(point, details),
+      onLongPressEnd: (details) => onLongPressEnd(point, details),
       child: Stack(
         alignment: Alignment.bottomCenter,
         children: [

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -321,6 +322,64 @@ class MapToolViewState extends State<MapToolView>
     }
   }
 
+  // Slide functionality handlers
+  void _handleLongPressStart(PointModel point, LongPressStartDetails details) {
+    // Store the original position and start sliding
+    final originalPosition = LatLng(point.latitude, point.longitude);
+    _stateManager.startSlidingMarker(point, originalPosition);
+    setState(() {});
+  }
+
+  void _handleLongPressMoveUpdate(
+    PointModel point,
+    LongPressMoveUpdateDetails details,
+  ) {
+    if (_stateManager.isSlidingMarker &&
+        _stateManager.slidingPointId == point.id) {
+      // Calculate the drag delta in pixels
+      final deltaX = details.offsetFromOrigin.dx;
+      final deltaY = details.offsetFromOrigin.dy;
+
+      // Convert pixel delta to map coordinate delta
+      // We need to use the map's scale factor to convert pixels to map units
+      final camera = _stateManager.mapController.camera;
+      final zoom = camera.zoom;
+
+      // Approximate conversion: at zoom level 0, 1 pixel ≈ 156543.03392 meters
+      // At other zoom levels, divide by 2^zoom
+      const metersPerPixelAtZoom0 = 156543.03392;
+      final metersPerPixel = metersPerPixelAtZoom0 / math.pow(2, zoom);
+
+      // Convert to degrees (approximate)
+      const metersPerDegreeLat = 111320.0; // meters per degree latitude
+      final metersPerDegreeLon =
+          metersPerDegreeLat * math.cos(point.latitude * math.pi / 180);
+
+      final deltaLat = -deltaY * metersPerPixel / metersPerDegreeLat;
+      final deltaLon = deltaX * metersPerPixel / metersPerDegreeLon;
+
+      // Calculate new position
+      final newLat = point.latitude + deltaLat;
+      final newLon = point.longitude + deltaLon;
+      final newPosition = LatLng(newLat, newLon);
+
+      // Update the slide position
+      _stateManager.updateSlidePosition(newPosition);
+      setState(() {});
+    }
+  }
+
+  void _handleLongPressEnd(PointModel point, LongPressEndDetails details) {
+    if (_stateManager.isSlidingMarker &&
+        _stateManager.slidingPointId == point.id) {
+      // End sliding and update the point
+      _stateManager.endSlidingMarker(context);
+      setState(() {});
+
+      showSuccessStatus('Point ${point.name} moved!');
+    }
+  }
+
   /// Public method to refresh points from the database
   /// This can be called from the parent component when points are reordered
   Future<void> refreshPoints() async {
@@ -458,6 +517,12 @@ class MapToolViewState extends State<MapToolView>
                               _stateManager.selectedPointId = null;
                             });
                           },
+                          // Slide functionality parameters
+                          onLongPressStart: _handleLongPressStart,
+                          onLongPressMoveUpdate: _handleLongPressMoveUpdate,
+                          onLongPressEnd: _handleLongPressEnd,
+                          isSlidingMarker: _stateManager.isSlidingMarker,
+                          slidingPointId: _stateManager.slidingPointId,
                         ),
                         MapTypeSelector.build(
                           currentMapType: _stateManager.currentMapType,

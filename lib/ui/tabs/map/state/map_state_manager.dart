@@ -31,6 +31,11 @@ class MapStateManager extends ChangeNotifier {
   bool isMovePointMode = false;
   bool isMovingPointLoading = false;
   PointModel? newPoint; // The unsaved new point
+  // Slide functionality state
+  bool isSlidingMarker = false;
+  String? slidingPointId;
+  LatLng? originalPosition;
+  LatLng? currentSlidePosition;
   bool isAddingNewPoint =
       false; // Whether we're in the process of adding a new point
   bool skipNextFitToPoints =
@@ -580,4 +585,68 @@ class MapStateManager extends ChangeNotifier {
 
   // Getters for the controller
   MapControllerLogic get controller => _controller;
+
+  // Slide functionality methods
+  void startSlidingMarker(PointModel point, LatLng originalPos) {
+    isSlidingMarker = true;
+    slidingPointId = point.id;
+    originalPosition = originalPos;
+    currentSlidePosition = originalPos;
+    notifyListeners();
+  }
+
+  void updateSlidePosition(LatLng newPosition) {
+    if (isSlidingMarker) {
+      currentSlidePosition = newPosition;
+      notifyListeners();
+    }
+  }
+
+  void endSlidingMarker(BuildContext context) {
+    if (!isSlidingMarker ||
+        slidingPointId == null ||
+        currentSlidePosition == null) {
+      return;
+    }
+
+    try {
+      // Get the point to update
+      final projectState = Provider.of<ProjectStateManager>(
+        context,
+        listen: false,
+      );
+      final points = projectState.currentPoints;
+      final pointToUpdate = points.firstWhere((p) => p.id == slidingPointId);
+
+      // Create updated point with new coordinates
+      final updatedPoint = pointToUpdate.copyWith(
+        latitude: currentSlidePosition!.latitude,
+        longitude: currentSlidePosition!.longitude,
+      );
+
+      // Update the point in global state
+      projectState.updatePointInEditingState(updatedPoint);
+
+      // Recalculate lines
+      recalculateAndDrawLines(context);
+
+      // Reset slide state
+      isSlidingMarker = false;
+      slidingPointId = null;
+      originalPosition = null;
+      currentSlidePosition = null;
+      notifyListeners();
+
+      // Status will be handled by the parent component
+    } catch (e) {
+      logger.severe('Failed to update point position from slide: $e');
+      // Reset slide state on error
+      isSlidingMarker = false;
+      slidingPointId = null;
+      originalPosition = null;
+      currentSlidePosition = null;
+      notifyListeners();
+      // Status will be handled by the parent component
+    }
+  }
 }

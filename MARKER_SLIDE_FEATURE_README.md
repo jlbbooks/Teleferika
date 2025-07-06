@@ -100,11 +100,29 @@ void endSlidingMarker(BuildContext context);
 ```
 
 #### Step 4: Coordinate Conversion
-Use existing MapController for screen-to-map coordinate conversion:
+Use drag delta approach for accurate coordinate conversion:
 ```dart
-// Convert screen coordinates to map coordinates
-LatLng mapPosition = mapController.camera.pointToLatLng(screenPosition);
+// Calculate the drag delta in pixels
+final deltaX = details.offsetFromOrigin.dx;
+final deltaY = details.offsetFromOrigin.dy;
+
+// Convert pixel delta to map coordinate delta using zoom level
+final camera = mapController.camera;
+final zoom = camera.zoom;
+final metersPerPixel = metersPerPixelAtZoom0 / math.pow(2, zoom);
+
+// Convert to degrees and calculate new position
+final deltaLat = -deltaY * metersPerPixel / metersPerDegreeLat;
+final deltaLon = deltaX * metersPerPixel / metersPerDegreeLon;
+final newPosition = LatLng(point.latitude + deltaLat, point.longitude + deltaLon);
 ```
+
+**Coordinate Conversion Details:**
+- **Method**: Drag delta calculation with zoom-based scaling
+- **Input**: Pixel delta from `LongPressMoveUpdateDetails.offsetFromOrigin`
+- **Output**: Map coordinates as `LatLng`
+- **Zoom**: Uses current camera zoom level for accurate scaling
+- **Accuracy**: Much more precise than global coordinate conversion
 
 ### 5. User Experience Flow
 
@@ -131,10 +149,10 @@ LatLng mapPosition = mapController.camera.pointToLatLng(screenPosition);
 ### 6. Technical Considerations
 
 #### Coordinate System
-- Handle screen-to-map coordinate conversion
-- Account for map rotation and zoom
+- Handle screen-to-map coordinate conversion using `mapController.camera.unprojectAtZoom()`
+- Account for map rotation and zoom (handled automatically by Flutter Map)
 - Validate coordinates (within bounds)
-- Use existing `MapController.camera.pointToLatLng()`
+- Use existing `MapController.camera.unprojectAtZoom(Offset point)` method
 
 #### Performance
 - Throttle position updates during drag
