@@ -7,6 +7,7 @@ import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/ui/tabs/map/map_controller.dart';
+import 'package:teleferika/ui/tabs/map/services/geometry_service.dart';
 import 'package:teleferika/core/app_config.dart';
 
 class PointDetailsPanel extends StatefulWidget {
@@ -432,6 +433,65 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                   ],
                 ),
               ],
+
+              // --- Angle ---
+              Builder(
+                builder: (context) {
+                  final points = context.projectState.currentPoints;
+                  final selected = widget.selectedPoint;
+                  if (selected == null || points.length < 3)
+                    return const SizedBox.shrink();
+
+                  final geometryService = GeometryService(
+                    project: context.projectState.currentProject!,
+                  );
+                  final angle = geometryService.calculateAngleAtPoint(
+                    selected,
+                    points,
+                  );
+
+                  if (angle == null) return const SizedBox.shrink();
+
+                  final angleColor = geometryService.getPointColor(
+                    selected,
+                    points,
+                  );
+
+                  return Padding(
+                    padding: EdgeInsets.only(top: isMobile ? 4 : 8),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.rotate_right,
+                          size: isMobile ? 14 : 16,
+                          color: angleColor,
+                        ),
+                        SizedBox(width: isMobile ? 6 : 8),
+                        Text(
+                          S.of(context)?.angleLabel ?? 'Angle:',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                                fontSize: isMobile ? 10 : null,
+                              ),
+                        ),
+                        SizedBox(width: isMobile ? 4 : 6),
+                        Text(
+                          '${angle.toStringAsFixed(1)}°',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: angleColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: isMobile ? 11 : null,
+                              ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
 
               // Note section - now editable
               SizedBox(height: isMobile ? 8 : 12),
