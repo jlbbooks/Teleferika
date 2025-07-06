@@ -1101,6 +1101,10 @@
   "@offsetLabel": {
     "description": "Label for the offset (distance from point to first-last line) in point details and point list UI."
   },
+  "angleLabel": "Angle:",
+  "@angleLabel": {
+    "description": "Label for the angle at a point between two connecting polylines in point details panel."
+  },
   "delete_photo_title": "Delete Photo?",
   "@delete_photo_title": {
     "description": "Title for the dialog to confirm photo deletion."

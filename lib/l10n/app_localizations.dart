@@ -1510,6 +1510,12 @@ abstract class S {
   /// **'Offset:'**
   String get offsetLabel;
 
+  /// Label for the angle at a point between two connecting polylines in point details panel.
+  ///
+  /// In en, this message translates to:
+  /// **'Angle:'**
+  String get angleLabel;
+
   /// Title for the dialog to confirm photo deletion.
   ///
   /// In en, this message translates to:

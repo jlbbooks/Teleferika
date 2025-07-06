@@ -1000,6 +1000,10 @@
   "@offsetLabel": {
     "description": "Etichetta per lo scostamento (distanza dal punto alla linea primo-ultimo) nei dettagli punto e nella lista punti."
   },
+  "angleLabel": "Angolo:",
+  "@angleLabel": {
+    "description": "Etichetta per l'angolo in un punto tra due polilinee di connessione nel pannello dettagli punto."
+  },
   "delete_photo_title": "Eliminare foto?",
   "@delete_photo_title": {
     "description": "Titolo per la finestra di dialogo di conferma eliminazione foto."

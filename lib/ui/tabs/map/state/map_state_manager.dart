@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
 import 'package:geolocator/geolocator.dart';
@@ -14,6 +13,7 @@ import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/tabs/map/map_controller.dart';
+import 'package:teleferika/ui/tabs/map/services/map_preferences_service.dart';
 import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
 import 'package:teleferika/core/app_config.dart';
 
@@ -46,8 +46,21 @@ class MapStateManager extends ChangeNotifier {
   bool hasLocationPermission = false;
   double? connectingLineFromFirstToLast;
   Polyline? projectHeadingLine;
-  MapType currentMapType = MapType.openStreetMap;
+  MapType _currentMapType = MapType.openStreetMap;
   double glowAnimationValue = 0.0;
+
+  /// Get the current map type
+  MapType get currentMapType => _currentMapType;
+
+  /// Set the current map type and save to preferences
+  set currentMapType(MapType value) {
+    if (_currentMapType != value) {
+      _currentMapType = value;
+      // Save to SharedPreferences
+      MapPreferencesService.saveMapType(value);
+      notifyListeners();
+    }
+  }
 
   // Location stream for CurrentLocationLayer
   final StreamController<LocationMarkerPosition> locationStreamController =
@@ -73,6 +86,20 @@ class MapStateManager extends ChangeNotifier {
   // Track if already initialized to prevent multiple initializations
   bool _isInitialized = false;
 
+  /// Load the saved map type from SharedPreferences
+  Future<void> _loadSavedMapType() async {
+    try {
+      final savedMapType = await MapPreferencesService.loadMapType();
+      if (currentMapType != savedMapType) {
+        currentMapType = savedMapType;
+        notifyListeners();
+      }
+    } catch (e) {
+      logger.warning('Failed to load saved map type: $e');
+      // Keep the default map type if loading fails
+    }
+  }
+
   void initialize(TickerProvider vsync, ProjectModel project) {
     // Prevent multiple initializations
     if (_isInitialized) {
@@ -89,6 +116,9 @@ class MapStateManager extends ChangeNotifier {
       begin: 0.0,
       end: 1.0,
     ).animate(arrowheadController!);
+
+    // Load saved map type preference
+    _loadSavedMapType();
 
     _isInitialized = true;
   }

@@ -841,6 +841,9 @@ class SIt extends S {
   String get offsetLabel => 'Scostamento:';
 
   @override
+  String get angleLabel => 'Angolo:';
+
+  @override
   String get delete_photo_title => 'Eliminare foto?';
 
   @override

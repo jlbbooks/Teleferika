@@ -832,6 +832,9 @@ class SEn extends S {
   String get offsetLabel => 'Offset:';
 
   @override
+  String get angleLabel => 'Angle:';
+
+  @override
   String get delete_photo_title => 'Delete Photo?';
 
   @override
