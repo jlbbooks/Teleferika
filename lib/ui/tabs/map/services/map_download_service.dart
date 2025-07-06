@@ -171,13 +171,7 @@ class MapDownloadService {
     final tileKey = '${zoom}_${tile.x}_${tile.y}';
 
     try {
-      // Create a tile provider that will cache tiles in the store
-      final tileProvider = FMTCTileProvider(
-        stores: {mapType.cacheStoreName: BrowseStoreStrategy.readUpdateCreate},
-      );
-
-      // Download the tile using the tile provider to ensure it's cached
-      // This approach ensures the tile is stored in the FMTC cache
+      // Download the tile
       final client = HttpClient();
       final request = await client.getUrl(Uri.parse(url));
 
@@ -187,15 +181,14 @@ class MapDownloadService {
       final response = await request.close();
 
       if (response.statusCode == 200) {
-        // Read the tile data
+        // Read the tile data to ensure it's valid
         final tileData = await response.fold<List<int>>(
           <int>[],
           (list, data) => list..addAll(data),
         );
 
-        // Store the tile in the FMTC cache manually
-        // Since FMTC doesn't expose a direct API for this, we'll use a workaround
-        // The tile will be cached when the map requests it through the tile provider
+        // The tile is now downloaded and will be cached by FMTC when the map requests it
+        // through the FMTCTileProvider with the correct store configuration
         _logger.fine(
           'Tile downloaded successfully: $tileKey (${tileData.length} bytes)',
         );

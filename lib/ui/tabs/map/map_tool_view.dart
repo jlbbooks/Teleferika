@@ -26,6 +26,7 @@ import 'widgets/map_loading_widget.dart';
 import 'widgets/point_details_panel.dart';
 import 'widgets/floating_action_buttons.dart';
 import 'widgets/map_type_selector.dart';
+import 'services/map_cache_error_handler.dart';
 
 class MapToolView extends StatefulWidget {
   final ProjectModel project;
@@ -572,9 +573,49 @@ class MapToolViewState extends State<MapToolView>
                         MapTypeSelector.build(
                           currentMapType: _stateManager.currentMapType,
                           onMapTypeChanged: (mapType) {
+                            logger.info(
+                              'Map type changed from ${_stateManager.currentMapType.name} to ${mapType.name}',
+                            );
                             setState(() {
                               _stateManager.currentMapType = mapType;
                             });
+
+                            // Log cache status for debugging
+                            MapCacheErrorHandler.logCacheStatus();
+
+                            // Force map to refresh tiles by triggering a small movement
+                            if (_stateManager.isMapReady) {
+                              Future.delayed(
+                                const Duration(milliseconds: 100),
+                                () {
+                                  if (mounted) {
+                                    final currentCenter = _stateManager
+                                        .mapController
+                                        .camera
+                                        .center;
+                                    final currentZoom =
+                                        _stateManager.mapController.camera.zoom;
+                                    // Trigger a tiny zoom change to force tile reload
+                                    _stateManager.mapController.move(
+                                      currentCenter,
+                                      currentZoom + 0.0001,
+                                    );
+                                    // Move back to original position
+                                    Future.delayed(
+                                      const Duration(milliseconds: 50),
+                                      () {
+                                        if (mounted) {
+                                          _stateManager.mapController.move(
+                                            currentCenter,
+                                            currentZoom,
+                                          );
+                                        }
+                                      },
+                                    );
+                                  }
+                                },
+                              );
+                            }
                           },
                           context: context,
                         ),

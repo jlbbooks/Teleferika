@@ -30,7 +30,7 @@ class MapCacheErrorHandler {
 
     // If store is validated, use it directly
     if (_validatedStores.contains(storeName)) {
-      //_logger.fine('Using validated store: $storeName');
+      _logger.fine('Using validated store: $storeName');
       return FMTCTileProvider(
         stores: {storeName: BrowseStoreStrategy.readUpdateCreate},
       );
@@ -46,8 +46,8 @@ class MapCacheErrorHandler {
     MapType mapType,
   ) {
     try {
-      // First, try to create the store if it doesn't exist
-      _ensureStoreExists(storeName);
+      // Create the store synchronously (it will fail if it already exists, which is fine)
+      final store = FMTCStore(storeName);
 
       // Mark as validated
       _validatedStores.add(storeName);
@@ -68,8 +68,8 @@ class MapCacheErrorHandler {
   /// Create fallback tile provider
   static FMTCTileProvider _createFallbackTileProvider() {
     try {
-      // Ensure fallback store exists
-      _ensureStoreExists(_fallbackStoreName);
+      // Create fallback store synchronously
+      final store = FMTCStore(_fallbackStoreName);
       _validatedStores.add(_fallbackStoreName);
 
       _logger.info(
@@ -197,5 +197,29 @@ class MapCacheErrorHandler {
     _validatedStores.clear();
     _failedStores.clear();
     _logger.info('Reset validation state for all stores');
+  }
+
+  /// Check if a specific store has tiles (for debugging)
+  static Future<bool> hasTilesInStore(String storeName) async {
+    try {
+      final store = FMTCStore(storeName);
+      final stats = store.stats;
+      final size = await stats.size;
+      _logger.info('Store $storeName has $size entries');
+      return size > 0;
+    } catch (e) {
+      _logger.warning('Failed to check store $storeName: $e');
+      return false;
+    }
+  }
+
+  /// Log cache status for debugging
+  static Future<void> logCacheStatus() async {
+    _logger.info('=== CACHE STATUS ===');
+    for (final mapType in MapType.values) {
+      final storeName = mapType.cacheStoreName;
+      final hasTiles = await hasTilesInStore(storeName);
+      _logger.info('${mapType.name}: $storeName - Has tiles: $hasTiles');
+    }
   }
 }

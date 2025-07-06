@@ -106,10 +106,14 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
   FMTCTileProvider _getTileProvider(MapType mapType) {
     final logger = Logger('FlutterMapWidget');
     logger.info(
-      'Getting tile provider for ${mapType.name} with error handling',
+      'Getting tile provider for ${mapType.name} with cache store: ${mapType.cacheStoreName}',
     );
 
-    return MapCacheErrorHandler.getTileProviderWithFallback(mapType);
+    final tileProvider = MapCacheErrorHandler.getTileProviderWithFallback(
+      mapType,
+    );
+    logger.info('Created tile provider for ${mapType.name}');
+    return tileProvider;
   }
 
   @override
