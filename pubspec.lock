@@ -507,7 +507,7 @@ packages:
       path: licensed_features_package
       relative: true
     source: path
-    version: "0.4.0+10"
+    version: "0.4.1+11"
   lints:
     dependency: transitive
     description:
