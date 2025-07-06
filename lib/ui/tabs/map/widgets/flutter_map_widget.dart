@@ -51,6 +51,7 @@ class FlutterMapWidget extends StatefulWidget {
   final Function(PointModel, LongPressEndDetails) onLongPressEnd;
   final bool isSlidingMarker;
   final String? slidingPointId;
+  final LatLng? currentSlidePosition;
 
   const FlutterMapWidget({
     super.key,
@@ -84,6 +85,7 @@ class FlutterMapWidget extends StatefulWidget {
     required this.onLongPressEnd,
     required this.isSlidingMarker,
     required this.slidingPointId,
+    required this.currentSlidePosition,
   });
 
   @override
@@ -302,6 +304,35 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
                 ),
                 rotate: true,
               ),
+              // Sliding indicator - shows where the marker will be placed during sliding
+              if (widget.isSlidingMarker && widget.slidingPointId != null)
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      width: 80,
+                      height: 80,
+                      point: _getSlidingIndicatorPosition(context),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.blue.withValues(alpha: 0.3),
+                          border: Border.all(
+                            color: Colors.blue.withValues(alpha: 0.7),
+                            width: 2.0,
+                          ),
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.close,
+                            color: Colors.blue,
+                            size: 30,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  rotate: true,
+                ),
               if (_isValidPolyline(widget.polylinePathPoints) &&
                   widget.polylinePathPoints.length >= 2 &&
                   widget.arrowheadAnimation != null)
@@ -392,6 +423,34 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
       project: context.projectStateListen.currentProject!,
     );
     return geometryService.getPointColor(points[i], points);
+  }
+
+  // Get the position for the sliding indicator
+  LatLng _getSlidingIndicatorPosition(BuildContext context) {
+    // Use the current slide position if available, otherwise fall back to the original point position
+    if (widget.currentSlidePosition != null) {
+      return widget.currentSlidePosition!;
+    }
+
+    // Fallback: get the original point position
+    if (widget.slidingPointId != null) {
+      try {
+        final projectState = Provider.of<ProjectStateManager>(
+          context,
+          listen: false,
+        );
+        final points = projectState.currentPoints;
+        final slidingPoint = points.firstWhere(
+          (p) => p.id == widget.slidingPointId,
+        );
+        return LatLng(slidingPoint.latitude, slidingPoint.longitude);
+      } catch (e) {
+        // If we can't find the point, return a default position
+        return widget.initialMapCenter;
+      }
+    }
+
+    return widget.initialMapCenter;
   }
 
   List<Polyline> _buildAngleArcPolylines(BuildContext context) {

@@ -555,6 +555,8 @@ class MapToolViewState extends State<MapToolView>
                           onLongPressEnd: _handleLongPressEnd,
                           isSlidingMarker: _stateManager.isSlidingMarker,
                           slidingPointId: _stateManager.slidingPointId,
+                          currentSlidePosition:
+                              _stateManager.currentSlidePosition,
                         ),
                         MapTypeSelector.build(
                           currentMapType: _stateManager.currentMapType,
