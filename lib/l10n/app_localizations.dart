@@ -1887,6 +1887,18 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Project: '**
   String get project_label_prefix;
+
+  /// Title for the bulk download restriction notice.
+  ///
+  /// In en, this message translates to:
+  /// **'Bulk Download Not Allowed'**
+  String get offline_maps_bulk_download_not_allowed;
+
+  /// Message explaining why bulk download is not allowed for certain map types.
+  ///
+  /// In en, this message translates to:
+  /// **'This map type does not allow bulk download operations due to licensing restrictions.'**
+  String get offline_maps_bulk_download_restriction_message;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

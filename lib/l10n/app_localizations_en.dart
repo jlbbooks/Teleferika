@@ -1087,4 +1087,12 @@ class SEn extends S {
 
   @override
   String get project_label_prefix => 'Project: ';
+
+  @override
+  String get offline_maps_bulk_download_not_allowed =>
+      'Bulk Download Not Allowed';
+
+  @override
+  String get offline_maps_bulk_download_restriction_message =>
+      'This map type does not allow bulk download operations due to licensing restrictions.';
 }

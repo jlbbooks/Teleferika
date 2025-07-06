@@ -21,6 +21,18 @@ enum MapType {
   /// Get the cache store name for this map type
   String get cacheStoreName => 'mapStore_${toString().split('.').last}';
 
+  /// Check if this map type allows bulk download operations
+  bool get allowsBulkDownload {
+    switch (this) {
+      case MapType.openStreetMap:
+        return false; // https://operations.osmfoundation.org/policies/tiles/
+      case MapType.satellite:
+        return true;
+      case MapType.terrain:
+        return true;
+    }
+  }
+
   /// Get the UI display name for this map type (localized if available)
   String getUiName([S? localizations]) {
     if (localizations == null) return name;

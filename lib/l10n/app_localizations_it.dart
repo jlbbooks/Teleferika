@@ -1098,4 +1098,12 @@ class SIt extends S {
 
   @override
   String get project_label_prefix => 'Progetto: ';
+
+  @override
+  String get offline_maps_bulk_download_not_allowed =>
+      'Download Massivo Non Consentito';
+
+  @override
+  String get offline_maps_bulk_download_restriction_message =>
+      'Questo tipo di mappa non consente operazioni di download massivo a causa di restrizioni di licenza.';
 }

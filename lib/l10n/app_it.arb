@@ -1329,5 +1329,13 @@
   "project_label_prefix": "Progetto: ",
   "@project_label_prefix": {
     "description": "Prefisso per le etichette dei nomi dei progetti sulla mappa."
+  },
+  "offline_maps_bulk_download_not_allowed": "Download Massivo Non Consentito",
+  "@offline_maps_bulk_download_not_allowed": {
+    "description": "Titolo per l'avviso di restrizione download massivo."
+  },
+  "offline_maps_bulk_download_restriction_message": "Questo tipo di mappa non consente operazioni di download massivo a causa di restrizioni di licenza.",
+  "@offline_maps_bulk_download_restriction_message": {
+    "description": "Messaggio che spiega perché il download massivo non è consentito per alcuni tipi di mappa."
   }
 }

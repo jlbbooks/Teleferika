@@ -1433,5 +1433,13 @@
   "project_label_prefix": "Project: ",
   "@project_label_prefix": {
     "description": "Prefix for project name labels on the map."
+  },
+  "offline_maps_bulk_download_not_allowed": "Bulk Download Not Allowed",
+  "@offline_maps_bulk_download_not_allowed": {
+    "description": "Title for the bulk download restriction notice."
+  },
+  "offline_maps_bulk_download_restriction_message": "This map type does not allow bulk download operations due to licensing restrictions.",
+  "@offline_maps_bulk_download_restriction_message": {
+    "description": "Message explaining why bulk download is not allowed for certain map types."
   }
 }

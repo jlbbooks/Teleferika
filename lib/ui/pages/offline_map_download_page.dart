@@ -60,7 +60,7 @@ class _OfflineMapDownloadPageState extends State<OfflineMapDownloadPage>
       await MapDownloadService.downloadMapArea(
         bounds: _selectedArea!,
         mapType: _selectedMapType!,
-        minZoom: 10, // Start with zoom level 10
+        minZoom: 9, // Start with zoom level 10
         maxZoom: 16, // End with zoom level 16
         onProgress: (downloaded, total, percentage) {
           if (mounted) {
@@ -182,10 +182,70 @@ class _OfflineMapDownloadPageState extends State<OfflineMapDownloadPage>
                     height:
                         MediaQuery.of(context).size.height *
                         0.5, // 50% of screen height for the map
-                    child: MapAreaSelector(
-                      mapType: _selectedMapType!,
-                      onAreaSelected: _onAreaSelected,
-                      onClearSelection: _onClearSelection,
+                    child: Stack(
+                      children: [
+                        MapAreaSelector(
+                          mapType: _selectedMapType!,
+                          onAreaSelected: _onAreaSelected,
+                          onClearSelection: _onClearSelection,
+                        ),
+                        if (!_selectedMapType!.allowsBulkDownload)
+                          Positioned.fill(
+                            child: Container(
+                              color: Colors.red.withValues(alpha: 0.1),
+                              child: Center(
+                                child: Container(
+                                  margin: const EdgeInsets.all(16),
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    borderRadius: BorderRadius.circular(8),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.2,
+                                        ),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.warning,
+                                        color: Colors.white,
+                                        size: 32,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        s?.offline_maps_bulk_download_not_allowed ??
+                                            'Bulk Download Not Allowed',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        s?.offline_maps_bulk_download_restriction_message ??
+                                            'This map type does not allow bulk download operations due to licensing restrictions.',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -295,7 +355,11 @@ class _OfflineMapDownloadPageState extends State<OfflineMapDownloadPage>
                                 : (s?.offline_maps_download_button ??
                                       'Download'),
                           ),
-                          onPressed: _isDownloading ? null : _startDownload,
+                          onPressed:
+                              (_isDownloading ||
+                                  !_selectedMapType!.allowsBulkDownload)
+                              ? null
+                              : _startDownload,
                         ),
                       ],
                     ),
