@@ -12,6 +12,7 @@ import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/widgets/photo_manager_widget.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 import 'package:teleferika/ui/tabs/map/map_controller.dart';
+import 'package:teleferika/ui/tabs/map/services/geometry_service.dart';
 
 class PointDetailsPage extends StatefulWidget {
   final PointModel point;
@@ -916,6 +917,64 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                                             color: Theme.of(
                                               context,
                                             ).colorScheme.onSurfaceVariant,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                          // Angle
+                          Builder(
+                            builder: (context) {
+                              final points = context.projectState.currentPoints;
+                              if (points.length < 3)
+                                return const SizedBox.shrink();
+
+                              final geometryService = GeometryService(
+                                project: context.projectState.currentProject!,
+                              );
+                              final angle = geometryService
+                                  .calculateAngleAtPoint(widget.point, points);
+
+                              if (angle == null) return const SizedBox.shrink();
+
+                              final angleColor = geometryService.getPointColor(
+                                widget.point,
+                                points,
+                              );
+
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 8.0),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.rotate_right,
+                                      size: 18,
+                                      color: angleColor,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      S.of(context)?.angleLabel ?? 'Angle:',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
+                                          ),
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      '${angle.toStringAsFixed(1)}°',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            fontFamily: 'monospace',
+                                            color: angleColor,
                                             fontWeight: FontWeight.bold,
                                           ),
                                     ),

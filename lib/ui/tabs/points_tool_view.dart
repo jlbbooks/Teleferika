@@ -14,6 +14,7 @@ import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/pages/point_details_page.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 import 'package:teleferika/ui/tabs/map/map_controller.dart';
+import 'package:teleferika/ui/tabs/map/services/geometry_service.dart';
 import 'dart:io';
 
 class PointsToolView extends StatefulWidget {
@@ -496,6 +497,42 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                         ),
                       ],
                     ),
+                  // Angle
+                  Builder(
+                    builder: (context) {
+                      if (points.length < 3) return const SizedBox.shrink();
+
+                      final geometryService = GeometryService(
+                        project: context.projectState.currentProject!,
+                      );
+                      final angle = geometryService.calculateAngleAtPoint(
+                        point,
+                        points,
+                      );
+
+                      if (angle == null) return const SizedBox.shrink();
+
+                      final angleColor = geometryService.getPointColor(
+                        point,
+                        points,
+                      );
+
+                      return Row(
+                        children: [
+                          Icon(Icons.rotate_right, size: 18, color: angleColor),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${S.of(context)?.angleLabel ?? 'Angle:'} ${angle.toStringAsFixed(1)}°',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: angleColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
                   // Note preview removed from basic info
                 ],
               ),
