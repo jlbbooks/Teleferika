@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:teleferika/ui/tabs/map/map_type.dart';
 import 'package:teleferika/ui/widgets/map_area_selector.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 
 class OfflineMapDownloadPage extends StatefulWidget {
-  const OfflineMapDownloadPage({Key? key}) : super(key: key);
+  const OfflineMapDownloadPage({super.key});
 
   @override
   State<OfflineMapDownloadPage> createState() => _OfflineMapDownloadPageState();
@@ -36,7 +35,7 @@ class _OfflineMapDownloadPageState extends State<OfflineMapDownloadPage> {
 
   @override
   Widget build(BuildContext context) {
-    final s = S.of(context);
+    S.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('Download Offline Maps')),
       body: Padding(
@@ -56,7 +55,7 @@ class _OfflineMapDownloadPageState extends State<OfflineMapDownloadPage> {
                     value: type,
                     child: Text(type.getUiName(null)),
                   );
-                }).toList(),
+                }),
               ],
               onChanged: (type) {
                 setState(() {
