@@ -44,24 +44,6 @@ class _MapAreaSelectorState extends State<MapAreaSelector> {
   @override
   void initState() {
     super.initState();
-    _loadLastKnownLocation();
-  }
-
-  Future<void> _loadLastKnownLocation() async {
-    try {
-      final lastLocation = await MapPreferencesService.loadLastLocation();
-      if (lastLocation != null) {
-        _logger.info('Using last known location: $lastLocation');
-        _mapController.move(lastLocation, _defaultZoom);
-      } else {
-        _logger.info(
-          'No last known location found, using default: ${AppConfig.defaultMapCenter}',
-        );
-        _mapController.move(_defaultCenter, _defaultZoom);
-      }
-    } catch (e) {
-      _logger.warning('Error loading last known location: $e');
-    }
   }
 
   void _updateSelectedArea() {
@@ -152,8 +134,22 @@ class _MapAreaSelectorState extends State<MapAreaSelector> {
               options: MapOptions(
                 initialCenter: _defaultCenter,
                 initialZoom: _defaultZoom,
-                onMapReady: () {
-                  // Map is ready, now we can update the selected area
+                onMapReady: () async {
+                  try {
+                    final lastLocation =
+                        await MapPreferencesService.loadLastLocation();
+                    if (lastLocation != null) {
+                      _logger.info('Using last known location: $lastLocation');
+                      _mapController.move(lastLocation, _defaultZoom);
+                    } else {
+                      _logger.info(
+                        'No last known location found, using default: ${AppConfig.defaultMapCenter}',
+                      );
+                      _mapController.move(_defaultCenter, _defaultZoom);
+                    }
+                  } catch (e) {
+                    _logger.warning('Error loading last known location: $e');
+                  }
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     _updateSelectedArea();
                   });

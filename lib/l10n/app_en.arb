@@ -1411,6 +1411,21 @@
   "@offline_maps_download_not_implemented": {
     "description": "Message shown when download functionality is not yet implemented."
   },
+  "offline_maps_download_completed": "Download completed successfully!",
+  "@offline_maps_download_completed": {
+    "description": "Message shown when download completes successfully."
+  },
+  "offline_maps_download_failed": "Download failed: {error}",
+  "@offline_maps_download_failed": {
+    "description": "Message shown when download fails.",
+    "placeholders": {
+      "error": {"type": "String", "example": "Network error"}
+    }
+  },
+  "offline_maps_downloading": "Downloading...",
+  "@offline_maps_downloading": {
+    "description": "Text shown on the download button when download is in progress."
+  },
   "map_area_selector_instruction": "Drag the map to position the download area",
   "@map_area_selector_instruction": {
     "description": "Instruction text shown in the map area selector widget."

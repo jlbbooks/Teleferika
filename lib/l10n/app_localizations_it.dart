@@ -1081,6 +1081,18 @@ class SIt extends S {
       'Download non ancora implementato.';
 
   @override
+  String get offline_maps_download_completed =>
+      'Download completato con successo!';
+
+  @override
+  String offline_maps_download_failed(String error) {
+    return 'Download fallito: $error';
+  }
+
+  @override
+  String get offline_maps_downloading => 'Download in corso...';
+
+  @override
   String get map_area_selector_instruction =>
       'Trascina la mappa per posizionare l\'area di download';
 

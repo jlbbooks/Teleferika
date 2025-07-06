@@ -1070,6 +1070,18 @@ class SEn extends S {
       'Download not implemented yet.';
 
   @override
+  String get offline_maps_download_completed =>
+      'Download completed successfully!';
+
+  @override
+  String offline_maps_download_failed(String error) {
+    return 'Download failed: $error';
+  }
+
+  @override
+  String get offline_maps_downloading => 'Downloading...';
+
+  @override
   String get map_area_selector_instruction =>
       'Drag the map to position the download area';
 

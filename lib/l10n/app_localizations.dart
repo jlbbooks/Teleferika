@@ -1858,6 +1858,24 @@ abstract class S {
   /// **'Download not implemented yet.'**
   String get offline_maps_download_not_implemented;
 
+  /// Message shown when download completes successfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Download completed successfully!'**
+  String get offline_maps_download_completed;
+
+  /// Message shown when download fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Download failed: {error}'**
+  String offline_maps_download_failed(String error);
+
+  /// Text shown on the download button when download is in progress.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading...'**
+  String get offline_maps_downloading;
+
   /// Instruction text shown in the map area selector widget.
   ///
   /// In en, this message translates to:

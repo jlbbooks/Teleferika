@@ -1307,6 +1307,21 @@
   "@offline_maps_download_not_implemented": {
     "description": "Messaggio mostrato quando la funzionalità di download non è ancora implementata."
   },
+  "offline_maps_download_completed": "Download completato con successo!",
+  "@offline_maps_download_completed": {
+    "description": "Messaggio mostrato quando il download viene completato con successo."
+  },
+  "offline_maps_download_failed": "Download fallito: {error}",
+  "@offline_maps_download_failed": {
+    "description": "Messaggio mostrato quando il download fallisce.",
+    "placeholders": {
+      "error": {"type": "String", "example": "Errore di rete"}
+    }
+  },
+  "offline_maps_downloading": "Download in corso...",
+  "@offline_maps_downloading": {
+    "description": "Testo mostrato sul pulsante di download quando il download è in corso."
+  },
   "map_area_selector_instruction": "Trascina la mappa per posizionare l'area di download",
   "@map_area_selector_instruction": {
     "description": "Testo di istruzione mostrato nel widget selettore area mappa."

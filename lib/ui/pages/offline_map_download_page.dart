@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:teleferika/ui/tabs/map/map_type.dart';
+import 'package:teleferika/ui/tabs/map/services/map_download_service.dart';
 import 'package:teleferika/ui/widgets/map_area_selector.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 
@@ -15,6 +16,13 @@ class _OfflineMapDownloadPageState extends State<OfflineMapDownloadPage> {
   MapType? _selectedMapType;
   LatLngBounds? _selectedArea;
 
+  // Download state
+  bool _isDownloading = false;
+  int _downloadedTiles = 0;
+  int _totalTiles = 0;
+  double _downloadProgress = 0.0;
+  String? _downloadError;
+
   @override
   void initState() {
     super.initState();
@@ -24,13 +32,97 @@ class _OfflineMapDownloadPageState extends State<OfflineMapDownloadPage> {
   void _onAreaSelected(LatLngBounds bounds) {
     setState(() {
       _selectedArea = bounds;
+      _downloadError = null; // Clear any previous errors
     });
   }
 
   void _onClearSelection() {
     setState(() {
       _selectedArea = null;
+      _downloadError = null;
     });
+  }
+
+  Future<void> _startDownload() async {
+    if (_selectedArea == null || _selectedMapType == null) return;
+
+    setState(() {
+      _isDownloading = true;
+      _downloadedTiles = 0;
+      _totalTiles = 0;
+      _downloadProgress = 0.0;
+      _downloadError = null;
+    });
+
+    try {
+      await MapDownloadService.downloadMapArea(
+        bounds: _selectedArea!,
+        mapType: _selectedMapType!,
+        minZoom: 10, // Start with zoom level 10
+        maxZoom: 16, // End with zoom level 16
+        onProgress: (downloaded, total, percentage) {
+          if (mounted) {
+            setState(() {
+              _downloadedTiles = downloaded;
+              _totalTiles = total;
+              _downloadProgress = percentage;
+            });
+          }
+        },
+        onComplete: (success, error) {
+          if (mounted) {
+            setState(() {
+              _isDownloading = false;
+              if (!success) {
+                _downloadError = error;
+              }
+            });
+
+            // Show completion message
+            final s = S.of(context);
+            if (success) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    s?.offline_maps_download_completed ??
+                        'Download completed successfully!',
+                  ),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    s?.offline_maps_download_failed(error ?? 'Unknown error') ??
+                        'Download failed: ${error ?? 'Unknown error'}',
+                  ),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        },
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isDownloading = false;
+          _downloadError = e.toString();
+        });
+
+        final s = S.of(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              s?.offline_maps_download_failed(e.toString()) ??
+                  'Download failed: $e',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -150,27 +242,63 @@ class _OfflineMapDownloadPageState extends State<OfflineMapDownloadPage> {
                                   ) ??
                                   'NE: ${_selectedArea!.northEast.latitude.toStringAsFixed(4)}, ${_selectedArea!.northEast.longitude.toStringAsFixed(4)}',
                             ),
+                            if (_isDownloading) ...[
+                              const SizedBox(height: 12),
+                              LinearProgressIndicator(
+                                value: _downloadProgress / 100,
+                                backgroundColor: Colors.grey.shade300,
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                  Colors.blue,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${_downloadedTiles}/${_totalTiles} tiles (${_downloadProgress.toStringAsFixed(1)}%)',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                            if (_downloadError != null) ...[
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(
+                                    color: Colors.red.withValues(alpha: 0.3),
+                                  ),
+                                ),
+                                child: Text(
+                                  _downloadError!,
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
                     ),
                     const SizedBox(width: 16),
                     ElevatedButton.icon(
-                      icon: const Icon(Icons.download),
+                      icon: _isDownloading
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.download),
                       label: Text(
-                        s?.offline_maps_download_button ?? 'Download',
+                        _isDownloading
+                            ? (s?.offline_maps_downloading ?? 'Downloading...')
+                            : (s?.offline_maps_download_button ?? 'Download'),
                       ),
-                      onPressed: () {
-                        // TODO: Implement download logic
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              s?.offline_maps_download_not_implemented ??
-                                  'Download not implemented yet.',
-                            ),
-                          ),
-                        );
-                      },
+                      onPressed: _isDownloading ? null : _startDownload,
                     ),
                   ],
                 ),
