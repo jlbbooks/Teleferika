@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
+import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:logging/logging.dart';
@@ -15,6 +16,7 @@ import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
 import 'package:teleferika/ui/widgets/project_points_layer.dart';
 
 class MapAreaSelector extends StatefulWidget {
+  // TODO: move to licensed_features_package
   final MapType mapType;
   final Function(LatLngBounds bounds)? onAreaSelected;
   final Function()? onClearSelection;
@@ -166,16 +168,7 @@ class _MapAreaSelectorState extends State<MapAreaSelector> {
                 TileLayer(
                   urlTemplate: widget.mapType.tileLayerUrl,
                   userAgentPackageName: 'com.jlbbooks.teleferika',
-                  tileProvider: FMTCTileProvider(
-                    stores: {
-                      widget.mapType.cacheStoreName:
-                          BrowseStoreStrategy.readUpdateCreate,
-                    },
-                    errorHandler: MapCacheManager.getTileProviderWithFallback(
-                      widget.mapType,
-                    ).errorHandler,
-                    loadingStrategy: BrowseLoadingStrategy.cacheFirst,
-                  ),
+                  tileProvider: _getTileProvider(),
                 ),
                 // Project points and lines layer
                 ProjectPointsLayer(
@@ -316,5 +309,18 @@ class _MapAreaSelectorState extends State<MapAreaSelector> {
         ),
       ),
     );
+  }
+
+  TileProvider _getTileProvider() {
+    try {
+      // Try to use cached tile provider first
+      return MapCacheManager.getTileProviderWithFallback(widget.mapType);
+    } catch (e) {
+      _logger.warning(
+        'Failed to create cached tile provider, using cancellable provider: $e',
+      );
+      // Fallback to cancellable network tile provider
+      return MapCacheManager.getCancellableTileProvider();
+    }
   }
 }

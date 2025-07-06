@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
+import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:logging/logging.dart';
 import 'package:teleferika/ui/tabs/map/map_type.dart';
 
@@ -59,6 +60,7 @@ class MapDownloadService {
         options: TileLayer(
           urlTemplate: mapType.tileLayerUrl,
           userAgentPackageName: 'com.jlbbooks.teleferika',
+          tileProvider: CancellableNetworkTileProvider(),
         ),
       );
       _logger.info(
