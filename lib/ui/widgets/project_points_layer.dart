@@ -67,6 +67,15 @@ class ProjectPointsLayer extends StatefulWidget {
           markerBorderWidth: markerBorderWidth,
         ),
       ),
+      // Project name labels layer
+      MarkerLayer(
+        markers: _buildProjectNameMarkersStatic(
+          projects: projects,
+          excludeProjectId: excludeProjectId,
+          markerColor: markerColor,
+          markerSize: markerSize,
+        ),
+      ),
     ];
   }
 
@@ -140,6 +149,86 @@ class ProjectPointsLayer extends StatefulWidget {
           );
         }
       }
+    }
+
+    return markers;
+  }
+
+  static List<Marker> _buildProjectNameMarkersStatic({
+    List<ProjectModel>? projects,
+    String? excludeProjectId,
+    Color markerColor = Colors.blue,
+    double markerSize = 8.0,
+  }) {
+    if (projects == null) return [];
+
+    final markers = <Marker>[];
+
+    for (final project in projects) {
+      // Skip the excluded project
+      if (excludeProjectId != null && project.id == excludeProjectId) {
+        continue;
+      }
+
+      // Only show label if project has points
+      final validPoints = project.points
+          .where((point) => point.latitude != null && point.longitude != null)
+          .toList();
+
+      if (validPoints.isEmpty) continue;
+
+      // Calculate center point of the project
+      final centerLat =
+          validPoints.map((p) => p.latitude!).reduce((a, b) => a + b) /
+          validPoints.length;
+      final centerLng =
+          validPoints.map((p) => p.longitude!).reduce((a, b) => a + b) /
+          validPoints.length;
+      final centerPoint = LatLng(centerLat, centerLng);
+
+      // Calculate font size based on marker size
+      final fontSize = (markerSize * 1.0).clamp(10.0, 18.0);
+
+      final projectName = project.name.isNotEmpty ? project.name : 'Untitled';
+      final fullText = 'Project: $projectName';
+
+      markers.add(
+        Marker(
+          point: centerPoint,
+          width: (fontSize * fullText.length * 0.6).clamp(
+            120.0,
+            300.0,
+          ), // Adaptive width based on text length
+          height: fontSize * 3.0, // Increased height to prevent text cutoff
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            decoration: BoxDecoration(
+              color: markerColor.withValues(alpha: 0.9),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: markerColor, width: 1.0),
+            ),
+            child: Center(
+              child: Text(
+                fullText,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.bold,
+                  shadows: [
+                    Shadow(
+                      offset: const Offset(1, 1),
+                      blurRadius: 2,
+                      color: Colors.black.withValues(alpha: 0.7),
+                    ),
+                  ],
+                ),
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+        ),
+      );
     }
 
     return markers;
@@ -231,6 +320,8 @@ class _ProjectPointsLayerState extends State<ProjectPointsLayer> {
         PolylineLayer(polylines: _buildProjectPolylines()),
         // Point markers layer
         MarkerLayer(markers: _buildPointMarkers()),
+        // Project name labels layer
+        MarkerLayer(markers: _buildProjectNameMarkers()),
       ],
     );
   }
@@ -298,5 +389,79 @@ class _ProjectPointsLayerState extends State<ProjectPointsLayer> {
     }
 
     return polylines;
+  }
+
+  List<Marker> _buildProjectNameMarkers() {
+    final markers = <Marker>[];
+
+    for (final project in _projects) {
+      // Skip the excluded project
+      if (widget.excludeProjectId != null &&
+          project.id == widget.excludeProjectId) {
+        continue;
+      }
+
+      // Only show label if project has points
+      final validPoints = project.points
+          .where((point) => point.latitude != null && point.longitude != null)
+          .toList();
+
+      if (validPoints.isEmpty) continue;
+
+      // Calculate center point of the project
+      final centerLat =
+          validPoints.map((p) => p.latitude!).reduce((a, b) => a + b) /
+          validPoints.length;
+      final centerLng =
+          validPoints.map((p) => p.longitude!).reduce((a, b) => a + b) /
+          validPoints.length;
+      final centerPoint = LatLng(centerLat, centerLng);
+
+      // Calculate font size based on marker size
+      final fontSize = (widget.markerSize * 1.0).clamp(10.0, 18.0);
+
+      final projectName = project.name.isNotEmpty ? project.name : 'Untitled';
+      final fullText = 'Project: $projectName';
+
+      markers.add(
+        Marker(
+          point: centerPoint,
+          width: (fontSize * fullText.length * 0.6).clamp(
+            120.0,
+            300.0,
+          ), // Adaptive width based on text length
+          height: fontSize * 3.0, // Increased height to prevent text cutoff
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            decoration: BoxDecoration(
+              color: widget.markerColor.withValues(alpha: 0.9),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: widget.markerColor, width: 1.0),
+            ),
+            child: Center(
+              child: Text(
+                fullText,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.bold,
+                  shadows: [
+                    Shadow(
+                      offset: const Offset(1, 1),
+                      blurRadius: 2,
+                      color: Colors.black.withValues(alpha: 0.7),
+                    ),
+                  ],
+                ),
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return markers;
   }
 }
