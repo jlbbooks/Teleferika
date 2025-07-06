@@ -25,14 +25,7 @@ enum MapType {
   String getUiName([S? localizations]) {
     if (localizations == null) return name;
 
-    switch (this) {
-      case MapType.openStreetMap:
-        return localizations.mapTypeStreet;
-      case MapType.satellite:
-        return localizations.mapTypeSatellite;
-      case MapType.terrain:
-        return localizations.mapTypeTerrain;
-    }
+    return localizations.mapTypeName(toString().split('.').last);
   }
 
   /// Get the tile layer URL for this map type

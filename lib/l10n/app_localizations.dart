@@ -1036,23 +1036,11 @@ abstract class S {
   /// **'Center on points'**
   String get mapCenterOnPoints;
 
-  /// Label for street map type.
+  /// Localized name for map types based on the mapType parameter.
   ///
   /// In en, this message translates to:
-  /// **'Open Street Map'**
-  String get mapTypeStreet;
-
-  /// Label for satellite map type.
-  ///
-  /// In en, this message translates to:
-  /// **'Satellite'**
-  String get mapTypeSatellite;
-
-  /// Label for terrain map type.
-  ///
-  /// In en, this message translates to:
-  /// **'Terrain'**
-  String get mapTypeTerrain;
+  /// **'{mapType, select, openStreetMap {Open Street Map} satellite {Satellite} terrain {Terrain} other {Unknown}}'**
+  String mapTypeName(String mapType);
 
   /// Label for the map type selector.
   ///

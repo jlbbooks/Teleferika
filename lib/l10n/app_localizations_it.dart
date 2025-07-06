@@ -587,13 +587,15 @@ class SIt extends S {
   String get mapCenterOnPoints => 'Centra sui punti';
 
   @override
-  String get mapTypeStreet => 'Mappa Stradale Aperta';
-
-  @override
-  String get mapTypeSatellite => 'Satellite';
-
-  @override
-  String get mapTypeTerrain => 'Terreno';
+  String mapTypeName(String mapType) {
+    String _temp0 = intl.Intl.selectLogic(mapType, {
+      'openStreetMap': 'Mappa Stradale Aperta',
+      'satellite': 'Satellite',
+      'terrain': 'Terreno',
+      'other': 'Sconosciuto',
+    });
+    return '$_temp0';
+  }
 
   @override
   String get mapTypeSelector => 'Tipo Mappa';

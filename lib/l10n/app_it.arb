@@ -676,17 +676,15 @@
   "@mapCenterOnPoints": {
     "description": "Tooltip per il pulsante per centrare la mappa su tutti i punti del progetto."
   },
-  "mapTypeStreet": "Mappa Stradale Aperta",
-  "@mapTypeStreet": {
-    "description": "Etichetta per il tipo di mappa stradale."
-  },
-  "mapTypeSatellite": "Satellite",
-  "@mapTypeSatellite": {
-    "description": "Etichetta per il tipo di mappa satellitare."
-  },
-  "mapTypeTerrain": "Terreno",
-  "@mapTypeTerrain": {
-    "description": "Etichetta per il tipo di mappa del terreno."
+  "mapTypeName": "{mapType, select, openStreetMap {Mappa Stradale Aperta} satellite {Satellite} terrain {Terreno} other {Sconosciuto}}",
+  "@mapTypeName": {
+    "description": "Nome localizzato per i tipi di mappa basato sul parametro mapType.",
+    "placeholders": {
+      "mapType": {
+        "type": "String",
+        "example": "openStreetMap"
+      }
+    }
   },
   "mapTypeSelector": "Tipo Mappa",
   "@mapTypeSelector": {

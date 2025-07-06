@@ -582,13 +582,15 @@ class SEn extends S {
   String get mapCenterOnPoints => 'Center on points';
 
   @override
-  String get mapTypeStreet => 'Open Street Map';
-
-  @override
-  String get mapTypeSatellite => 'Satellite';
-
-  @override
-  String get mapTypeTerrain => 'Terrain';
+  String mapTypeName(String mapType) {
+    String _temp0 = intl.Intl.selectLogic(mapType, {
+      'openStreetMap': 'Open Street Map',
+      'satellite': 'Satellite',
+      'terrain': 'Terrain',
+      'other': 'Unknown',
+    });
+    return '$_temp0';
+  }
 
   @override
   String get mapTypeSelector => 'Map Type';

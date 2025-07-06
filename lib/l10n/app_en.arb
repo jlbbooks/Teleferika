@@ -777,17 +777,15 @@
   "@mapCenterOnPoints": {
     "description": "Tooltip for the button to center the map on all project points."
   },
-  "mapTypeStreet": "Open Street Map",
-  "@mapTypeStreet": {
-    "description": "Label for street map type."
-  },
-  "mapTypeSatellite": "Satellite",
-  "@mapTypeSatellite": {
-    "description": "Label for satellite map type."
-  },
-  "mapTypeTerrain": "Terrain",
-  "@mapTypeTerrain": {
-    "description": "Label for terrain map type."
+  "mapTypeName": "{mapType, select, openStreetMap {Open Street Map} satellite {Satellite} terrain {Terrain} other {Unknown}}",
+  "@mapTypeName": {
+    "description": "Localized name for map types based on the mapType parameter.",
+    "placeholders": {
+      "mapType": {
+        "type": "String",
+        "example": "openStreetMap"
+      }
+    }
   },
   "mapTypeSelector": "Map Type",
   "@mapTypeSelector": {
