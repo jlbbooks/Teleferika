@@ -336,36 +336,38 @@ class MapToolViewState extends State<MapToolView>
   ) {
     if (_stateManager.isSlidingMarker &&
         _stateManager.slidingPointId == point.id) {
+      // Get the original position from the state manager
+      final originalPosition = _stateManager.originalPosition;
+      if (originalPosition == null) return;
+
       // Calculate the drag delta in pixels
       final deltaX = details.offsetFromOrigin.dx;
       final deltaY = details.offsetFromOrigin.dy;
 
-      // Convert pixel delta to map coordinate delta
-      // We need to use the map's scale factor to convert pixels to map units
+      // Use the map controller's coordinate conversion methods for accurate conversion
       final camera = _stateManager.mapController.camera;
-      final zoom = camera.zoom;
 
-      // Approximate conversion: at zoom level 0, 1 pixel ≈ 156543.03392 meters
-      // At other zoom levels, divide by 2^zoom
-      const metersPerPixelAtZoom0 = 156543.03392;
-      final metersPerPixel = metersPerPixelAtZoom0 / math.pow(2, zoom);
+      // Convert the original position to screen coordinates using the map's projection
+      final originalScreenPoint = camera.projectAtZoom(
+        originalPosition,
+        camera.zoom,
+      );
 
-      // Convert to degrees (approximate)
-      const metersPerDegreeLat = 111320.0; // meters per degree latitude
-      final metersPerDegreeLon =
-          metersPerDegreeLat * math.cos(point.latitude * math.pi / 180);
+      // Calculate the new screen position
+      final newScreenPoint = Offset(
+        originalScreenPoint.dx + deltaX,
+        originalScreenPoint.dy + deltaY,
+      );
 
-      final deltaLat = -deltaY * metersPerPixel / metersPerDegreeLat;
-      final deltaLon = deltaX * metersPerPixel / metersPerDegreeLon;
+      // Convert back to map coordinates
+      final newPosition = camera.unprojectAtZoom(newScreenPoint, camera.zoom);
 
-      // Calculate new position
-      final newLat = point.latitude + deltaLat;
-      final newLon = point.longitude + deltaLon;
-      final newPosition = LatLng(newLat, newLon);
-
-      // Update the slide position
-      _stateManager.updateSlidePosition(newPosition);
-      setState(() {});
+      // Ensure the new position is valid
+      if (newPosition.latitude.isFinite && newPosition.longitude.isFinite) {
+        // Update the slide position
+        _stateManager.updateSlidePosition(newPosition);
+        setState(() {});
+      }
     }
   }
 
