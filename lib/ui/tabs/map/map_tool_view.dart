@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -521,6 +520,7 @@ class MapToolViewState extends State<MapToolView>
                           attributionUrl: _stateManager.controller
                               .getAttributionUrl(_stateManager.currentMapType),
                           mapController: _stateManager.mapController,
+                          currentMapType: _stateManager.currentMapType,
                           isMapReady: _stateManager.isMapReady,
                           isLoadingPoints: _stateManager.isLoadingPoints,
                           isMovePointMode: _stateManager.isMovePointMode,
@@ -633,6 +633,7 @@ class MapToolViewState extends State<MapToolView>
                             top: 16,
                             left: 16,
                             child: DebugPanel(
+                              currentMapType: _stateManager.currentMapType,
                               onClose: () {
                                 setState(() {
                                   _stateManager.hasClosedDebugPanel = true;

@@ -14,6 +14,7 @@ import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/tabs/map/map_controller.dart';
 import 'package:teleferika/ui/tabs/map/services/map_preferences_service.dart';
+import 'package:teleferika/ui/tabs/map/services/map_cache_logger.dart';
 import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
 import 'package:teleferika/core/app_config.dart';
 
@@ -53,6 +54,7 @@ class MapStateManager extends ChangeNotifier {
   Polyline? projectHeadingLine;
   MapType _currentMapType = MapType.openStreetMap;
   double glowAnimationValue = 0.0;
+  double mapCacheSize = 0.0;
 
   /// Get the current map type
   MapType get currentMapType => _currentMapType;
@@ -63,6 +65,8 @@ class MapStateManager extends ChangeNotifier {
       _currentMapType = value;
       // Save to SharedPreferences
       MapPreferencesService.saveMapType(value);
+      // Log cache performance for the new map type
+      MapCacheLogger.logCachePerformance(value);
       notifyListeners();
     }
   }
@@ -124,6 +128,9 @@ class MapStateManager extends ChangeNotifier {
 
     // Load saved map type preference
     _loadSavedMapType();
+
+    // Log initial cache statistics
+    MapCacheLogger.logAllCacheStats();
 
     _isInitialized = true;
   }

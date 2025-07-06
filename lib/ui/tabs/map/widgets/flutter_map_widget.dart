@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_compass/flutter_map_compass.dart';
 import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
+import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:logging/logging.dart';
@@ -18,6 +19,8 @@ import 'package:teleferika/ui/tabs/map/markers/azimuth_arrow.dart';
 import 'package:teleferika/ui/tabs/map/markers/location_markers.dart';
 import 'package:teleferika/ui/tabs/map/markers/polyline_arrowhead.dart';
 import 'package:teleferika/ui/tabs/map/services/geometry_service.dart';
+import 'package:teleferika/ui/tabs/map/services/map_store_utils.dart';
+import 'package:teleferika/ui/tabs/map/map_controller.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class FlutterMapWidget extends StatefulWidget {
@@ -30,6 +33,7 @@ class FlutterMapWidget extends StatefulWidget {
   final String tileLayerAttribution;
   final String attributionUrl;
   final MapController mapController;
+  final MapType currentMapType;
   final bool isMapReady;
   final bool isLoadingPoints;
   final bool isMovePointMode;
@@ -64,6 +68,7 @@ class FlutterMapWidget extends StatefulWidget {
     required this.tileLayerAttribution,
     required this.attributionUrl,
     required this.mapController,
+    required this.currentMapType,
     required this.isMapReady,
     required this.isLoadingPoints,
     required this.isMovePointMode,
@@ -95,6 +100,19 @@ class FlutterMapWidget extends StatefulWidget {
 class _FlutterMapWidgetState extends State<FlutterMapWidget> {
   double _currentZoom = 14.0; // Default zoom level
 
+  // Get the appropriate tile provider based on the current map type
+  FMTCTileProvider _getTileProvider(MapType mapType) {
+    final storeName = MapStoreUtils.getStoreNameForMapType(mapType);
+    final logger = Logger('FlutterMapWidget');
+    logger.info(
+      'Using tile provider for ${mapType.name} using store: $storeName',
+    );
+
+    return FMTCTileProvider(
+      stores: {storeName: BrowseStoreStrategy.readUpdateCreate},
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -117,12 +135,14 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
               onMapEvent: (MapEvent event) {
                 if (event is MapEventMove) {
                   final newZoom = event.camera.zoom;
-                  logger.info(
-                    'FlutterMapWidget: Zoom changed from $_currentZoom to $newZoom',
-                  );
-                  setState(() {
-                    _currentZoom = newZoom;
-                  });
+                  if (_currentZoom != newZoom) {
+                    logger.info(
+                      'FlutterMapWidget: Zoom changed from $_currentZoom to $newZoom',
+                    );
+                    setState(() {
+                      _currentZoom = newZoom;
+                    });
+                  }
                 }
               },
               onTap: (tapPosition, latlng) {
@@ -163,6 +183,7 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
               TileLayer(
                 urlTemplate: widget.tileLayerUrl,
                 userAgentPackageName: 'com.jlbbooks.teleferika',
+                tileProvider: _getTileProvider(widget.currentMapType),
               ),
               RichAttributionWidget(
                 attributions: [

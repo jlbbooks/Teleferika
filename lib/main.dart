@@ -3,6 +3,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:logging/logging.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
@@ -16,6 +17,8 @@ import 'package:teleferika/ui/pages/loading_page.dart';
 import 'core/logger.dart';
 import 'db/database_helper.dart';
 import 'ui/pages/projects_list_page.dart';
+import 'ui/tabs/map/map_controller.dart';
+import 'ui/tabs/map/services/map_cache_logger.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -87,6 +90,23 @@ class _MyAppRootState extends State<MyAppRoot> {
       _versionInfo = packageInfo.version;
       _buildNumber = packageInfo.buildNumber;
       logger.info("Version info loaded successfully.");
+
+      logger.info('Initialising FMTCObjectBoxBackend');
+      await FMTCObjectBoxBackend()
+          .initialise(); // Initialise the map cache store
+
+      // Create stores for each MapType enum value
+      for (final mapType in MapType.values) {
+        final storeName = 'mapStore_${mapType.name}';
+        await FMTCStore(storeName).manage.create();
+        logger.info('Created store: $storeName');
+        // Log store creation
+        MapCacheLogger.logStoreCreated(storeName);
+      }
+
+      logger.info(
+        'FMTCObjectBoxBackend initialised with stores for all map types',
+      );
 
       // Simulate other essential checks
       await Future.delayed(

@@ -74,6 +74,7 @@ dependencies:
   compassx: ^1.0.1
   lottie: ^3.3.1
   reorderable_grid_view: ^2.2.8
+  flutter_map_tile_caching: ^10.1.1
 
 #dependency_overrides:
 #  teleferika:

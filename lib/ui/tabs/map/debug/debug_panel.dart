@@ -1,15 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:provider/provider.dart';
 import 'package:teleferika/core/app_config.dart';
 import 'package:teleferika/ui/tabs/map/state/map_state_manager.dart';
+import 'package:teleferika/ui/tabs/map/services/map_store_utils.dart';
+import 'package:teleferika/ui/tabs/map/services/map_cache_logger.dart';
+import 'package:teleferika/ui/tabs/map/map_controller.dart';
 
 class DebugPanel extends StatelessWidget {
   final VoidCallback? onClose;
   final VoidCallback? onTestCalibrationPanel;
+  final MapType currentMapType;
 
-  const DebugPanel({super.key, this.onClose, this.onTestCalibrationPanel});
+  const DebugPanel({
+    super.key,
+    this.onClose,
+    this.onTestCalibrationPanel,
+    required this.currentMapType,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -180,6 +190,67 @@ class DebugPanel extends StatelessWidget {
                     Text(
                       'Speed accuracy: ${stateManager.currentPosition!.speedAccuracy.toStringAsFixed(2)} m/s',
                     ),
+                    Text('Map type: ${stateManager.currentMapType}'),
+                    SizedBox(
+                      height: 32,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        onPressed: () async {
+                          await MapCacheLogger.logAllCacheStats();
+                          if (context.mounted) {
+                            _showCacheStatsDialog(context);
+                          }
+                        },
+                        child: const Text('Log Cache Stats'),
+                      ),
+                    ),
+                    FutureBuilder<double>(
+                      future: FMTCStore(
+                        MapStoreUtils.getStoreNameForMapType(currentMapType),
+                      ).stats.size,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Text('FMTCStore size: Loading...');
+                        } else if (snapshot.hasError) {
+                          return Text(
+                            'FMTCStore size: Error - ${snapshot.error}',
+                          );
+                        } else if (snapshot.hasData) {
+                          return Text(
+                            'FMTCStore size: ${snapshot.data?.toStringAsFixed(0) ?? '0'}',
+                          );
+                        } else {
+                          return const Text('FMTCStore size: -');
+                        }
+                      },
+                    ),
+                    FutureBuilder<double>(
+                      future: FMTCRoot.stats.realSize,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Text('Map cache size: Loading...');
+                        } else if (snapshot.hasError) {
+                          return Text(
+                            'Map cache size: Error - ${snapshot.error}',
+                          );
+                        } else if (snapshot.hasData) {
+                          return Text(
+                            'Map cache size: ${snapshot.data?.toStringAsFixed(0) ?? '0'} bytes',
+                          );
+                        } else {
+                          return const Text('Map cache size: -');
+                        }
+                      },
+                    ),
                     Text(
                       'Timestamp: ${stateManager.currentPosition!.timestamp}',
                     ),
@@ -190,6 +261,106 @@ class DebugPanel extends StatelessWidget {
               ),
             ),
           ),
+        );
+      },
+    );
+  }
+
+  /// Show cache statistics in a dialog
+  void _showCacheStatsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Map Cache Statistics'),
+          content: FutureBuilder<Map<String, dynamic>>(
+            future: MapCacheLogger.getCacheSummary(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Text('Error loading cache stats: ${snapshot.error}');
+              } else if (snapshot.hasData) {
+                final data = snapshot.data!;
+                return SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Total Cache Size: ${data['totalSizeFormatted'] ?? 'Unknown'}',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 16),
+                      if (data['stores'] != null) ...[
+                        Text(
+                          'Store Details:',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        const SizedBox(height: 8),
+                        ...data['stores'].entries.map<Widget>((entry) {
+                          final storeData = entry.value as Map<String, dynamic>;
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${entry.key.toUpperCase()}:',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                if (storeData['error'] != null)
+                                  Text(
+                                    'Error: ${storeData['error']}',
+                                    style: TextStyle(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.error,
+                                    ),
+                                  )
+                                else ...[
+                                  Text(
+                                    'Size: ${storeData['size'] ?? 'Unknown'}',
+                                  ),
+                                  Text(
+                                    'Len: ${storeData['length'] ?? 'Unknown'}'
+                                    ' | '
+                                    'Hits: ${storeData['hits'] ?? 'Unknown'}'
+                                    ' | '
+                                    'Misses: ${storeData['misses'] ?? 'Unknown'}',
+                                  ),
+                                ],
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ],
+                      if (data['error'] != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            'Error: ${data['error']}',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                );
+              } else {
+                return const Text('No data available');
+              }
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
         );
       },
     );
