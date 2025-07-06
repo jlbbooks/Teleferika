@@ -20,7 +20,7 @@ import 'package:teleferika/ui/tabs/map/markers/polyline_arrowhead.dart';
 import 'package:teleferika/ui/tabs/map/services/geometry_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class FlutterMapWidget extends StatelessWidget {
+class FlutterMapWidget extends StatefulWidget {
   final List<LatLng> polylinePathPoints;
   final Polyline? connectingLine;
   final Polyline? projectHeadingLine;
@@ -75,6 +75,19 @@ class FlutterMapWidget extends StatelessWidget {
   });
 
   @override
+  State<FlutterMapWidget> createState() => _FlutterMapWidgetState();
+}
+
+class _FlutterMapWidgetState extends State<FlutterMapWidget> {
+  double _currentZoom = 14.0; // Default zoom level
+
+  @override
+  void initState() {
+    super.initState();
+    _currentZoom = widget.initialMapZoom;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final logger = Logger('FlutterMapWidget');
 
@@ -82,14 +95,25 @@ class FlutterMapWidget extends StatelessWidget {
       return Stack(
         children: [
           FlutterMap(
-            mapController: mapController,
+            mapController: widget.mapController,
             options: MapOptions(
-              initialCenter: initialMapCenter,
-              initialZoom: initialMapZoom,
+              initialCenter: widget.initialMapCenter,
+              initialZoom: widget.initialMapZoom,
               keepAlive: true,
+              onMapEvent: (MapEvent event) {
+                if (event is MapEventMove) {
+                  final newZoom = event.camera.zoom;
+                  logger.info(
+                    'FlutterMapWidget: Zoom changed from $_currentZoom to $newZoom',
+                  );
+                  setState(() {
+                    _currentZoom = newZoom;
+                  });
+                }
+              },
               onTap: (tapPosition, latlng) {
-                if (isMovePointMode) {
-                  if (selectedPointId != null) {
+                if (widget.isMovePointMode) {
+                  if (widget.selectedPointId != null) {
                     try {
                       final projectState = Provider.of<ProjectStateManager>(
                         context,
@@ -97,20 +121,20 @@ class FlutterMapWidget extends StatelessWidget {
                       );
                       final points = projectState.currentPoints;
                       final pointToMove = points.firstWhere(
-                        (p) => p.id == selectedPointId,
+                        (p) => p.id == widget.selectedPointId,
                       );
-                      onMovePoint(pointToMove, latlng);
+                      widget.onMovePoint(pointToMove, latlng);
                     } catch (e) {
                       logger.warning(
-                        "Error finding point to move in onTap: $selectedPointId. $e",
+                        "Error finding point to move in onTap: ${widget.selectedPointId}. $e",
                       );
                       // This will be handled by the parent component
                     }
                   }
                 } else {
                   // Only deselect if we're not dealing with a new point
-                  if (selectedPointId != null) {
-                    onDeselectPoint();
+                  if (widget.selectedPointId != null) {
+                    widget.onDeselectPoint();
                   }
                 }
               },
@@ -118,21 +142,21 @@ class FlutterMapWidget extends StatelessWidget {
                 logger.info(
                   "FlutterMapWidget: Map is ready (onMapReady called).",
                 );
-                onMapReady();
+                widget.onMapReady();
               },
             ),
             children: [
               TileLayer(
-                urlTemplate: tileLayerUrl,
+                urlTemplate: widget.tileLayerUrl,
                 userAgentPackageName: 'com.jlbbooks.teleferika',
               ),
               RichAttributionWidget(
                 attributions: [
                   TextSourceAttribution(
-                    tileLayerAttribution,
+                    widget.tileLayerAttribution,
                     onTap: () {
-                      if (attributionUrl.isNotEmpty) {
-                        launchUrl(Uri.parse(attributionUrl));
+                      if (widget.attributionUrl.isNotEmpty) {
+                        launchUrl(Uri.parse(widget.attributionUrl));
                       }
                     },
                   ),
@@ -140,7 +164,7 @@ class FlutterMapWidget extends StatelessWidget {
               ),
               const MapCompass.cupertino(hideIfRotatedNorth: true),
               // Add azimuth arrow marker on top of current location (drawn first, so it's below the location marker)
-              if (currentPosition != null &&
+              if (widget.currentPosition != null &&
                   Provider.of<ProjectStateManager>(
                         context,
                         listen: false,
@@ -152,8 +176,8 @@ class FlutterMapWidget extends StatelessWidget {
                       width: 40,
                       height: 40,
                       point: LatLng(
-                        currentPosition!.latitude,
-                        currentPosition!.longitude,
+                        widget.currentPosition!.latitude,
+                        widget.currentPosition!.longitude,
                       ),
                       child: AzimuthArrow(
                         azimuth: Provider.of<ProjectStateManager>(
@@ -169,16 +193,16 @@ class FlutterMapWidget extends StatelessWidget {
               CurrentLocationLayer(
                 style: LocationMarkerStyle(
                   marker: CurrentLocationAccuracyMarker(
-                    accuracy: currentPosition?.accuracy,
+                    accuracy: widget.currentPosition?.accuracy,
                   ),
                   markerSize: const Size.square(60),
                   markerDirection: MarkerDirection.heading,
                   showAccuracyCircle: false,
                   headingSectorRadius: 40,
                 ),
-                positionStream: locationStreamController.stream,
+                positionStream: widget.locationStreamController.stream,
               ),
-              ...(_isValidPolyline(polylinePathPoints)
+              ...(_isValidPolyline(widget.polylinePathPoints)
                   ? () {
                       // Get points from global state to match MapMarkers
                       final projectPoints =
@@ -194,13 +218,13 @@ class FlutterMapWidget extends StatelessWidget {
                           polylines: [
                             for (
                               int i = 0;
-                              i < polylinePathPoints.length - 1;
+                              i < widget.polylinePathPoints.length - 1;
                               i++
                             )
                               Polyline(
                                 points: [
-                                  polylinePathPoints[i],
-                                  polylinePathPoints[i + 1],
+                                  widget.polylinePathPoints[i],
+                                  widget.polylinePathPoints[i + 1],
                                 ],
                                 gradientColors: [
                                   pointColors[i],
@@ -214,54 +238,57 @@ class FlutterMapWidget extends StatelessWidget {
                       ];
                     }()
                   : []),
-              if (connectingLine != null &&
-                  _isValidPolyline(connectingLine!.points))
-                PolylineLayer(polylines: [connectingLine!]),
-              if (projectHeadingLine != null &&
-                  _isValidPolyline(projectHeadingLine!.points))
+              if (widget.connectingLine != null &&
+                  _isValidPolyline(widget.connectingLine!.points))
+                PolylineLayer(polylines: [widget.connectingLine!]),
+              if (widget.projectHeadingLine != null &&
+                  _isValidPolyline(widget.projectHeadingLine!.points))
                 PolylineLayer(
                   polylines: [
                     Polyline(
-                      points: projectHeadingLine!.points,
-                      color: projectHeadingLine!.color,
-                      gradientColors: projectHeadingLine!.gradientColors,
-                      colorsStop: projectHeadingLine!.colorsStop,
-                      strokeWidth: projectHeadingLine!.strokeWidth,
-                      borderColor: projectHeadingLine!.borderColor,
-                      borderStrokeWidth: projectHeadingLine!.borderStrokeWidth,
+                      points: widget.projectHeadingLine!.points,
+                      color: widget.projectHeadingLine!.color,
+                      gradientColors: widget.projectHeadingLine!.gradientColors,
+                      colorsStop: widget.projectHeadingLine!.colorsStop,
+                      strokeWidth: widget.projectHeadingLine!.strokeWidth,
+                      borderColor: widget.projectHeadingLine!.borderColor,
+                      borderStrokeWidth:
+                          widget.projectHeadingLine!.borderStrokeWidth,
                       pattern: StrokePattern.dotted(),
                     ),
                   ],
                 ),
               // Angle arcs as polylines (so they rotate with the map)
-              if (_isValidPolyline(polylinePathPoints) &&
-                  polylinePathPoints.length > 2)
+              if (_isValidPolyline(widget.polylinePathPoints) &&
+                  widget.polylinePathPoints.length > 2)
                 PolylineLayer(polylines: _buildAngleArcPolylines(context)),
+              // Angle labels as markers (don't rotate with the map) - rendered first (bottom layer)
+              if (_isValidPolyline(widget.polylinePathPoints) &&
+                  widget.polylinePathPoints.length > 2)
+                MarkerLayer(
+                  markers: _buildAngleLabelMarkers(context),
+                  rotate: true,
+                ),
+              // Point markers - rendered second (top layer)
               MarkerLayer(
-                markers: [
-                  ...MapMarkers.buildAllMapMarkers(
-                    context: context,
-                    selectedPointId: selectedPointId,
-                    isMovePointMode: isMovePointMode,
-                    glowAnimationValue: glowAnimationValue,
-                    currentPosition: currentPosition,
-                    hasLocationPermission: hasLocationPermission,
-                    headingFromFirstToLast: connectingLineFromFirstToLast,
-                    onPointTap: onPointTap,
-                    currentDeviceHeading: currentDeviceHeading,
-                  ),
-                  // Angle labels as markers (don't rotate with the map)
-                  if (_isValidPolyline(polylinePathPoints) &&
-                      polylinePathPoints.length > 2)
-                    ..._buildAngleLabelMarkers(context),
-                ],
+                markers: MapMarkers.buildAllMapMarkers(
+                  context: context,
+                  selectedPointId: widget.selectedPointId,
+                  isMovePointMode: widget.isMovePointMode,
+                  glowAnimationValue: widget.glowAnimationValue,
+                  currentPosition: widget.currentPosition,
+                  hasLocationPermission: widget.hasLocationPermission,
+                  headingFromFirstToLast: widget.connectingLineFromFirstToLast,
+                  onPointTap: widget.onPointTap,
+                  currentDeviceHeading: widget.currentDeviceHeading,
+                ),
                 rotate: true,
               ),
-              if (_isValidPolyline(polylinePathPoints) &&
-                  polylinePathPoints.length >= 2 &&
-                  arrowheadAnimation != null)
+              if (_isValidPolyline(widget.polylinePathPoints) &&
+                  widget.polylinePathPoints.length >= 2 &&
+                  widget.arrowheadAnimation != null)
                 AnimatedBuilder(
-                  animation: arrowheadAnimation!,
+                  animation: widget.arrowheadAnimation!,
                   builder: (context, child) {
                     // Get points from global state to match polyline colors
                     final projectPoints =
@@ -274,13 +301,13 @@ class FlutterMapWidget extends StatelessWidget {
                     ];
 
                     // Find which segment the arrowhead is on and calculate local position
-                    final t = arrowheadAnimation!.value;
-                    final n = polylinePathPoints.length;
+                    final t = widget.arrowheadAnimation!.value;
+                    final n = widget.polylinePathPoints.length;
                     double totalLength = 0.0;
                     final List<double> segmentLengths = [];
                     for (int i = 0; i < n - 1; i++) {
-                      final a = polylinePathPoints[i];
-                      final b = polylinePathPoints[i + 1];
+                      final a = widget.polylinePathPoints[i];
+                      final b = widget.polylinePathPoints[i + 1];
                       final d = math.sqrt(
                         math.pow(b.latitude - a.latitude, 2) +
                             math.pow(b.longitude - a.longitude, 2),
@@ -313,8 +340,8 @@ class FlutterMapWidget extends StatelessWidget {
                     return MarkerLayer(
                       markers: [
                         PolylinePathArrowheadMarker(
-                          pathPoints: polylinePathPoints,
-                          t: arrowheadAnimation!.value,
+                          pathPoints: widget.polylinePathPoints,
+                          t: widget.arrowheadAnimation!.value,
                           color: markerColor,
                         ),
                       ],
@@ -486,19 +513,18 @@ class FlutterMapWidget extends StatelessWidget {
     final projectPoints = context.projectStateListen.currentPoints;
     final List<Marker> angleLabels = [];
 
-    // Get current zoom level for scaling with safety check
-    double currentZoom;
-    try {
-      currentZoom = mapController.camera.zoom;
-    } catch (e) {
-      // Fallback to initial zoom if map controller is not ready
-      currentZoom = initialMapZoom;
-    }
-    final baseZoom = 14.0; // Base zoom level for normal size
-    final zoomFactor = (currentZoom / baseZoom).clamp(
+    // Use the current zoom from state (updated via onMapEvent)
+    final baseZoom =
+        15.0; // Base zoom level for normal size (zoom 15 = normal size)
+    final zoomFactor = (_currentZoom / baseZoom).clamp(
       0.5,
       2.0,
     ); // Scale between 0.5x and 2x
+
+    final logger = Logger('FlutterMapWidget');
+    logger.info(
+      'FlutterMapWidget: Building angle labels with zoom: $_currentZoom, factor: $zoomFactor',
+    );
 
     // Generate angle labels for intermediate points
     for (int i = 1; i < projectPoints.length - 1; i++) {
@@ -510,12 +536,22 @@ class FlutterMapWidget extends StatelessWidget {
       final angleDeg = _calculateAngleAtPoint(prev, curr, next);
       if (angleDeg != null) {
         // Calculate the position for the label (outside the arc)
+        // Adjust radius based on zoom level - closer at higher zoom
+        final baseRadius = 52.0; // Base radius at zoom 15
+        final zoomRadiusFactor = (_currentZoom / 15.0).clamp(
+          0.5,
+          3.0,
+        ); // Scale radius between 0.5x and 3.0x (more aggressive)
+        final dynamicRadius =
+            baseRadius /
+            zoomRadiusFactor; // Inverse relationship - higher zoom = smaller radius
+
         final labelPosition = _calculateAngleLabelPosition(
           prev,
           curr,
           next,
-          52.0,
-        ); // Slightly larger than arc radius
+          dynamicRadius,
+        );
 
         // Scale dimensions based on zoom
         final markerWidth = (40 * zoomFactor).round();
