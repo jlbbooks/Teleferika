@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:teleferika/core/app_config.dart';
 import 'package:teleferika/ui/tabs/map/state/map_state_manager.dart';
@@ -24,6 +26,7 @@ class DebugPanel extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Header row with title and close button
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -47,14 +50,59 @@ class DebugPanel extends StatelessWidget {
                           onPressed: onClose,
                           tooltip: 'Close debug panel',
                         ),
-                      if (onTestCalibrationPanel != null)
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  // Test buttons row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      if (onTestCalibrationPanel != null) ...[
                         TextButton(
                           onPressed: onTestCalibrationPanel,
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
                           child: const Text(
-                            'Test Calibration Panel',
-                            style: TextStyle(color: Colors.amber, fontSize: 12),
+                            'Test Calibration',
+                            style: TextStyle(color: Colors.amber, fontSize: 11),
                           ),
                         ),
+                        const SizedBox(width: 8),
+                      ],
+                      TextButton(
+                        onPressed: () {
+                          try {
+                            if (kIsWeb) {
+                              debugPrint(
+                                'Haptic feedback not available on web',
+                              );
+                              return;
+                            }
+                            HapticFeedback.mediumImpact();
+                            debugPrint('Haptic feedback test triggered');
+                          } catch (e) {
+                            debugPrint('Haptic feedback test failed: $e');
+                          }
+                        },
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: const Text(
+                          'Test Haptic',
+                          style: TextStyle(color: Colors.green, fontSize: 11),
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 4),

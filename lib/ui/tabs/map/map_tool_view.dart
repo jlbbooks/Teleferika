@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:logging/logging.dart';
@@ -47,6 +49,21 @@ class MapToolViewState extends State<MapToolView>
 
   // State manager
   late MapStateManager _stateManager;
+
+  // Helper method for haptic feedback
+  void _triggerHapticFeedback(String action) {
+    try {
+      if (kIsWeb) {
+        logger.info('Haptic feedback skipped on web platform for: $action');
+        return;
+      }
+
+      HapticFeedback.mediumImpact();
+      logger.info('Haptic feedback triggered for: $action');
+    } catch (e) {
+      logger.warning('Failed to trigger haptic feedback for $action: $e');
+    }
+  }
 
   @override
   void initState() {
@@ -142,6 +159,10 @@ class MapToolViewState extends State<MapToolView>
     await _stateManager.handleMovePoint(context, pointToMove, newPosition);
     if (!mounted) return;
     setState(() {});
+
+    // Provide haptic feedback for successful point movement
+    _triggerHapticFeedback('point movement');
+
     showSuccessStatus('Point ${pointToMove.name} moved (pending save)!');
   }
 
@@ -224,6 +245,9 @@ class MapToolViewState extends State<MapToolView>
   }
 
   void _handleMovePointAction() {
+    // Provide haptic feedback for move mode activation
+    _triggerHapticFeedback('move mode activation');
+
     _stateManager.handleMovePointAction(context);
     setState(() {});
 
@@ -324,6 +348,9 @@ class MapToolViewState extends State<MapToolView>
 
   // Slide functionality handlers
   void _handleLongPressStart(PointModel point, LongPressStartDetails details) {
+    // Provide haptic feedback for slide start
+    _triggerHapticFeedback('slide start');
+
     // Store the original position and start sliding
     final originalPosition = LatLng(point.latitude, point.longitude);
     _stateManager.startSlidingMarker(point, originalPosition);
@@ -374,6 +401,9 @@ class MapToolViewState extends State<MapToolView>
   void _handleLongPressEnd(PointModel point, LongPressEndDetails details) {
     if (_stateManager.isSlidingMarker &&
         _stateManager.slidingPointId == point.id) {
+      // Provide haptic feedback for successful slide completion
+      _triggerHapticFeedback('slide completion');
+
       // End sliding and update the point
       _stateManager.endSlidingMarker(context);
       setState(() {});
