@@ -1,13 +1,9 @@
 import 'dart:async';
-import 'dart:io';
-import 'dart:math' as math;
 
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:logging/logging.dart';
 import 'package:teleferika/ui/tabs/map/map_type.dart';
-import 'package:teleferika/ui/tabs/map/services/map_cache_error_handler.dart';
 
 /// Download progress callback
 typedef DownloadProgressCallback =
@@ -15,17 +11,6 @@ typedef DownloadProgressCallback =
 
 /// Download completion callback
 typedef DownloadCompletionCallback = void Function(bool success, String? error);
-
-/// Simple class to represent tile coordinates
-class TileCoordinate {
-  final int x;
-  final int y;
-
-  const TileCoordinate(this.x, this.y);
-
-  @override
-  String toString() => 'TileCoordinate($x, $y)';
-}
 
 /// Service for downloading offline map tiles
 class MapDownloadService {
@@ -63,47 +48,75 @@ class MapDownloadService {
         }
       }
 
-      // Calculate total tiles to download
-      final totalTiles = _calculateTotalTiles(bounds, minZoom, maxZoom);
-      int downloadedTiles = 0;
+      // Step 1: Define a region (RectangleRegion)
+      final region = RectangleRegion(bounds);
+      _logger.info('Created RectangleRegion for bounds: $bounds');
 
+      // Step 2: Add information to make the region downloadable
+      final downloadableRegion = region.toDownloadable(
+        minZoom: minZoom,
+        maxZoom: maxZoom,
+        options: TileLayer(
+          urlTemplate: mapType.tileLayerUrl,
+          userAgentPackageName: 'com.jlbbooks.teleferika',
+        ),
+      );
+      _logger.info(
+        'Created DownloadableRegion with zoom levels: $minZoom-$maxZoom',
+      );
+
+      // Step 3: (Optional) Count the number of tiles in the region
+      final totalTiles = await store.download.countTiles(downloadableRegion);
       _logger.info('Total tiles to download: $totalTiles');
 
-      // Download tiles for each zoom level
-      for (int zoom = minZoom; zoom <= maxZoom; zoom++) {
-        final tilesForZoom = _calculateTilesForZoom(bounds, zoom);
+      // Step 4: Configure and start the download
+      final (:downloadProgress, :tileEvents) = store.download.startForeground(
+        region: downloadableRegion,
+        skipExistingTiles: true,
+        skipSeaTiles: false,
+        parallelThreads: 4,
+        maxBufferLength: 100,
+        rateLimit: 50, // 50ms delay between requests
+      );
 
-        _logger.info(
-          'Downloading zoom level $zoom: ${tilesForZoom.length} tiles',
-        );
+      // Step 5: Monitor the download outputs
+      int downloadedTiles = 0;
+      final completer = Completer<void>();
 
-        // Download tiles for this zoom level
-        for (final tile in tilesForZoom) {
-          try {
-            await _downloadTileToCache(tile, mapType, zoom, store);
-            downloadedTiles++;
+      // Listen to download progress
+      downloadProgress.listen(
+        (progress) {
+          // Use a simple counter for progress tracking
+          downloadedTiles++;
+          final percentage = (downloadedTiles / totalTiles) * 100;
+          onProgress(downloadedTiles, totalTiles, percentage);
 
-            // Report progress
-            final percentage = (downloadedTiles / totalTiles) * 100;
-            onProgress(downloadedTiles, totalTiles, percentage);
+          _logger.fine(
+            'Download progress: $downloadedTiles/$totalTiles tiles (${percentage.toStringAsFixed(1)}%)',
+          );
+        },
+        onDone: () {
+          completer.complete();
+        },
+        onError: (error) {
+          completer.completeError(error);
+        },
+      );
 
-            // Small delay to prevent overwhelming the server
-            await Future.delayed(const Duration(milliseconds: 50));
-          } catch (e) {
-            _logger.warning('Failed to download tile $tile at zoom $zoom: $e');
-            // Continue with other tiles even if one fails
-          }
-        }
-      }
+      // Listen to tile events for basic logging
+      tileEvents.listen((event) {
+        _logger.fine('Tile event: ${event.runtimeType}');
+      });
+
+      // Wait for download to complete
+      await completer.future;
 
       _logger.info(
         'Download completed successfully. Downloaded: $downloadedTiles/$totalTiles tiles to cache store: $storeName',
       );
 
-      // Note: The downloaded tiles will be cached by FMTC when the map requests them
-      // through the FMTCTileProvider. The tiles are downloaded to ensure they're available
-      // offline, and when the user views the map in the selected area, the tiles will be
-      // served from the cache instead of being downloaded again.
+      // The downloaded tiles are now stored in the FMTC cache and will be available offline
+      // when the map requests them through the FMTCTileProvider
 
       onComplete(true, null);
     } catch (e, stackTrace) {
@@ -111,110 +124,4 @@ class MapDownloadService {
       onComplete(false, e.toString());
     }
   }
-
-  /// Calculate total number of tiles to download
-  static int _calculateTotalTiles(
-    LatLngBounds bounds,
-    int minZoom,
-    int maxZoom,
-  ) {
-    int total = 0;
-    for (int zoom = minZoom; zoom <= maxZoom; zoom++) {
-      total += _calculateTilesForZoom(bounds, zoom).length;
-    }
-    return total;
-  }
-
-  /// Calculate tiles needed for a specific zoom level
-  static List<TileCoordinate> _calculateTilesForZoom(
-    LatLngBounds bounds,
-    int zoom,
-  ) {
-    final tiles = <TileCoordinate>[];
-
-    // Convert bounds to tile coordinates
-    final minTile = _latLngToTile(bounds.southWest, zoom);
-    final maxTile = _latLngToTile(bounds.northEast, zoom);
-
-    // Generate all tiles in the range
-    for (int x = minTile.x; x <= maxTile.x; x++) {
-      for (int y = minTile.y; y <= maxTile.y; y++) {
-        tiles.add(TileCoordinate(x, y));
-      }
-    }
-
-    return tiles;
-  }
-
-  /// Convert LatLng to tile coordinates
-  static TileCoordinate _latLngToTile(LatLng latLng, int zoom) {
-    final n = math.pow(2, zoom).toDouble();
-    final xtile = ((latLng.longitude + 180) / 360 * n).floor();
-
-    final latRad = _radians(latLng.latitude);
-    final tanLat = math.tan(latRad);
-    final cosLat = math.cos(latRad);
-    final logTerm = math.log(tanLat + 1 / cosLat);
-    final ytile = ((1 - logTerm) / math.pi * n / 2).floor();
-
-    return TileCoordinate(xtile, ytile);
-  }
-
-  /// Download a single tile and store it in the FMTC cache
-  static Future<void> _downloadTileToCache(
-    TileCoordinate tile,
-    MapType mapType,
-    int zoom,
-    FMTCStore store,
-  ) async {
-    final url = _buildTileUrl(tile, mapType, zoom);
-    final tileKey = '${zoom}_${tile.x}_${tile.y}';
-
-    try {
-      // Download the tile
-      final client = HttpClient();
-      final request = await client.getUrl(Uri.parse(url));
-
-      // Add user agent to avoid being blocked
-      request.headers.set('User-Agent', 'TeleferiKa/1.0');
-
-      final response = await request.close();
-
-      if (response.statusCode == 200) {
-        // Read the tile data to ensure it's valid
-        final tileData = await response.fold<List<int>>(
-          <int>[],
-          (list, data) => list..addAll(data),
-        );
-
-        // The tile is now downloaded and will be cached by FMTC when the map requests it
-        // through the FMTCTileProvider with the correct store configuration
-        _logger.fine(
-          'Tile downloaded successfully: $tileKey (${tileData.length} bytes)',
-        );
-
-        // Note: The tiles will be cached by FMTC when the map requests them
-        // through the FMTCTileProvider. This download ensures they're available offline.
-        // When the user views the map in the selected area, the tiles will be served
-        // from the cache instead of being downloaded again.
-      } else {
-        throw Exception('HTTP ${response.statusCode}: $url');
-      }
-    } catch (e) {
-      _logger.warning('Failed to download tile: $url - $e');
-      rethrow;
-    }
-  }
-
-  /// Build tile URL for the given map type
-  static String _buildTileUrl(TileCoordinate tile, MapType mapType, int zoom) {
-    final urlTemplate = mapType.tileLayerUrl;
-    return urlTemplate
-        .replaceAll('{z}', zoom.toString())
-        .replaceAll('{x}', tile.x.toString())
-        .replaceAll('{y}', tile.y.toString());
-  }
-
-  /// Convert degrees to radians
-  static double _radians(double degrees) => degrees * math.pi / 180;
 }

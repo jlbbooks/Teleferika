@@ -46,9 +46,6 @@ class MapCacheErrorHandler {
     MapType mapType,
   ) {
     try {
-      // Create the store synchronously (it will fail if it already exists, which is fine)
-      final store = FMTCStore(storeName);
-
       // Mark as validated
       _validatedStores.add(storeName);
       _logger.info('Successfully validated store: $storeName');
@@ -68,8 +65,6 @@ class MapCacheErrorHandler {
   /// Create fallback tile provider
   static FMTCTileProvider _createFallbackTileProvider() {
     try {
-      // Create fallback store synchronously
-      final store = FMTCStore(_fallbackStoreName);
       _validatedStores.add(_fallbackStoreName);
 
       _logger.info(
