@@ -84,24 +84,39 @@ The `getUiName()` method automatically passes the enum name as a parameter to ge
 Each map type has its own dedicated cache store to optimize performance and storage:
 
 ### Cache Store Creation
-Cache stores are created during app initialization in `lib/main.dart`:
+Cache stores are created and validated during app initialization in `lib/main.dart`:
 ```dart
-for (final mapType in MapType.values) {
-  final storeName = mapType.cacheStoreName;
-  await FMTCStore(storeName).manage.create();
-  MapCacheLogger.logStoreCreated(storeName);
+// Create and validate stores for each MapType enum value
+await MapCacheErrorHandler.validateAllStores();
+```
+
+### Cache Store Usage with Error Handling
+The `FlutterMapWidget` uses the error handler to get tile providers with automatic fallback:
+```dart
+FMTCTileProvider _getTileProvider(MapType mapType) {
+  return MapCacheErrorHandler.getTileProviderWithFallback(mapType);
 }
 ```
 
-### Cache Store Usage
-The `FlutterMapWidget` uses the appropriate cache store based on the current map type:
+### Error Handling and Fallback
+The system includes comprehensive error handling for cache store operations:
+
+**Automatic Validation**: Stores are validated during initialization and their status is cached
+**Graceful Degradation**: If a store fails, the system automatically falls back to a fallback store
+**Recovery Mechanisms**: Failed stores can be revalidated or reset through debug tools
+
 ```dart
-FMTCTileProvider _getTileProvider(MapType mapType) {
-  final storeName = MapStoreUtils.getStoreNameForMapType(mapType);
-  return FMTCTileProvider(
-    stores: {storeName: BrowseStoreStrategy.readUpdateCreate},
-  );
-}
+// Get tile provider with automatic error handling
+FMTCTileProvider provider = MapCacheErrorHandler.getTileProviderWithFallback(mapType);
+
+// Check store status
+Map<String, String> status = MapCacheErrorHandler.getStoreStatus();
+
+// Revalidate all stores
+await MapCacheErrorHandler.validateAllStores();
+
+// Reset validation state for recovery
+MapCacheErrorHandler.resetAllStoreValidation();
 ```
 
 ## Usage Patterns
@@ -221,6 +236,35 @@ await FMTCStore(mapType.cacheStoreName).manage.delete();
 await FMTCRoot.instance.reset();
 ```
 
+### Debug Tools
+The debug panel provides tools for cache store management:
+
+**Store Status**: View the validation status of all cache stores
+**Revalidate All**: Re-run validation for all stores
+**Reset Validation**: Clear validation state to force re-validation
+
+Access these tools through the debug panel's "Store Status" button.
+
+### Error Recovery
+When cache stores fail, the system provides multiple recovery options:
+
+1. **Automatic Fallback**: Failed stores automatically fall back to a fallback store
+2. **Manual Revalidation**: Use debug tools to revalidate failed stores
+3. **Store Reset**: Clear and recreate stores if needed
+4. **Validation Reset**: Reset validation state to force fresh validation
+
+```dart
+// Example: Handle store errors in your code
+try {
+  final provider = MapCacheErrorHandler.getTileProviderWithFallback(mapType);
+  // Use provider normally
+} catch (e) {
+  // The error handler has already provided a fallback
+  // Log the error for debugging
+  logger.warning('Store error handled by fallback: $e');
+}
+```
+
 ## Best Practices
 
 1. **Always use the enum**: Never hardcode map type strings
@@ -229,14 +273,80 @@ await FMTCRoot.instance.reset();
 4. **Cache efficiently**: Each map type has its own cache to avoid conflicts
 5. **Respect attribution**: Always display the required attribution for each map type
 6. **Test thoroughly**: Verify that new map types work across all supported locales
+7. **Use error handling**: Always use `MapCacheErrorHandler.getTileProviderWithFallback()` for tile providers
+8. **Monitor store status**: Use debug tools to monitor cache store health
+9. **Handle errors gracefully**: Implement proper error handling for cache operations
+10. **Validate stores**: Ensure stores are properly validated during initialization
 
 ## Related Files
 
 - `lib/ui/tabs/map/map_type.dart` - Core MapType enum
 - `lib/ui/tabs/map/services/map_store_utils.dart` - Cache store utilities
 - `lib/ui/tabs/map/services/map_cache_logger.dart` - Cache logging
+- `lib/ui/tabs/map/services/map_cache_error_handler.dart` - Error handling and fallback
 - `lib/ui/tabs/map/services/map_preferences_service.dart` - Preferences management
 - `lib/ui/tabs/map/widgets/map_type_selector.dart` - UI selector
+- `lib/ui/tabs/map/debug/debug_panel.dart` - Debug tools for cache management
 - `lib/l10n/app_en.arb` & `lib/l10n/app_it.arb` - Localization
 - `lib/main.dart` - Cache store initialization
-- `lib/ui/tabs/map/widgets/flutter_map_widget.dart` - Map widget implementation 
+- `lib/ui/tabs/map/widgets/flutter_map_widget.dart` - Map widget implementation
+
+## Troubleshooting
+
+### Common Cache Store Errors
+
+**Error**: `StoreNotExists: The requested store 'xyz' did not exist`
+
+**Solution**: This error occurs when a cache store is missing or corrupted. The error handler automatically provides a fallback, but you can also:
+
+1. Use the debug panel's "Store Status" button to check store health
+2. Click "Revalidate All" to recreate missing stores
+3. Click "Reset Validation" to clear cached validation state
+4. Restart the app to trigger automatic store creation
+
+**Error**: `StoreExists: The requested store 'xyz' already exists`
+
+**Solution**: This is a normal error during store creation. The error handler automatically handles this by catching the exception and continuing.
+
+**Error**: Map tiles not loading or showing blank areas
+
+**Solution**: 
+1. Check if the current map type's store is validated (use debug panel)
+2. Try switching to a different map type
+3. Use "Revalidate All" in the debug panel
+4. Check network connectivity for tile servers
+
+### Debug Tools Usage
+
+**Store Status Dialog**: Shows the validation status of all cache stores with color coding:
+- 🟢 **Green**: Store is validated and working
+- 🔴 **Red**: Store has failed and will use fallback
+- 🟠 **Orange**: Store status is unknown
+
+**Revalidate All**: Recreates and validates all cache stores. Use this when stores are corrupted or missing.
+
+**Reset Validation**: Clears the cached validation state. Use this to force fresh validation of all stores.
+
+### Performance Monitoring
+
+Monitor cache performance using the debug panel's "Log Cache Stats" button, which shows:
+- Total cache size across all stores
+- Individual store statistics (size, length, hits, misses)
+- Error information for failed stores
+
+### Recovery Procedures
+
+**For Corrupted Stores**:
+1. Use "Revalidate All" in debug panel
+2. If that fails, use "Reset Validation" then "Revalidate All"
+3. As a last resort, clear app data and restart
+
+**For Missing Stores**:
+1. Restart the app (stores are created during initialization)
+2. Use "Revalidate All" in debug panel
+3. Check logs for store creation errors
+
+**For Performance Issues**:
+1. Monitor cache statistics using debug tools
+2. Clear individual store caches if needed
+3. Check for network connectivity issues 
