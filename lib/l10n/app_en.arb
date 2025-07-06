@@ -777,7 +777,7 @@
   "@mapCenterOnPoints": {
     "description": "Tooltip for the button to center the map on all project points."
   },
-  "mapTypeStreet": "Street",
+  "mapTypeStreet": "Open Street Map",
   "@mapTypeStreet": {
     "description": "Label for street map type."
   },

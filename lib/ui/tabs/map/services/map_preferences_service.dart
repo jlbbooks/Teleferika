@@ -1,6 +1,6 @@
 import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:teleferika/ui/tabs/map/map_controller.dart';
+import 'package:teleferika/ui/tabs/map/map_type.dart';
 
 class MapPreferencesService {
   static const String _mapTypeKey = 'map_type';

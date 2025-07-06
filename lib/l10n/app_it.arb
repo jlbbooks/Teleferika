@@ -676,7 +676,7 @@
   "@mapCenterOnPoints": {
     "description": "Tooltip per il pulsante per centrare la mappa su tutti i punti del progetto."
   },
-  "mapTypeStreet": "Strada",
+  "mapTypeStreet": "Mappa Stradale Aperta",
   "@mapTypeStreet": {
     "description": "Etichetta per il tipo di mappa stradale."
   },

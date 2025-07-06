@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
-import 'package:teleferika/ui/tabs/map/map_controller.dart';
+import 'package:teleferika/ui/tabs/map/map_type.dart';
 
 class MapControls {
   static Widget buildFloatingActionButtons({
@@ -155,7 +155,7 @@ class MapControls {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    _getMapTypeDisplayName(currentMapType, s),
+                    currentMapType.getUiName(s),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.w500,
                       fontSize: 12,
@@ -175,21 +175,21 @@ class MapControls {
             itemBuilder: (BuildContext context) => [
               _buildMapTypeMenuItem(
                 MapType.openStreetMap,
-                s?.mapTypeStreet ?? 'Street',
+                MapType.openStreetMap.getUiName(s),
                 Icons.map,
                 currentMapType,
                 context,
               ),
               _buildMapTypeMenuItem(
                 MapType.satellite,
-                s?.mapTypeSatellite ?? 'Satellite',
+                MapType.satellite.getUiName(s),
                 Icons.satellite_alt,
                 currentMapType,
                 context,
               ),
               _buildMapTypeMenuItem(
                 MapType.terrain,
-                s?.mapTypeTerrain ?? 'Terrain',
+                MapType.terrain.getUiName(s),
                 Icons.terrain,
                 currentMapType,
                 context,
@@ -265,17 +265,6 @@ class MapControls {
         return Icons.satellite_alt;
       case MapType.terrain:
         return Icons.terrain;
-    }
-  }
-
-  static String _getMapTypeDisplayName(MapType mapType, S? s) {
-    switch (mapType) {
-      case MapType.openStreetMap:
-        return s?.mapTypeStreet ?? 'Street';
-      case MapType.satellite:
-        return s?.mapTypeSatellite ?? 'Satellite';
-      case MapType.terrain:
-        return s?.mapTypeTerrain ?? 'Terrain';
     }
   }
 

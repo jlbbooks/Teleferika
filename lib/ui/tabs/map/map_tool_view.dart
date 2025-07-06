@@ -511,14 +511,12 @@ class MapToolViewState extends State<MapToolView>
                           projectHeadingLine: _stateManager.projectHeadingLine,
                           initialMapCenter: initialMapCenter,
                           initialMapZoom: initialMapZoom,
-                          tileLayerUrl: _stateManager.controller
-                              .getTileLayerUrl(_stateManager.currentMapType),
-                          tileLayerAttribution: _stateManager.controller
-                              .getTileLayerAttribution(
-                                _stateManager.currentMapType,
-                              ),
-                          attributionUrl: _stateManager.controller
-                              .getAttributionUrl(_stateManager.currentMapType),
+                          tileLayerUrl:
+                              _stateManager.currentMapType.tileLayerUrl,
+                          tileLayerAttribution:
+                              _stateManager.currentMapType.tileLayerAttribution,
+                          attributionUrl:
+                              _stateManager.currentMapType.attributionUrl,
                           mapController: _stateManager.mapController,
                           currentMapType: _stateManager.currentMapType,
                           isMapReady: _stateManager.isMapReady,

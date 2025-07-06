@@ -582,7 +582,7 @@ class SEn extends S {
   String get mapCenterOnPoints => 'Center on points';
 
   @override
-  String get mapTypeStreet => 'Street';
+  String get mapTypeStreet => 'Open Street Map';
 
   @override
   String get mapTypeSatellite => 'Satellite';

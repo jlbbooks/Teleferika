@@ -1039,7 +1039,7 @@ abstract class S {
   /// Label for street map type.
   ///
   /// In en, this message translates to:
-  /// **'Street'**
+  /// **'Open Street Map'**
   String get mapTypeStreet;
 
   /// Label for satellite map type.

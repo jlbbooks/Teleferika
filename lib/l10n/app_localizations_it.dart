@@ -587,7 +587,7 @@ class SIt extends S {
   String get mapCenterOnPoints => 'Centra sui punti';
 
   @override
-  String get mapTypeStreet => 'Strada';
+  String get mapTypeStreet => 'Mappa Stradale Aperta';
 
   @override
   String get mapTypeSatellite => 'Satellite';

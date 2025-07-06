@@ -13,8 +13,6 @@ import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 
-enum MapType { openStreetMap, satellite, terrain }
-
 class MapControllerLogic {
   final ProjectModel project;
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
@@ -237,39 +235,6 @@ class MapControllerLogic {
 
     // Default zoom for no data
     return _defaultZoom;
-  }
-
-  // Tile layer management
-  String getTileLayerUrl(MapType mapType) {
-    switch (mapType) {
-      case MapType.openStreetMap:
-        return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-      case MapType.satellite:
-        return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-      case MapType.terrain:
-        return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}';
-    }
-  }
-
-  String getTileLayerAttribution(MapType mapType) {
-    switch (mapType) {
-      case MapType.openStreetMap:
-        return '© OpenStreetMap contributors';
-      case MapType.satellite:
-        return '© Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community';
-      case MapType.terrain:
-        return '© Esri — Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012';
-    }
-  }
-
-  String getAttributionUrl(MapType mapType) {
-    switch (mapType) {
-      case MapType.openStreetMap:
-        return 'https://openstreetmap.org/copyright';
-      case MapType.satellite:
-      case MapType.terrain:
-        return 'https://www.esri.com/en-us/home';
-    }
   }
 
   // Glow animation

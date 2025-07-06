@@ -20,7 +20,7 @@ import 'package:teleferika/ui/tabs/map/markers/location_markers.dart';
 import 'package:teleferika/ui/tabs/map/markers/polyline_arrowhead.dart';
 import 'package:teleferika/ui/tabs/map/services/geometry_service.dart';
 import 'package:teleferika/ui/tabs/map/services/map_store_utils.dart';
-import 'package:teleferika/ui/tabs/map/map_controller.dart';
+import 'package:teleferika/ui/tabs/map/map_type.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class FlutterMapWidget extends StatefulWidget {

@@ -17,7 +17,7 @@ import 'package:teleferika/ui/pages/loading_page.dart';
 import 'core/logger.dart';
 import 'db/database_helper.dart';
 import 'ui/pages/projects_list_page.dart';
-import 'ui/tabs/map/map_controller.dart';
+import 'ui/tabs/map/map_type.dart';
 import 'ui/tabs/map/services/map_cache_logger.dart';
 
 void main() async {
@@ -97,7 +97,7 @@ class _MyAppRootState extends State<MyAppRoot> {
 
       // Create stores for each MapType enum value
       for (final mapType in MapType.values) {
-        final storeName = 'mapStore_${mapType.name}';
+        final storeName = mapType.cacheStoreName;
         await FMTCStore(storeName).manage.create();
         logger.info('Created store: $storeName');
         // Log store creation
