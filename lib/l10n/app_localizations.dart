@@ -493,6 +493,12 @@ abstract class S {
   /// **'Valid licence required for export'**
   String get exportRequiresValidLicence;
 
+  /// Error message when map download is attempted without a valid licence.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid licence required for map download'**
+  String get mapDownloadRequiresValidLicence;
+
   /// Title for the dialog warning about unsaved changes.
   ///
   /// In en, this message translates to:

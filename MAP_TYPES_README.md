@@ -87,14 +87,14 @@ Each map type has its own dedicated cache store to optimize performance and stor
 Cache stores are created and validated during app initialization in `lib/main.dart`:
 ```dart
 // Create and validate stores for each MapType enum value
-await MapCacheErrorHandler.validateAllStores();
+await MapCacheManager.validateAllStores();
 ```
 
 ### Cache Store Usage with Error Handling
 The `FlutterMapWidget` uses the error handler to get tile providers with automatic fallback:
 ```dart
 FMTCTileProvider _getTileProvider(MapType mapType) {
-  return MapCacheErrorHandler.getTileProviderWithFallback(mapType);
+  return MapCacheManager.getTileProviderWithFallback(mapType);
 }
 ```
 
@@ -107,16 +107,16 @@ The system includes comprehensive error handling for cache store operations:
 
 ```dart
 // Get tile provider with automatic error handling
-FMTCTileProvider provider = MapCacheErrorHandler.getTileProviderWithFallback(mapType);
+FMTCTileProvider provider = MapCacheManager.getTileProviderWithFallback(mapType);
 
 // Check store status
-Map<String, String> status = MapCacheErrorHandler.getStoreStatus();
+Map<String, String> status = MapCacheManager.getStoreStatus();
 
 // Revalidate all stores
-await MapCacheErrorHandler.validateAllStores();
+await MapCacheManager.validateAllStores();
 
 // Reset validation state for recovery
-MapCacheErrorHandler.resetAllStoreValidation();
+MapCacheManager.resetAllStoreValidation();
 ```
 
 ## Usage Patterns
@@ -256,7 +256,7 @@ When cache stores fail, the system provides multiple recovery options:
 ```dart
 // Example: Handle store errors in your code
 try {
-  final provider = MapCacheErrorHandler.getTileProviderWithFallback(mapType);
+  final provider = MapCacheManager.getTileProviderWithFallback(mapType);
   // Use provider normally
 } catch (e) {
   // The error handler has already provided a fallback
@@ -273,7 +273,7 @@ try {
 4. **Cache efficiently**: Each map type has its own cache to avoid conflicts
 5. **Respect attribution**: Always display the required attribution for each map type
 6. **Test thoroughly**: Verify that new map types work across all supported locales
-7. **Use error handling**: Always use `MapCacheErrorHandler.getTileProviderWithFallback()` for tile providers
+7. **Use error handling**: Always use `MapCacheManager.getTileProviderWithFallback()` for tile providers
 8. **Monitor store status**: Use debug tools to monitor cache store health
 9. **Handle errors gracefully**: Implement proper error handling for cache operations
 10. **Validate stores**: Ensure stores are properly validated during initialization

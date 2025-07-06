@@ -483,7 +483,7 @@ packages:
       path: licensed_features_package
       relative: true
     source: path
-    version: "0.3.3+9"
+    version: "0.4.0+10"
   lints:
     dependency: transitive
     description:

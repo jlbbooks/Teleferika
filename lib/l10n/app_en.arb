@@ -333,6 +333,10 @@
   "@exportRequiresValidLicence": {
     "description": "Error message when export is attempted without a valid licence."
   },
+  "mapDownloadRequiresValidLicence": "Valid licence required for map download",
+  "@mapDownloadRequiresValidLicence": {
+    "description": "Error message when map download is attempted without a valid licence."
+  },
   "unsaved_changes_title": "Unsaved Changes",
   "@unsaved_changes_title": {
     "description": "Title for the dialog warning about unsaved changes."

@@ -237,6 +237,10 @@
   "@exportRequiresValidLicence": {
     "description": "Error message when export is attempted without a valid licence."
   },
+  "mapDownloadRequiresValidLicence": "Licenza valida richiesta per il download delle mappe",
+  "@mapDownloadRequiresValidLicence": {
+    "description": "Error message when map download is attempted without a valid licence."
+  },
   "unsaved_changes_title": "Modifiche non salvate",
   "@unsaved_changes_title": {
     "description": "Titolo per la finestra di dialogo che avvisa delle modifiche non salvate."

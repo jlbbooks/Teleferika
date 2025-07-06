@@ -3,9 +3,9 @@ import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:logging/logging.dart';
 import 'package:teleferika/ui/tabs/map/map_type.dart';
 
-/// Service to handle cache store errors and provide fallback mechanisms
-class MapCacheErrorHandler {
-  static final Logger _logger = Logger('MapCacheErrorHandler');
+/// Service to manage cache stores, handle errors, and provide fallback mechanisms
+class MapCacheManager {
+  static final Logger _logger = Logger('MapCacheManager');
 
   /// Default store name to use as fallback when other stores fail
   static const String _fallbackStoreName = 'mapStore_fallback';

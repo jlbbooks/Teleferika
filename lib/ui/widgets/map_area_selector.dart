@@ -9,7 +9,7 @@ import 'package:logging/logging.dart';
 import 'package:teleferika/core/app_config.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/tabs/map/map_type.dart';
-import 'package:teleferika/ui/tabs/map/services/map_cache_error_handler.dart';
+import 'package:teleferika/ui/tabs/map/services/map_cache_manager.dart';
 import 'package:teleferika/ui/tabs/map/services/map_preferences_service.dart';
 import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
 import 'package:teleferika/ui/widgets/project_points_layer.dart';
@@ -171,10 +171,9 @@ class _MapAreaSelectorState extends State<MapAreaSelector> {
                       widget.mapType.cacheStoreName:
                           BrowseStoreStrategy.readUpdateCreate,
                     },
-                    errorHandler:
-                        MapCacheErrorHandler.getTileProviderWithFallback(
-                          widget.mapType,
-                        ).errorHandler,
+                    errorHandler: MapCacheManager.getTileProviderWithFallback(
+                      widget.mapType,
+                    ).errorHandler,
                     loadingStrategy: BrowseLoadingStrategy.cacheFirst,
                   ),
                 ),

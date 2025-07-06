@@ -19,7 +19,7 @@ import 'package:teleferika/ui/tabs/map/markers/azimuth_arrow.dart';
 import 'package:teleferika/ui/tabs/map/markers/location_markers.dart';
 import 'package:teleferika/ui/tabs/map/markers/polyline_arrowhead.dart';
 import 'package:teleferika/ui/tabs/map/services/geometry_service.dart';
-import 'package:teleferika/ui/tabs/map/services/map_cache_error_handler.dart';
+import 'package:teleferika/ui/tabs/map/services/map_cache_manager.dart';
 import 'package:teleferika/ui/tabs/map/map_type.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -109,9 +109,7 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
       'Getting tile provider for ${mapType.name} with cache store: ${mapType.cacheStoreName}',
     );
 
-    final tileProvider = MapCacheErrorHandler.getTileProviderWithFallback(
-      mapType,
-    );
+    final tileProvider = MapCacheManager.getTileProviderWithFallback(mapType);
     logger.info('Created tile provider for ${mapType.name}');
     return tileProvider;
   }

@@ -255,6 +255,10 @@ class SEn extends S {
   String get exportRequiresValidLicence => 'Valid licence required for export';
 
   @override
+  String get mapDownloadRequiresValidLicence =>
+      'Valid licence required for map download';
+
+  @override
   String get unsaved_changes_title => 'Unsaved Changes';
 
   @override

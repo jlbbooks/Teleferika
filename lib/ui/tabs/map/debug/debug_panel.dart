@@ -8,7 +8,7 @@ import 'package:teleferika/ui/tabs/map/map_type.dart';
 import 'package:teleferika/ui/tabs/map/state/map_state_manager.dart';
 import 'package:teleferika/ui/tabs/map/services/map_store_utils.dart';
 import 'package:teleferika/ui/tabs/map/services/map_cache_logger.dart';
-import 'package:teleferika/ui/tabs/map/services/map_cache_error_handler.dart';
+import 'package:teleferika/ui/tabs/map/services/map_cache_manager.dart';
 
 class DebugPanel extends StatelessWidget {
   final VoidCallback? onClose;
@@ -306,7 +306,7 @@ class DebugPanel extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                ...MapCacheErrorHandler.getStoreStatus().entries.map<Widget>((
+                ...MapCacheManager.getStoreStatus().entries.map<Widget>((
                   entry,
                 ) {
                   final status = entry.value;
@@ -345,7 +345,7 @@ class DebugPanel extends StatelessWidget {
                   children: [
                     TextButton(
                       onPressed: () async {
-                        await MapCacheErrorHandler.validateAllStores();
+                        await MapCacheManager.validateAllStores();
                         if (context.mounted) {
                           Navigator.of(context).pop();
                           _showStoreStatusDialog(context);
@@ -355,7 +355,7 @@ class DebugPanel extends StatelessWidget {
                     ),
                     TextButton(
                       onPressed: () {
-                        MapCacheErrorHandler.resetAllStoreValidation();
+                        MapCacheManager.resetAllStoreValidation();
                         Navigator.of(context).pop();
                         _showStoreStatusDialog(context);
                       },

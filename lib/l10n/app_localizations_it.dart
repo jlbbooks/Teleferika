@@ -258,6 +258,10 @@ class SIt extends S {
       'Licenza valida richiesta per l\'esportazione';
 
   @override
+  String get mapDownloadRequiresValidLicence =>
+      'Licenza valida richiesta per il download delle mappe';
+
+  @override
   String get unsaved_changes_title => 'Modifiche non salvate';
 
   @override

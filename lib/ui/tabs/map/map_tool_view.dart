@@ -26,7 +26,7 @@ import 'widgets/map_loading_widget.dart';
 import 'widgets/point_details_panel.dart';
 import 'widgets/floating_action_buttons.dart';
 import 'widgets/map_type_selector.dart';
-import 'services/map_cache_error_handler.dart';
+import 'services/map_cache_manager.dart';
 
 class MapToolView extends StatefulWidget {
   final ProjectModel project;
@@ -581,7 +581,7 @@ class MapToolViewState extends State<MapToolView>
                             });
 
                             // Log cache status for debugging
-                            MapCacheErrorHandler.logCacheStatus();
+                            MapCacheManager.logCacheStatus();
 
                             // Force map to refresh tiles by triggering a small movement
                             if (_stateManager.isMapReady) {

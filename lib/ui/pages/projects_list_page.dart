@@ -14,7 +14,6 @@ import 'package:teleferika/licensing/licensed_features_loader.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 
 import 'project_page.dart';
-import 'offline_map_download_page.dart';
 
 class ProjectsListPage extends StatefulWidget {
   final String? appVersion;
@@ -860,12 +859,32 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
                       ],
                     ),
                     tooltip: 'Download Offline Maps',
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const OfflineMapDownloadPage(),
-                        ),
-                      );
+                    onPressed: () async {
+                      // Check if map download feature is available
+                      if (!LicensedFeaturesLoader.hasLicensedFeature(
+                        'map_download',
+                      )) {
+                        // Show upgrade dialog for opensource version
+                        LicensedFeaturesLoader.showMapDownloadUpgradeDialog(
+                          context,
+                        );
+                        return;
+                      }
+
+                      // Check if licence is valid
+                      final licenceStatus = await _licenceService
+                          .getLicenceStatus();
+                      if (!licenceStatus['isValid']) {
+                        final s = S.of(context);
+                        showErrorStatus(
+                          s?.mapDownloadRequiresValidLicence ??
+                              'Valid licence required for map download',
+                        );
+                        return;
+                      }
+
+                      // Show map download page
+                      await LicensedFeaturesLoader.showMapDownloadPage(context);
                     },
                   ),
                   PopupMenuButton<String>(
