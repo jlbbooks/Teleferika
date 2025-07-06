@@ -838,7 +838,27 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.download),
+                    icon: Stack(
+                      children: [
+                        const Icon(Icons.map),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(1),
+                            decoration: BoxDecoration(
+                              color: Colors.blue,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.download,
+                              size: 12,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                     tooltip: 'Download Offline Maps',
                     onPressed: () {
                       Navigator.of(context).push(
