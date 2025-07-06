@@ -19,7 +19,7 @@ import 'package:teleferika/ui/tabs/map/markers/azimuth_arrow.dart';
 import 'package:teleferika/ui/tabs/map/markers/location_markers.dart';
 import 'package:teleferika/ui/tabs/map/markers/polyline_arrowhead.dart';
 import 'package:teleferika/ui/tabs/map/services/geometry_service.dart';
-import 'package:teleferika/ui/tabs/map/services/map_store_utils.dart';
+import 'package:teleferika/ui/tabs/map/services/map_cache_error_handler.dart';
 import 'package:teleferika/ui/tabs/map/map_type.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -102,15 +102,12 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
 
   // Get the appropriate tile provider based on the current map type
   FMTCTileProvider _getTileProvider(MapType mapType) {
-    final storeName = MapStoreUtils.getStoreNameForMapType(mapType);
     final logger = Logger('FlutterMapWidget');
     logger.info(
-      'Using tile provider for ${mapType.name} using store: $storeName',
+      'Getting tile provider for ${mapType.name} with error handling',
     );
 
-    return FMTCTileProvider(
-      stores: {storeName: BrowseStoreStrategy.readUpdateCreate},
-    );
+    return MapCacheErrorHandler.getTileProviderWithFallback(mapType);
   }
 
   @override

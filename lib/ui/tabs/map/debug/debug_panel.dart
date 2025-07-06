@@ -8,6 +8,7 @@ import 'package:teleferika/ui/tabs/map/map_type.dart';
 import 'package:teleferika/ui/tabs/map/state/map_state_manager.dart';
 import 'package:teleferika/ui/tabs/map/services/map_store_utils.dart';
 import 'package:teleferika/ui/tabs/map/services/map_cache_logger.dart';
+import 'package:teleferika/ui/tabs/map/services/map_cache_error_handler.dart';
 
 class DebugPanel extends StatelessWidget {
   final VoidCallback? onClose;
@@ -191,25 +192,47 @@ class DebugPanel extends StatelessWidget {
                       'Speed accuracy: ${stateManager.currentPosition!.speedAccuracy.toStringAsFixed(2)} m/s',
                     ),
                     Text('Map type: ${stateManager.currentMapType}'),
-                    SizedBox(
-                      height: 32,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
+                    Row(
+                      children: [
+                        SizedBox(
+                          height: 32,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            onPressed: () async {
+                              await MapCacheLogger.logAllCacheStats();
+                              if (context.mounted) {
+                                _showCacheStatsDialog(context);
+                              }
+                            },
+                            child: const Text('Log Cache Stats'),
                           ),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         ),
-                        onPressed: () async {
-                          await MapCacheLogger.logAllCacheStats();
-                          if (context.mounted) {
-                            _showCacheStatsDialog(context);
-                          }
-                        },
-                        child: const Text('Log Cache Stats'),
-                      ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          height: 32,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            onPressed: () {
+                              _showStoreStatusDialog(context);
+                            },
+                            child: const Text('Store Status'),
+                          ),
+                        ),
+                      ],
                     ),
                     FutureBuilder<double>(
                       future: FMTCStore(
@@ -261,6 +284,94 @@ class DebugPanel extends StatelessWidget {
               ),
             ),
           ),
+        );
+      },
+    );
+  }
+
+  /// Show store status in a dialog
+  void _showStoreStatusDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Cache Store Status'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Store validation status:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                ...MapCacheErrorHandler.getStoreStatus().entries.map<Widget>((
+                  entry,
+                ) {
+                  final status = entry.value;
+                  Color statusColor;
+                  switch (status) {
+                    case 'validated':
+                      statusColor = Colors.green;
+                      break;
+                    case 'failed':
+                      statusColor = Colors.red;
+                      break;
+                    default:
+                      statusColor = Colors.orange;
+                  }
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 4.0),
+                    child: Row(
+                      children: [
+                        Text(
+                          '${entry.key}: ',
+                          style: const TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                        Text(status, style: TextStyle(color: statusColor)),
+                      ],
+                    ),
+                  );
+                }).toList(),
+                const SizedBox(height: 16),
+                const Text(
+                  'Actions:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: () async {
+                        await MapCacheErrorHandler.validateAllStores();
+                        if (context.mounted) {
+                          Navigator.of(context).pop();
+                          _showStoreStatusDialog(context);
+                        }
+                      },
+                      child: const Text('Revalidate All'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        MapCacheErrorHandler.resetAllStoreValidation();
+                        Navigator.of(context).pop();
+                        _showStoreStatusDialog(context);
+                      },
+                      child: const Text('Reset Validation'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
         );
       },
     );

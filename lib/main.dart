@@ -17,8 +17,7 @@ import 'package:teleferika/ui/pages/loading_page.dart';
 import 'core/logger.dart';
 import 'db/database_helper.dart';
 import 'ui/pages/projects_list_page.dart';
-import 'ui/tabs/map/map_type.dart';
-import 'ui/tabs/map/services/map_cache_logger.dart';
+import 'ui/tabs/map/services/map_cache_error_handler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -95,17 +94,10 @@ class _MyAppRootState extends State<MyAppRoot> {
       await FMTCObjectBoxBackend()
           .initialise(); // Initialise the map cache store
 
-      // Create stores for each MapType enum value
-      for (final mapType in MapType.values) {
-        final storeName = mapType.cacheStoreName;
-        await FMTCStore(storeName).manage.create();
-        logger.info('Created store: $storeName');
-        // Log store creation
-        MapCacheLogger.logStoreCreated(storeName);
-      }
-
+      // Create and validate stores for each MapType enum value
+      await MapCacheErrorHandler.validateAllStores();
       logger.info(
-        'FMTCObjectBoxBackend initialised with stores for all map types',
+        'FMTCObjectBoxBackend initialised with validated stores for all map types',
       );
 
       // Simulate other essential checks
