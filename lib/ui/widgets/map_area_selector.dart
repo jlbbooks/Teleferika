@@ -6,8 +6,11 @@ import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:logging/logging.dart';
+import 'package:teleferika/core/app_config.dart';
+import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/tabs/map/map_type.dart';
 import 'package:teleferika/ui/tabs/map/services/map_cache_error_handler.dart';
+import 'package:teleferika/ui/tabs/map/services/map_preferences_service.dart';
 import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
 import 'package:teleferika/ui/widgets/project_points_layer.dart';
 
@@ -30,10 +33,11 @@ class MapAreaSelector extends StatefulWidget {
 class _MapAreaSelectorState extends State<MapAreaSelector> {
   final MapController _mapController = MapController();
   final Logger _logger = Logger('MapAreaSelector');
+  final MapPreferencesService _preferencesService = MapPreferencesService();
 
-  // Default center and zoom
-  static const LatLng _defaultCenter = LatLng(45.4642, 9.1900); // Milan
-  static const double _defaultZoom = 10.0;
+  LatLng _defaultCenter =
+      AppConfig.defaultMapCenter; // Use config instead of hardcoded Milan
+  double _defaultZoom = AppConfig.defaultMapZoom;
 
   bool _isLoadingLocation = false;
   bool _hasLocationPermission = false;
@@ -41,7 +45,24 @@ class _MapAreaSelectorState extends State<MapAreaSelector> {
   @override
   void initState() {
     super.initState();
-    // Don't call _updateSelectedArea here - wait for map to be ready
+    _loadLastKnownLocation();
+  }
+
+  Future<void> _loadLastKnownLocation() async {
+    try {
+      final lastLocation = await MapPreferencesService.loadLastLocation();
+      if (lastLocation != null) {
+        _logger.info('Using last known location: $lastLocation');
+        _mapController.move(lastLocation, _defaultZoom);
+      } else {
+        _logger.info(
+          'No last known location found, using default: ${AppConfig.defaultMapCenter}',
+        );
+        _mapController.move(_defaultCenter, _defaultZoom);
+      }
+    } catch (e) {
+      _logger.warning('Error loading last known location: $e');
+    }
   }
 
   void _updateSelectedArea() {

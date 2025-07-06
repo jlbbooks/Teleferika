@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 
 class AppConfig {
@@ -140,6 +141,10 @@ class AppConfig {
 
   static const Color angleColorGood = Colors.green;
   static const Color angleColorBad = Colors.red;
+
+  // Default map center (Trento, Italy) - used as fallback when no last known location
+  static const LatLng defaultMapCenter = LatLng(46.0669, 11.1211);
+  static const double defaultMapZoom = 13.0;
 
   // Private constructor to prevent instantiation if all members are static
   AppConfig._();

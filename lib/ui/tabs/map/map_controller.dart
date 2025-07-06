@@ -12,14 +12,15 @@ import 'package:teleferika/core/utils/ordinal_manager.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
+import 'package:teleferika/core/app_config.dart';
 
 class MapControllerLogic {
   final ProjectModel project;
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
-  // Default center if no points are available (e.g., Rome)
-  final LatLng _defaultCenter = const LatLng(41.9028, 12.4964);
-  final double _defaultZoom = 6.0;
+  // Default center if no points are available - use config instead of hardcoded coordinates
+  final LatLng _defaultCenter = AppConfig.defaultMapCenter;
+  final double _defaultZoom = AppConfig.defaultMapZoom;
 
   // Stream subscriptions
   StreamSubscription<Position>? _positionStreamSubscription;

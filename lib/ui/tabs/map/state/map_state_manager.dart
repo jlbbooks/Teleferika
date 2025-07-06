@@ -15,6 +15,7 @@ import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/tabs/map/map_controller.dart';
 import 'package:teleferika/ui/tabs/map/map_type.dart';
 import 'package:teleferika/ui/tabs/map/services/map_preferences_service.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:teleferika/ui/tabs/map/services/map_cache_logger.dart';
 import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
 import 'package:teleferika/core/app_config.dart';
@@ -171,6 +172,11 @@ class MapStateManager extends ChangeNotifier {
       (position) {
         currentPosition = position;
         notifyListeners();
+
+        // Save the location to preferences for future use
+        MapPreferencesService.saveLastLocation(
+          LatLng(position.latitude, position.longitude),
+        );
 
         // Send location data to CurrentLocationLayer
         locationStreamController.add(
