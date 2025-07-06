@@ -211,7 +211,7 @@ class DebugPanel extends StatelessWidget {
                                 _showCacheStatsDialog(context);
                               }
                             },
-                            child: const Text('Log Cache Stats'),
+                            child: const Text('Cache Stats'),
                           ),
                         ),
                         const SizedBox(width: 8),

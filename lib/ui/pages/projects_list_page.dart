@@ -14,6 +14,7 @@ import 'package:teleferika/licensing/licensed_features_loader.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 
 import 'project_page.dart';
+import 'offline_map_download_page.dart';
 
 class ProjectsListPage extends StatefulWidget {
   final String? appVersion;
@@ -835,6 +836,17 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.download),
+                    tooltip: 'Download Offline Maps',
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const OfflineMapDownloadPage(),
+                        ),
+                      );
+                    },
                   ),
                   PopupMenuButton<String>(
                     icon: Icon(
