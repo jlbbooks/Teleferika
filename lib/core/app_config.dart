@@ -144,7 +144,7 @@ class AppConfig {
 
   // Default map center (Trento, Italy) - used as fallback when no last known location
   static const LatLng defaultMapCenter = LatLng(46.0669, 11.1211);
-  static const double defaultMapZoom = 13.0;
+  static const double defaultMapZoom = 12.0;
 
   // Private constructor to prevent instantiation if all members are static
   AppConfig._();

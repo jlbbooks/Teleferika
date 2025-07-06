@@ -1366,5 +1366,57 @@
     "placeholders": {
       "angle": {"type": "String", "example": "123.4"}
     }
+  },
+  "offline_maps_download_title": "Download Offline Maps",
+  "@offline_maps_download_title": {
+    "description": "Title for the offline maps download page."
+  },
+  "offline_maps_select_map_type": "Select Map Type",
+  "@offline_maps_select_map_type": {
+    "description": "Placeholder text for the map type dropdown."
+  },
+  "offline_maps_select_map_type_to_start": "Select a map type to start",
+  "@offline_maps_select_map_type_to_start": {
+    "description": "Message shown when no map type is selected."
+  },
+  "offline_maps_select_area_to_download": "Select Area to Download:",
+  "@offline_maps_select_area_to_download": {
+    "description": "Label for the area selection section."
+  },
+  "offline_maps_selected_area": "Selected Area:",
+  "@offline_maps_selected_area": {
+    "description": "Label for the selected area information."
+  },
+  "offline_maps_coordinates_sw": "SW: {lat}, {lng}",
+  "@offline_maps_coordinates_sw": {
+    "description": "Southwest coordinates display.",
+    "placeholders": {
+      "lat": {"type": "String", "example": "45.4642"},
+      "lng": {"type": "String", "example": "9.1900"}
+    }
+  },
+  "offline_maps_coordinates_ne": "NE: {lat}, {lng}",
+  "@offline_maps_coordinates_ne": {
+    "description": "Northeast coordinates display.",
+    "placeholders": {
+      "lat": {"type": "String", "example": "45.4642"},
+      "lng": {"type": "String", "example": "9.1900"}
+    }
+  },
+  "offline_maps_download_button": "Download",
+  "@offline_maps_download_button": {
+    "description": "Label for the download button."
+  },
+  "offline_maps_download_not_implemented": "Download not implemented yet.",
+  "@offline_maps_download_not_implemented": {
+    "description": "Message shown when download functionality is not yet implemented."
+  },
+  "map_area_selector_instruction": "Drag the map to position the download area",
+  "@map_area_selector_instruction": {
+    "description": "Instruction text shown in the map area selector widget."
+  },
+  "project_label_prefix": "Project: ",
+  "@project_label_prefix": {
+    "description": "Prefix for project name labels on the map."
   }
 }

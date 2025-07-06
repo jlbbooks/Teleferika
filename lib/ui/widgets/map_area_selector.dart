@@ -33,7 +33,6 @@ class MapAreaSelector extends StatefulWidget {
 class _MapAreaSelectorState extends State<MapAreaSelector> {
   final MapController _mapController = MapController();
   final Logger _logger = Logger('MapAreaSelector');
-  final MapPreferencesService _preferencesService = MapPreferencesService();
 
   LatLng _defaultCenter =
       AppConfig.defaultMapCenter; // Use config instead of hardcoded Milan
@@ -141,7 +140,6 @@ class _MapAreaSelectorState extends State<MapAreaSelector> {
       requiredPermissions: [PermissionType.location],
       onPermissionsResult: _onPermissionsResult,
       child: Container(
-        height: 300,
         decoration: BoxDecoration(
           border: Border.all(color: Colors.grey.shade300),
           borderRadius: BorderRadius.circular(8),
@@ -202,9 +200,10 @@ class _MapAreaSelectorState extends State<MapAreaSelector> {
                   color: Colors.white.withOpacity(0.9),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: const Text(
-                  'Drag the map to position the download area',
-                  style: TextStyle(fontSize: 12),
+                child: Text(
+                  S.of(context)?.map_area_selector_instruction ??
+                      'Drag the map to position the download area',
+                  style: const TextStyle(fontSize: 12),
                   textAlign: TextAlign.center,
                 ),
               ),

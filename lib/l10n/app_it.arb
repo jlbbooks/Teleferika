@@ -1262,5 +1262,57 @@
     "placeholders": {
       "angle": {"type": "String", "example": "123.4"}
     }
+  },
+  "offline_maps_download_title": "Scarica Mappe Offline",
+  "@offline_maps_download_title": {
+    "description": "Titolo per la pagina di download delle mappe offline."
+  },
+  "offline_maps_select_map_type": "Seleziona Tipo Mappa",
+  "@offline_maps_select_map_type": {
+    "description": "Testo segnaposto per il menu a tendina del tipo di mappa."
+  },
+  "offline_maps_select_map_type_to_start": "Seleziona un tipo di mappa per iniziare",
+  "@offline_maps_select_map_type_to_start": {
+    "description": "Messaggio mostrato quando nessun tipo di mappa è selezionato."
+  },
+  "offline_maps_select_area_to_download": "Seleziona Area da Scaricare:",
+  "@offline_maps_select_area_to_download": {
+    "description": "Etichetta per la sezione di selezione dell'area."
+  },
+  "offline_maps_selected_area": "Area Selezionata:",
+  "@offline_maps_selected_area": {
+    "description": "Etichetta per le informazioni sull'area selezionata."
+  },
+  "offline_maps_coordinates_sw": "SO: {lat}, {lng}",
+  "@offline_maps_coordinates_sw": {
+    "description": "Visualizzazione coordinate sud-ovest.",
+    "placeholders": {
+      "lat": {"type": "String", "example": "45.4642"},
+      "lng": {"type": "String", "example": "9.1900"}
+    }
+  },
+  "offline_maps_coordinates_ne": "NE: {lat}, {lng}",
+  "@offline_maps_coordinates_ne": {
+    "description": "Visualizzazione coordinate nord-est.",
+    "placeholders": {
+      "lat": {"type": "String", "example": "45.4642"},
+      "lng": {"type": "String", "example": "9.1900"}
+    }
+  },
+  "offline_maps_download_button": "Scarica",
+  "@offline_maps_download_button": {
+    "description": "Etichetta per il pulsante di download."
+  },
+  "offline_maps_download_not_implemented": "Download non ancora implementato.",
+  "@offline_maps_download_not_implemented": {
+    "description": "Messaggio mostrato quando la funzionalità di download non è ancora implementata."
+  },
+  "map_area_selector_instruction": "Trascina la mappa per posizionare l'area di download",
+  "@map_area_selector_instruction": {
+    "description": "Testo di istruzione mostrato nel widget selettore area mappa."
+  },
+  "project_label_prefix": "Progetto: ",
+  "@project_label_prefix": {
+    "description": "Prefisso per le etichette dei nomi dei progetti sulla mappa."
   }
 }

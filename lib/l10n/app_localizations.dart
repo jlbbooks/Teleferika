@@ -1803,6 +1803,72 @@ abstract class S {
   /// In en, this message translates to:
   /// **'{angle}°'**
   String headingLabel(String angle);
+
+  /// Title for the offline maps download page.
+  ///
+  /// In en, this message translates to:
+  /// **'Download Offline Maps'**
+  String get offline_maps_download_title;
+
+  /// Placeholder text for the map type dropdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Map Type'**
+  String get offline_maps_select_map_type;
+
+  /// Message shown when no map type is selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a map type to start'**
+  String get offline_maps_select_map_type_to_start;
+
+  /// Label for the area selection section.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Area to Download:'**
+  String get offline_maps_select_area_to_download;
+
+  /// Label for the selected area information.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected Area:'**
+  String get offline_maps_selected_area;
+
+  /// Southwest coordinates display.
+  ///
+  /// In en, this message translates to:
+  /// **'SW: {lat}, {lng}'**
+  String offline_maps_coordinates_sw(String lat, String lng);
+
+  /// Northeast coordinates display.
+  ///
+  /// In en, this message translates to:
+  /// **'NE: {lat}, {lng}'**
+  String offline_maps_coordinates_ne(String lat, String lng);
+
+  /// Label for the download button.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get offline_maps_download_button;
+
+  /// Message shown when download functionality is not yet implemented.
+  ///
+  /// In en, this message translates to:
+  /// **'Download not implemented yet.'**
+  String get offline_maps_download_not_implemented;
+
+  /// Instruction text shown in the map area selector widget.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag the map to position the download area'**
+  String get map_area_selector_instruction;
+
+  /// Prefix for project name labels on the map.
+  ///
+  /// In en, this message translates to:
+  /// **'Project: '**
+  String get project_label_prefix;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

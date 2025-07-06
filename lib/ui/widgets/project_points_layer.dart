@@ -1,11 +1,13 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:provider/provider.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:logging/logging.dart';
+import 'package:teleferika/l10n/app_localizations.dart';
 
 /// A reusable widget that displays project points as markers and connects them with polylines.
 /// Can be used in any FlutterMap to show project data.
@@ -138,25 +140,23 @@ class _ProjectPointsLayerState extends State<ProjectPointsLayer> {
       }
 
       for (final point in project.points) {
-        if (point.latitude != null && point.longitude != null) {
-          markers.add(
-            Marker(
-              point: LatLng(point.latitude!, point.longitude!),
-              width: widget.markerSize,
-              height: widget.markerSize,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: widget.markerColor,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: widget.markerBorderColor,
-                    width: widget.markerBorderWidth,
-                  ),
+        markers.add(
+          Marker(
+            point: LatLng(point.latitude, point.longitude),
+            width: widget.markerSize,
+            height: widget.markerSize,
+            child: Container(
+              decoration: BoxDecoration(
+                color: widget.markerColor,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: widget.markerBorderColor,
+                  width: widget.markerBorderWidth,
                 ),
               ),
             ),
-          );
-        }
+          ),
+        );
       }
     }
 
@@ -174,8 +174,7 @@ class _ProjectPointsLayerState extends State<ProjectPointsLayer> {
       }
 
       final points = project.points
-          .where((point) => point.latitude != null && point.longitude != null)
-          .map((point) => LatLng(point.latitude!, point.longitude!))
+          .map((point) => LatLng(point.latitude, point.longitude))
           .toList();
 
       if (points.length > 1) {
@@ -203,18 +202,16 @@ class _ProjectPointsLayerState extends State<ProjectPointsLayer> {
       }
 
       // Only show label if project has points
-      final validPoints = project.points
-          .where((point) => point.latitude != null && point.longitude != null)
-          .toList();
+      final validPoints = project.points.toList();
 
       if (validPoints.isEmpty) continue;
 
       // Calculate center point of the project
       final centerLat =
-          validPoints.map((p) => p.latitude!).reduce((a, b) => a + b) /
+          validPoints.map((p) => p.latitude).reduce((a, b) => a + b) /
           validPoints.length;
       final centerLng =
-          validPoints.map((p) => p.longitude!).reduce((a, b) => a + b) /
+          validPoints.map((p) => p.longitude).reduce((a, b) => a + b) /
           validPoints.length;
       final centerPoint = LatLng(centerLat, centerLng);
 
@@ -222,7 +219,8 @@ class _ProjectPointsLayerState extends State<ProjectPointsLayer> {
       final fontSize = (widget.markerSize * 1.0).clamp(10.0, 18.0);
 
       final projectName = project.name.isNotEmpty ? project.name : 'Untitled';
-      final fullText = 'Project: $projectName';
+      final fullText =
+          '${S.of(context)?.project_label_prefix ?? 'Project: '}$projectName';
 
       markers.add(
         Marker(

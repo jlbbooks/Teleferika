@@ -1035,4 +1035,44 @@ class SEn extends S {
   String headingLabel(String angle) {
     return '$angle°';
   }
+
+  @override
+  String get offline_maps_download_title => 'Download Offline Maps';
+
+  @override
+  String get offline_maps_select_map_type => 'Select Map Type';
+
+  @override
+  String get offline_maps_select_map_type_to_start =>
+      'Select a map type to start';
+
+  @override
+  String get offline_maps_select_area_to_download => 'Select Area to Download:';
+
+  @override
+  String get offline_maps_selected_area => 'Selected Area:';
+
+  @override
+  String offline_maps_coordinates_sw(String lat, String lng) {
+    return 'SW: $lat, $lng';
+  }
+
+  @override
+  String offline_maps_coordinates_ne(String lat, String lng) {
+    return 'NE: $lat, $lng';
+  }
+
+  @override
+  String get offline_maps_download_button => 'Download';
+
+  @override
+  String get offline_maps_download_not_implemented =>
+      'Download not implemented yet.';
+
+  @override
+  String get map_area_selector_instruction =>
+      'Drag the map to position the download area';
+
+  @override
+  String get project_label_prefix => 'Project: ';
 }

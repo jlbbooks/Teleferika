@@ -1045,4 +1045,45 @@ class SIt extends S {
   String headingLabel(String angle) {
     return '$angle°';
   }
+
+  @override
+  String get offline_maps_download_title => 'Scarica Mappe Offline';
+
+  @override
+  String get offline_maps_select_map_type => 'Seleziona Tipo Mappa';
+
+  @override
+  String get offline_maps_select_map_type_to_start =>
+      'Seleziona un tipo di mappa per iniziare';
+
+  @override
+  String get offline_maps_select_area_to_download =>
+      'Seleziona Area da Scaricare:';
+
+  @override
+  String get offline_maps_selected_area => 'Area Selezionata:';
+
+  @override
+  String offline_maps_coordinates_sw(String lat, String lng) {
+    return 'SO: $lat, $lng';
+  }
+
+  @override
+  String offline_maps_coordinates_ne(String lat, String lng) {
+    return 'NE: $lat, $lng';
+  }
+
+  @override
+  String get offline_maps_download_button => 'Scarica';
+
+  @override
+  String get offline_maps_download_not_implemented =>
+      'Download non ancora implementato.';
+
+  @override
+  String get map_area_selector_instruction =>
+      'Trascina la mappa per posizionare l\'area di download';
+
+  @override
+  String get project_label_prefix => 'Progetto: ';
 }
