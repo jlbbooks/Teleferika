@@ -33,6 +33,7 @@ class MapCacheErrorHandler {
       _logger.fine('Using validated store: $storeName');
       return FMTCTileProvider(
         stores: {storeName: BrowseStoreStrategy.readUpdateCreate},
+        loadingStrategy: BrowseLoadingStrategy.cacheFirst,
       );
     }
 
@@ -52,6 +53,7 @@ class MapCacheErrorHandler {
 
       return FMTCTileProvider(
         stores: {storeName: BrowseStoreStrategy.readUpdateCreate},
+        loadingStrategy: BrowseLoadingStrategy.cacheFirst,
       );
     } catch (e) {
       _logger.warning('Failed to validate store $storeName: $e');
@@ -72,11 +74,15 @@ class MapCacheErrorHandler {
       );
       return FMTCTileProvider(
         stores: {_fallbackStoreName: BrowseStoreStrategy.readUpdateCreate},
+        loadingStrategy: BrowseLoadingStrategy.cacheFirst,
       );
     } catch (e) {
       _logger.severe('Failed to create fallback tile provider: $e');
       // Return a basic tile provider without caching as last resort
-      return FMTCTileProvider(stores: {});
+      return FMTCTileProvider(
+        stores: {},
+        loadingStrategy: BrowseLoadingStrategy.cacheFirst,
+      );
     }
   }
 

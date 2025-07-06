@@ -175,6 +175,7 @@ class _MapAreaSelectorState extends State<MapAreaSelector> {
                         MapCacheErrorHandler.getTileProviderWithFallback(
                           widget.mapType,
                         ).errorHandler,
+                    loadingStrategy: BrowseLoadingStrategy.cacheFirst,
                   ),
                 ),
                 // Project points and lines layer
