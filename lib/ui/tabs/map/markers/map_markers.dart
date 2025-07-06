@@ -27,7 +27,7 @@ class MapMarkers {
     List<Marker> projectPointMarkers = projectPoints.map((point) {
       return Marker(
         width: 60,
-        height: 58,
+        height: 70,
         point: LatLng(point.latitude, point.longitude),
         child: _buildProjectPointMarker(
           context: context,
@@ -99,46 +99,75 @@ class MapMarkers {
       markerColor = geometryService.getPointColor(point, allPoints);
     }
 
+    // Visual appearance variables - experiment with these values
+    const double iconSize = 30.0;
+    const double iconToLabelSpacing = 18.0; // Space between icon and label
+    const double labelBottomOffset =
+        14.0; // Distance from icon tip to label bottom
+
     return GestureDetector(
       onTap: () => onTap(point),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: Stack(
+        alignment: Alignment.bottomCenter,
         children: [
-          // Marker icon
-          Icon(Icons.location_pin, color: markerColor, size: 30.0),
-          const SizedBox(height: 4),
-          // Point label
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: point.isUnsaved
-                  ? Colors.orange
-                  : (isSelected ? Colors.blue : Colors.white),
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(
-                color: point.isUnsaved
-                    ? Colors.orange
-                    : (isSelected ? Colors.blue : Colors.grey.shade300),
-                width: point.isUnsaved ? 2 : 1, // Thicker border for new points
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(
-                    alpha: (point.isUnsaved ? 0.2 : 0.1),
-                  ),
-                  blurRadius: point.isUnsaved ? 4 : 2,
-                  offset: const Offset(0, 1),
+          // Marker icon - positioned so tip points to exact coordinates
+          Positioned(
+            bottom: labelBottomOffset + iconToLabelSpacing,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Black border icon (slightly larger)
+                Icon(
+                  Icons.location_pin,
+                  color: Colors.black.withValues(alpha: 0.7),
+                  size: iconSize + 2.0,
                 ),
+                // Colored icon on top
+                Icon(Icons.location_pin, color: markerColor, size: iconSize),
               ],
             ),
-            child: Text(
-              point.name,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
+          ),
+          // Point label - positioned below the icon
+          Positioned(
+            bottom: 0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
                 color: point.isUnsaved
-                    ? Colors.white
-                    : (isSelected ? Colors.white : Colors.black),
+                    ? Colors.orange.withValues(alpha: 0.9)
+                    : (isSelected
+                          ? Colors.blue.withValues(alpha: 0.9)
+                          : Colors.white.withValues(alpha: 0.85)),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: point.isUnsaved
+                      ? Colors.orange.shade700
+                      : (isSelected
+                            ? Colors.blue.shade700
+                            : Colors.grey.shade400),
+                  width: point.isUnsaved ? 2 : 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(
+                      alpha: (point.isUnsaved ? 0.3 : 0.15),
+                    ),
+                    blurRadius: point.isUnsaved ? 6 : 4,
+                    offset: const Offset(0, 2),
+                    spreadRadius: 0.5,
+                  ),
+                ],
+              ),
+              child: Text(
+                point.name,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: point.isUnsaved
+                      ? Colors.white
+                      : (isSelected ? Colors.white : Colors.grey.shade800),
+                  letterSpacing: 0.3,
+                ),
               ),
             ),
           ),
