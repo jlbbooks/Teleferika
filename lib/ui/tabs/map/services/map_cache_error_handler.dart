@@ -30,7 +30,7 @@ class MapCacheErrorHandler {
 
     // If store is validated, use it directly
     if (_validatedStores.contains(storeName)) {
-      _logger.fine('Using validated store: $storeName');
+      //_logger.fine('Using validated store: $storeName');
       return FMTCTileProvider(
         stores: {storeName: BrowseStoreStrategy.readUpdateCreate},
       );
