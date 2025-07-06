@@ -56,6 +56,7 @@ class FlutterMapWidget extends StatefulWidget {
   final bool isSlidingMarker;
   final String? slidingPointId;
   final LatLng? currentSlidePosition;
+  final List<Widget>? additionalLayers;
 
   const FlutterMapWidget({
     super.key,
@@ -91,6 +92,7 @@ class FlutterMapWidget extends StatefulWidget {
     required this.isSlidingMarker,
     required this.slidingPointId,
     required this.currentSlidePosition,
+    this.additionalLayers,
   });
 
   @override
@@ -415,6 +417,8 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
                     );
                   },
                 ),
+              // Add additional layers if provided
+              if (widget.additionalLayers != null) ...widget.additionalLayers!,
             ],
           ),
         ],

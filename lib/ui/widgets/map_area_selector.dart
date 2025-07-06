@@ -9,6 +9,7 @@ import 'package:logging/logging.dart';
 import 'package:teleferika/ui/tabs/map/map_type.dart';
 import 'package:teleferika/ui/tabs/map/services/map_cache_error_handler.dart';
 import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
+import 'package:teleferika/ui/widgets/project_points_layer.dart';
 
 class MapAreaSelector extends StatefulWidget {
   final MapType mapType;
@@ -29,8 +30,6 @@ class MapAreaSelector extends StatefulWidget {
 class _MapAreaSelectorState extends State<MapAreaSelector> {
   final MapController _mapController = MapController();
   final Logger _logger = Logger('MapAreaSelector');
-
-  // Fixed rectangle margins (40px from each edge)
 
   // Default center and zoom
   static const LatLng _defaultCenter = LatLng(45.4642, 9.1900); // Milan
@@ -162,6 +161,11 @@ class _MapAreaSelectorState extends State<MapAreaSelector> {
                           widget.mapType,
                         ).errorHandler,
                   ),
+                ),
+                // Project points and lines layer
+                ProjectPointsLayer(
+                  // No projects parameter - will load from database
+                  // No excludeProjectId - will show all projects
                 ),
               ],
             ),

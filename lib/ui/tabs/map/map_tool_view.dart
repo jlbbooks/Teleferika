@@ -16,6 +16,7 @@ import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/pages/point_details_page.dart';
 import 'package:teleferika/ui/widgets/compass_calibration_panel.dart';
 import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
+import 'package:teleferika/ui/widgets/project_points_layer.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 
 import 'debug/debug_panel.dart';
@@ -555,6 +556,18 @@ class MapToolViewState extends State<MapToolView>
                           slidingPointId: _stateManager.slidingPointId,
                           currentSlidePosition:
                               _stateManager.currentSlidePosition,
+                          // Add other projects layer
+                          additionalLayers: [
+                            ProjectPointsLayer(
+                              excludeProjectId: projectState.currentProject?.id,
+                              markerSize: 6.0,
+                              markerColor: Colors.grey,
+                              markerBorderColor: Colors.white,
+                              markerBorderWidth: 1.0,
+                              lineColor: Colors.grey,
+                              lineWidth: 1.0,
+                            ),
+                          ],
                         ),
                         MapTypeSelector.build(
                           currentMapType: _stateManager.currentMapType,
