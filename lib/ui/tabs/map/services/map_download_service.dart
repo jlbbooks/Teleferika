@@ -13,18 +13,107 @@ typedef DownloadProgressCallback =
 /// Download completion callback
 typedef DownloadCompletionCallback = void Function(bool success, String? error);
 
+/// Download status callback
+typedef DownloadStatusCallback = void Function(bool isPaused);
+
+/// Controller for managing an active download
+class MapDownloadController {
+  final StoreDownload _download;
+  final StreamSubscription<DownloadProgress> _progressSubscription;
+  final StreamSubscription<TileEvent> _tileEventsSubscription;
+  final Completer<void> _completer;
+  final Logger _logger = Logger('MapDownloadController');
+
+  MapDownloadController({
+    required StoreDownload download,
+    required StreamSubscription<DownloadProgress> progressSubscription,
+    required StreamSubscription<TileEvent> tileEventsSubscription,
+    required Completer<void> completer,
+  }) : _download = download,
+       _progressSubscription = progressSubscription,
+       _tileEventsSubscription = tileEventsSubscription,
+       _completer = completer;
+
+  /// Check if the download is currently paused
+  bool get isPaused => _download.isPaused();
+
+  /// Pause the download
+  Future<void> pause() async {
+    try {
+      _logger.info('Pausing download...');
+      await _download.pause();
+      _logger.info('Download paused successfully');
+    } catch (e) {
+      _logger.warning('Failed to pause download: $e');
+      rethrow;
+    }
+  }
+
+  /// Resume the download
+  Future<void> resume() async {
+    try {
+      _logger.info('Resuming download...');
+      await _download.resume();
+      _logger.info('Download resumed successfully');
+    } catch (e) {
+      _logger.warning('Failed to resume download: $e');
+      rethrow;
+    }
+  }
+
+  /// Cancel the download
+  Future<void> cancel() async {
+    try {
+      _logger.info('Cancelling download...');
+
+      // Cancel the download
+      await _download.cancel();
+
+      // Cancel subscriptions
+      await _progressSubscription.cancel();
+      await _tileEventsSubscription.cancel();
+
+      // Complete with cancellation
+      if (!_completer.isCompleted) {
+        _completer.complete();
+      }
+
+      _logger.info('Download cancelled successfully');
+    } catch (e) {
+      _logger.warning('Failed to cancel download: $e');
+      rethrow;
+    }
+  }
+
+  /// Wait for the download to complete (either successfully or by cancellation)
+  Future<void> waitForCompletion() async {
+    return _completer.future;
+  }
+
+  /// Dispose of the controller
+  void dispose() {
+    _progressSubscription.cancel();
+    _tileEventsSubscription.cancel();
+    if (!_completer.isCompleted) {
+      _completer.complete();
+    }
+  }
+}
+
 /// Service for downloading offline map tiles
 class MapDownloadService {
   static final Logger _logger = Logger('MapDownloadService');
 
   /// Downloads map tiles for the specified area and map type
-  static Future<void> downloadMapArea({
+  /// Returns a controller that can be used to pause, resume, or cancel the download
+  static Future<MapDownloadController> downloadMapArea({
     required LatLngBounds bounds,
     required MapType mapType,
     required int minZoom,
     required int maxZoom,
     required DownloadProgressCallback onProgress,
     required DownloadCompletionCallback onComplete,
+    DownloadStatusCallback? onStatusChanged,
   }) async {
     try {
       _logger.info(
@@ -86,7 +175,7 @@ class MapDownloadService {
       final completer = Completer<void>();
 
       // Listen to download progress
-      downloadProgress.listen(
+      final progressSubscription = downloadProgress.listen(
         (progress) {
           // Use a simple counter for progress tracking
           downloadedTiles++;
@@ -98,32 +187,53 @@ class MapDownloadService {
           );
         },
         onDone: () {
-          completer.complete();
+          if (!completer.isCompleted) {
+            completer.complete();
+          }
         },
         onError: (error) {
-          completer.completeError(error);
+          if (!completer.isCompleted) {
+            completer.completeError(error);
+          }
         },
       );
 
       // Listen to tile events for basic logging
-      tileEvents.listen((event) {
-        _logger.fine('Tile event: ${event.runtimeType}');
-      });
-
-      // Wait for download to complete
-      await completer.future;
-
-      _logger.info(
-        'Download completed successfully. Downloaded: $downloadedTiles/$totalTiles tiles to cache store: $storeName',
+      final tileEventsSubscription = tileEvents.listen(
+        (event) {
+          _logger.fine('Tile event: ${event.runtimeType}');
+        },
+        onError: (error) {
+          _logger.warning('Tile events error: $error');
+        },
       );
 
-      // The downloaded tiles are now stored in the FMTC cache and will be available offline
-      // when the map requests them through the FMTCTileProvider
+      // Create the download controller
+      final controller = MapDownloadController(
+        download: store.download,
+        progressSubscription: progressSubscription,
+        tileEventsSubscription: tileEventsSubscription,
+        completer: completer,
+      );
 
-      onComplete(true, null);
+      // Wait for completion in the background
+      completer.future
+          .then((_) {
+            _logger.info(
+              'Download completed. Downloaded: $downloadedTiles/$totalTiles tiles to cache store: $storeName',
+            );
+            onComplete(true, null);
+          })
+          .catchError((error) {
+            _logger.severe('Download failed: $error');
+            onComplete(false, error.toString());
+          });
+
+      return controller;
     } catch (e, stackTrace) {
-      _logger.severe('Download failed: $e', e, stackTrace);
+      _logger.severe('Failed to start download: $e', e, stackTrace);
       onComplete(false, e.toString());
+      rethrow;
     }
   }
 }
