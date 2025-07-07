@@ -1,4 +1,4 @@
-// project_details_page.dart
+// project_editor_screen.dart
 // ignore_for_file: curly_braces_in_flow_control_structures, unused_field
 
 import 'dart:async';
@@ -19,7 +19,7 @@ import 'package:teleferika/ui/tabs/points_tool_view.dart';
 import 'package:teleferika/ui/tabs/project_details_tab.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 
-enum ProjectPageTab {
+enum ProjectEditorTab {
   details, // 0
   points, // 1
   map, // 2
@@ -58,17 +58,21 @@ double calculateBearingFromPoints(PointModel startPoint, PointModel endPoint) {
   return (bearingDeg + 360) % 360;
 }
 
-class ProjectPage extends StatefulWidget {
+class ProjectEditorScreen extends StatefulWidget {
   final ProjectModel project;
   final bool isNew;
 
-  const ProjectPage({super.key, required this.project, required this.isNew});
+  const ProjectEditorScreen({
+    super.key,
+    required this.project,
+    required this.isNew,
+  });
 
   @override
-  State<ProjectPage> createState() => _ProjectPageState();
+  State<ProjectEditorScreen> createState() => _ProjectEditorScreenState();
 }
 
-class _ProjectPageState extends State<ProjectPage>
+class _ProjectEditorScreenState extends State<ProjectEditorScreen>
     with TickerProviderStateMixin, StatusMixin {
   late TabController _tabController;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -116,7 +120,7 @@ class _ProjectPageState extends State<ProjectPage>
     _lastUpdateTime = widget.project.lastUpdate;
 
     _tabController = TabController(
-      length: ProjectPageTab.values.length,
+      length: ProjectEditorTab.values.length,
       vsync: this,
     );
 
@@ -194,7 +198,7 @@ class _ProjectPageState extends State<ProjectPage>
     if (_isLoading) return null;
 
     // Check if we're on the details tab and validate the form
-    if (_tabController.index == ProjectPageTab.details.index) {
+    if (_tabController.index == ProjectEditorTab.details.index) {
       final detailsTabState = _detailsTabKey.currentState;
       if (detailsTabState != null && !detailsTabState.validateForm()) {
         showErrorStatus('Please correct the errors in the form before saving.');

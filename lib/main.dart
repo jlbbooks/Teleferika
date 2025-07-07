@@ -12,11 +12,11 @@ import 'package:teleferika/core/project_state_manager.dart';
 import 'package:teleferika/licensing/feature_registry.dart';
 import 'package:teleferika/licensing/licence_service.dart';
 import 'package:teleferika/licensing/licensed_features_loader.dart';
-import 'package:teleferika/ui/pages/loading_page.dart';
+import 'package:teleferika/ui/screens/loading/loading_screen.dart';
 
 import 'core/logger.dart';
 import 'db/database_helper.dart';
-import 'ui/pages/projects_list_page.dart';
+import 'ui/screens/projects/projects_list_screen.dart';
 import 'ui/tabs/map/services/map_cache_manager.dart';
 
 void main() async {
@@ -129,11 +129,11 @@ class _MyAppRootState extends State<MyAppRoot> {
   @override
   Widget build(BuildContext context) {
     if (!_isInitialized) {
-      logger.finest("Building LoadingPage.");
-      return const LoadingPage();
+      logger.finest("Building LoadingScreen.");
+      return const LoadingScreen();
     }
 
-    logger.finest("Building MyApp (which now loads ProjectsListPage).");
+    logger.finest("Building MyApp (which now loads ProjectsListScreen).");
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ProjectStateManager()),
@@ -143,16 +143,13 @@ class _MyAppRootState extends State<MyAppRoot> {
         title: 'Teleferika',
         // --- Dynamic Theme Settings ---
         theme: AppConfig.lightTheme,
-        // Your defined light theme
         darkTheme: AppConfig.darkTheme,
-        // Your defined dark theme
         themeMode: ThemeMode.system,
-        // This is the key!
         // --- End Dynamic Theme Settings ---
         debugShowCheckedModeBanner: kDebugMode,
         localizationsDelegates: AppConfig.localizationsDelegates,
         supportedLocales: AppConfig.supportedLocales,
-        home: const ProjectsListPage(),
+        home: const ProjectsListScreen(),
       ),
     );
   }

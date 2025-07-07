@@ -5,7 +5,7 @@ import 'package:teleferika/core/project_state_manager.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
-import 'package:teleferika/ui/pages/point_details_page.dart';
+import 'package:teleferika/ui/screens/points/point_editor_screen.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 
 import 'points_tool_view.dart';
@@ -45,7 +45,7 @@ class PointsTabState extends State<PointsTab> with StatusMixin {
     final result = await Navigator.push<Map<String, dynamic>>(
       context,
       MaterialPageRoute(
-        builder: (context) => PointDetailsPage(point: newPoint),
+        builder: (context) => PointEditorScreen(point: newPoint),
       ),
     );
 

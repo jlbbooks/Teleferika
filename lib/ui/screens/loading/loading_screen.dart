@@ -4,16 +4,16 @@ import 'package:teleferika/core/app_config.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/licensing/feature_registry.dart';
 
-class LoadingPage extends StatefulWidget {
+class LoadingScreen extends StatefulWidget {
   final String? appVersion;
 
-  const LoadingPage({super.key, this.appVersion});
+  const LoadingScreen({super.key, this.appVersion});
 
   @override
-  State<LoadingPage> createState() => _LoadingPageState();
+  State<LoadingScreen> createState() => _LoadingScreenState();
 }
 
-class _LoadingPageState extends State<LoadingPage> {
+class _LoadingScreenState extends State<LoadingScreen> {
   @override
   void initState() {
     super.initState();

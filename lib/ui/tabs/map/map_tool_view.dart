@@ -13,7 +13,7 @@ import 'package:teleferika/core/app_config.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
-import 'package:teleferika/ui/pages/point_details_page.dart';
+import 'package:teleferika/ui/screens/points/point_editor_screen.dart';
 import 'package:teleferika/ui/widgets/compass_calibration_panel.dart';
 import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
 import 'package:teleferika/ui/widgets/project_points_layer.dart';
@@ -203,7 +203,7 @@ class MapToolViewState extends State<MapToolView>
 
     final result = await Navigator.push<Map<String, dynamic>>(
       context,
-      MaterialPageRoute(builder: (context) => PointDetailsPage(point: point)),
+      MaterialPageRoute(builder: (context) => PointEditorScreen(point: point)),
     );
 
     if (result != null && mounted) {

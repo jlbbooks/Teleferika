@@ -13,19 +13,20 @@ import 'package:teleferika/licensing/licence_service.dart';
 import 'package:teleferika/licensing/licensed_features_loader.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 
-import 'project_page.dart';
+import 'project_editor_screen.dart';
 
-class ProjectsListPage extends StatefulWidget {
+class ProjectsListScreen extends StatefulWidget {
   final String? appVersion;
 
-  const ProjectsListPage({super.key, this.appVersion});
+  const ProjectsListScreen({super.key, this.appVersion});
 
   @override
-  State<ProjectsListPage> createState() => _ProjectsListPageState();
+  State<ProjectsListScreen> createState() => _ProjectsListScreenState();
 }
 
-class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
-  final Logger logger = Logger('ProjectsListPage');
+class _ProjectsListScreenState extends State<ProjectsListScreen>
+    with StatusMixin {
+  final Logger logger = Logger('ProjectsListScreen');
   late Future<List<ProjectModel>> _projectsFuture;
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
@@ -397,7 +398,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
       final result = await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => ProjectPage(project: project, isNew: false),
+          builder: (_) => ProjectEditorScreen(project: project, isNew: false),
         ),
       );
       _handleNavigationResult(result);
@@ -414,14 +415,16 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
         // or just refresh if any background state might have changed.
         // For now, let's assume a full refresh might be safest if something non-specific happened.
         // _refreshProjectsListFromDb();
-        logger.info("ProjectPage returned with no specific ID or action.");
+        logger.info(
+          "ProjectEditorScreen returned with no specific ID or action.",
+        );
         // Clear global state to ensure fresh data for next navigation
         context.projectState.clearProject();
         return;
       }
 
       if (action == 'saved') {
-        logger.info("ProjectPage returned: project $id was saved.");
+        logger.info("ProjectEditorScreen returned: project $id was saved.");
         // Refresh from both database and global state to ensure consistency
         _projectsFuture = _dbHelper.getAllProjects();
         _projectsFuture.then((projects) {
@@ -437,7 +440,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
         // Also clear any global state to ensure fresh data on next load
         context.projectState.clearProject();
       } else if (action == 'deleted') {
-        logger.info("ProjectPage returned: project $id was deleted.");
+        logger.info("ProjectEditorScreen returned: project $id was deleted.");
         setState(() {
           _currentProjects.removeWhere((p) => p.id == id);
           _highlightedProjectId = null; // Ensure no highlight on a deleted item
@@ -450,7 +453,9 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
         );
       } else if (action == 'navigated_back') {
         // User just came back, potentially from viewing an existing project. Highlight it.
-        logger.info("ProjectPage returned: navigated back from project $id.");
+        logger.info(
+          "ProjectEditorScreen returned: navigated back from project $id.",
+        );
         setState(() {
           _highlightedProjectId = id;
         });
@@ -459,7 +464,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
       } else if (result['action'] == "created" && result['id'] != null) {
         // This is your existing logic path from _onItemTap, let's integrate it.
         logger.info(
-          "ProjectPage returned: project ${result['id']} was created (legacy path).",
+          "ProjectEditorScreen returned: project ${result['id']} was created (legacy path).",
         );
         _refreshProjectsListFromDb(); // Refresh to get the new item
         setState(() {
@@ -470,7 +475,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
       } else {
         // Fallback for your existing conditions, or new unhandled ones
         logger.info(
-          "ProjectPage returned with result: $result. Refreshing list.",
+          "ProjectEditorScreen returned with result: $result. Refreshing list.",
         );
         _refreshProjectsListFromDb();
         // If an ID is present in a generic success, highlight it
@@ -484,13 +489,15 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
       }
     } else if (result is bool && result == true) {
       // Generic true, refresh list. Maybe highlight if a context can be inferred.
-      logger.info("ProjectPage returned generic true. Refreshing list.");
+      logger.info(
+        "ProjectEditorScreen returned generic true. Refreshing list.",
+      );
       _refreshProjectsListFromDb();
       // Clear global state for generic success
       context.projectState.clearProject();
     } else if (result == null) {
       logger.info(
-        "ProjectPage returned null (e.g. back press without action). No specific action taken on list.",
+        "ProjectEditorScreen returned null (e.g. back press without action). No specific action taken on list.",
       );
       // Clear global state when user just navigates back without action
       context.projectState.clearProject();
@@ -504,7 +511,7 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
   }
 
   void _navigateToAddProjectPage() async {
-    logger.info("Navigating to ProjectDetailsPage for a new project.");
+    logger.info("Navigating to ProjectEditorScreen for a new project.");
     ProjectModel newProject = ProjectModel(name: '', note: '');
 
     // Clear any previous highlight before navigating
@@ -518,8 +525,9 @@ class _ProjectsListPageState extends State<ProjectsListPage> with StatusMixin {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ProjectPage(project: newProject, isNew: true),
-      ), // Ensure this is your ProjectDetailsPage
+        builder: (context) =>
+            ProjectEditorScreen(project: newProject, isNew: true),
+      ), // Ensure this is your ProjectEditorScreen
     );
 
     _handleNavigationResult(result);

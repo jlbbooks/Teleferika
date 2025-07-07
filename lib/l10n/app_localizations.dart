@@ -655,7 +655,7 @@ abstract class S {
   /// **'Cannot delete a project that has not been saved yet.'**
   String get cannot_delete_unsaved_project;
 
-  /// No description provided for @confirm_delete_project_title.
+  /// Title for the dialog confirming project deletion.
   ///
   /// In en, this message translates to:
   /// **'Confirm Delete'**
@@ -691,7 +691,7 @@ abstract class S {
   /// **'Error deleting project: {errorMessage}'**
   String error_deleting_project(String errorMessage);
 
-  /// No description provided for @unsaved_changes_dialog_title.
+  /// Title for the dialog warning about unsaved changes.
   ///
   /// In en, this message translates to:
   /// **'Unsaved Changes'**

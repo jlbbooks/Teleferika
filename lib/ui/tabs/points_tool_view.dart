@@ -11,7 +11,7 @@ import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
-import 'package:teleferika/ui/pages/point_details_page.dart';
+import 'package:teleferika/ui/screens/points/point_editor_screen.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 import 'package:teleferika/ui/widgets/photo_gallery_dialog.dart';
 import 'package:teleferika/ui/tabs/map/map_controller.dart';
@@ -420,7 +420,7 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                     final result = await Navigator.push<Map<String, dynamic>>(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => PointDetailsPage(point: point),
+                        builder: (context) => PointEditorScreen(point: point),
                       ),
                     );
                     if (result != null && mounted) {
