@@ -7,6 +7,6 @@ class MapStoreUtils {
   /// Uses the cacheStoreName getter from the MapType enum
   /// e.g., MapType.openStreetMap -> 'mapStore_openStreetMap'
   static String getStoreNameForMapType(MapType mapType) {
-    return mapType.cacheStoreName;
+    return mapType.singleName;
   }
 }

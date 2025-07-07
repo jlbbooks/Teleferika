@@ -1045,7 +1045,7 @@ abstract class S {
   /// Localized name for map types based on the mapType parameter.
   ///
   /// In en, this message translates to:
-  /// **'{mapType, select, openStreetMap {Open Street Map} satellite {Satellite} terrain {Terrain} other {Unknown}}'**
+  /// **'{mapType, select, openStreetMap {Open Street Map} satellite {Satellite} terrain {Terrain} opentopography {OpenTopography} other {Unknown}}'**
   String mapTypeName(String mapType);
 
   /// Label for the map type selector.

@@ -591,6 +591,7 @@ class SEn extends S {
       'openStreetMap': 'Open Street Map',
       'satellite': 'Satellite',
       'terrain': 'Terrain',
+      'opentopography': 'OpenTopography',
       'other': 'Unknown',
     });
     return '$_temp0';

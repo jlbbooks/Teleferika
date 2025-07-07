@@ -680,7 +680,7 @@
   "@mapCenterOnPoints": {
     "description": "Tooltip per il pulsante per centrare la mappa su tutti i punti del progetto."
   },
-  "mapTypeName": "{mapType, select, openStreetMap {Mappa Stradale Aperta} satellite {Satellite} terrain {Terreno} other {Sconosciuto}}",
+  "mapTypeName": "{mapType, select, openStreetMap {Mappa Stradale Aperta} satellite {Satellite} terrain {Terreno} opentopography {OpenTopography} other {Sconosciuto}}",
   "@mapTypeName": {
     "description": "Nome localizzato per i tipi di mappa basato sul parametro mapType.",
     "placeholders": {

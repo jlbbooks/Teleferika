@@ -781,7 +781,7 @@
   "@mapCenterOnPoints": {
     "description": "Tooltip for the button to center the map on all project points."
   },
-  "mapTypeName": "{mapType, select, openStreetMap {Open Street Map} satellite {Satellite} terrain {Terrain} other {Unknown}}",
+  "mapTypeName": "{mapType, select, openStreetMap {Open Street Map} satellite {Satellite} terrain {Terrain} opentopography {OpenTopography} other {Unknown}}",
   "@mapTypeName": {
     "description": "Localized name for map types based on the mapType parameter.",
     "placeholders": {

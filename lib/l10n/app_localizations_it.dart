@@ -596,6 +596,7 @@ class SIt extends S {
       'openStreetMap': 'Mappa Stradale Aperta',
       'satellite': 'Satellite',
       'terrain': 'Terreno',
+      'opentopography': 'OpenTopography',
       'other': 'Sconosciuto',
     });
     return '$_temp0';
