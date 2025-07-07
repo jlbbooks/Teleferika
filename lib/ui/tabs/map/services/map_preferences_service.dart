@@ -6,7 +6,7 @@ import 'package:teleferika/core/app_config.dart';
 
 class MapPreferencesService {
   static const String _mapTypeKey = 'map_type';
-  static final String _defaultMapType = MapType.values.first.singleName;
+  static const String _defaultMapType = 'openStreetMap';
   static const String _lastLocationLatKey = 'last_location_lat';
   static const String _lastLocationLngKey = 'last_location_lng';
   static const String _lastLocationTimestampKey = 'last_location_timestamp';
@@ -16,7 +16,7 @@ class MapPreferencesService {
   static Future<void> saveMapType(MapType mapType) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final mapTypeString = mapType.singleName;
+      final mapTypeString = _mapTypeToString(mapType);
       await prefs.setString(_mapTypeKey, mapTypeString);
     } catch (e) {
       // Log error but don't throw - preferences are not critical
@@ -30,11 +30,36 @@ class MapPreferencesService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final mapTypeString = prefs.getString(_mapTypeKey) ?? _defaultMapType;
-      return MapType.fromString(mapTypeString);
+      return _stringToMapType(mapTypeString);
     } catch (e) {
       // Log error but return default - preferences are not critical
       _logger.warning('Error loading map type preference: $e');
-      return MapType.fromString(_defaultMapType);
+      return _stringToMapType(_defaultMapType);
+    }
+  }
+
+  /// Convert MapType enum to string for storage
+  static String _mapTypeToString(MapType mapType) {
+    switch (mapType) {
+      case MapType.openStreetMap:
+        return 'openStreetMap';
+      case MapType.satellite:
+        return 'satellite';
+      case MapType.terrain:
+        return 'terrain';
+    }
+  }
+
+  /// Convert string back to MapType enum
+  static MapType _stringToMapType(String mapTypeString) {
+    switch (mapTypeString) {
+      case 'satellite':
+        return MapType.satellite;
+      case 'terrain':
+        return MapType.terrain;
+      case 'openStreetMap':
+      default:
+        return MapType.openStreetMap;
     }
   }
 

@@ -46,7 +46,7 @@ class MapTypeSelector {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Icon(
-                      currentMapType.icon,
+                      _getMapTypeIcon(currentMapType),
                       size: 14,
                       color: Theme.of(
                         context,
@@ -72,17 +72,29 @@ class MapTypeSelector {
                 ],
               ),
             ),
-            itemBuilder: (BuildContext context) => MapType.values
-                .map(
-                  (mapType) => _buildMapTypeMenuItem(
-                    mapType,
-                    mapType.getUiName(s),
-                    mapType.icon,
-                    currentMapType,
-                    context,
-                  ),
-                )
-                .toList(),
+            itemBuilder: (BuildContext context) => [
+              _buildMapTypeMenuItem(
+                MapType.openStreetMap,
+                MapType.openStreetMap.getUiName(s),
+                Icons.map,
+                currentMapType,
+                context,
+              ),
+              _buildMapTypeMenuItem(
+                MapType.satellite,
+                MapType.satellite.getUiName(s),
+                Icons.satellite_alt,
+                currentMapType,
+                context,
+              ),
+              _buildMapTypeMenuItem(
+                MapType.terrain,
+                MapType.terrain.getUiName(s),
+                Icons.terrain,
+                currentMapType,
+                context,
+              ),
+            ],
           ),
         ),
       ),
@@ -143,5 +155,16 @@ class MapTypeSelector {
         ),
       ),
     );
+  }
+
+  static IconData _getMapTypeIcon(MapType mapType) {
+    switch (mapType) {
+      case MapType.openStreetMap:
+        return Icons.map;
+      case MapType.satellite:
+        return Icons.satellite_alt;
+      case MapType.terrain:
+        return Icons.terrain;
+    }
   }
 }

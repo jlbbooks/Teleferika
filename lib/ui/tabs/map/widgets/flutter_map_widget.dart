@@ -107,7 +107,7 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
   TileProvider _getTileProvider(MapType mapType) {
     final logger = Logger('FlutterMapWidget');
     logger.info(
-      'Getting tile provider for ${mapType.name} with cache store: ${mapType.singleName}',
+      'Getting tile provider for ${mapType.name} with cache store: ${mapType.cacheStoreName}',
     );
 
     try {

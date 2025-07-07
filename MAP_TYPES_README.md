@@ -14,8 +14,7 @@ The core of the map type system is the `MapType` enum located in `lib/ui/tabs/ma
 enum MapType {
   openStreetMap,
   satellite,
-  terrain,
-  opentopography;
+  terrain;
 }
 ```
 

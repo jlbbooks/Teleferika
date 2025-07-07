@@ -92,10 +92,6 @@ The refactored architecture follows a clean separation of concerns:
 
 The main entry point is `map_tool_view.dart`, which imports and uses all the other components. The state management is handled through `MapStateManager`, which coordinates between the UI components and the business logic services.
 
-### Default Map Type Handling
-
-The default map type is no longer hardcoded. Instead, it is dynamically determined as the `singleName` of the first value in the `MapType` enum (using `MapType.values.first.singleName`). This ensures that if the enum order changes or new map types are added, the default will always match the first enum value, making the code more robust and future-proof.
-
 ## Migration Status
 
 - ✅ **Completed**: Widget extraction and organization

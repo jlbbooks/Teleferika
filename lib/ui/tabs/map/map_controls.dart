@@ -146,7 +146,7 @@ class MapControls {
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Icon(
-                      currentMapType.icon,
+                      _getMapTypeIcon(currentMapType),
                       size: 14,
                       color: Theme.of(
                         context,
@@ -255,6 +255,17 @@ class MapControls {
         ),
       ),
     );
+  }
+
+  static IconData _getMapTypeIcon(MapType mapType) {
+    switch (mapType) {
+      case MapType.openStreetMap:
+        return Icons.map;
+      case MapType.satellite:
+        return Icons.satellite_alt;
+      case MapType.terrain:
+        return Icons.terrain;
+    }
   }
 
   static Widget buildPermissionOverlay({
