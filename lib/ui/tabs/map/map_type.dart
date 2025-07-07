@@ -103,16 +103,6 @@ class MapType {
       attributionUrl: 'https://www.thunderforest.com/',
       icon: Icons.landscape,
     ),
-    MapType(
-      id: 'openMapTilesTerrain',
-      name: 'OpenMapTiles Terrain',
-      cacheStoreName: 'mapStore_openMapTilesTerrain',
-      allowsBulkDownload: true,
-      tileLayerUrl: 'https://tiles.maptiler.com/terrain/{z}/{x}/{y}.png',
-      tileLayerAttribution: '© OpenMapTiles © OpenStreetMap contributors',
-      attributionUrl: 'https://openmaptiles.org/',
-      icon: Icons.landscape_outlined,
-    ),
   ];
 
   static MapType of(String id) {

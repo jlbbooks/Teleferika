@@ -54,12 +54,7 @@ Teleferika supports multiple map types to provide users with different views of 
 - **Best For**: Visual terrain analysis with artistic appeal
 - **Coverage**: Global coverage
 
-### 8. **OpenMapTiles Terrain** ⭐ **NEW - High-Quality Terrain**
-- **URL**: `https://tiles.maptiler.com/terrain/{z}/{x}/{y}.png`
-- **Features**: High-quality terrain visualization with detailed elevation data
-- **Elevation Data**: Yes, excellent terrain representation
-- **Best For**: Professional topographic analysis
-- **Coverage**: Global coverage
+
 
 ## MapType Class (Data-Driven)
 
@@ -168,7 +163,7 @@ For European projects requiring elevation data, we recommend:
 
 1. **Open Topo Map** - Best overall for European topographic surveys
 2. **Thunderforest Outdoors** - Excellent for outdoor field work
-3. **OpenMapTiles Terrain** - High-quality terrain visualization
+
 4. **Thunderforest Landscape** - Beautiful landscape visualization
 
 ## Adding New Map Types
