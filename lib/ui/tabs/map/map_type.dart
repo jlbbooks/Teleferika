@@ -70,17 +70,6 @@ class MapType {
       icon: Icons.terrain_outlined,
     ),
     MapType(
-      id: 'thunderforestOutdoors',
-      name: 'Thunderforest Outdoors',
-      cacheStoreName: 'mapStore_thunderforestOutdoors',
-      allowsBulkDownload: true,
-      tileLayerUrl:
-          'https://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}.png',
-      tileLayerAttribution: '© OpenStreetMap contributors, © Thunderforest',
-      attributionUrl: 'https://www.thunderforest.com/',
-      icon: Icons.hiking,
-    ),
-    MapType(
       id: 'cartoPositron',
       name: 'CartoDB Positron',
       cacheStoreName: 'mapStore_cartoPositron',
@@ -93,16 +82,26 @@ class MapType {
       supportsRetina: true,
     ),
     MapType(
-      id: 'stamenTerrain',
-      name: 'Stamen Terrain',
-      cacheStoreName: 'mapStore_stamenTerrain',
+      id: 'thunderforestOutdoors',
+      name: 'Thunderforest Outdoors',
+      cacheStoreName: 'mapStore_thunderforestOutdoors',
       allowsBulkDownload: true,
       tileLayerUrl:
-          'https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}{r}.png',
-      tileLayerAttribution: '© Stamen Design, © OpenStreetMap contributors',
-      attributionUrl: 'https://stamen.com/',
+          'https://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}.png',
+      tileLayerAttribution: '© OpenStreetMap contributors, © Thunderforest',
+      attributionUrl: 'https://www.thunderforest.com/',
+      icon: Icons.hiking,
+    ),
+    MapType(
+      id: 'thunderforestLandscape',
+      name: 'Thunderforest Landscape',
+      cacheStoreName: 'mapStore_thunderforestLandscape',
+      allowsBulkDownload: true,
+      tileLayerUrl:
+          'https://{s}.tile.thunderforest.com/landscape/{z}/{x}/{y}.png',
+      tileLayerAttribution: '© OpenStreetMap contributors, © Thunderforest',
+      attributionUrl: 'https://www.thunderforest.com/',
       icon: Icons.landscape,
-      supportsRetina: true,
     ),
     MapType(
       id: 'openMapTilesTerrain',

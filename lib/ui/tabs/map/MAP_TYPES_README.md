@@ -47,9 +47,9 @@ Teleferika supports multiple map types to provide users with different views of 
 - **Best For**: Clean base maps for overlaying data
 - **Coverage**: Global coverage
 
-### 7. **Stamen Terrain** ⭐ **NEW - Artistic Terrain**
-- **URL**: `https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}{r}.png`
-- **Features**: Artistic terrain visualization with elevation shading
+### 7. **Thunderforest Landscape** ⭐ **NEW - Artistic Landscape**
+- **URL**: `https://{s}.tile.thunderforest.com/landscape/{z}/{x}/{y}.png`
+- **Features**: Beautiful landscape visualization with terrain features
 - **Elevation Data**: Yes, through artistic terrain representation
 - **Best For**: Visual terrain analysis with artistic appeal
 - **Coverage**: Global coverage
@@ -169,7 +169,7 @@ For European projects requiring elevation data, we recommend:
 1. **Open Topo Map** - Best overall for European topographic surveys
 2. **Thunderforest Outdoors** - Excellent for outdoor field work
 3. **OpenMapTiles Terrain** - High-quality terrain visualization
-4. **Stamen Terrain** - Artistic terrain representation
+4. **Thunderforest Landscape** - Beautiful landscape visualization
 
 ## Adding New Map Types
 
@@ -210,7 +210,7 @@ MapType(
 Some map types support high-resolution tiles for retina displays using the `{r}` placeholder in their URL templates. These map types have `supportsRetina: true` and will automatically use high-resolution tiles on high-density displays:
 
 - **CartoDB Positron** - Supports retina mode for crisp display on high-DPI screens
-- **Stamen Terrain** - Supports retina mode for high-quality terrain visualization
+- **Thunderforest Landscape** - Beautiful landscape visualization with terrain features
 
 The `supportsRetina` field is automatically used by the `TileLayer` configuration to enable `RetinaMode.isHighDensity` when appropriate.
 
