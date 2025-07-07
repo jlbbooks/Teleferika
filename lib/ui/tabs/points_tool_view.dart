@@ -13,6 +13,7 @@ import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/pages/point_details_page.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
+import 'package:teleferika/ui/widgets/photo_gallery_dialog.dart';
 import 'package:teleferika/ui/tabs/map/map_controller.dart';
 import 'package:teleferika/ui/tabs/map/services/geometry_service.dart';
 import 'dart:io';
@@ -630,13 +631,81 @@ class PointsToolViewState extends State<PointsToolView> with StatusMixin {
                                 const SizedBox(width: 8),
                             itemBuilder: (context, imgIdx) {
                               final img = point.images[imgIdx];
-                              return ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.file(
-                                  File(img.imagePath),
-                                  width: 60,
-                                  height: 60,
-                                  fit: BoxFit.cover,
+                              return GestureDetector(
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => PhotoGalleryDialog(
+                                      pointId: point.id,
+                                      initialIndex: imgIdx,
+                                    ),
+                                  );
+                                },
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Stack(
+                                    children: [
+                                      Image.file(
+                                        File(img.imagePath),
+                                        width: 60,
+                                        height: 60,
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (
+                                              context,
+                                              error,
+                                              stackTrace,
+                                            ) => Container(
+                                              width: 60,
+                                              height: 60,
+                                              color: Colors.grey[300],
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.broken_image,
+                                                    color: Colors.grey[600],
+                                                    size: 20,
+                                                  ),
+                                                  const SizedBox(height: 2),
+                                                  Text(
+                                                    S
+                                                            .of(context)
+                                                            ?.errorGeneric ??
+                                                        'Error',
+                                                    style: TextStyle(
+                                                      fontSize: 8,
+                                                      color: Colors.grey[700],
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                      ),
+                                      // Note icon overlay (bottom right)
+                                      if (img.note.isNotEmpty)
+                                        Positioned(
+                                          bottom: 2,
+                                          right: 2,
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.black.withValues(
+                                                alpha: 0.6,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            padding: const EdgeInsets.all(2),
+                                            child: Icon(
+                                              Icons.sticky_note_2,
+                                              color: Colors.white,
+                                              size: 12,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
                                 ),
                               );
                             },

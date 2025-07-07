@@ -69,49 +69,59 @@ class DebugPanel extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       if (onTestCalibrationPanel != null) ...[
-                        TextButton(
-                          onPressed: onTestCalibrationPanel,
-                          style: TextButton.styleFrom(
+                        SizedBox(
+                          height: 32,
+                          child: ElevatedButton(
+                            onPressed: onTestCalibrationPanel,
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              backgroundColor: Colors.amber,
+                              foregroundColor: Colors.black,
+                            ),
+                            child: const Text(
+                              'Test Calibration',
+                              style: TextStyle(fontSize: 11),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      SizedBox(
+                        height: 32,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            try {
+                              if (kIsWeb) {
+                                debugPrint(
+                                  'Haptic feedback not available on web',
+                                );
+                                return;
+                              }
+                              HapticFeedback.mediumImpact();
+                              debugPrint('Haptic feedback test triggered');
+                            } catch (e) {
+                              debugPrint('Haptic feedback test failed: $e');
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 8,
                               vertical: 4,
                             ),
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
                           ),
                           child: const Text(
-                            'Test Calibration',
-                            style: TextStyle(color: Colors.amber, fontSize: 11),
+                            'Test Haptic',
+                            style: TextStyle(fontSize: 11),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                      ],
-                      TextButton(
-                        onPressed: () {
-                          try {
-                            if (kIsWeb) {
-                              debugPrint(
-                                'Haptic feedback not available on web',
-                              );
-                              return;
-                            }
-                            HapticFeedback.mediumImpact();
-                            debugPrint('Haptic feedback test triggered');
-                          } catch (e) {
-                            debugPrint('Haptic feedback test failed: $e');
-                          }
-                        },
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: const Text(
-                          'Test Haptic',
-                          style: TextStyle(color: Colors.green, fontSize: 11),
                         ),
                       ),
                     ],
@@ -239,10 +249,7 @@ class DebugPanel extends StatelessWidget {
                         MapStoreUtils.getStoreNameForMapType(currentMapType),
                       ).stats.size,
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Text('FMTCStore size: Loading...');
-                        } else if (snapshot.hasError) {
+                        if (snapshot.hasError) {
                           return Text(
                             'FMTCStore size: Error - ${snapshot.error}',
                           );
@@ -250,6 +257,9 @@ class DebugPanel extends StatelessWidget {
                           return Text(
                             'FMTCStore size: ${snapshot.data?.toStringAsFixed(0) ?? '0'}',
                           );
+                        } else if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Text('FMTCStore size: Loading...');
                         } else {
                           return const Text('FMTCStore size: -');
                         }
@@ -258,10 +268,7 @@ class DebugPanel extends StatelessWidget {
                     FutureBuilder<double>(
                       future: FMTCRoot.stats.realSize,
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Text('Map cache size: Loading...');
-                        } else if (snapshot.hasError) {
+                        if (snapshot.hasError) {
                           return Text(
                             'Map cache size: Error - ${snapshot.error}',
                           );
@@ -269,6 +276,9 @@ class DebugPanel extends StatelessWidget {
                           return Text(
                             'Map cache size: ${snapshot.data?.toStringAsFixed(0) ?? '0'} bytes',
                           );
+                        } else if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Text('Map cache size: Loading...');
                         } else {
                           return const Text('Map cache size: -');
                         }

@@ -466,7 +466,7 @@ class _ProjectPageState extends State<ProjectPage>
         ),
       if (!_isEffectivelyNew && currentPoints.isNotEmpty)
         IconButton(
-          icon: const Icon(Icons.file_download, color: Colors.blue),
+          icon: const Icon(Icons.upload_file, color: Colors.blue),
           onPressed: _isLoading ? null : _handleExport,
           tooltip: s?.export_project_tooltip ?? 'Export Project',
         ),
