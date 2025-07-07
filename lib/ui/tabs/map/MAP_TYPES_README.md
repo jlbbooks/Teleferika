@@ -6,6 +6,61 @@ This document explains how map types are implemented and used throughout the Tel
 
 Teleferika supports multiple map types to provide users with different views of geographic data. Each map type has its own tile server, cache store, and localized display name.
 
+## Available Map Types
+
+### 1. **OpenStreetMap** (Basic Street Map)
+- **URL**: `https://tile.openstreetmap.org/{z}/{x}/{y}.png`
+- **Features**: Standard street map with roads, buildings, and basic geographic features
+- **Elevation Data**: No
+- **Best For**: General navigation and street-level detail
+
+### 2. **Esri Satellite** (Aerial Imagery)
+- **URL**: `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}`
+- **Features**: High-resolution satellite imagery
+- **Elevation Data**: No
+- **Best For**: Aerial reconnaissance and visual identification
+
+### 3. **Esri World Topo** (Topographic Map)
+- **URL**: `https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}`
+- **Features**: Topographic map with terrain shading and contour lines
+- **Elevation Data**: Yes, through visual representation
+- **Best For**: General topographic analysis
+
+### 4. **Open Topo Map** ⭐ **NEW - Excellent for Europe**
+- **URL**: `https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png`
+- **Features**: High-quality topographic maps with detailed contour lines
+- **Elevation Data**: Yes, excellent contour line detail
+- **Best For**: European topographic surveys, elevation analysis
+- **Coverage**: Excellent European coverage
+
+### 5. **Thunderforest Outdoors** ⭐ **NEW - Outdoor Focus**
+- **URL**: `https://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}.png`
+- **Features**: Outdoor-focused maps with hiking trails, elevation contours
+- **Elevation Data**: Yes, detailed contour lines and terrain features
+- **Best For**: Outdoor activities, hiking, field surveys
+- **Coverage**: Good European coverage
+
+### 6. **CartoDB Positron** ⭐ **NEW - Clean Base**
+- **URL**: `https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png`
+- **Features**: Clean, minimal design with subtle terrain shading
+- **Elevation Data**: Minimal, through subtle shading
+- **Best For**: Clean base maps for overlaying data
+- **Coverage**: Global coverage
+
+### 7. **Stamen Terrain** ⭐ **NEW - Artistic Terrain**
+- **URL**: `https://stamen-tiles-{s}.a.ssl.fastly.net/terrain/{z}/{x}/{y}{r}.png`
+- **Features**: Artistic terrain visualization with elevation shading
+- **Elevation Data**: Yes, through artistic terrain representation
+- **Best For**: Visual terrain analysis with artistic appeal
+- **Coverage**: Global coverage
+
+### 8. **OpenMapTiles Terrain** ⭐ **NEW - High-Quality Terrain**
+- **URL**: `https://tiles.maptiler.com/terrain/{z}/{x}/{y}.png`
+- **Features**: High-quality terrain visualization with detailed elevation data
+- **Elevation Data**: Yes, excellent terrain representation
+- **Best For**: Professional topographic analysis
+- **Coverage**: Global coverage
+
 ## MapType Class (Data-Driven)
 
 The core of the map type system is the `MapType` class located in `lib/ui/tabs/map/map_type.dart`:
@@ -20,16 +75,29 @@ class MapType {
   final String tileLayerAttribution;
   final String attributionUrl;
   final IconData icon;
+  final bool supportsRetina;
   // ...
 }
 ```
 
 ### Static List of Map Types
 
-All available map types are defined in a static list:
+All available map types are defined directly in a static list:
 
 ```dart
-static const List<MapType> all = [openStreetMap, satellite, terrain];
+static const List<MapType> all = [
+  MapType(
+    id: 'openStreetMap',
+    name: 'Open Street Map',
+    // ... other properties
+  ),
+  MapType(
+    id: 'satellite',
+    name: 'Satellite',
+    // ... other properties
+  ),
+  // ... more map types
+];
 ```
 
 ### Lookup by ID
@@ -43,16 +111,17 @@ MapType type = MapType.of('openStreetMap');
 ### Example MapType Definition
 
 ```dart
-static const MapType openStreetMap = MapType(
-  id: 'openStreetMap',
-  name: 'Open Street Map',
-  cacheStoreName: 'mapStore_openStreetMap',
-  allowsBulkDownload: false,
-  tileLayerUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-  tileLayerAttribution: '© OpenStreetMap contributors',
-  attributionUrl: 'https://openstreetmap.org/copyright',
-  icon: Icons.map,
-);
+MapType(
+  id: 'cartoPositron',
+  name: 'CartoDB Positron',
+  cacheStoreName: 'mapStore_cartoPositron',
+  allowsBulkDownload: true,
+  tileLayerUrl: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+  tileLayerAttribution: '© OpenStreetMap contributors, © CartoDB',
+  attributionUrl: 'https://carto.com/',
+  icon: Icons.map_outlined,
+  supportsRetina: true,
+),
 ```
 
 ## Accessing Properties
@@ -67,7 +136,7 @@ IconData icon = mapType.icon;
 
 ## Localization
 
-Map type names are localized using the `getUiName()` method, which uses the id for lookup in ARB files.
+Map type names are taken directly from the `name` field in the `MapType` definition. The `getUiName()` method returns the `name` field directly.
 
 ## Usage Patterns
 
@@ -83,40 +152,67 @@ for (final mapType in MapType.all) {
 
 ### 2. State Management
 
-Store the current map type as a `MapType` instance. Persist the id string and use `MapType.of(id)` to restore.
+Map types are managed through the `MapStateManager` and stored in `SharedPreferences` via `MapPreferencesService`.
 
-### 3. Preferences
+### 3. Caching
 
-Save the map type id to preferences. Restore using `MapType.of(savedId)`.
+Each map type has its own cache store for offline access:
 
-### 4. Tile Layer Configuration
+```dart
+String storeName = mapType.cacheStoreName; // e.g., 'mapStore_openTopoMap'
+```
 
-Configure tile layers using the properties of the selected `MapType` instance.
+## Recommendations for European Elevation Data
+
+For European projects requiring elevation data, we recommend:
+
+1. **Open Topo Map** - Best overall for European topographic surveys
+2. **Thunderforest Outdoors** - Excellent for outdoor field work
+3. **OpenMapTiles Terrain** - High-quality terrain visualization
+4. **Stamen Terrain** - Artistic terrain representation
 
 ## Adding New Map Types
 
 To add a new map type:
 
-1. **Define a new MapType**: Add a new static const in `MapType` and add it to the `all` list.
-2. **Add Localization**: Add the new map type id to the `mapTypeName` select statement in both ARB files.
-3. **Update UI**: The new map type will automatically appear in selectors if you iterate over `MapType.all`.
+1. Add the `MapType` entry directly to the `all` list in `map_type.dart`
+2. Add to licensed features if applicable
+3. Regenerate localization files with `flutter gen-l10n`
 
-### Example: Adding a "Hybrid" Map Type
+### Retina Mode Support
+
+If the map type URL template includes the `{r}` placeholder for retina mode, set `supportsRetina: true`:
 
 ```dart
-static const MapType hybrid = MapType(
-  id: 'hybrid',
-  name: 'Hybrid',
-  cacheStoreName: 'mapStore_hybrid',
+MapType(
+  id: 'example',
+  name: 'Example Map',
+  cacheStoreName: 'mapStore_example',
   allowsBulkDownload: true,
-  tileLayerUrl: 'https://example.com/hybrid/{z}/{x}/{y}.png',
+  tileLayerUrl: 'https://example.com/tiles/{z}/{x}/{y}{r}.png', // Note the {r} placeholder
   tileLayerAttribution: '© Example',
   attributionUrl: 'https://example.com',
-  icon: Icons.layers,
-);
-
-static const List<MapType> all = [openStreetMap, satellite, terrain, hybrid];
+  icon: Icons.map,
+  supportsRetina: true, // Enable retina mode for high-DPI displays
+),
 ```
+
+## Technical Notes
+
+- All map types support bulk download for offline use
+- Each map type has its own cache store for performance
+- Attribution is automatically displayed on the map
+- Map types are automatically included in the map type selector
+- Localization is handled through the standard Flutter localization system
+
+## Retina Mode Support
+
+Some map types support high-resolution tiles for retina displays using the `{r}` placeholder in their URL templates. These map types have `supportsRetina: true` and will automatically use high-resolution tiles on high-density displays:
+
+- **CartoDB Positron** - Supports retina mode for crisp display on high-DPI screens
+- **Stamen Terrain** - Supports retina mode for high-quality terrain visualization
+
+The `supportsRetina` field is automatically used by the `TileLayer` configuration to enable `RetinaMode.isHighDensity` when appropriate.
 
 ## Best Practices
 

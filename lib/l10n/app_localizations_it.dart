@@ -592,13 +592,7 @@ class SIt extends S {
 
   @override
   String mapTypeName(String mapType) {
-    String _temp0 = intl.Intl.selectLogic(mapType, {
-      'openStreetMap': 'Mappa Stradale Aperta',
-      'satellite': 'Satellite',
-      'terrain': 'Terreno',
-      'other': 'Sconosciuto',
-    });
-    return '$_temp0';
+    return '$mapType';
   }
 
   @override
@@ -1051,63 +1045,5 @@ class SIt extends S {
   }
 
   @override
-  String get offline_maps_download_title => 'Scarica Mappe Offline';
-
-  @override
-  String get offline_maps_select_map_type => 'Seleziona Tipo Mappa';
-
-  @override
-  String get offline_maps_select_map_type_to_start =>
-      'Seleziona un tipo di mappa per iniziare';
-
-  @override
-  String get offline_maps_select_area_to_download =>
-      'Seleziona Area da Scaricare:';
-
-  @override
-  String get offline_maps_selected_area => 'Area Selezionata:';
-
-  @override
-  String offline_maps_coordinates_sw(String lat, String lng) {
-    return 'SO: $lat, $lng';
-  }
-
-  @override
-  String offline_maps_coordinates_ne(String lat, String lng) {
-    return 'NE: $lat, $lng';
-  }
-
-  @override
-  String get offline_maps_download_button => 'Scarica';
-
-  @override
-  String get offline_maps_download_not_implemented =>
-      'Download non ancora implementato.';
-
-  @override
-  String get offline_maps_download_completed =>
-      'Download completato con successo!';
-
-  @override
-  String offline_maps_download_failed(String error) {
-    return 'Download fallito: $error';
-  }
-
-  @override
-  String get offline_maps_downloading => 'Download in corso...';
-
-  @override
-  String get map_area_selector_instruction =>
-      'Trascina la mappa per posizionare l\'area di download';
-
-  @override
   String get project_label_prefix => 'Progetto: ';
-
-  @override
-  String get offline_maps_bulk_download_not_allowed =>
-      'Download Massivo Non Consentito';
-
-  @override
-  String get offline_maps_bulk_download_restriction_message =>
-      'Questo tipo di mappa non consente operazioni di download massivo a causa di restrizioni di licenza.';
 }

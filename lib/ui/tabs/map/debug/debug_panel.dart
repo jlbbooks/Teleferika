@@ -334,7 +334,7 @@ class DebugPanel extends StatelessWidget {
                       ],
                     ),
                   );
-                }).toList(),
+                }),
                 const SizedBox(height: 16),
                 const Text(
                   'Actions:',

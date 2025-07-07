@@ -587,13 +587,7 @@ class SEn extends S {
 
   @override
   String mapTypeName(String mapType) {
-    String _temp0 = intl.Intl.selectLogic(mapType, {
-      'openStreetMap': 'Open Street Map',
-      'satellite': 'Satellite',
-      'terrain': 'Terrain',
-      'other': 'Unknown',
-    });
-    return '$_temp0';
+    return '$mapType';
   }
 
   @override
@@ -1041,62 +1035,5 @@ class SEn extends S {
   }
 
   @override
-  String get offline_maps_download_title => 'Download Offline Maps';
-
-  @override
-  String get offline_maps_select_map_type => 'Select Map Type';
-
-  @override
-  String get offline_maps_select_map_type_to_start =>
-      'Select a map type to start';
-
-  @override
-  String get offline_maps_select_area_to_download => 'Select Area to Download:';
-
-  @override
-  String get offline_maps_selected_area => 'Selected Area:';
-
-  @override
-  String offline_maps_coordinates_sw(String lat, String lng) {
-    return 'SW: $lat, $lng';
-  }
-
-  @override
-  String offline_maps_coordinates_ne(String lat, String lng) {
-    return 'NE: $lat, $lng';
-  }
-
-  @override
-  String get offline_maps_download_button => 'Download';
-
-  @override
-  String get offline_maps_download_not_implemented =>
-      'Download not implemented yet.';
-
-  @override
-  String get offline_maps_download_completed =>
-      'Download completed successfully!';
-
-  @override
-  String offline_maps_download_failed(String error) {
-    return 'Download failed: $error';
-  }
-
-  @override
-  String get offline_maps_downloading => 'Downloading...';
-
-  @override
-  String get map_area_selector_instruction =>
-      'Drag the map to position the download area';
-
-  @override
   String get project_label_prefix => 'Project: ';
-
-  @override
-  String get offline_maps_bulk_download_not_allowed =>
-      'Bulk Download Not Allowed';
-
-  @override
-  String get offline_maps_bulk_download_restriction_message =>
-      'This map type does not allow bulk download operations due to licensing restrictions.';
 }

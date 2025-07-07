@@ -6,12 +6,12 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:logging/logging.dart';
 import 'package:teleferika/core/app_config.dart';
-import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/tabs/map/map_type.dart';
 import 'package:teleferika/ui/tabs/map/services/map_cache_manager.dart';
 import 'package:teleferika/ui/tabs/map/services/map_preferences_service.dart';
 import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
 import 'package:teleferika/ui/widgets/project_points_layer.dart';
+import 'package:licensed_features_package/l10n/lfp_localizations.dart';
 
 class MapAreaSelector extends StatefulWidget {
   // TODO: move to licensed_features_package
@@ -34,9 +34,9 @@ class _MapAreaSelectorState extends State<MapAreaSelector> {
   final MapController _mapController = MapController();
   final Logger _logger = Logger('MapAreaSelector');
 
-  LatLng _defaultCenter =
+  final LatLng _defaultCenter =
       AppConfig.defaultMapCenter; // Use config instead of hardcoded Milan
-  double _defaultZoom = AppConfig.defaultMapZoom;
+  final double _defaultZoom = AppConfig.defaultMapZoom;
 
   bool _isLoadingLocation = false;
   bool _hasLocationPermission = false;
@@ -188,7 +188,7 @@ class _MapAreaSelectorState extends State<MapAreaSelector> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  S.of(context)?.map_area_selector_instruction ??
+                  LfpLocalizations.of(context)?.map_area_selector_instruction ??
                       'Drag the map to position the download area',
                   style: const TextStyle(fontSize: 12),
                   textAlign: TextAlign.center,

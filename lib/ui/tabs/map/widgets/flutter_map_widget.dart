@@ -192,6 +192,7 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
                 urlTemplate: widget.tileLayerUrl,
                 userAgentPackageName: 'com.jlbbooks.teleferika',
                 tileProvider: _getTileProvider(widget.currentMapType),
+                retinaMode: widget.currentMapType.supportsRetina ? RetinaMode.isHighDensity(context) : null,
               ),
               RichAttributionWidget(
                 attributions: [

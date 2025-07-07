@@ -53,7 +53,7 @@ class MapStateManager extends ChangeNotifier {
   bool hasLocationPermission = false;
   double? connectingLineFromFirstToLast;
   Polyline? projectHeadingLine;
-  MapType _currentMapType = MapType.openStreetMap;
+  MapType _currentMapType = MapType.all.first;
   double glowAnimationValue = 0.0;
   double mapCacheSize = 0.0;
 

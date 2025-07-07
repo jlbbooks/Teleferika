@@ -929,8 +929,9 @@ class _PointDetailsPageState extends State<PointDetailsPage> with StatusMixin {
                           Builder(
                             builder: (context) {
                               final points = context.projectState.currentPoints;
-                              if (points.length < 3)
+                              if (points.length < 3) {
                                 return const SizedBox.shrink();
+                              }
 
                               final geometryService = GeometryService(
                                 project: context.projectState.currentProject!,

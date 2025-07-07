@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/tabs/map/map_type.dart';
 
 class MapTypeSelector {
@@ -8,7 +7,6 @@ class MapTypeSelector {
     required Function(MapType) onMapTypeChanged,
     required BuildContext context,
   }) {
-    final s = S.of(context);
     return Positioned(
       top: 16,
       left: 16,
@@ -53,7 +51,7 @@ class MapTypeSelector {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    currentMapType.getUiName(s),
+                    currentMapType.name,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.w500,
                       fontSize: 12,
@@ -74,7 +72,7 @@ class MapTypeSelector {
               for (final mapType in MapType.all)
                 _buildMapTypeMenuItem(
                   mapType,
-                  mapType.getUiName(s),
+                  mapType.name,
                   mapType.icon,
                   currentMapType,
                   context,

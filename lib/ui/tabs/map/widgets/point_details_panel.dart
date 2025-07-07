@@ -439,8 +439,9 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                 builder: (context) {
                   final points = context.projectState.currentPoints;
                   final selected = widget.selectedPoint;
-                  if (selected == null || points.length < 3)
+                  if (selected == null || points.length < 3) {
                     return const SizedBox.shrink();
+                  }
 
                   final geometryService = GeometryService(
                     project: context.projectState.currentProject!,

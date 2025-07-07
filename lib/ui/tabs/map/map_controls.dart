@@ -108,7 +108,6 @@ class MapControls {
     required Function(MapType) onMapTypeChanged,
     required BuildContext context,
   }) {
-    final s = S.of(context);
     return Positioned(
       top: 16,
       left: 16,
@@ -155,7 +154,7 @@ class MapControls {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    currentMapType.getUiName(s),
+                    currentMapType.name,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.w500,
                       fontSize: 12,
@@ -176,7 +175,7 @@ class MapControls {
               for (final mapType in MapType.all)
                 _buildMapTypeMenuItem(
                   mapType,
-                  mapType.getUiName(s),
+                  mapType.name,
                   mapType.icon,
                   currentMapType,
                   context,

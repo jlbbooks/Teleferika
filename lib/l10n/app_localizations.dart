@@ -1045,7 +1045,7 @@ abstract class S {
   /// Localized name for map types based on the mapType parameter.
   ///
   /// In en, this message translates to:
-  /// **'{mapType, select, openStreetMap {Open Street Map} satellite {Satellite} terrain {Terrain} other {Unknown}}'**
+  /// **'{mapType}'**
   String mapTypeName(String mapType);
 
   /// Label for the map type selector.
@@ -1810,101 +1810,11 @@ abstract class S {
   /// **'{angle}°'**
   String headingLabel(String angle);
 
-  /// Title for the offline maps download page.
-  ///
-  /// In en, this message translates to:
-  /// **'Download Offline Maps'**
-  String get offline_maps_download_title;
-
-  /// Placeholder text for the map type dropdown.
-  ///
-  /// In en, this message translates to:
-  /// **'Select Map Type'**
-  String get offline_maps_select_map_type;
-
-  /// Message shown when no map type is selected.
-  ///
-  /// In en, this message translates to:
-  /// **'Select a map type to start'**
-  String get offline_maps_select_map_type_to_start;
-
-  /// Label for the area selection section.
-  ///
-  /// In en, this message translates to:
-  /// **'Select Area to Download:'**
-  String get offline_maps_select_area_to_download;
-
-  /// Label for the selected area information.
-  ///
-  /// In en, this message translates to:
-  /// **'Selected Area:'**
-  String get offline_maps_selected_area;
-
-  /// Southwest coordinates display.
-  ///
-  /// In en, this message translates to:
-  /// **'SW: {lat}, {lng}'**
-  String offline_maps_coordinates_sw(String lat, String lng);
-
-  /// Northeast coordinates display.
-  ///
-  /// In en, this message translates to:
-  /// **'NE: {lat}, {lng}'**
-  String offline_maps_coordinates_ne(String lat, String lng);
-
-  /// Label for the download button.
-  ///
-  /// In en, this message translates to:
-  /// **'Download'**
-  String get offline_maps_download_button;
-
-  /// Message shown when download functionality is not yet implemented.
-  ///
-  /// In en, this message translates to:
-  /// **'Download not implemented yet.'**
-  String get offline_maps_download_not_implemented;
-
-  /// Message shown when download completes successfully.
-  ///
-  /// In en, this message translates to:
-  /// **'Download completed successfully!'**
-  String get offline_maps_download_completed;
-
-  /// Message shown when download fails.
-  ///
-  /// In en, this message translates to:
-  /// **'Download failed: {error}'**
-  String offline_maps_download_failed(String error);
-
-  /// Text shown on the download button when download is in progress.
-  ///
-  /// In en, this message translates to:
-  /// **'Downloading...'**
-  String get offline_maps_downloading;
-
-  /// Instruction text shown in the map area selector widget.
-  ///
-  /// In en, this message translates to:
-  /// **'Drag the map to position the download area'**
-  String get map_area_selector_instruction;
-
   /// Prefix for project name labels on the map.
   ///
   /// In en, this message translates to:
   /// **'Project: '**
   String get project_label_prefix;
-
-  /// Title for the bulk download restriction notice.
-  ///
-  /// In en, this message translates to:
-  /// **'Bulk Download Not Allowed'**
-  String get offline_maps_bulk_download_not_allowed;
-
-  /// Message explaining why bulk download is not allowed for certain map types.
-  ///
-  /// In en, this message translates to:
-  /// **'This map type does not allow bulk download operations due to licensing restrictions.'**
-  String get offline_maps_bulk_download_restriction_message;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {
