@@ -19,26 +19,89 @@
     "description": "Titolo della barra dell'app per la pagina dei dettagli del progetto"
   },
   "tabDetails": "Dettagli",
+  "@tabDetails": {
+    "description": "Etichetta per la tab dettagli."
+  },
   "tabPoints": "Punti",
+  "@tabPoints": {
+    "description": "Etichetta per la tab punti."
+  },
   "tabCompass": "Bussola",
+  "@tabCompass": {
+    "description": "Etichetta per la tab bussola."
+  },
   "tabMap": "Mappa",
+  "@tabMap": {
+    "description": "Etichetta per la tab mappa."
+  },
   "formFieldNameLabel": "Nome Progetto",
+  "@formFieldNameLabel": {
+    "description": "Etichetta per il campo nome del modulo."
+  },
   "formFieldNoteLabel": "Note",
+  "@formFieldNoteLabel": {
+    "description": "Etichetta per il campo note del modulo."
+  },
   "formFieldAzimuthLabel": "Azimut (°)",
+  "@formFieldAzimuthLabel": {
+    "description": "Etichetta per il campo azimut del modulo."
+  },
   "formFieldProjectDateLabel": "Data Progetto",
+  "@formFieldProjectDateLabel": {
+    "description": "Etichetta per il campo data progetto del modulo."
+  },
   "formFieldLastUpdatedLabel": "Ultimo Aggiornamento",
+  "@formFieldLastUpdatedLabel": {
+    "description": "Etichetta per il campo ultimo aggiornamento del modulo."
+  },
   "formFieldPresumedTotalLengthLabel": "Lunghezza totale presunta (m)",
+  "@formFieldPresumedTotalLengthLabel": {
+    "description": "Etichetta per il campo lunghezza totale presunta del modulo."
+  },
   "buttonSave": "Salva",
+  "@buttonSave": {
+    "description": "Etichetta per il pulsante salva."
+  },
   "buttonCalculateAzimuth": "Calcola Azimut",
+  "@buttonCalculateAzimuth": {
+    "description": "Etichetta per il pulsante calcola azimut."
+  },
   "buttonCalculate": "Calcola",
+  "@buttonCalculate": {
+    "description": "Etichetta per il pulsante calcola."
+  },
   "buttonSelectDate": "Seleziona Data",
+  "@buttonSelectDate": {
+    "description": "Etichetta per il pulsante seleziona data."
+  },
   "compassAddPointButton": "Aggiungi Punto",
+  "@compassAddPointButton": {
+    "description": "Etichetta per il pulsante aggiungi punto dalla bussola."
+  },
   "compassAddAsEndPointButton": "Aggiungi come Fine",
+  "@compassAddAsEndPointButton": {
+    "description": "Etichetta per il pulsante aggiungi come punto finale dalla bussola."
+  },
   "pointsSetAsStartButton": "Imposta come Inizio",
+  "@pointsSetAsStartButton": {
+    "description": "Etichetta per il pulsante imposta come inizio."
+  },
   "pointsSetAsEndButton": "Imposta come Fine",
+  "@pointsSetAsEndButton": {
+    "description": "Etichetta per il pulsante imposta come fine."
+  },
   "pointsDeleteButton": "Elimina",
+  "@pointsDeleteButton": {
+    "description": "Etichetta per il pulsante elimina punto."
+  },
   "errorSaveProjectBeforeAddingPoints": "Salvare il progetto prima di aggiungere punti.",
+  "@errorSaveProjectBeforeAddingPoints": {
+    "description": "Messaggio di errore mostrato quando si tenta di aggiungere punti prima di salvare il progetto."
+  },
   "infoFetchingLocation": "Recupero posizione...",
+  "@infoFetchingLocation": {
+    "description": "Messaggio mostrato quando si recupera la posizione dell'utente."
+  },
   "pointAddedSnackbar": "Punto P{ordinalNumber} aggiunto.",
   "@pointAddedSnackbar": {
     "description": "Messaggio Snackbar quando un punto viene aggiunto con successo. ordinalNumber è il numero del punto.",
@@ -50,7 +113,13 @@
     }
   },
   "pointAddedSetAsEndSnackbarSuffix": "Impostato come punto FINALE.",
+  "@pointAddedSetAsEndSnackbarSuffix": {
+    "description": "Suffisso per snackbar quando un punto viene impostato come punto finale."
+  },
   "pointAddedInsertedBeforeEndSnackbarSuffix": "Inserito prima del punto finale corrente.",
+  "@pointAddedInsertedBeforeEndSnackbarSuffix": {
+    "description": "Suffisso per snackbar quando un punto viene inserito prima del punto finale."
+  },
   "pointFromCompassDefaultNote": "Punto da Bussola (A: {altitude}°)",
   "@pointFromCompassDefaultNote": {
     "description": "Nota predefinita per un punto aggiunto tramite lo strumento bussola, che mostra l'altitudine.",
@@ -78,8 +147,17 @@
     }
   },
   "errorAzimuthPointsNotSet": "Punto iniziale e/o finale non impostato. Impossibile calcolare l'azimut.",
+  "@errorAzimuthPointsNotSet": {
+    "description": "Messaggio di errore quando il calcolo dell'azimut viene tentato senza punti iniziali/finali."
+  },
   "errorAzimuthPointsSame": "I punti iniziale e finale sono uguali. L'azimut è indefinito o 0.",
+  "@errorAzimuthPointsSame": {
+    "description": "Messaggio di errore quando i punti iniziali e finali sono uguali per il calcolo dell'azimut."
+  },
   "errorAzimuthCouldNotRetrievePoints": "Impossibile recuperare i dati dei punti per il calcolo. Controllare i punti.",
+  "@errorAzimuthCouldNotRetrievePoints": {
+    "description": "Messaggio di errore quando i dati dei punti non possono essere recuperati per il calcolo dell'azimut."
+  },
   "errorCalculatingAzimuth": "Errore durante il calcolo dell'azimut: {errorMessage}",
   "@errorCalculatingAzimuth": {
     "placeholders": {
@@ -110,8 +188,17 @@
     "description": "Messaggio nella finestra di dialogo che chiede conferma per sovrascrivere il valore dell'azimut esistente."
   },
   "projectNameCannotBeEmptyValidator": "Il nome del progetto non può essere vuoto.",
+  "@projectNameCannotBeEmptyValidator": {
+    "description": "Messaggio di validazione per nome progetto vuoto."
+  },
   "projectSavedSuccessfully": "Progetto salvato con successo.",
+  "@projectSavedSuccessfully": {
+    "description": "Messaggio Snackbar quando un progetto viene salvato con successo."
+  },
   "dialogTitleConfirmDelete": "Conferma Eliminazione",
+  "@dialogTitleConfirmDelete": {
+    "description": "Titolo per la finestra di dialogo di conferma eliminazione."
+  },
   "dialogContentConfirmDeletePoint": "Sei sicuro di voler eliminare il punto P{pointOrdinal}? Questa azione non può essere annullata.",
   "@dialogContentConfirmDeletePoint": {
     "placeholders": {
@@ -121,7 +208,13 @@
     }
   },
   "buttonCancel": "Annulla",
+  "@buttonCancel": {
+    "description": "Etichetta per il pulsante annulla."
+  },
   "buttonDelete": "Elimina",
+  "@buttonDelete": {
+    "description": "Etichetta per il pulsante elimina."
+  },
   "pointDeletedSnackbar": "Punto P{pointOrdinal} eliminato.",
   "@pointDeletedSnackbar": {
     "placeholders": {
@@ -195,6 +288,9 @@
     "description": "Messaggio di successo mostrato dopo che il file è pronto per la condivisione tramite la finestra di dialogo di condivisione."
   },
   "file_saved_successfully": "File salvato con successo",
+  "@file_saved_successfully": {
+    "description": "Messaggio snackbar quando un file viene salvato con successo."
+  },
   "file_save_cancelled_or_failed": "Salvataggio file annullato o fallito.",
   "@file_save_cancelled_or_failed": {
     "description": "Messaggio mostrato se l'utente annulla la finestra di dialogo di salvataggio o se il salvataggio fallisce per altri motivi."
@@ -274,8 +370,17 @@
     "description": "Messaggio mostrato quando si tenta di esportare un progetto nuovo mai salvato."
   },
   "export_requires_licence_title": "Licenza richiesta per l'esportazione",
+  "@export_requires_licence_title": {
+    "description": "Titolo per la finestra di dialogo mostrata quando una licenza è richiesta per l'esportazione."
+  },
   "export_requires_licence_message": "Questa funzione richiede una licenza attiva. Importa un file di licenza valido per procedere.",
+  "@export_requires_licence_message": {
+    "description": "Messaggio mostrato quando una licenza è richiesta per l'esportazione."
+  },
   "action_import_licence": "Importa licenza",
+  "@action_import_licence": {
+    "description": "Etichetta per l'azione di importazione licenza."
+  },
   "unsaved_changes_dialog_title": "Modifiche non salvate",
   "@unsaved_changes_dialog_title": {
     "description": "Titolo per la finestra di dialogo che avvisa delle modifiche non salvate."
@@ -1165,6 +1270,9 @@
     }
   },
   "photo_manager_wait_saving": "Attendere, salvataggio foto in corso...",
+  "@photo_manager_wait_saving": {
+    "description": "Messaggio snackbar mostrato quando le foto vengono salvate e l'utente tenta di interagire."
+  },
   "app_version_label": "Versione app: {version}",
   "@app_version_label": {
     "description": "Etichetta per visualizzare la versione dell'app nei dialoghi.",

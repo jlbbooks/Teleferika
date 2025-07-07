@@ -452,6 +452,9 @@
     "description": "Error message when trying to delete an unsaved project."
   },
   "confirm_delete_project_title": "Confirm Delete",
+  "@confirm_delete_project_title": {
+    "description": "Title for the dialog confirming project deletion."
+  },
   "confirm_delete_project_content": "Are you sure you want to delete the project \"{projectName}\"? This action cannot be undone.",
   "@confirm_delete_project_content": {
     "description": "Content for the dialog confirming project deletion.",
@@ -487,6 +490,9 @@
     }
   },
   "unsaved_changes_dialog_title": "Unsaved Changes",
+  "@unsaved_changes_dialog_title": {
+    "description": "Title for the dialog warning about unsaved changes."
+  },
   "unsaved_changes_dialog_content": "You have unsaved changes. Do you want to discard them and leave?",
   "@unsaved_changes_dialog_content": {
     "description": "Content for the dialog warning about unsaved changes."
