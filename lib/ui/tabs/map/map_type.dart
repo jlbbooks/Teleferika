@@ -1,77 +1,72 @@
+import 'package:flutter/material.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 
-/// Enhanced MapType enum with getters for name and cache store name
-enum MapType {
-  openStreetMap,
-  satellite,
-  terrain;
+class MapType {
+  final String id;
+  final String name;
+  final String cacheStoreName;
+  final bool allowsBulkDownload;
+  final String tileLayerUrl;
+  final String tileLayerAttribution;
+  final String attributionUrl;
+  final IconData icon;
 
-  /// Get a nicely formatted display name for the map type
-  String get name {
-    switch (this) {
-      case MapType.openStreetMap:
-        return 'Open Street Map';
-      case MapType.satellite:
-        return 'Satellite';
-      case MapType.terrain:
-        return 'Terrain';
-    }
-  }
+  const MapType({
+    required this.id,
+    required this.name,
+    required this.cacheStoreName,
+    required this.allowsBulkDownload,
+    required this.tileLayerUrl,
+    required this.tileLayerAttribution,
+    required this.attributionUrl,
+    required this.icon,
+  });
 
-  /// Get the cache store name for this map type
-  String get cacheStoreName => 'mapStore_${toString().split('.').last}';
-
-  /// Check if this map type allows bulk download operations
-  bool get allowsBulkDownload {
-    switch (this) {
-      case MapType.openStreetMap:
-        return false; // https://operations.osmfoundation.org/policies/tiles/
-      case MapType.satellite:
-        return true;
-      case MapType.terrain:
-        return true;
-    }
-  }
-
-  /// Get the UI display name for this map type (localized if available)
   String getUiName([S? localizations]) {
     if (localizations == null) return name;
-
-    return localizations.mapTypeName(toString().split('.').last);
+    return localizations.mapTypeName(id);
   }
 
-  /// Get the tile layer URL for this map type
-  String get tileLayerUrl {
-    switch (this) {
-      case MapType.openStreetMap:
-        return 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-      case MapType.satellite:
-        return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-      case MapType.terrain:
-        return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}';
-    }
-  }
+  static const MapType openStreetMap = MapType(
+    id: 'openStreetMap',
+    name: 'Open Street Map',
+    cacheStoreName: 'mapStore_openStreetMap',
+    allowsBulkDownload: false,
+    tileLayerUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    tileLayerAttribution: '© OpenStreetMap contributors',
+    attributionUrl: 'https://openstreetmap.org/copyright',
+    icon: Icons.map,
+  );
 
-  /// Get the tile layer attribution for this map type
-  String get tileLayerAttribution {
-    switch (this) {
-      case MapType.openStreetMap:
-        return '© OpenStreetMap contributors';
-      case MapType.satellite:
-        return '© Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community';
-      case MapType.terrain:
-        return '© Esri — Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012';
-    }
-  }
+  static const MapType satellite = MapType(
+    id: 'satellite',
+    name: 'Satellite',
+    cacheStoreName: 'mapStore_satellite',
+    allowsBulkDownload: true,
+    tileLayerUrl:
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    tileLayerAttribution:
+        '© Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+    attributionUrl: 'https://www.esri.com/en-us/home',
+    icon: Icons.satellite_alt,
+  );
 
-  /// Get the attribution URL for this map type
-  String get attributionUrl {
-    switch (this) {
-      case MapType.openStreetMap:
-        return 'https://openstreetmap.org/copyright';
-      case MapType.satellite:
-      case MapType.terrain:
-        return 'https://www.esri.com/en-us/home';
-    }
+  static const MapType terrain = MapType(
+    id: 'terrain',
+    name: 'Terrain',
+    cacheStoreName: 'mapStore_terrain',
+    allowsBulkDownload: true,
+    tileLayerUrl:
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+    tileLayerAttribution:
+        '© Esri — Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012',
+    attributionUrl: 'https://www.esri.com/en-us/home',
+    icon: Icons.terrain,
+  );
+
+  static const List<MapType> all = [openStreetMap, satellite, terrain];
+
+  static MapType of(String id) {
+    return all.firstWhere((type) => type.id == id, orElse: () => openStreetMap);
   }
 }

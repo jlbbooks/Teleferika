@@ -44,7 +44,7 @@ class MapCacheLogger {
 
   /// Log individual store statistics for each map type
   static Future<void> _logIndividualStoreStats() async {
-    for (final mapType in MapType.values) {
+    for (final mapType in MapType.all) {
       await _logStoreStats(mapType);
     }
   }
@@ -186,7 +186,7 @@ class MapCacheLogger {
 
       // Individual store stats
       final storeStats = <String, dynamic>{};
-      for (final mapType in MapType.values) {
+      for (final mapType in MapType.all) {
         try {
           final storeName = MapStoreUtils.getStoreNameForMapType(mapType);
           final store = FMTCStore(storeName);

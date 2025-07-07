@@ -18,12 +18,10 @@ class MapTypeSelector {
         shadowColor: Colors.black12,
         child: Container(
           decoration: BoxDecoration(
-            color: Theme.of(context).cardColor.withValues(alpha: 0.9),
+            color: Theme.of(context).cardColor.withAlpha(230),
             borderRadius: BorderRadius.circular(8.0),
             border: Border.all(
-              color: Theme.of(
-                context,
-              ).colorScheme.outline.withValues(alpha: 0.1),
+              color: Theme.of(context).colorScheme.outline.withAlpha(25),
               width: 0.5,
             ),
           ),
@@ -42,15 +40,15 @@ class MapTypeSelector {
                     decoration: BoxDecoration(
                       color: Theme.of(
                         context,
-                      ).colorScheme.primary.withValues(alpha: 0.05),
+                      ).colorScheme.primary.withAlpha(13),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Icon(
-                      _getMapTypeIcon(currentMapType),
+                      currentMapType.icon,
                       size: 14,
                       color: Theme.of(
                         context,
-                      ).colorScheme.primary.withValues(alpha: 0.7),
+                      ).colorScheme.primary.withAlpha(179),
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -67,33 +65,20 @@ class MapTypeSelector {
                     size: 16,
                     color: Theme.of(
                       context,
-                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                    ).colorScheme.onSurfaceVariant.withAlpha(153),
                   ),
                 ],
               ),
             ),
             itemBuilder: (BuildContext context) => [
-              _buildMapTypeMenuItem(
-                MapType.openStreetMap,
-                MapType.openStreetMap.getUiName(s),
-                Icons.map,
-                currentMapType,
-                context,
-              ),
-              _buildMapTypeMenuItem(
-                MapType.satellite,
-                MapType.satellite.getUiName(s),
-                Icons.satellite_alt,
-                currentMapType,
-                context,
-              ),
-              _buildMapTypeMenuItem(
-                MapType.terrain,
-                MapType.terrain.getUiName(s),
-                Icons.terrain,
-                currentMapType,
-                context,
-              ),
+              for (final mapType in MapType.all)
+                _buildMapTypeMenuItem(
+                  mapType,
+                  mapType.getUiName(s),
+                  mapType.icon,
+                  currentMapType,
+                  context,
+                ),
             ],
           ),
         ),
@@ -108,7 +93,7 @@ class MapTypeSelector {
     MapType currentMapType,
     BuildContext context,
   ) {
-    final isSelected = currentMapType == mapType;
+    final isSelected = currentMapType.id == mapType.id;
     return PopupMenuItem<MapType>(
       value: mapType,
       child: Container(
@@ -119,9 +104,7 @@ class MapTypeSelector {
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? Theme.of(
-                        context,
-                      ).colorScheme.primary.withValues(alpha: 0.1)
+                    ? Theme.of(context).colorScheme.primary.withAlpha(25)
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(6),
               ),
@@ -155,16 +138,5 @@ class MapTypeSelector {
         ),
       ),
     );
-  }
-
-  static IconData _getMapTypeIcon(MapType mapType) {
-    switch (mapType) {
-      case MapType.openStreetMap:
-        return Icons.map;
-      case MapType.satellite:
-        return Icons.satellite_alt;
-      case MapType.terrain:
-        return Icons.terrain;
-    }
   }
 }

@@ -111,7 +111,7 @@ class MapCacheManager {
   static Future<void> validateAllStores() async {
     _logger.info('Validating all cache stores...');
 
-    for (final mapType in MapType.values) {
+    for (final mapType in MapType.all) {
       final storeName = mapType.cacheStoreName;
 
       try {
@@ -141,7 +141,7 @@ class MapCacheManager {
     _logger.info('Clearing all cache stores...');
 
     final allStoreNames = [
-      ...MapType.values.map((mt) => mt.cacheStoreName),
+      ...MapType.all.map((mt) => mt.cacheStoreName),
       _fallbackStoreName,
     ];
 
@@ -164,7 +164,7 @@ class MapCacheManager {
   static Map<String, String> getStoreStatus() {
     final status = <String, String>{};
 
-    for (final mapType in MapType.values) {
+    for (final mapType in MapType.all) {
       final storeName = mapType.cacheStoreName;
       if (_validatedStores.contains(storeName)) {
         status[storeName] = 'validated';
@@ -218,7 +218,7 @@ class MapCacheManager {
   /// Log cache status for debugging
   static Future<void> logCacheStatus() async {
     _logger.info('=== CACHE STATUS ===');
-    for (final mapType in MapType.values) {
+    for (final mapType in MapType.all) {
       final storeName = mapType.cacheStoreName;
       final hasTiles = await hasTilesInStore(storeName);
       _logger.info('${mapType.name}: $storeName - Has tiles: $hasTiles');
