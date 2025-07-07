@@ -62,7 +62,7 @@ class MapStateManager extends ChangeNotifier {
 
   /// Set the current map type and save to preferences
   set currentMapType(MapType value) {
-    if (_currentMapType != value) {
+    if (_currentMapType.id != value.id) {
       _currentMapType = value;
       // Save to SharedPreferences
       MapPreferencesService.saveMapType(value);
@@ -100,7 +100,7 @@ class MapStateManager extends ChangeNotifier {
   Future<void> _loadSavedMapType() async {
     try {
       final savedMapType = await MapPreferencesService.loadMapType();
-      if (currentMapType != savedMapType) {
+      if (currentMapType.id != savedMapType.id) {
         currentMapType = savedMapType;
         notifyListeners();
       }

@@ -6,212 +6,156 @@ This document explains how map types are implemented and used throughout the Tel
 
 Teleferika supports multiple map types to provide users with different views of geographic data. Each map type has its own tile server, cache store, and localized display name.
 
-## Map Type Enum
+## MapType Class (Data-Driven)
 
-The core of the map type system is the `MapType` enum located in `lib/ui/tabs/map/map_type.dart`:
+The core of the map type system is the `MapType` class located in `lib/ui/tabs/map/map_type.dart`:
 
 ```dart
-enum MapType {
-  openStreetMap,
-  satellite,
-  terrain;
+class MapType {
+  final String id;
+  final String name;
+  final String cacheStoreName;
+  final bool allowsBulkDownload;
+  final String tileLayerUrl;
+  final String tileLayerAttribution;
+  final String attributionUrl;
+  final IconData icon;
+  // ...
 }
 ```
 
-## Getters and Properties
+### Static List of Map Types
 
-Each `MapType` instance provides several getters for different use cases:
+All available map types are defined in a static list:
 
-### 1. Display Name (`name`)
-Returns a nicely formatted display name for UI purposes:
 ```dart
-MapType.openStreetMap.name // "Open Street Map"
-MapType.satellite.name     // "Satellite"
-MapType.terrain.name       // "Terrain"
+static const List<MapType> all = [openStreetMap, satellite, terrain];
 ```
 
-### 2. Cache Store Name (`cacheStoreName`)
-Returns the cache store identifier for tile caching:
+### Lookup by ID
+
+You can look up a map type by its id:
+
 ```dart
-MapType.openStreetMap.cacheStoreName // "mapStore_openStreetMap"
-MapType.satellite.cacheStoreName     // "mapStore_satellite"
-MapType.terrain.cacheStoreName       // "mapStore_terrain"
+MapType type = MapType.of('openStreetMap');
 ```
 
-### 3. Localized UI Name (`getUiName()`)
-Returns a localized display name based on the current app locale:
-```dart
-// English
-mapType.getUiName(localizations) // "Open Street Map", "Satellite", "Terrain"
+### Example MapType Definition
 
-// Italian
-mapType.getUiName(localizations) // "Mappa Stradale Aperta", "Satellite", "Terreno"
+```dart
+static const MapType openStreetMap = MapType(
+  id: 'openStreetMap',
+  name: 'Open Street Map',
+  cacheStoreName: 'mapStore_openStreetMap',
+  allowsBulkDownload: false,
+  tileLayerUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+  tileLayerAttribution: '© OpenStreetMap contributors',
+  attributionUrl: 'https://openstreetmap.org/copyright',
+  icon: Icons.map,
+);
 ```
 
-### 4. Tile Layer URL (`tileLayerUrl`)
-Returns the tile server URL for the map type:
-```dart
-MapType.openStreetMap.tileLayerUrl // "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-MapType.satellite.tileLayerUrl     // "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-MapType.terrain.tileLayerUrl       // "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
-```
+## Accessing Properties
 
-### 5. Attribution (`tileLayerAttribution` & `attributionUrl`)
-Returns the required attribution information for each map type:
+You can access properties directly:
+
 ```dart
-MapType.openStreetMap.tileLayerAttribution // "© OpenStreetMap contributors"
-MapType.openStreetMap.attributionUrl       // "https://openstreetmap.org/copyright"
+String url = mapType.tileLayerUrl;
+String name = mapType.getUiName(localizations);
+IconData icon = mapType.icon;
 ```
 
 ## Localization
 
-Map type names are localized using a parameterized approach in the ARB files:
-
-### English (`lib/l10n/app_en.arb`)
-```json
-"mapTypeName": "{mapType, select, openStreetMap {Open Street Map} satellite {Satellite} terrain {Terrain} other {Unknown}}"
-```
-
-### Italian (`lib/l10n/app_it.arb`)
-```json
-"mapTypeName": "{mapType, select, openStreetMap {Mappa Stradale Aperta} satellite {Satellite} terrain {Terreno} other {Sconosciuto}}"
-```
-
-The `getUiName()` method automatically passes the enum name as a parameter to get the correct localized string.
-
-## Tile Caching
-
-Each map type has its own dedicated cache store to optimize performance and storage:
-
-### Cache Store Creation
-Cache stores are created and validated during app initialization in `lib/main.dart`:
-```dart
-// Create and validate stores for each MapType enum value
-await MapCacheManager.validateAllStores();
-```
-
-### Cache Store Usage with Error Handling
-The `FlutterMapWidget` uses the error handler to get tile providers with automatic fallback:
-```dart
-FMTCTileProvider _getTileProvider(MapType mapType) {
-  return MapCacheManager.getTileProviderWithFallback(mapType);
-}
-```
-
-### Error Handling and Fallback
-The system includes comprehensive error handling for cache store operations:
-
-**Automatic Validation**: Stores are validated during initialization and their status is cached
-**Graceful Degradation**: If a store fails, the system automatically falls back to a fallback store
-**Recovery Mechanisms**: Failed stores can be revalidated or reset through debug tools
-
-```dart
-// Get tile provider with automatic error handling
-FMTCTileProvider provider = MapCacheManager.getTileProviderWithFallback(mapType);
-
-// Check store status
-Map<String, String> status = MapCacheManager.getStoreStatus();
-
-// Revalidate all stores
-await MapCacheManager.validateAllStores();
-
-// Reset validation state for recovery
-MapCacheManager.resetAllStoreValidation();
-```
+Map type names are localized using the `getUiName()` method, which uses the id for lookup in ARB files.
 
 ## Usage Patterns
 
 ### 1. Map Type Selection
-Users can change map types using the `MapTypeSelector` widget:
+
+Iterate over `MapType.all` to build selectors:
+
 ```dart
-MapTypeSelector.build(
-  currentMapType: _stateManager.currentMapType,
-  onMapTypeChanged: (mapType) {
-    setState(() {
-      _stateManager.currentMapType = mapType;
-    });
-  },
-  context: context,
-)
-```
-
-### 2. State Management
-Map type state is managed in `MapStateManager`:
-```dart
-MapType _currentMapType = MapType.openStreetMap;
-
-MapType get currentMapType => _currentMapType;
-
-set currentMapType(MapType value) {
-  if (_currentMapType != value) {
-    _currentMapType = value;
-    MapPreferencesService.saveMapType(value);
-    MapCacheLogger.logCachePerformance(value);
-    notifyListeners();
-  }
+for (final mapType in MapType.all) {
+  // Use mapType in dropdowns, menus, etc.
 }
 ```
 
-### 3. Preferences
-Map type preferences are persisted using `MapPreferencesService`:
-```dart
-// Save preference
-await MapPreferencesService.saveMapType(mapType);
+### 2. State Management
 
-// Load preference
-final savedMapType = await MapPreferencesService.loadMapType();
-```
+Store the current map type as a `MapType` instance. Persist the id string and use `MapType.of(id)` to restore.
+
+### 3. Preferences
+
+Save the map type id to preferences. Restore using `MapType.of(savedId)`.
 
 ### 4. Tile Layer Configuration
-The `FlutterMapWidget` configures tile layers based on the current map type:
-```dart
-TileLayer(
-  urlTemplate: widget.currentMapType.tileLayerUrl,
-  userAgentPackageName: 'com.jlbbooks.teleferika',
-  tileProvider: _getTileProvider(widget.currentMapType),
-),
-RichAttributionWidget(
-  attributions: [
-    TextSourceAttribution(
-      widget.currentMapType.tileLayerAttribution,
-      onTap: () => launchUrl(Uri.parse(widget.currentMapType.attributionUrl)),
-    ),
-  ],
-),
-```
+
+Configure tile layers using the properties of the selected `MapType` instance.
 
 ## Adding New Map Types
 
 To add a new map type:
 
-1. **Add to Enum**: Add the new value to the `MapType` enum
-2. **Update Getters**: Add the new case to all getters (`tileLayerUrl`, `tileLayerAttribution`, etc.)
-3. **Add Localization**: Add the new map type to the `mapTypeName` select statement in both ARB files
-4. **Update Cache**: The cache store will be automatically created during app initialization
-5. **Update UI**: Add the new map type to the `MapTypeSelector` widget
+1. **Define a new MapType**: Add a new static const in `MapType` and add it to the `all` list.
+2. **Add Localization**: Add the new map type id to the `mapTypeName` select statement in both ARB files.
+3. **Update UI**: The new map type will automatically appear in selectors if you iterate over `MapType.all`.
 
 ### Example: Adding a "Hybrid" Map Type
-```dart
-enum MapType {
-  openStreetMap,
-  satellite,
-  terrain,
-  hybrid; // New map type
-}
 
-// Update getters
-String get tileLayerUrl {
-  switch (this) {
-    // ... existing cases
-    case MapType.hybrid:
-      return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-  }
-}
+```dart
+static const MapType hybrid = MapType(
+  id: 'hybrid',
+  name: 'Hybrid',
+  cacheStoreName: 'mapStore_hybrid',
+  allowsBulkDownload: true,
+  tileLayerUrl: 'https://example.com/hybrid/{z}/{x}/{y}.png',
+  tileLayerAttribution: '© Example',
+  attributionUrl: 'https://example.com',
+  icon: Icons.layers,
+);
+
+static const List<MapType> all = [openStreetMap, satellite, terrain, hybrid];
 ```
 
-```json
-// Update ARB files
-"mapTypeName": "{mapType, select, openStreetMap {Open Street Map} satellite {Satellite} terrain {Terrain} hybrid {Hybrid} other {Unknown}}"
+## Best Practices
+
+1. **Always use the MapType class**: Never hardcode map type strings or use enums.
+2. **Use the static list**: Iterate over `MapType.all` for selectors and utilities.
+3. **Persist by id**: Store the id string, not the whole object.
+4. **Handle localization**: Always provide fallbacks when localization is not available.
+5. **Respect attribution**: Always display the required attribution for each map type.
+6. **Test thoroughly**: Verify that new map types work across all supported locales.
+
+## Related Files
+
+- `lib/ui/tabs/map/map_type.dart` - Core MapType class
+- `lib/ui/tabs/map/services/map_store_utils.dart` - Cache store utilities
+- `lib/ui/tabs/map/services/map_cache_logger.dart` - Cache logging
+- `lib/ui/tabs/map/services/map_cache_error_handler.dart` - Error handling and fallback
+- `lib/ui/tabs/map/services/map_preferences_service.dart` - Preferences management
+- `lib/ui/tabs/map/widgets/map_type_selector.dart` - UI selector
+- `lib/ui/tabs/map/debug/debug_panel.dart` - Debug tools for cache management
+- `lib/l10n/app_en.arb` & `lib/l10n/app_it.arb` - Localization
+- `lib/main.dart` - Cache store initialization
+- `lib/ui/tabs/map/widgets/flutter_map_widget.dart` - Map widget implementation
+
+## Troubleshooting
+
+- If a map type is missing from selectors, ensure it is included in `MapType.all`.
+- If localization is missing, update the ARB files with the new id.
+- If you see errors about missing properties, check your MapType definition for required fields.
+
+```dart
+// Example: Handle store errors in your code
+try {
+  final provider = MapCacheManager.getTileProviderWithFallback(mapType);
+  // Use provider normally
+} catch (e) {
+  // The error handler has already provided a fallback
+  // Log the error for debugging
+  logger.warning('Store error handled by fallback: $e');
+}
 ```
 
 ## Cache Management
@@ -277,76 +221,3 @@ try {
 8. **Monitor store status**: Use debug tools to monitor cache store health
 9. **Handle errors gracefully**: Implement proper error handling for cache operations
 10. **Validate stores**: Ensure stores are properly validated during initialization
-
-## Related Files
-
-- `lib/ui/tabs/map/map_type.dart` - Core MapType enum
-- `lib/ui/tabs/map/services/map_store_utils.dart` - Cache store utilities
-- `lib/ui/tabs/map/services/map_cache_logger.dart` - Cache logging
-- `lib/ui/tabs/map/services/map_cache_error_handler.dart` - Error handling and fallback
-- `lib/ui/tabs/map/services/map_preferences_service.dart` - Preferences management
-- `lib/ui/tabs/map/widgets/map_type_selector.dart` - UI selector
-- `lib/ui/tabs/map/debug/debug_panel.dart` - Debug tools for cache management
-- `lib/l10n/app_en.arb` & `lib/l10n/app_it.arb` - Localization
-- `lib/main.dart` - Cache store initialization
-- `lib/ui/tabs/map/widgets/flutter_map_widget.dart` - Map widget implementation
-
-## Troubleshooting
-
-### Common Cache Store Errors
-
-**Error**: `StoreNotExists: The requested store 'xyz' did not exist`
-
-**Solution**: This error occurs when a cache store is missing or corrupted. The error handler automatically provides a fallback, but you can also:
-
-1. Use the debug panel's "Store Status" button to check store health
-2. Click "Revalidate All" to recreate missing stores
-3. Click "Reset Validation" to clear cached validation state
-4. Restart the app to trigger automatic store creation
-
-**Error**: `StoreExists: The requested store 'xyz' already exists`
-
-**Solution**: This is a normal error during store creation. The error handler automatically handles this by catching the exception and continuing.
-
-**Error**: Map tiles not loading or showing blank areas
-
-**Solution**: 
-1. Check if the current map type's store is validated (use debug panel)
-2. Try switching to a different map type
-3. Use "Revalidate All" in the debug panel
-4. Check network connectivity for tile servers
-
-### Debug Tools Usage
-
-**Store Status Dialog**: Shows the validation status of all cache stores with color coding:
-- 🟢 **Green**: Store is validated and working
-- 🔴 **Red**: Store has failed and will use fallback
-- 🟠 **Orange**: Store status is unknown
-
-**Revalidate All**: Recreates and validates all cache stores. Use this when stores are corrupted or missing.
-
-**Reset Validation**: Clears the cached validation state. Use this to force fresh validation of all stores.
-
-### Performance Monitoring
-
-Monitor cache performance using the debug panel's "Log Cache Stats" button, which shows:
-- Total cache size across all stores
-- Individual store statistics (size, length, hits, misses)
-- Error information for failed stores
-
-### Recovery Procedures
-
-**For Corrupted Stores**:
-1. Use "Revalidate All" in debug panel
-2. If that fails, use "Reset Validation" then "Revalidate All"
-3. As a last resort, clear app data and restart
-
-**For Missing Stores**:
-1. Restart the app (stores are created during initialization)
-2. Use "Revalidate All" in debug panel
-3. Check logs for store creation errors
-
-**For Performance Issues**:
-1. Monitor cache statistics using debug tools
-2. Clear individual store caches if needed
-3. Check for network connectivity issues 
