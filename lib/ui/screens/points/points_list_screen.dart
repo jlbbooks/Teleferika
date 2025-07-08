@@ -75,9 +75,8 @@ class PointsListScreenState extends State<PointsListScreen> with StatusMixin {
     final currentProject =
         context.projectStateListen.currentProject ?? widget.project;
 
-    if (_previousProject?.startingPointId != currentProject.startingPointId ||
-        _previousProject?.endingPointId != currentProject.endingPointId) {
-      // Refresh from global state
+    if (_previousProject?.id != currentProject.id) {
+      // Project changed, reload points
       _loadPoints();
     }
 

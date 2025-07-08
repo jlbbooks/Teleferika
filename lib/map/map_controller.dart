@@ -345,16 +345,8 @@ class MapControllerLogic {
   Future<PointModel> saveNewPointWithStateManagement(PointModel point) async {
     // Create a new instance with isUnsaved: false for the saved point
     final savedPoint = point.copyWith(isUnsaved: false);
-
-    // Update project start/end points in the database
-    await updateProjectStartEndPoints();
-
+    // No need to update project start/end points in DB anymore
     return savedPoint;
-  }
-
-  // Update project start/end points
-  Future<void> updateProjectStartEndPoints() async {
-    await _dbHelper.updateProjectStartEndPoints(project.id);
   }
 
   // Calculates the shortest distance (in meters) from a given point to the line segment from the first to last point in projectPoints.

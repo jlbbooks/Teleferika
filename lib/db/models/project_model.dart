@@ -13,8 +13,6 @@ class ProjectModel {
   static const String columnId = 'id';
   static const String columnName = 'name';
   static const String columnNote = 'note';
-  static const String columnStartingPointId = 'starting_point_id';
-  static const String columnEndingPointId = 'ending_point_id';
   static const String columnAzimuth = 'azimuth';
   static const String columnLastUpdate = 'last_update';
   static const String columnDate = 'date';
@@ -23,8 +21,6 @@ class ProjectModel {
   final String id;
   final String name;
   final String note;
-  final String? startingPointId;
-  final String? endingPointId;
   final double? azimuth;
   final DateTime? lastUpdate; // Tracks when the record was last modified in DB
   final DateTime? date; // User-settable date for the project
@@ -39,8 +35,6 @@ class ProjectModel {
     String? id, // Default to generating a UUID if not provided
     required this.name,
     required this.note,
-    this.startingPointId,
-    this.endingPointId,
     this.azimuth,
     this.lastUpdate,
     this.date,
@@ -54,8 +48,6 @@ class ProjectModel {
       columnId: id,
       columnName: name,
       columnNote: note.isEmpty ? null : note,
-      columnStartingPointId: startingPointId,
-      columnEndingPointId: endingPointId,
       columnAzimuth: azimuth,
       columnLastUpdate: lastUpdate?.toIso8601String(),
       columnDate: date?.toIso8601String(),
@@ -72,9 +64,6 @@ class ProjectModel {
       id: map[columnId] as String?,
       name: map[columnName] as String,
       note: map[columnNote] as String? ?? '',
-      // Convert null to empty string
-      startingPointId: map[columnStartingPointId] as String?,
-      endingPointId: map[columnEndingPointId] as String?,
       azimuth: map[columnAzimuth] as double?,
       lastUpdate: map[columnLastUpdate] != null
           ? DateTime.tryParse(map[columnLastUpdate] as String)
@@ -92,10 +81,6 @@ class ProjectModel {
     String? name,
     String? note,
     bool clearNote = false, // To explicitly set note to empty string
-    String? startingPointId,
-    bool clearStartingPointId = false,
-    String? endingPointId,
-    bool clearEndingPointId = false,
     double? azimuth,
     bool clearAzimuth = false,
     DateTime? lastUpdate,
@@ -110,12 +95,6 @@ class ProjectModel {
       id: id ?? this.id,
       name: name ?? this.name,
       note: clearNote ? '' : (note ?? this.note),
-      startingPointId: clearStartingPointId
-          ? null
-          : (startingPointId ?? this.startingPointId),
-      endingPointId: clearEndingPointId
-          ? null
-          : (endingPointId ?? this.endingPointId),
       azimuth: clearAzimuth ? null : (azimuth ?? this.azimuth),
       lastUpdate: clearLastUpdate ? null : (lastUpdate ?? this.lastUpdate),
       date: clearDate ? null : (date ?? this.date),
@@ -140,8 +119,6 @@ class ProjectModel {
         other.id == id &&
         other.name == name &&
         other.note == note &&
-        other.startingPointId == startingPointId &&
-        other.endingPointId == endingPointId &&
         other.azimuth == azimuth &&
         ((other.lastUpdate == null && lastUpdate == null) ||
             (other.lastUpdate != null &&
@@ -168,8 +145,6 @@ class ProjectModel {
     id,
     name,
     note,
-    startingPointId,
-    endingPointId,
     azimuth,
     lastUpdate,
     date,

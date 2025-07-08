@@ -201,9 +201,7 @@ class ProjectStateManager extends ChangeNotifier {
   /// Update an existing point in the editing project (in-memory only, not DB)
   void updatePointInEditingState(PointModel updatedPoint) {
     if (_editingProject == null) return;
-    final points = List<PointModel>.from(
-      _editingProject!.points,
-    );
+    final points = List<PointModel>.from(_editingProject!.points);
     final index = points.indexWhere((p) => p.id == updatedPoint.id);
     if (index != -1) {
       points[index] = updatedPoint;
@@ -222,26 +220,9 @@ class ProjectStateManager extends ChangeNotifier {
   /// Delete a point from the editing project (in-memory only, not DB)
   void deletePointInEditingState(String pointId) {
     if (_editingProject == null) return;
-    final points = List<PointModel>.from(
-      _editingProject!.points,
-    );
+    final points = List<PointModel>.from(_editingProject!.points);
     final resequenced = OrdinalManager.removeById(points, pointId);
-
-    // Determine new starting/ending point IDs
-    String? newStartingPointId = _editingProject!.startingPointId;
-    String? newEndingPointId = _editingProject!.endingPointId;
-    if (newStartingPointId == pointId || resequenced.isEmpty) {
-      newStartingPointId = resequenced.isNotEmpty ? resequenced.first.id : null;
-    }
-    if (newEndingPointId == pointId || resequenced.isEmpty) {
-      newEndingPointId = resequenced.isNotEmpty ? resequenced.last.id : null;
-    }
-
-    _editingProject = _editingProject!.copyWith(
-      points: resequenced,
-      startingPointId: newStartingPointId,
-      endingPointId: newEndingPointId,
-    );
+    _editingProject = _editingProject!.copyWith(points: resequenced);
     _currentPoints = resequenced;
     _hasUnsavedChanges = true;
     notifyListeners();

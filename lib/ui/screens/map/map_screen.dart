@@ -92,14 +92,6 @@ class MapScreenState extends State<MapScreen>
 
     if (currentProject.id != oldProject.id && !_stateManager.isLoadingPoints) {
       _loadProjectPoints();
-    } else if (currentProject.startingPointId != oldProject.startingPointId ||
-        currentProject.endingPointId != oldProject.endingPointId) {
-      // Project start/end points changed, reload points to get updated data
-      // But skip if we're in the middle of saving a new point
-      if (!_stateManager.skipNextFitToPoints &&
-          !_stateManager.isLoadingPoints) {
-        _loadProjectPoints();
-      }
     }
 
     if (widget.selectedPointId != oldWidget.selectedPointId) {

@@ -50,15 +50,11 @@ class DatabaseHelper {
       CREATE TABLE ${ProjectModel.tableName} (
         ${ProjectModel.columnId} TEXT PRIMARY KEY,
         ${ProjectModel.columnName} TEXT NOT NULL,
-        ${ProjectModel.columnStartingPointId} TEXT,
-        ${ProjectModel.columnEndingPointId} TEXT,
         ${ProjectModel.columnAzimuth} REAL,
         ${ProjectModel.columnNote} TEXT,
         ${ProjectModel.columnLastUpdate} TEXT,
         ${ProjectModel.columnDate} TEXT,
-        ${ProjectModel.columnPresumedTotalLength} REAL,
-        FOREIGN KEY (${ProjectModel.columnStartingPointId}) REFERENCES ${PointModel.tableName} (${PointModel.columnId}) ON DELETE SET NULL,
-        FOREIGN KEY (${ProjectModel.columnEndingPointId}) REFERENCES ${PointModel.tableName} (${PointModel.columnId}) ON DELETE SET NULL
+        ${ProjectModel.columnPresumedTotalLength} REAL
       )
       '''); // TEXT for ISO8601 DateTime string
     // Add index for faster querying/sorting by last_update
@@ -177,8 +173,7 @@ class DatabaseHelper {
         await txn.execute('''
       CREATE TABLE $projectsTempTableName (
         ${ProjectModel.columnId} TEXT PRIMARY KEY, ${ProjectModel.columnName} TEXT NOT NULL,
-        ${ProjectModel.columnNote} TEXT, ${ProjectModel.columnStartingPointId} TEXT,
-        ${ProjectModel.columnEndingPointId} TEXT, ${ProjectModel.columnAzimuth} REAL,
+        ${ProjectModel.columnNote} TEXT, ${ProjectModel.columnAzimuth} REAL,
         ${ProjectModel.columnLastUpdate} TEXT, ${ProjectModel.columnDate} TEXT
       )
       ''');
@@ -265,33 +260,7 @@ class DatabaseHelper {
         logger.info("Generated UUIDs for ${oldImages.length} images.");
 
         // --- Step 4: Update Project's starting_point_id and ending_point_id ---
-        logger.info("Updating project start/end point UUIDs...");
-        for (var oldProject in oldProjects) {
-          int oldProjectId = oldProject[ProjectModel.columnId] as int;
-          String? newProjectUUID = projectOldToNewIdMap[oldProjectId];
-          int? oldStartingPointId =
-              oldProject[ProjectModel.columnStartingPointId] as int?;
-          int? oldEndingPointId =
-              oldProject[ProjectModel.columnEndingPointId] as int?;
-          String? newStartingPointUUID = oldStartingPointId != null
-              ? pointOldToNewIdMap[oldStartingPointId]
-              : null;
-          String? newEndingPointUUID = oldEndingPointId != null
-              ? pointOldToNewIdMap[oldEndingPointId]
-              : null;
-          if (newProjectUUID != null) {
-            await txn.update(
-              projectsTempTableName,
-              {
-                ProjectModel.columnStartingPointId: newStartingPointUUID,
-                ProjectModel.columnEndingPointId: newEndingPointUUID,
-              },
-              where: '${ProjectModel.columnId} = ?',
-              whereArgs: [newProjectUUID],
-            );
-          }
-        }
-
+        // (Obsolete: removed columns, so remove this block)
         // --- Step 5: Drop Old Tables ---
         logger.info("Dropping old tables...");
         await txn.execute('DROP TABLE ${ProjectModel.tableName}');
@@ -469,6 +438,61 @@ class DatabaseHelper {
         "Applied migration for version 10: Added ${ImageModel.columnNote} column",
       );
     }
+    if (oldVersion < 11) {
+      // ---- Migration to Version 11: Remove starting_point_id and ending_point_id from projects table ----
+      logger.info(
+        "Applying migration for version 11: Removing starting_point_id and ending_point_id from projects table",
+      );
+      await db.transaction((txn) async {
+        // 1. Create a temporary table without the removed columns
+        final tempTable = '${ProjectModel.tableName}_temp_v11_no_start_end';
+        await txn.execute('''
+          CREATE TABLE $tempTable (
+            ${ProjectModel.columnId} TEXT PRIMARY KEY,
+            ${ProjectModel.columnName} TEXT NOT NULL,
+            ${ProjectModel.columnAzimuth} REAL,
+            ${ProjectModel.columnNote} TEXT,
+            ${ProjectModel.columnLastUpdate} TEXT,
+            ${ProjectModel.columnDate} TEXT,
+            ${ProjectModel.columnPresumedTotalLength} REAL
+          )
+        ''');
+        // 2. Copy data from the old table to the temporary table, omitting the removed columns
+        await txn.execute('''
+          INSERT INTO $tempTable (
+            ${ProjectModel.columnId},
+            ${ProjectModel.columnName},
+            ${ProjectModel.columnAzimuth},
+            ${ProjectModel.columnNote},
+            ${ProjectModel.columnLastUpdate},
+            ${ProjectModel.columnDate},
+            ${ProjectModel.columnPresumedTotalLength}
+          )
+          SELECT
+            ${ProjectModel.columnId},
+            ${ProjectModel.columnName},
+            ${ProjectModel.columnAzimuth},
+            ${ProjectModel.columnNote},
+            ${ProjectModel.columnLastUpdate},
+            ${ProjectModel.columnDate},
+            ${ProjectModel.columnPresumedTotalLength}
+          FROM ${ProjectModel.tableName}
+        ''');
+        // 3. Drop the old table
+        await txn.execute('DROP TABLE ${ProjectModel.tableName}');
+        // 4. Rename the temporary table to the original table name
+        await txn.execute(
+          'ALTER TABLE $tempTable RENAME TO ${ProjectModel.tableName}',
+        );
+        // 5. Recreate indexes
+        await txn.execute(
+          'CREATE INDEX IF NOT EXISTS idx_project_last_update ON ${ProjectModel.tableName} (${ProjectModel.columnLastUpdate})',
+        );
+      });
+      logger.info(
+        "Successfully removed starting_point_id and ending_point_id from projects table by recreating the table.",
+      );
+    }
     logger.info("Database upgrade process complete.");
   }
 
@@ -511,148 +535,6 @@ class DatabaseHelper {
       projectToUpdate.toMap(),
       where: '${ProjectModel.columnId} = ?',
       whereArgs: [projectToUpdate.id],
-    );
-  }
-
-  Future<int> setProjectStartingPoint(String projectId, String? pointId) async {
-    Database db = await instance.database;
-    String now = DateTime.now().toIso8601String();
-    return await db.update(
-      ProjectModel.tableName,
-      {
-        ProjectModel.columnStartingPointId: pointId,
-        ProjectModel.columnLastUpdate: now,
-      },
-      where: '${ProjectModel.columnId} = ?',
-      whereArgs: [projectId],
-    );
-  }
-
-  /// Fetches all points for a project, sorted by ordinal,
-  /// and updates the project's starting_point_id and ending_point_id.
-  /// Can be called within a transaction by passing the txn object.
-  Future<void> updateProjectStartEndPoints(
-    String projectId, {
-    Transaction? txn,
-  }) async {
-    logger.info("updateProjectStartEndPoints called for project $projectId");
-
-    final dbOrTxn =
-        txn ?? await instance.database; // Use transaction if provided
-
-    final List<Map<String, dynamic>> pointsMaps = await dbOrTxn.query(
-      PointModel.tableName,
-      columns: [
-        PointModel.columnId,
-        PointModel.columnOrdinalNumber,
-      ], // Only need ID and ordinal
-      where: '${PointModel.columnProjectId} = ?',
-      whereArgs: [projectId],
-      orderBy: '${PointModel.columnOrdinalNumber} ASC',
-    );
-
-    logger.info("Found ${pointsMaps.length} points for project $projectId");
-
-    // Log each point with its ordinal for debugging
-    for (int i = 0; i < pointsMaps.length; i++) {
-      final point = pointsMaps[i];
-      final pointId = point[PointModel.columnId] as String;
-      final ordinal = point[PointModel.columnOrdinalNumber] as int;
-      logger.info("Point $i: ID=$pointId, Ordinal=$ordinal");
-    }
-
-    String? newStartingPointId;
-    String? newEndingPointId;
-
-    if (pointsMaps.isNotEmpty) {
-      newStartingPointId =
-          pointsMaps.first[PointModel.columnId]
-              as String?; // First point (ordinal 0)
-      newEndingPointId =
-          pointsMaps.last[PointModel.columnId]
-              as String?; // Last point (highest ordinal)
-
-      logger.info(
-        "Calculated new start/end points - Start: $newStartingPointId, End: $newEndingPointId",
-      );
-    }
-    // If pointsMaps is empty, both will remain null, effectively clearing them.
-
-    // Get current project's start/end to avoid unnecessary updates
-    final List<Map<String, dynamic>> currentProjectMaps = await dbOrTxn.query(
-      ProjectModel.tableName,
-      columns: [
-        ProjectModel.columnStartingPointId,
-        ProjectModel.columnEndingPointId,
-      ],
-      where: '${ProjectModel.columnId} = ?',
-      whereArgs: [projectId],
-    );
-
-    bool needsUpdate = false;
-    if (currentProjectMaps.isNotEmpty) {
-      final currentStartId =
-          currentProjectMaps.first[ProjectModel.columnStartingPointId]
-              as String?;
-      final currentEndId =
-          currentProjectMaps.first[ProjectModel.columnEndingPointId] as String?;
-
-      logger.info(
-        "Current project start/end - Start: $currentStartId, End: $currentEndId",
-      );
-      logger.info(
-        "New calculated start/end - Start: $newStartingPointId, End: $newEndingPointId",
-      );
-
-      if (currentStartId != newStartingPointId ||
-          currentEndId != newEndingPointId) {
-        needsUpdate = true;
-        logger.info(
-          "Start/end points need update: currentStartId=$currentStartId, newStartingPointId=$newStartingPointId, currentEndId=$currentEndId, newEndingPointId=$newEndingPointId",
-        );
-      } else {
-        logger.info("Start/end points are the same, no update needed");
-      }
-    } else {
-      // Project not found, should not happen if projectId is valid
-      logger.warning(
-        "Project ID $projectId not found while trying to update start/end points.",
-      );
-      return;
-    }
-
-    if (needsUpdate) {
-      logger.info(
-        "Updating start/end points for project $projectId: StartID: $newStartingPointId, EndID: $newEndingPointId",
-      );
-      await dbOrTxn.update(
-        ProjectModel.tableName,
-        {
-          ProjectModel.columnStartingPointId: newStartingPointId,
-          ProjectModel.columnEndingPointId: newEndingPointId,
-          ProjectModel.columnLastUpdate: DateTime.now().toIso8601String(),
-        },
-        where: '${ProjectModel.columnId} = ?',
-        whereArgs: [projectId],
-      );
-    } else {
-      logger.fine(
-        "No change needed for start/end points of project $projectId.",
-      );
-    }
-  }
-
-  Future<int> setProjectEndingPoint(String projectId, String? pointId) async {
-    Database db = await instance.database;
-    String now = DateTime.now().toIso8601String();
-    return await db.update(
-      ProjectModel.tableName,
-      {
-        ProjectModel.columnEndingPointId: pointId,
-        ProjectModel.columnLastUpdate: now,
-      },
-      where: '${ProjectModel.columnId} = ?',
-      whereArgs: [projectId],
     );
   }
 
@@ -931,9 +813,7 @@ class DatabaseHelper {
 
       if (totalDeletedCount > 0) {
         // 4. For each affected project, re-sequence the remaining points using OrdinalManager
-        for (String projectId in pointsByProject.keys) {
-          await updateProjectStartEndPoints(projectId, txn: txn);
-        }
+        // (No longer need to update project start/end points)
       }
     });
     return totalDeletedCount;
