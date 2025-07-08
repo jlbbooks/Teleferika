@@ -7,6 +7,6 @@ class MapStoreUtils {
   /// Uses the cacheStoreName property from the MapType class
   /// e.g., MapType.openStreetMap -> 'mapStore_openStreetMap'
   static String getStoreNameForMapType(MapType mapType) {
-    return mapType.cacheStoreName;
+    return MapType.of(mapType.id).cacheStoreName ?? 'mapStore_${mapType.id}';
   }
 }

@@ -19,7 +19,7 @@ class MapCacheManager {
 
   /// Get a tile provider with error handling and fallback
   static FMTCTileProvider getTileProviderWithFallback(MapType mapType) {
-    final storeName = mapType.cacheStoreName;
+    final storeName = mapType.cacheStoreName ?? _fallbackStoreName;
 
     // If store is known to be failed, use fallback immediately
     if (_failedStores.contains(storeName)) {
@@ -112,7 +112,8 @@ class MapCacheManager {
     _logger.info('Validating all cache stores...');
 
     for (final mapType in MapType.all) {
-      final storeName = mapType.cacheStoreName;
+      final storeName =
+          MapType.of(mapType.id).cacheStoreName ?? _fallbackStoreName;
 
       try {
         await _ensureStoreExists(storeName);
@@ -141,7 +142,9 @@ class MapCacheManager {
     _logger.info('Clearing all cache stores...');
 
     final allStoreNames = [
-      ...MapType.all.map((mt) => mt.cacheStoreName),
+      ...MapType.all
+          .map((mt) => MapType.of(mt.id).cacheStoreName)
+          .whereType<String>(),
       _fallbackStoreName,
     ];
 
@@ -165,7 +168,8 @@ class MapCacheManager {
     final status = <String, String>{};
 
     for (final mapType in MapType.all) {
-      final storeName = mapType.cacheStoreName;
+      final storeName =
+          MapType.of(mapType.id).cacheStoreName ?? _fallbackStoreName;
       if (_validatedStores.contains(storeName)) {
         status[storeName] = 'validated';
       } else if (_failedStores.contains(storeName)) {
@@ -219,7 +223,8 @@ class MapCacheManager {
   static Future<void> logCacheStatus() async {
     _logger.info('=== CACHE STATUS ===');
     for (final mapType in MapType.all) {
-      final storeName = mapType.cacheStoreName;
+      final storeName =
+          MapType.of(mapType.id).cacheStoreName ?? _fallbackStoreName;
       final hasTiles = await hasTilesInStore(storeName);
       _logger.info('${mapType.name}: $storeName - Has tiles: $hasTiles');
     }

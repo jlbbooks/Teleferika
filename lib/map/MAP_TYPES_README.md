@@ -64,7 +64,6 @@ The core of the map type system is the `MapType` class located in `lib/map/map_t
 class MapType {
   final String id;
   final String name;
-  final String cacheStoreName;
   final bool allowsBulkDownload;
   final String tileLayerUrl;
   final String tileLayerAttribution;
@@ -109,7 +108,6 @@ MapType type = MapType.of('openStreetMap');
 MapType(
   id: 'cartoPositron',
   name: 'CartoDB Positron',
-  cacheStoreName: 'mapStore_cartoPositron',
   allowsBulkDownload: true,
   tileLayerUrl: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
   tileLayerAttribution: '© OpenStreetMap contributors, © CartoDB',
@@ -154,7 +152,7 @@ Map types are managed through the `MapStateManager` and stored in `SharedPrefere
 Each map type has its own cache store for offline access:
 
 ```dart
-String storeName = mapType.cacheStoreName; // e.g., 'mapStore_openTopoMap'
+String storeName = MapType.of(mapType.id).cacheStoreName ?? 'mapStore_${mapType.id}'; // e.g., 'mapStore_openTopoMap'
 ```
 
 ## Recommendations for European Elevation Data
@@ -182,7 +180,6 @@ If the map type URL template includes the `{r}` placeholder for retina mode, set
 MapType(
   id: 'example',
   name: 'Example Map',
-  cacheStoreName: 'mapStore_example',
   allowsBulkDownload: true,
   tileLayerUrl: 'https://example.com/tiles/{z}/{x}/{y}{r}.png', // Note the {r} placeholder
   tileLayerAttribution: '© Example',
@@ -237,7 +234,7 @@ The `supportsRetina` field is automatically used by the `TileLayer` configuratio
 ```dart
 // Example: Handle store errors in your code
 try {
-  final provider = MapCacheManager.getTileProviderWithFallback(mapType);
+  final provider = MapCacheManager.getTileProviderWithFallback(MapType.of(mapType.id));
   // Use provider normally
 } catch (e) {
   // The error handler has already provided a fallback
@@ -262,7 +259,7 @@ MapCacheLogger.logAllCacheStats();
 Cache stores can be managed individually or globally:
 ```dart
 // Clear specific map type cache
-await FMTCStore(mapType.cacheStoreName).manage.delete();
+await FMTCStore(MapType.of(mapType.id).cacheStoreName ?? 'mapStore_${mapType.id}').manage.delete();
 
 // Clear all caches
 await FMTCRoot.instance.reset();
@@ -288,7 +285,7 @@ When cache stores fail, the system provides multiple recovery options:
 ```dart
 // Example: Handle store errors in your code
 try {
-  final provider = MapCacheManager.getTileProviderWithFallback(mapType);
+  final provider = MapCacheManager.getTileProviderWithFallback(MapType.of(mapType.id));
   // Use provider normally
 } catch (e) {
   // The error handler has already provided a fallback

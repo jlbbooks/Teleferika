@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 class MapType {
   final String id;
   final String name;
-  final String cacheStoreName;
   final bool allowsBulkDownload;
   final String tileLayerUrl;
   final String tileLayerAttribution;
@@ -12,11 +11,11 @@ class MapType {
   final bool supportsRetina;
   final String? apiKey;
   final String? apiKeyParameterName;
+  final String? cacheStoreName;
 
   const MapType({
     required this.id,
     required this.name,
-    required this.cacheStoreName,
     required this.allowsBulkDownload,
     required this.tileLayerUrl,
     required this.tileLayerAttribution,
@@ -25,6 +24,7 @@ class MapType {
     this.supportsRetina = false,
     this.apiKey,
     this.apiKeyParameterName,
+    this.cacheStoreName,
   });
 
   // All map types defined directly in the list
@@ -32,7 +32,6 @@ class MapType {
     MapType(
       id: 'openStreetMap',
       name: 'Open Street Map',
-      cacheStoreName: 'mapStore_openStreetMap',
       allowsBulkDownload: false,
       tileLayerUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
       tileLayerAttribution: '© OpenStreetMap contributors',
@@ -42,7 +41,6 @@ class MapType {
     MapType(
       id: 'satellite',
       name: 'Esri Satellite',
-      cacheStoreName: 'mapStore_satellite',
       allowsBulkDownload: true,
       tileLayerUrl:
           'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -54,7 +52,6 @@ class MapType {
     MapType(
       id: 'terrain',
       name: 'Esri World Topo',
-      cacheStoreName: 'mapStore_terrain',
       allowsBulkDownload: true,
       tileLayerUrl:
           'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
@@ -66,7 +63,6 @@ class MapType {
     MapType(
       id: 'openTopoMap',
       name: 'Open Topo Map',
-      cacheStoreName: 'mapStore_openTopoMap',
       allowsBulkDownload: true,
       tileLayerUrl: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
       tileLayerAttribution: '© OpenTopoMap contributors',
@@ -76,7 +72,6 @@ class MapType {
     MapType(
       id: 'cartoPositron',
       name: 'CartoDB Positron',
-      cacheStoreName: 'mapStore_cartoPositron',
       allowsBulkDownload: true,
       tileLayerUrl:
           'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
@@ -88,7 +83,6 @@ class MapType {
     MapType(
       id: 'thunderforestOutdoors',
       name: 'Thunderforest Outdoors',
-      cacheStoreName: 'mapStore_thunderforestOutdoors',
       allowsBulkDownload: false,
       tileLayerUrl:
           'https://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}.png',
@@ -102,7 +96,6 @@ class MapType {
     MapType(
       id: 'thunderforestLandscape',
       name: 'Thunderforest Landscape',
-      cacheStoreName: 'mapStore_thunderforestLandscape',
       allowsBulkDownload: false,
       tileLayerUrl:
           'https://{s}.tile.thunderforest.com/landscape/{z}/{x}/{y}.png',
@@ -116,6 +109,22 @@ class MapType {
   ];
 
   static MapType of(String id) {
-    return all.firstWhere((type) => type.id == id, orElse: () => all.first);
+    final base = all.firstWhere(
+      (type) => type.id == id,
+      orElse: () => all.first,
+    );
+    return MapType(
+      id: base.id,
+      name: base.name,
+      allowsBulkDownload: base.allowsBulkDownload,
+      tileLayerUrl: base.tileLayerUrl,
+      tileLayerAttribution: base.tileLayerAttribution,
+      attributionUrl: base.attributionUrl,
+      icon: base.icon,
+      supportsRetina: base.supportsRetina,
+      apiKey: base.apiKey,
+      apiKeyParameterName: base.apiKeyParameterName,
+      cacheStoreName: 'mapStore_${base.id}',
+    );
   }
 }
