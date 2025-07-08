@@ -129,3 +129,10 @@ All notable changes to this project will be documented in this file.
 ## [0.0.1+1]
 - feat: Implement project creation and details editing
 
+## [0.9.29+70] - 2025-07-08
+### Added
+- GPS precision feature: Introduced gpsPrecision field in PointModel, updated database schema, and enhanced UI to display GPS precision. Updated localization for new label in English and Italian.
+
+### Changed
+- Refactored Point Editor: Replaced PointCoordinatesSection with PointDetailsSection to consolidate point details (latitude, longitude, altitude, note, GPS precision) into a single UI component. Updated localization for new section title in English and Italian, and adjusted related controllers and validation logic.
+
