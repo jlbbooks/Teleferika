@@ -22,15 +22,16 @@ import 'package:provider/provider.dart';
 
 class PhotoManagerWidget extends StatefulWidget {
   final Function(List<ImageModel> updatedImages) onImageListChangedForUI;
-  final VoidCallback?
-  onPhotosSavedSuccessfully; // Callback when photos are auto-saved
+  final VoidCallback? onPhotosSavedSuccessfully;
   final PointModel point;
+  final void Function(VoidCallback callback)? setAddPhotoCallback;
 
   const PhotoManagerWidget({
     super.key,
     required this.point,
     required this.onImageListChangedForUI,
     this.onPhotosSavedSuccessfully,
+    this.setAddPhotoCallback,
   });
 
   @override
@@ -56,6 +57,9 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
       'PhotoManagerWidget initState called. Point ID: ${widget.point.id}, Initial images from point.images count: ${widget.point.images.length}',
     );
     _updateImagesFromGlobalState();
+    if (widget.setAddPhotoCallback != null) {
+      widget.setAddPhotoCallback!(_showAddPhotoOptions);
+    }
   }
 
   void _updateImagesFromGlobalState() {
@@ -425,59 +429,45 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      '${S.of(context)?.photo_manager_title ?? 'Photos'} (${_images.length})',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    _isSavingPhotos
-                        ? const Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.0,
+                    // Title row is now handled by parent section
+                    if (_isSavingPhotos)
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2.0),
+                        ),
+                      )
+                    else if (_selectMode)
+                      Row(
+                        children: [
+                          TextButton(
+                            onPressed: _selectedImageIds.isEmpty
+                                ? null
+                                : _deleteSelectedImages,
+                            child: Text(
+                              S.of(context)?.buttonDelete ?? 'Delete',
+                              style: TextStyle(
+                                color: _selectedImageIds.isEmpty
+                                    ? Colors.grey
+                                    : Theme.of(context).colorScheme.error,
                               ),
                             ),
-                          )
-                        : _selectMode
-                        ? Row(
-                            children: [
-                              TextButton(
-                                onPressed: _selectedImageIds.isEmpty
-                                    ? null
-                                    : _deleteSelectedImages,
-                                child: Text(
-                                  S.of(context)?.buttonDelete ?? 'Delete',
-                                  style: TextStyle(
-                                    color: _selectedImageIds.isEmpty
-                                        ? Colors.grey
-                                        : Theme.of(context).colorScheme.error,
-                                  ),
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _selectMode = false;
-                                    _selectedImageIds.clear();
-                                  });
-                                },
-                                child: Text(
-                                  S.of(context)?.buttonCancel ?? 'Cancel',
-                                ),
-                              ),
-                            ],
-                          )
-                        : IconButton(
-                            icon: const Icon(Icons.add_a_photo_outlined),
-                            tooltip:
-                                S
-                                    .of(context)
-                                    ?.photo_manager_add_photo_tooltip ??
-                                'Add Photo',
-                            onPressed: _showAddPhotoOptions,
                           ),
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _selectMode = false;
+                                _selectedImageIds.clear();
+                              });
+                            },
+                            child: Text(
+                              S.of(context)?.buttonCancel ?? 'Cancel',
+                            ),
+                          ),
+                        ],
+                      ),
                   ],
                 ),
                 const SizedBox(height: 8),

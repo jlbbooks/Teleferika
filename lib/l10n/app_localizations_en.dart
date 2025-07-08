@@ -1039,4 +1039,7 @@ class SEn extends S {
 
   @override
   String get gpsPrecisionLabel => 'GPS Precision:';
+
+  @override
+  String get pointDetailsSectionTitle => 'Point Details';
 }

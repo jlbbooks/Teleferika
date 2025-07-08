@@ -10,8 +10,7 @@ import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 
-import 'components/point_coordinates_section.dart';
-import 'components/point_additional_data_section.dart';
+import 'components/point_details_section.dart';
 import 'components/point_photos_section.dart';
 
 class PointEditorScreen extends StatefulWidget {
@@ -31,6 +30,7 @@ class _PointEditorScreenState extends State<PointEditorScreen>
   late TextEditingController _longitudeController;
   late TextEditingController _noteController;
   late TextEditingController _altitudeController;
+  late TextEditingController _gpsPrecisionController;
 
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
   bool _isLoading = false;
@@ -52,9 +52,10 @@ class _PointEditorScreenState extends State<PointEditorScreen>
     );
     _noteController = TextEditingController(text: widget.point.note);
     _altitudeController = TextEditingController(
-      text:
-          widget.point.altitude?.toStringAsFixed(2) ??
-          '', // Handle null altitude
+      text: widget.point.altitude?.toStringAsFixed(2) ?? '',
+    );
+    _gpsPrecisionController = TextEditingController(
+      text: widget.point.gpsPrecision?.toStringAsFixed(2) ?? '',
     );
     // Initialize _currentImages from the point being edited
     _currentImages = List<ImageModel>.from(
@@ -67,6 +68,7 @@ class _PointEditorScreenState extends State<PointEditorScreen>
     _longitudeController.addListener(_markUnsavedTextChanges);
     _noteController.addListener(_markUnsavedTextChanges);
     _altitudeController.addListener(_markUnsavedTextChanges);
+    _gpsPrecisionController.addListener(_markUnsavedTextChanges);
 
     logger.info(
       "PointEditorScreen initialized for Point ID: ${widget.point.id}, Initial image count: ${_currentImages.length}",
@@ -91,11 +93,13 @@ class _PointEditorScreenState extends State<PointEditorScreen>
     _longitudeController.removeListener(_markUnsavedTextChanges);
     _noteController.removeListener(_markUnsavedTextChanges);
     _altitudeController.removeListener(_markUnsavedTextChanges);
+    _gpsPrecisionController.removeListener(_markUnsavedTextChanges);
 
     _latitudeController.dispose();
     _longitudeController.dispose();
     _noteController.dispose();
     _altitudeController.dispose();
+    _gpsPrecisionController.dispose();
     super.dispose();
   }
 
@@ -110,6 +114,9 @@ class _PointEditorScreenState extends State<PointEditorScreen>
     final double? altitudeValue = _altitudeController.text.isNotEmpty
         ? double.tryParse(_altitudeController.text)
         : null;
+    final double? gpsPrecisionValue = _gpsPrecisionController.text.isNotEmpty
+        ? double.tryParse(_gpsPrecisionController.text)
+        : null;
 
     // Create the point to validate
     PointModel pointToSave = widget.point.copyWith(
@@ -119,6 +126,7 @@ class _PointEditorScreenState extends State<PointEditorScreen>
       // Use 0.0 as fallback for validation
       note: _noteController.text.trim(),
       altitude: altitudeValue,
+      gpsPrecision: gpsPrecisionValue,
       timestamp: DateTime.now(),
       images: _currentImages,
     );
@@ -356,18 +364,11 @@ class _PointEditorScreenState extends State<PointEditorScreen>
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Row(
-            children: [
-              Icon(Icons.edit_location, size: 24),
-              const SizedBox(width: 12),
-              // ignore: use_build_context_synchronously
-              Text(
-                S.of(context)?.edit_point_title ?? 'Edit Point',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-              ),
-            ],
+          title: Text(
+            widget.point.name,
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
           ),
           leading: IconButton(
             // Custom back button to ensure _onWillPop is always triggered
@@ -427,64 +428,13 @@ class _PointEditorScreenState extends State<PointEditorScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    // Header Section
-                    Container(
-                      padding: const EdgeInsets.all(16.0),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Theme.of(context).colorScheme.primaryContainer
-                                .withValues(alpha: 0.3),
-                            Theme.of(context).colorScheme.secondaryContainer
-                                .withValues(alpha: 0.2),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(12.0),
-                        border: Border.all(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.outline.withValues(alpha: 0.2),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.location_on,
-                            color: Theme.of(context).colorScheme.primary,
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              widget.point.name,
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface,
-                                  ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Coordinates Section
-                    PointCoordinatesSection(
+                    // Point Details Section (coordinates, altitude, note)
+                    PointDetailsSection(
                       latitudeController: _latitudeController,
                       longitudeController: _longitudeController,
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Additional Data Section
-                    PointAdditionalDataSection(
                       altitudeController: _altitudeController,
                       noteController: _noteController,
-                      point: widget.point,
+                      gpsPrecisionController: _gpsPrecisionController,
                     ),
                     const SizedBox(height: 20),
 

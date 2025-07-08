@@ -1384,5 +1384,9 @@
   "gpsPrecisionLabel": "GPS Precision:",
   "@gpsPrecisionLabel": {
     "description": "Label for GPS precision (accuracy) in meters."
+  },
+  "pointDetailsSectionTitle": "Point Details",
+  "@pointDetailsSectionTitle": {
+    "description": "Section title for the point details (coordinates, altitude, note) in the point editor."
   }
 }

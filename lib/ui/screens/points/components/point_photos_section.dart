@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/widgets/photo_manager_widget.dart';
+import 'package:teleferika/core/project_provider.dart';
 
-class PointPhotosSection extends StatelessWidget {
+class PointPhotosSection extends StatefulWidget {
   final PointModel point;
   final Function(List<dynamic>) onImageListChangedForUI;
   final VoidCallback onPhotosSavedSuccessfully;
@@ -14,6 +15,27 @@ class PointPhotosSection extends StatelessWidget {
     required this.onImageListChangedForUI,
     required this.onPhotosSavedSuccessfully,
   });
+
+  @override
+  State<PointPhotosSection> createState() => _PointPhotosSectionState();
+}
+
+class _PointPhotosSectionState extends State<PointPhotosSection> {
+  VoidCallback? _addPhotoCallback;
+
+  void _handleImageListChanged(List<dynamic> images) {
+    widget.onImageListChangedForUI(images);
+  }
+
+  void _setAddPhotoCallback(VoidCallback callback) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _addPhotoCallback = callback;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,17 +82,35 @@ class PointPhotosSection extends StatelessWidget {
                   color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
+              const SizedBox(width: 8),
+              Builder(
+                builder: (context) {
+                  final point = context.projectStateListen.getPointById(
+                    widget.point.id,
+                  );
+                  final imageCount = point?.images.length ?? 0;
+                  return Text(
+                    '($imageCount)',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  );
+                },
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.add_a_photo_outlined),
+                tooltip:
+                    S.of(context)?.photo_manager_add_photo_tooltip ??
+                    'Add Photo',
+                onPressed: _addPhotoCallback,
+              ),
             ],
           ),
           const SizedBox(height: 16),
           PhotoManagerWidget(
-            // Pass a point model that reflects the current state of _currentImages
-            // but for other fields, it uses the original widget.point data
-            // This is important because PhotoManagerWidget's _savePointWithCurrentImages
-            // will use widget.point.copyWith()
-            point: point,
-            onImageListChangedForUI: onImageListChangedForUI,
-            onPhotosSavedSuccessfully: onPhotosSavedSuccessfully,
+            point: widget.point,
+            onImageListChangedForUI: _handleImageListChanged,
+            onPhotosSavedSuccessfully: widget.onPhotosSavedSuccessfully,
+            setAddPhotoCallback: _setAddPhotoCallback,
           ),
         ],
       ),

@@ -1821,6 +1821,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'GPS Precision:'**
   String get gpsPrecisionLabel;
+
+  /// Section title for the point details (coordinates, altitude, note) in the point editor.
+  ///
+  /// In en, this message translates to:
+  /// **'Point Details'**
+  String get pointDetailsSectionTitle;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

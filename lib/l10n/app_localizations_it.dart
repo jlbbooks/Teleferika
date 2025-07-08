@@ -1049,4 +1049,7 @@ class SIt extends S {
 
   @override
   String get gpsPrecisionLabel => 'Precisione GPS:';
+
+  @override
+  String get pointDetailsSectionTitle => 'Dettagli Punto';
 }
