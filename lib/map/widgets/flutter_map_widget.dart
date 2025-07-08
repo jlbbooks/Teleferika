@@ -189,7 +189,7 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
             ),
             children: [
               TileLayer(
-                urlTemplate: widget.tileLayerUrl,
+                urlTemplate: _getTileLayerUrlWithApiKey(widget.currentMapType),
                 userAgentPackageName: 'com.jlbbooks.teleferika',
                 tileProvider: _getTileProvider(widget.currentMapType),
                 retinaMode: widget.currentMapType.supportsRetina
@@ -751,5 +751,20 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
       midAngle,
       radius / 1000.0, // Convert meters to kilometers
     );
+  }
+
+  String _getTileLayerUrlWithApiKey(MapType mapType) {
+    final url = mapType.tileLayerUrl;
+    final apiKey = mapType.apiKey;
+    final apiKeyParam = mapType.apiKeyParameterName;
+    if (apiKey != null && apiKeyParam != null) {
+      // If the URL already has query params, append with &param=...
+      if (url.contains('?')) {
+        return '${url}&$apiKeyParam=$apiKey';
+      } else {
+        return '${url}?$apiKeyParam=$apiKey';
+      }
+    }
+    return url;
   }
 }

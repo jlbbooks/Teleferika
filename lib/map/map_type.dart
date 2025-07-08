@@ -10,6 +10,8 @@ class MapType {
   final String attributionUrl;
   final IconData icon;
   final bool supportsRetina;
+  final String? apiKey;
+  final String? apiKeyParameterName;
 
   const MapType({
     required this.id,
@@ -21,6 +23,8 @@ class MapType {
     required this.attributionUrl,
     required this.icon,
     this.supportsRetina = false,
+    this.apiKey,
+    this.apiKeyParameterName,
   });
 
   // All map types defined directly in the list
@@ -85,23 +89,29 @@ class MapType {
       id: 'thunderforestOutdoors',
       name: 'Thunderforest Outdoors',
       cacheStoreName: 'mapStore_thunderforestOutdoors',
-      allowsBulkDownload: true,
+      allowsBulkDownload: false,
       tileLayerUrl:
           'https://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}.png',
-      tileLayerAttribution: '© OpenStreetMap contributors, © Thunderforest',
+      tileLayerAttribution:
+          'Maps: © Thunderforest | Data: © OpenStreetMap contributors',
       attributionUrl: 'https://www.thunderforest.com/',
       icon: Icons.hiking,
+      apiKey: null,
+      apiKeyParameterName: 'apikey',
     ),
     MapType(
       id: 'thunderforestLandscape',
       name: 'Thunderforest Landscape',
       cacheStoreName: 'mapStore_thunderforestLandscape',
-      allowsBulkDownload: true,
+      allowsBulkDownload: false,
       tileLayerUrl:
           'https://{s}.tile.thunderforest.com/landscape/{z}/{x}/{y}.png',
-      tileLayerAttribution: '© OpenStreetMap contributors, © Thunderforest',
+      tileLayerAttribution:
+          'Maps: © Thunderforest | Data: © OpenStreetMap contributors',
       attributionUrl: 'https://www.thunderforest.com/',
       icon: Icons.landscape,
+      apiKey: null,
+      apiKeyParameterName: 'apikey',
     ),
   ];
 

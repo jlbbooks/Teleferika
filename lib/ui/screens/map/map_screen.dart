@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -361,6 +362,18 @@ class MapScreenState extends State<MapScreen>
       // Use the map controller's coordinate conversion methods for accurate conversion
       final camera = _stateManager.mapController.camera;
 
+      // Get the current map rotation in radians (negative for screen-to-map)
+      final rotationDegrees = camera.rotation;
+      final rotationRadians = -rotationDegrees * math.pi / 180.0;
+
+      // Rotate the drag delta by the negative map rotation
+      final rotatedDx =
+          deltaX * math.cos(rotationRadians) -
+          deltaY * math.sin(rotationRadians);
+      final rotatedDy =
+          deltaX * math.sin(rotationRadians) +
+          deltaY * math.cos(rotationRadians);
+
       // Convert the original position to screen coordinates using the map's projection
       final originalScreenPoint = camera.projectAtZoom(
         originalPosition,
@@ -369,8 +382,8 @@ class MapScreenState extends State<MapScreen>
 
       // Calculate the new screen position
       final newScreenPoint = Offset(
-        originalScreenPoint.dx + deltaX,
-        originalScreenPoint.dy + deltaY,
+        originalScreenPoint.dx + rotatedDx,
+        originalScreenPoint.dy + rotatedDy,
       );
 
       // Convert back to map coordinates
