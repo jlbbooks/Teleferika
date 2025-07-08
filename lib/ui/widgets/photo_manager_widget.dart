@@ -612,9 +612,34 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
                                             8,
                                           ),
                                           child: SizedBox.expand(
-                                            child: Image.file(
-                                              File(imageModel.imagePath),
+                                            child: Image(
+                                              image: FileImage(
+                                                File(imageModel.imagePath),
+                                              ),
                                               fit: BoxFit.cover,
+                                              frameBuilder:
+                                                  (
+                                                    context,
+                                                    child,
+                                                    frame,
+                                                    wasSynchronouslyLoaded,
+                                                  ) {
+                                                    if (wasSynchronouslyLoaded ||
+                                                        frame != null) {
+                                                      return child;
+                                                    } else {
+                                                      return const Center(
+                                                        child: SizedBox(
+                                                          width: 28,
+                                                          height: 28,
+                                                          child:
+                                                              CircularProgressIndicator(
+                                                                strokeWidth: 2,
+                                                              ),
+                                                        ),
+                                                      );
+                                                    }
+                                                  },
                                               errorBuilder: (context, error, stackTrace) {
                                                 logger.warning(
                                                   'Error building image for path: ${imageModel.imagePath}',

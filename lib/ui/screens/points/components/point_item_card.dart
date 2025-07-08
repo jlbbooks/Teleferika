@@ -323,11 +323,33 @@ class PointItemCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                           child: Stack(
                             children: [
-                              Image.file(
-                                File(img.imagePath),
+                              Image(
+                                image: FileImage(File(img.imagePath)),
                                 width: 60,
                                 height: 60,
                                 fit: BoxFit.cover,
+                                frameBuilder:
+                                    (
+                                      context,
+                                      child,
+                                      frame,
+                                      wasSynchronouslyLoaded,
+                                    ) {
+                                      if (wasSynchronouslyLoaded ||
+                                          frame != null) {
+                                        return child;
+                                      } else {
+                                        return const Center(
+                                          child: SizedBox(
+                                            width: 28,
+                                            height: 28,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    },
                                 errorBuilder: (context, error, stackTrace) =>
                                     Container(
                                       width: 60,

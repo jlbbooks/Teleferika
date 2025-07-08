@@ -14,6 +14,7 @@ import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 import 'components/point_item_card.dart';
 import 'components/points_top_bar.dart';
+import 'package:flutter/foundation.dart';
 
 class PointsListScreen extends StatefulWidget {
   final ProjectModel project;
@@ -45,6 +46,18 @@ class PointsListScreenState extends State<PointsListScreen> with StatusMixin {
   void initState() {
     super.initState();
     _loadPoints();
+    // In debug mode, expand all cards after first frame
+    if (kDebugMode) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final projectState = Provider.of<ProjectStateManager>(
+          context,
+          listen: false,
+        );
+        setState(() {
+          _expandedPointIds.addAll(projectState.currentPoints.map((p) => p.id));
+        });
+      });
+    }
   }
 
   @override
