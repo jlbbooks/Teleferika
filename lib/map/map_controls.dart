@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
-import 'package:teleferika/ui/tabs/map/map_type.dart';
+import 'package:teleferika/map/map_type.dart';
 
 class MapControls {
   static Widget buildFloatingActionButtons({

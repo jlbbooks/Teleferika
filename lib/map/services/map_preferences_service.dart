@@ -1,6 +1,6 @@
 import 'package:logging/logging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:teleferika/ui/tabs/map/map_type.dart';
+import 'package:teleferika/map/map_type.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:teleferika/core/app_config.dart';
 

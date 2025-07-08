@@ -13,13 +13,13 @@ import 'package:teleferika/core/project_state_manager.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/db/models/point_model.dart';
 
-import 'package:teleferika/ui/tabs/map/markers/map_markers.dart';
-import 'package:teleferika/ui/tabs/map/markers/azimuth_arrow.dart';
-import 'package:teleferika/ui/tabs/map/markers/location_markers.dart';
-import 'package:teleferika/ui/tabs/map/markers/polyline_arrowhead.dart';
-import 'package:teleferika/ui/tabs/map/services/geometry_service.dart';
-import 'package:teleferika/ui/tabs/map/services/map_cache_manager.dart';
-import 'package:teleferika/ui/tabs/map/map_type.dart';
+import 'package:teleferika/map/markers/map_markers.dart';
+import 'package:teleferika/map/markers/azimuth_arrow.dart';
+import 'package:teleferika/map/markers/location_markers.dart';
+import 'package:teleferika/map/markers/polyline_arrowhead.dart';
+import 'package:teleferika/map/services/geometry_service.dart';
+import 'package:teleferika/map/services/map_cache_manager.dart';
+import 'package:teleferika/map/map_type.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class FlutterMapWidget extends StatefulWidget {
@@ -192,7 +192,9 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
                 urlTemplate: widget.tileLayerUrl,
                 userAgentPackageName: 'com.jlbbooks.teleferika',
                 tileProvider: _getTileProvider(widget.currentMapType),
-                retinaMode: widget.currentMapType.supportsRetina ? RetinaMode.isHighDensity(context) : null,
+                retinaMode: widget.currentMapType.supportsRetina
+                    ? RetinaMode.isHighDensity(context)
+                    : null,
               ),
               RichAttributionWidget(
                 attributions: [

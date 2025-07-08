@@ -6,7 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
-import 'package:teleferika/ui/tabs/map/services/geometry_service.dart';
+import 'package:teleferika/map/services/geometry_service.dart';
 import 'package:teleferika/core/project_provider.dart';
 
 class MapMarkers {

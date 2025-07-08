@@ -17,7 +17,7 @@ import 'package:teleferika/ui/screens/loading/loading_screen.dart';
 import 'core/logger.dart';
 import 'db/database_helper.dart';
 import 'ui/screens/projects/projects_list_screen.dart';
-import 'ui/tabs/map/services/map_cache_manager.dart';
+import 'map/services/map_cache_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

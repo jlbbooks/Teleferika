@@ -1,4 +1,4 @@
-import 'package:teleferika/ui/tabs/map/map_type.dart';
+import 'package:teleferika/map/map_type.dart';
 
 /// Utility functions for map store management
 class MapStoreUtils {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:teleferika/ui/tabs/map/map_type.dart';
+import 'package:teleferika/map/map_type.dart';
 
 class MapTypeSelector {
   static Widget build({

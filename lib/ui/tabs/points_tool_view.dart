@@ -14,8 +14,8 @@ import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/screens/points/point_editor_screen.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 import 'package:teleferika/ui/widgets/photo_gallery_dialog.dart';
-import 'package:teleferika/ui/tabs/map/map_controller.dart';
-import 'package:teleferika/ui/tabs/map/services/geometry_service.dart';
+import 'package:teleferika/map/map_controller.dart';
+import 'package:teleferika/map/services/geometry_service.dart';
 import 'dart:io';
 
 class PointsToolView extends StatefulWidget {

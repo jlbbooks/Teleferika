@@ -4,11 +4,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:provider/provider.dart';
 import 'package:teleferika/core/app_config.dart';
-import 'package:teleferika/ui/tabs/map/map_type.dart';
-import 'package:teleferika/ui/tabs/map/state/map_state_manager.dart';
-import 'package:teleferika/ui/tabs/map/services/map_store_utils.dart';
-import 'package:teleferika/ui/tabs/map/services/map_cache_logger.dart';
-import 'package:teleferika/ui/tabs/map/services/map_cache_manager.dart';
+import 'package:teleferika/map/map_type.dart';
+import 'package:teleferika/map/state/map_state_manager.dart';
+import 'package:teleferika/map/services/map_store_utils.dart';
+import 'package:teleferika/map/services/map_cache_logger.dart';
+import 'package:teleferika/map/services/map_cache_manager.dart';
 
 class DebugPanel extends StatelessWidget {
   final VoidCallback? onClose;

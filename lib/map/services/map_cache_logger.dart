@@ -1,7 +1,7 @@
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:logging/logging.dart';
-import 'package:teleferika/ui/tabs/map/map_type.dart';
-import 'package:teleferika/ui/tabs/map/services/map_store_utils.dart';
+import 'package:teleferika/map/map_type.dart';
+import 'package:teleferika/map/services/map_store_utils.dart';
 
 /// Service for logging map cache usage and statistics
 class MapCacheLogger {

@@ -19,14 +19,14 @@ import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
 import 'package:teleferika/ui/widgets/project_points_layer.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 
-import '../../tabs/map/debug/debug_panel.dart';
-import '../../tabs/map/state/map_state_manager.dart';
-import '../../tabs/map/widgets/flutter_map_widget.dart';
-import '../../tabs/map/widgets/map_loading_widget.dart';
-import '../../tabs/map/widgets/point_details_panel.dart';
-import '../../tabs/map/widgets/floating_action_buttons.dart';
-import '../../tabs/map/widgets/map_type_selector.dart';
-import '../../tabs/map/services/map_cache_manager.dart';
+import '../../../map/debug/debug_panel.dart';
+import '../../../map/state/map_state_manager.dart';
+import '../../../map/widgets/flutter_map_widget.dart';
+import '../../../map/widgets/map_loading_widget.dart';
+import '../../../map/widgets/point_details_panel.dart';
+import '../../../map/widgets/floating_action_buttons.dart';
+import '../../../map/widgets/map_type_selector.dart';
+import '../../../map/services/map_cache_manager.dart';
 
 class MapScreen extends StatefulWidget {
   final ProjectModel project;

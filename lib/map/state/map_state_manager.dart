@@ -12,10 +12,10 @@ import 'package:teleferika/core/project_state_manager.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
-import 'package:teleferika/ui/tabs/map/map_controller.dart';
-import 'package:teleferika/ui/tabs/map/map_type.dart';
-import 'package:teleferika/ui/tabs/map/services/map_preferences_service.dart';
-import 'package:teleferika/ui/tabs/map/services/map_cache_logger.dart';
+import 'package:teleferika/map/map_controller.dart';
+import 'package:teleferika/map/map_type.dart';
+import 'package:teleferika/map/services/map_preferences_service.dart';
+import 'package:teleferika/map/services/map_cache_logger.dart';
 import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
 import 'package:teleferika/core/app_config.dart';
 
