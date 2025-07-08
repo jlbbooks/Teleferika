@@ -13,7 +13,7 @@ import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/licensing/licence_service.dart';
 import 'package:teleferika/licensing/licensed_features_loader.dart';
-import 'package:teleferika/ui/tabs/map/map_tool_view.dart';
+import 'package:teleferika/ui/screens/map/map_screen.dart';
 import 'package:teleferika/ui/tabs/points_tab.dart';
 import 'package:teleferika/ui/tabs/points_tool_view.dart';
 import 'package:teleferika/ui/tabs/project_details_tab.dart';
@@ -98,8 +98,8 @@ class _ProjectEditorScreenState extends State<ProjectEditorScreen>
   // Add a GlobalKey to access the PointsTab state
   final GlobalKey<PointsTabState> _pointsTabKey = GlobalKey<PointsTabState>();
 
-  // GlobalKey to access MapToolView methods
-  final GlobalKey<MapToolViewState> _mapTabKey = GlobalKey<MapToolViewState>();
+  // GlobalKey to access MapScreen methods
+  final GlobalKey<MapScreenState> _mapTabKey = GlobalKey<MapScreenState>();
 
   // Store reference to ProjectStateManager for safe disposal
   ProjectStateManager? _projectStateManager;
@@ -435,7 +435,7 @@ class _ProjectEditorScreenState extends State<ProjectEditorScreen>
           key: _pointsTabKey,
           project: currentProject ?? widget.project,
         ),
-        MapToolView(key: _mapTabKey, project: currentProject ?? widget.project),
+        MapScreen(key: _mapTabKey, project: currentProject ?? widget.project),
       ],
     );
     List<Widget> tabWidgets = [

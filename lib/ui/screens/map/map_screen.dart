@@ -19,34 +19,28 @@ import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
 import 'package:teleferika/ui/widgets/project_points_layer.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 
-import 'debug/debug_panel.dart';
-import 'state/map_state_manager.dart';
-import 'widgets/flutter_map_widget.dart';
-import 'widgets/map_loading_widget.dart';
-import 'widgets/point_details_panel.dart';
-import 'widgets/floating_action_buttons.dart';
-import 'widgets/map_type_selector.dart';
-import 'services/map_cache_manager.dart';
+import '../../tabs/map/debug/debug_panel.dart';
+import '../../tabs/map/state/map_state_manager.dart';
+import '../../tabs/map/widgets/flutter_map_widget.dart';
+import '../../tabs/map/widgets/map_loading_widget.dart';
+import '../../tabs/map/widgets/point_details_panel.dart';
+import '../../tabs/map/widgets/floating_action_buttons.dart';
+import '../../tabs/map/widgets/map_type_selector.dart';
+import '../../tabs/map/services/map_cache_manager.dart';
 
-class MapToolView extends StatefulWidget {
+class MapScreen extends StatefulWidget {
   final ProjectModel project;
   final String? selectedPointId;
-  final VoidCallback? onNavigateToCompassTab;
 
-  const MapToolView({
-    super.key,
-    required this.project,
-    this.selectedPointId,
-    this.onNavigateToCompassTab,
-  });
+  const MapScreen({super.key, required this.project, this.selectedPointId});
 
   @override
-  State<MapToolView> createState() => MapToolViewState();
+  State<MapScreen> createState() => MapScreenState();
 }
 
-class MapToolViewState extends State<MapToolView>
+class MapScreenState extends State<MapScreen>
     with StatusMixin, TickerProviderStateMixin {
-  final Logger logger = Logger('MapToolView');
+  final Logger logger = Logger('MapScreen');
 
   // State manager
   late MapStateManager _stateManager;
@@ -88,7 +82,7 @@ class MapToolViewState extends State<MapToolView>
   }
 
   @override
-  void didUpdateWidget(covariant MapToolView oldWidget) {
+  void didUpdateWidget(covariant MapScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     // Get current project from global state
@@ -212,7 +206,7 @@ class MapToolViewState extends State<MapToolView>
       if (action == 'updated') {
         final updatedPoint = result['point'] as PointModel?;
         if (updatedPoint != null) {
-          // Do NOT call updatePointInEditingState again; PointDetailsPage already did it and notified listeners
+          // Do NOT call updatePointInEditingState again; PointEditorScreen already did it and notified listeners
           setState(() {
             _stateManager.recalculateAndDrawLines(context);
           });
@@ -238,7 +232,7 @@ class MapToolViewState extends State<MapToolView>
             }
             _stateManager.recalculateAndDrawLines(context);
           });
-          logger.info("Point deleted from MapToolView.");
+          logger.info("Point deleted from MapScreen.");
           showSuccessStatus('Point deleted (pending save)!');
         }
       }
@@ -299,7 +293,7 @@ class MapToolViewState extends State<MapToolView>
 
         setState(() {
           logger.info(
-            "Point ${pointToDelete.name} (ID: ${pointToDelete.id}) removed from MapToolView after panel delete.",
+            "Point ${pointToDelete.name} (ID: ${pointToDelete.id}) removed from MapScreen after panel delete.",
           );
           if (_stateManager.selectedPointId == pointToDelete.id) {
             _stateManager.selectedPointId = null;
@@ -416,7 +410,7 @@ class MapToolViewState extends State<MapToolView>
   /// Public method to refresh points from the database
   /// This can be called from the parent component when points are reordered
   Future<void> refreshPoints() async {
-    logger.info("MapToolView: External refresh requested.");
+    logger.info("MapScreen: External refresh requested.");
     await _stateManager.refreshPoints(context);
     if (!mounted) return;
     setState(() {});
@@ -726,9 +720,7 @@ class MapToolViewState extends State<MapToolView>
               ),
             );
           } catch (e, st) {
-            logger.severe(
-              'MapToolView: Exception building FlutterMap: $e\n$st',
-            );
+            logger.severe('MapScreen: Exception building FlutterMap: $e\n$st');
             return Stack(
               children: [
                 const Center(child: Text('Error building map. See logs.')),
