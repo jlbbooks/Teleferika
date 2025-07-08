@@ -58,7 +58,7 @@ Teleferika supports multiple map types to provide users with different views of 
 
 ## MapType Class (Data-Driven)
 
-The core of the map type system is the `MapType` class located in `lib/ui/tabs/map/map_type.dart`:
+The core of the map type system is the `MapType` class located in `lib/map/map_type.dart`:
 
 ```dart
 class MapType {
@@ -220,16 +220,13 @@ The `supportsRetina` field is automatically used by the `TileLayer` configuratio
 
 ## Related Files
 
-- `lib/ui/tabs/map/map_type.dart` - Core MapType class
-- `lib/ui/tabs/map/services/map_store_utils.dart` - Cache store utilities
-- `lib/ui/tabs/map/services/map_cache_logger.dart` - Cache logging
-- `lib/ui/tabs/map/services/map_cache_error_handler.dart` - Error handling and fallback
-- `lib/ui/tabs/map/services/map_preferences_service.dart` - Preferences management
-- `lib/ui/tabs/map/widgets/map_type_selector.dart` - UI selector
-- `lib/ui/tabs/map/debug/debug_panel.dart` - Debug tools for cache management
-- `lib/l10n/app_en.arb` & `lib/l10n/app_it.arb` - Localization
-- `lib/main.dart` - Cache store initialization
-- `lib/ui/tabs/map/widgets/flutter_map_widget.dart` - Map widget implementation
+- `lib/map/map_type.dart` - Core MapType class
+- `lib/map/services/map_store_utils.dart` - Cache store utilities
+- `lib/map/services/map_cache_logger.dart` - Cache logging
+- `lib/map/services/map_cache_error_handler.dart` - Error handling and fallback
+- `lib/map/services/map_preferences_service.dart` - Preferences management
+- `lib/map/widgets/map_type_selector.dart` - UI selector
+- `lib/map/debug/debug_panel.dart` - Debug tools for cache management
 
 ## Troubleshooting
 
@@ -312,3 +309,17 @@ try {
 8. **Monitor store status**: Use debug tools to monitor cache store health
 9. **Handle errors gracefully**: Implement proper error handling for cache operations
 10. **Validate stores**: Ensure stores are properly validated during initialization
+
+## File Structure
+
+- `lib/map/map_type.dart` - Core MapType class
+- `lib/map/services/map_store_utils.dart` - Cache store utilities
+- `lib/map/services/map_cache_logger.dart` - Cache logging
+- `lib/map/services/map_cache_error_handler.dart` - Error handling and fallback
+- `lib/map/services/map_preferences_service.dart` - Preferences management
+- `lib/map/widgets/map_type_selector.dart` - UI selector
+- `lib/map/debug/debug_panel.dart` - Debug tools for cache management
+
+### Integration Points
+
+- `lib/map/widgets/flutter_map_widget.dart` - Map widget implementation

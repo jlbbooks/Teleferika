@@ -46,7 +46,7 @@ void endSlidingMarker(BuildContext context);
 ### 4. Implementation Steps
 
 #### Step 1: Update MapMarkers Class
-**File**: `lib/ui/tabs/map/markers/map_markers.dart`
+**File**: `lib/map/markers/map_markers.dart`
 
 Add new callback parameters to `buildAllMapMarkers()`:
 ```dart
@@ -73,7 +73,7 @@ if (isSlidingMarker && point.id == slidingPointId) {
 ```
 
 #### Step 2: Update FlutterMapWidget
-**File**: `lib/ui/tabs/map/widgets/flutter_map_widget.dart`
+**File**: `lib/map/widgets/flutter_map_widget.dart`
 
 Add gesture handlers to marker creation:
 ```dart
@@ -83,7 +83,7 @@ onLongPressEnd: (point, details) => _handleLongPressEnd(point, details),
 ```
 
 #### Step 3: Update MapStateManager
-**File**: `lib/ui/tabs/map/state/map_state_manager.dart`
+**File**: `lib/map/state/map_state_manager.dart`
 
 Add slide state management:
 ```dart
@@ -223,21 +223,21 @@ final newPosition = camera.unprojectAtZoom(newScreenPoint, camera.zoom);
 
 ### 9. Files to Modify
 
-1. **`lib/ui/tabs/map/markers/map_markers.dart`**
+1. **`lib/map/markers/map_markers.dart`**
    - Add gesture handlers
    - Update marker styling for slide mode
    - Add slide state parameters
 
-2. **`lib/ui/tabs/map/widgets/flutter_map_widget.dart`**
+2. **`lib/map/widgets/flutter_map_widget.dart`**
    - Add gesture callback handling
    - Integrate slide state with marker creation
 
-3. **`lib/ui/tabs/map/state/map_state_manager.dart`**
+3. **`lib/map/state/map_state_manager.dart`**
    - Add slide state properties
    - Add slide management methods
    - Integrate with existing state management
 
-4. **`lib/ui/tabs/map/map_tool_view.dart`**
+4. **`lib/map/map_tool_view.dart`**
    - Pass slide state to FlutterMapWidget
    - Handle slide callbacks
 

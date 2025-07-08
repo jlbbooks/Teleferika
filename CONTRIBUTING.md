@@ -141,6 +141,7 @@ lib/
     ├── pages/      # Full-screen pages
     ├── tabs/       # Tab views
     └── widgets/    # Reusable widgets
+    └── screens/    # Screen-specific components organized by feature
 ```
 
 ### Widget Organization

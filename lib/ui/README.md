@@ -6,4 +6,6 @@ This directory contains all user interface components.
 
 - `pages/` - Full page screens that users navigate to
 - `widgets/` - Reusable UI components
-- `tabs/` - Tab-specific content views and tools
+- `screens/` - Screen-specific components organized by feature
+  - `points/` - Points-related screens and components
+  - `projects/` - Project-related screens and components
