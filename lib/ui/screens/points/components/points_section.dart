@@ -6,23 +6,22 @@ import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/screens/points/point_editor_screen.dart';
+import 'package:teleferika/ui/screens/points/points_list_screen.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 
-import 'points_tool_view.dart';
-
-class PointsTab extends StatefulWidget {
+class PointsSection extends StatefulWidget {
   final ProjectModel project;
 
-  const PointsTab({super.key, required this.project});
+  const PointsSection({super.key, required this.project});
 
   @override
-  State<PointsTab> createState() => PointsTabState();
+  State<PointsSection> createState() => PointsSectionState();
 }
 
-class PointsTabState extends State<PointsTab> with StatusMixin {
-  // GlobalKey to access PointsToolView methods
-  final GlobalKey<PointsToolViewState> _pointsToolViewKey =
-      GlobalKey<PointsToolViewState>();
+class PointsSectionState extends State<PointsSection> with StatusMixin {
+  // GlobalKey to access PointsListScreen methods
+  final GlobalKey<PointsListScreenState> _pointsListScreenKey =
+      GlobalKey<PointsListScreenState>();
 
   Future<void> _addNewPoint() async {
     final currentProject =
@@ -141,8 +140,8 @@ class PointsTabState extends State<PointsTab> with StatusMixin {
                             ),
                           ),
                           Expanded(
-                            child: PointsToolView(
-                              key: _pointsToolViewKey,
+                            child: PointsListScreen(
+                              key: _pointsListScreenKey,
                               project: currentProject,
                               points: points,
                             ),
@@ -168,17 +167,17 @@ class PointsTabState extends State<PointsTab> with StatusMixin {
     );
   }
 
-  /// Public method to access PointsToolView's onProjectSaved method
+  /// Public method to access PointsListScreen's onProjectSaved method
   void onProjectSaved() {
-    _pointsToolViewKey.currentState?.onProjectSaved();
+    _pointsListScreenKey.currentState?.onProjectSaved();
   }
 
-  /// Public method to refresh points in PointsToolView
+  /// Public method to refresh points in PointsListScreen
   void refreshPoints() {
-    _pointsToolViewKey.currentState?.refreshPoints();
+    _pointsListScreenKey.currentState?.refreshPoints();
   }
 
-  /// Public method to undo changes in PointsToolView
+  /// Public method to undo changes in PointsListScreen
   Future<void> undoChanges() async {
     await context.projectState.undoChanges();
   }

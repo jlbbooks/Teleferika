@@ -11,12 +11,12 @@ import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 
-class ProjectDetailsTab extends StatefulWidget {
+class ProjectDetailsSection extends StatefulWidget {
   final ProjectModel project;
   final bool isNew;
   final int pointsCount;
 
-  const ProjectDetailsTab({
+  const ProjectDetailsSection({
     super.key,
     required this.project,
     required this.isNew,
@@ -24,11 +24,12 @@ class ProjectDetailsTab extends StatefulWidget {
   });
 
   @override
-  State<ProjectDetailsTab> createState() => ProjectDetailsTabState();
+  State<ProjectDetailsSection> createState() => ProjectDetailsSectionState();
 }
 
-class ProjectDetailsTabState extends State<ProjectDetailsTab> with StatusMixin {
-  final Logger logger = Logger('ProjectDetailsTab');
+class ProjectDetailsSectionState extends State<ProjectDetailsSection>
+    with StatusMixin {
+  final Logger logger = Logger('ProjectDetailsSection');
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _noteController;

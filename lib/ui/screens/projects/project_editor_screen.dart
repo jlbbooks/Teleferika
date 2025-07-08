@@ -14,9 +14,9 @@ import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/licensing/licence_service.dart';
 import 'package:teleferika/licensing/licensed_features_loader.dart';
 import 'package:teleferika/ui/screens/map/map_screen.dart';
-import 'package:teleferika/ui/tabs/points_tab.dart';
-import 'package:teleferika/ui/tabs/points_tool_view.dart';
-import 'package:teleferika/ui/tabs/project_details_tab.dart';
+import 'package:teleferika/ui/screens/points/components/points_section.dart';
+import '../points/points_list_screen.dart';
+import 'package:teleferika/ui/screens/projects/components/project_details_section.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 
 enum ProjectEditorTab {
@@ -83,20 +83,21 @@ class _ProjectEditorScreenState extends State<ProjectEditorScreen>
   bool _isLoading = false;
   bool _isEffectivelyNew = true;
 
-  final GlobalKey<PointsToolViewState> _pointsToolViewKey =
-      GlobalKey<PointsToolViewState>();
+  final GlobalKey<PointsListScreenState> _pointsListScreenKey =
+      GlobalKey<PointsListScreenState>();
 
   bool _projectWasSuccessfullySaved = false;
 
   final LicenceService _licenceService =
       LicenceService.instance; // Get instance
 
-  // Add a GlobalKey to access the ProjectDetailsTab state
-  final GlobalKey<ProjectDetailsTabState> _detailsTabKey =
-      GlobalKey<ProjectDetailsTabState>();
+  // Add a GlobalKey to access the ProjectDetailsSection state
+  final GlobalKey<ProjectDetailsSectionState> _detailsTabKey =
+      GlobalKey<ProjectDetailsSectionState>();
 
-  // Add a GlobalKey to access the PointsTab state
-  final GlobalKey<PointsTabState> _pointsTabKey = GlobalKey<PointsTabState>();
+  // Add a GlobalKey to access the PointsSection state
+  final GlobalKey<PointsSectionState> _pointsTabKey =
+      GlobalKey<PointsSectionState>();
 
   // GlobalKey to access MapScreen methods
   final GlobalKey<MapScreenState> _mapTabKey = GlobalKey<MapScreenState>();
@@ -425,13 +426,13 @@ class _ProjectEditorScreenState extends State<ProjectEditorScreen>
     Widget tabBarViewWidget = TabBarView(
       controller: _tabController,
       children: [
-        ProjectDetailsTab(
+        ProjectDetailsSection(
           key: _detailsTabKey,
           project: currentProject ?? widget.project,
           isNew: _isEffectivelyNew,
           pointsCount: currentPoints.length,
         ),
-        PointsTab(
+        PointsSection(
           key: _pointsTabKey,
           project: currentProject ?? widget.project,
         ),
