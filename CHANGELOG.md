@@ -120,4 +120,11 @@ All notable changes to this project will be documented in this file.
 - feat: Implement Compass Tool View with dynamic heading display
 
 ## [0.0.1+1]
-- feat: Implement project creation and details editing 
+- feat: Implement project creation and details editing
+
+## [0.9.28+69] - 2025-07-08
+### Changed
+- Dynamic injection of MapType `cacheStoreName` and update of all usages to use the new pattern.
+- Generalized Thunderforest API key support (now works for any map type with a parameterized API key).
+- Debug panel and store status UI improvements (clearer map type display, better store status layout, icons for status).
+- Documentation and code consistency improvements throughout the codebase. 
