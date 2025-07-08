@@ -439,6 +439,7 @@ class MapStateManager extends ChangeNotifier {
       // Try to get current location with maximum accuracy
       LatLng newPointLocation;
       double? altitude;
+      double? gpsPrecision;
 
       if (hasLocationPermission && currentPosition != null) {
         // Use current GPS location
@@ -447,17 +448,20 @@ class MapStateManager extends ChangeNotifier {
           currentPosition!.longitude,
         );
         altitude = currentPosition!.altitude;
+        gpsPrecision = currentPosition!.accuracy;
       } else {
         // Use map center as fallback
         final mapCenter = mapController.camera.center;
         newPointLocation = mapCenter;
         altitude = null;
+        gpsPrecision = null;
       }
 
       // Create new point
       final createdPoint = await _controller.createNewPoint(
         newPointLocation,
         altitude: altitude,
+        gpsPrecision: gpsPrecision,
       );
 
       newPoint = createdPoint;

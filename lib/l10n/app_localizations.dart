@@ -1815,6 +1815,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Project: '**
   String get project_label_prefix;
+
+  /// Label for GPS precision (accuracy) in meters.
+  ///
+  /// In en, this message translates to:
+  /// **'GPS Precision:'**
+  String get gpsPrecisionLabel;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

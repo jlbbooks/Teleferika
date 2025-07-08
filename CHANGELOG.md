@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.28+69] - 2025-07-08
+### Changed
+- Dynamic injection of MapType `cacheStoreName` and update of all usages to use the new pattern.
+- Generalized Thunderforest API key support (now works for any map type with a parameterized API key).
+- Debug panel and store status UI improvements (clearer map type display, better store status layout, icons for status).
+- Documentation and code consistency improvements throughout the codebase. 
+
 ## [0.9.27+68]
 - Removed `startingPointId` and `endingPointId` from `ProjectModel` and the database schema.
 
@@ -122,9 +129,3 @@ All notable changes to this project will be documented in this file.
 ## [0.0.1+1]
 - feat: Implement project creation and details editing
 
-## [0.9.28+69] - 2025-07-08
-### Changed
-- Dynamic injection of MapType `cacheStoreName` and update of all usages to use the new pattern.
-- Generalized Thunderforest API key support (now works for any map type with a parameterized API key).
-- Debug panel and store status UI improvements (clearer map type display, better store status layout, icons for status).
-- Documentation and code consistency improvements throughout the codebase. 

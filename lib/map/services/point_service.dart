@@ -77,7 +77,7 @@ class PointService {
       altitude: altitude,
       // Always include altitude if available
       ordinalNumber: nextOrdinal,
-      note: 'Point added from map',
+      note: null,
       timestamp: DateTime.now(),
       isUnsaved: true, // Mark as unsaved
     );

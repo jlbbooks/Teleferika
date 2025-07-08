@@ -1036,4 +1036,7 @@ class SEn extends S {
 
   @override
   String get project_label_prefix => 'Project: ';
+
+  @override
+  String get gpsPrecisionLabel => 'GPS Precision:';
 }

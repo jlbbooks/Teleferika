@@ -1378,5 +1378,9 @@
   "project_label_prefix": "Progetto: ",
   "@project_label_prefix": {
     "description": "Prefisso per le etichette dei nomi dei progetti sulla mappa."
+  },
+  "gpsPrecisionLabel": "Precisione GPS:",
+  "@gpsPrecisionLabel": {
+    "description": "Etichetta per la precisione GPS (accuratezza) in metri."
   }
 }

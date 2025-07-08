@@ -17,6 +17,7 @@ class PointModel {
   final double latitude;
   final double longitude;
   final double? altitude; // New optional altitude field
+  final double? gpsPrecision; // New optional field for GPS precision
   final int ordinalNumber;
   String? _note;
   final DateTime? timestamp;
@@ -46,6 +47,7 @@ class PointModel {
   static const String columnLatitude = 'latitude';
   static const String columnLongitude = 'longitude';
   static const String columnAltitude = 'altitude'; // New column name
+  static const String columnGpsPrecision = 'gps_precision';
   static const String columnOrdinalNumber = 'ordinal_number';
   static const String columnNote = 'note';
   static const String columnHeading = 'heading';
@@ -57,6 +59,7 @@ class PointModel {
     required this.latitude,
     required this.longitude,
     this.altitude, // Add to constructor
+    this.gpsPrecision, // Add to constructor
     required this.ordinalNumber,
     String? note,
     this.timestamp,
@@ -74,7 +77,9 @@ class PointModel {
     double? latitude,
     double? longitude,
     double? altitude, // Add to copyWith
+    double? gpsPrecision, // Add to copyWith
     bool clearAltitude = false, // Option to clear altitude
+    bool clearGpsPrecision = false, // Option to clear gpsPrecision
     int? ordinalNumber,
     String? note,
     bool clearNote = false,
@@ -89,7 +94,10 @@ class PointModel {
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       altitude: clearAltitude ? null : altitude ?? this.altitude,
-      // Handle clearAltitude
+      gpsPrecision: clearGpsPrecision
+          ? null
+          : gpsPrecision ?? this.gpsPrecision,
+      // Handle clearAltitude and clearGpsPrecision
       ordinalNumber: ordinalNumber ?? this.ordinalNumber,
       note: null,
       // Will be set below using the setter
@@ -117,6 +125,7 @@ class PointModel {
       columnLatitude: latitude,
       columnLongitude: longitude,
       columnAltitude: altitude, // Add to toMap
+      columnGpsPrecision: gpsPrecision, // Add to toMap
       columnOrdinalNumber: ordinalNumber,
       columnNote: note.isEmpty
           ? null
@@ -135,6 +144,7 @@ class PointModel {
       latitude: map[columnLatitude] as double,
       longitude: map[columnLongitude] as double,
       altitude: map[columnAltitude] as double?,
+      gpsPrecision: map[columnGpsPrecision] as double?,
       // Add to fromMap
       ordinalNumber: map[columnOrdinalNumber] as int,
       note: null,
@@ -154,7 +164,7 @@ class PointModel {
 
   @override
   String toString() {
-    return 'PointModel(id: $id, projectId: $projectId, latitude: $latitude, longitude: $longitude, altitude: $altitude, ordinalNumber: $ordinalNumber, note: $note, timestamp: $timestamp, images: ${images.length})';
+    return 'PointModel(id: $id, projectId: $projectId, latitude: $latitude, longitude: $longitude, altitude: $altitude, gpsPrecision: $gpsPrecision, ordinalNumber: $ordinalNumber, note: $note, timestamp: $timestamp, images: ${images.length})';
   }
 
   @override
@@ -167,6 +177,7 @@ class PointModel {
         other.latitude == latitude &&
         other.longitude == longitude &&
         other.altitude == altitude && // Add to equality check
+        other.gpsPrecision == gpsPrecision && // Add to equality check
         other.ordinalNumber == ordinalNumber &&
         other.note == note &&
         other.timestamp == timestamp &&
@@ -183,6 +194,7 @@ class PointModel {
       latitude,
       longitude,
       altitude,
+      gpsPrecision,
       // Add to hashCode
       ordinalNumber,
       note,
@@ -224,6 +236,9 @@ class PointModel {
     if (ordinalNumber < 0) errors.add('Ordinal number must be non-negative');
     if (altitude != null && (altitude! < -1000 || altitude! > 8849)) {
       errors.add('Altitude must be between -1000 and 8849 meters');
+    }
+    if (gpsPrecision != null && gpsPrecision! < 0) {
+      errors.add('GPS precision must be non-negative');
     }
 
     return errors;

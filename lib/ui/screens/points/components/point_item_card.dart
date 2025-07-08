@@ -278,6 +278,23 @@ class PointItemCard extends StatelessWidget {
                   ),
                 ],
               ),
+            // GPS Precision
+            if (point.gpsPrecision != null)
+              Row(
+                children: [
+                  Icon(
+                    AppConfig.gpsPrecisionIcon,
+                    size: 18,
+                    color: AppConfig.gpsPrecisionColor,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${S.of(context)?.gpsPrecisionLabel ?? 'GPS Precision:'} '
+                    '${point.gpsPrecision!.toStringAsFixed(2)} ${S.of(context)?.unit_meter ?? 'm'}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
             // Full note (untruncated)
             if (point.note.isNotEmpty)
               Padding(

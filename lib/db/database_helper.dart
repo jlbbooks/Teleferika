@@ -15,7 +15,7 @@ class DatabaseHelper {
   static const _databaseName = "Photogrammetry.db";
 
   static const _databaseVersion =
-      10; // Incremented due to adding note column to images table
+      11; // Incremented due to adding gps_precision column to points table
 
   DatabaseHelper._privateConstructor();
 
@@ -68,7 +68,8 @@ class DatabaseHelper {
       ${PointModel.columnProjectId} TEXT NOT NULL,
       ${PointModel.columnLatitude} REAL NOT NULL,
       ${PointModel.columnLongitude} REAL NOT NULL,
-      ${PointModel.columnAltitude} REAL, -- Added new altitude column (nullable REAL)
+      ${PointModel.columnAltitude} REAL,
+      gps_precision REAL, -- Added new gps_precision column (nullable REAL)
       ${PointModel.columnOrdinalNumber} INTEGER NOT NULL,
       ${PointModel.columnNote} TEXT,
       ${PointModel.columnHeading} REAL,
@@ -493,6 +494,21 @@ class DatabaseHelper {
         "Successfully removed starting_point_id and ending_point_id from projects table by recreating the table.",
       );
     }
+    if (oldVersion < 12) {
+      // ---- Migration to Version 12: Add gps_precision to points table ----
+      try {
+        await db.execute(
+          'ALTER TABLE ${PointModel.tableName} ADD COLUMN gps_precision REAL',
+        );
+        logger.info(
+          "Applied migration for version 12: Added gps_precision column to points table",
+        );
+      } catch (e) {
+        logger.warning(
+          "Could not add gps_precision to points table (may already exist): $e",
+        );
+      }
+    }
     logger.info("Database upgrade process complete.");
   }
 
@@ -558,7 +574,8 @@ class DatabaseHelper {
       // 1. Insert the PointModel (point.toMap() does not include images)
       await txn.insert(
         PointModel.tableName,
-        point.toMap(), // This map is for the 'points' table
+        point
+            .toMap(), // This map is for the 'points' table, now includes gps_precision
         conflictAlgorithm: ConflictAlgorithm.replace, // Or as per your needs
       );
 
@@ -597,7 +614,7 @@ class DatabaseHelper {
       // 1. Update the PointModel itself
       result = await txn.update(
         PointModel.tableName,
-        point.toMap(),
+        point.toMap(), // Now includes gps_precision
         where: '${PointModel.columnId} = ?',
         whereArgs: [point.id],
       );
@@ -650,7 +667,10 @@ class DatabaseHelper {
     if (maps.isNotEmpty) {
       // Fetch associated images
       final List<ImageModel> images = await getImagesForPoint(id);
-      return PointModel.fromMap(maps.first, images: images);
+      return PointModel.fromMap(
+        maps.first,
+        images: images,
+      ); // fromMap now handles gpsPrecision
     }
     return null;
   }
@@ -768,7 +788,9 @@ class DatabaseHelper {
     for (var pMap in pointMaps) {
       final String pointId = pMap[PointModel.columnId] as String;
       final List<ImageModel> images = await getImagesForPoint(pointId);
-      points.add(PointModel.fromMap(pMap, images: images));
+      points.add(
+        PointModel.fromMap(pMap, images: images),
+      ); // fromMap now handles gpsPrecision
     }
     return points;
   }

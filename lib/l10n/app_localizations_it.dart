@@ -1046,4 +1046,7 @@ class SIt extends S {
 
   @override
   String get project_label_prefix => 'Progetto: ';
+
+  @override
+  String get gpsPrecisionLabel => 'Precisione GPS:';
 }

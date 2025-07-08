@@ -18,6 +18,9 @@ class AppConfig {
   static const IconData altitudeIcon = Icons.terrain;
   static const Color altitudeColor = Colors.brown;
 
+  static const IconData gpsPrecisionIcon = Icons.my_location;
+  static const Color gpsPrecisionColor = Colors.blueGrey;
+
   static final ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
