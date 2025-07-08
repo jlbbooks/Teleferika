@@ -201,7 +201,7 @@ class DebugPanel extends StatelessWidget {
                     Text(
                       'Speed accuracy: ${stateManager.currentPosition!.speedAccuracy.toStringAsFixed(2)} m/s',
                     ),
-                    Text('Map type: ${stateManager.currentMapType}'),
+                    Text('Map type: ${stateManager.currentMapType.id}'),
                     Row(
                       children: [
                         SizedBox(
@@ -311,36 +311,50 @@ class DebugPanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Show current map type id for context
+                Text(
+                  'Current map type: ${currentMapType.id}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
                 const Text(
                   'Store validation status:',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                ...MapCacheManager.getStoreStatus().entries.map<Widget>((
-                  entry,
-                ) {
+                ...MapCacheManager.getStoreStatus().entries.map((entry) {
                   final status = entry.value;
                   Color statusColor;
+                  IconData statusIcon;
                   switch (status) {
                     case 'validated':
                       statusColor = Colors.green;
+                      statusIcon = Icons.check_circle;
                       break;
                     case 'failed':
                       statusColor = Colors.red;
+                      statusIcon = Icons.cancel;
                       break;
                     default:
                       statusColor = Colors.orange;
+                      statusIcon = Icons.check_circle;
                   }
-
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 4.0),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${entry.key}: ',
+                          '${entry.key}:',
                           style: const TextStyle(fontWeight: FontWeight.w500),
                         ),
-                        Text(status, style: TextStyle(color: statusColor)),
+                        Row(
+                          children: [
+                            Icon(statusIcon, color: statusColor, size: 16),
+                            const SizedBox(width: 4),
+                            Text(status, style: TextStyle(color: statusColor)),
+                          ],
+                        ),
                       ],
                     ),
                   );

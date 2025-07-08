@@ -19,7 +19,8 @@ class MapCacheManager {
 
   /// Get a tile provider with error handling and fallback
   static FMTCTileProvider getTileProviderWithFallback(MapType mapType) {
-    final storeName = mapType.cacheStoreName ?? _fallbackStoreName;
+    final storeName =
+        MapType.of(mapType.id).cacheStoreName ?? 'mapStore_${mapType.id}';
 
     // If store is known to be failed, use fallback immediately
     if (_failedStores.contains(storeName)) {
