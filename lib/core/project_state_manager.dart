@@ -102,11 +102,10 @@ class ProjectStateManager extends ChangeNotifier {
     if (_currentProject == null) return false;
 
     try {
-      final projectToSave = _currentProject!.copyWith(
-        lastUpdate: DateTime.now(),
-      );
+      // Update lastUpdate directly
+      _currentProject = _currentProject!.copyWith(lastUpdate: DateTime.now());
       // 1. Update all points first
-      final dbPoints = await _dbHelper.getPointsForProject(projectToSave.id);
+      final dbPoints = await _dbHelper.getPointsForProject(_currentProject!.id);
       final dbPointIds = dbPoints.map((p) => p.id).toSet();
       final memPoints = _currentProject!.points;
       final memPointIds = memPoints.map((p) => p.id).toSet();
@@ -123,9 +122,9 @@ class ProjectStateManager extends ChangeNotifier {
         await _dbHelper.deletePointById(pointId);
       }
       // 3. Now update the project (with valid start/end point IDs)
-      await updateProject(projectToSave);
+      await updateProjectInDB();
       // 4. Reload project and points from DB to ensure state is up to date
-      await loadProject(projectToSave.id);
+      await loadProject(_currentProject!.id);
       _hasUnsavedChanges = false;
       logger.info("ProjectStateManager: Project and points saved successfully");
       return true;
@@ -226,12 +225,13 @@ class ProjectStateManager extends ChangeNotifier {
   }
 
   /// Update project details in DB
-  Future<void> updateProject(ProjectModel project) async {
+  Future<void> updateProjectInDB() async {
     try {
-      final result = await _dbHelper.updateProject(project);
+      final result = await _dbHelper.updateProject(_currentProject!);
       if (result > 0) {
-        _currentProject = project;
-        logger.info("ProjectStateManager: Updated project ${project.name}");
+        logger.info(
+          "ProjectStateManager: Updated project ${_currentProject!.name}",
+        );
         notifyListeners();
       }
     } catch (e, stackTrace) {
@@ -352,13 +352,20 @@ class ProjectStateManager extends ChangeNotifier {
 
   /// Move a point to new coordinates (in-memory only, not DB)
   Future<bool> movePoint(
-    PointModel point,
+    String pointId,
     double newLatitude,
     double newLongitude,
   ) async {
     if (_currentProject == null) {
       logger.warning(
         "ProjectStateManager: Cannot move point - no current project",
+      );
+      return false;
+    }
+    final point = getPointById(pointId);
+    if (point == null) {
+      logger.warning(
+        "ProjectStateManager: Cannot move point - point $pointId not found",
       );
       return false;
     }
