@@ -7,7 +7,6 @@ import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/core/project_state_manager.dart';
-import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
@@ -31,7 +30,6 @@ class PointsListScreen extends StatefulWidget {
 }
 
 class PointsListScreenState extends State<PointsListScreen> with StatusMixin {
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
   final Logger logger = Logger('PointsListScreen');
 
   bool _isLoading = true;
@@ -292,7 +290,10 @@ class PointsListScreenState extends State<PointsListScreen> with StatusMixin {
     try {
       // Delete points in editing state (in-memory only)
       for (String pointId in _selectedPointIds) {
-        projectState.deletePointInEditingState(pointId);
+        final success = await projectState.deletePoint(pointId);
+        if (!success) {
+          logger.warning("Failed to delete point $pointId");
+        }
       }
 
       if (mounted) {

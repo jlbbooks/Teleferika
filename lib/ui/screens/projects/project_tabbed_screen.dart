@@ -7,7 +7,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/core/project_state_manager.dart';
-import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
@@ -19,6 +18,7 @@ import '../points/points_list_screen.dart';
 import 'package:teleferika/ui/screens/projects/components/project_details_section.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 import 'package:teleferika/core/app_config.dart';
+import 'package:logging/logging.dart';
 
 enum ProjectEditorTab {
   details, // 0
@@ -75,6 +75,7 @@ class ProjectTabbedScreen extends StatefulWidget {
 
 class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
     with TickerProviderStateMixin, StatusMixin {
+  final Logger logger = Logger('ProjectTabbedScreen');
   late TabController _tabController;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -151,10 +152,15 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
 
   Future<void> _insertNewProjectToDb() async {
     // Insert the new project into the DB so points can be added
-    final dbHelper = DatabaseHelper.instance;
-    await dbHelper.insertProject(widget.project);
+    final success = await context.projectState.createProject(widget.project);
+    if (!success) {
+      // logger.severe("Failed to create new project in database"); // logger is not defined
+      return;
+    }
     // Optionally reload from DB to get any DB-generated fields
-    final dbProject = await dbHelper.getProjectById(widget.project.id);
+    // Reload the project into global state to ensure we have the latest data
+    await context.projectState.loadProject(widget.project.id);
+    final dbProject = context.projectState.currentProject;
     if (dbProject != null && mounted) {
       setState(() {
         _isEffectivelyNew = true;
@@ -184,8 +190,11 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
   }
 
   Future<void> _deleteProjectFromDb() async {
-    final dbHelper = DatabaseHelper.instance;
-    await dbHelper.deleteProject(widget.project.id);
+    final success = await context.projectState.deleteProject(widget.project.id);
+    if (!success) {
+      // logger.severe("Failed to delete project from database"); // logger is not defined
+      throw Exception("Failed to delete project");
+    }
   }
 
   @override

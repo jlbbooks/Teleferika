@@ -175,6 +175,7 @@ class PointAdditionalDataSection extends StatelessWidget {
               if (points.length >= 2) {
                 final logic = MapControllerLogic(
                   project: context.projectState.currentProject!,
+                  projectState: context.projectState,
                 );
                 distanceToLine = logic.distanceFromPointToFirstLastLine(
                   point,

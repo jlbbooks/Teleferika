@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:teleferika/core/project_provider.dart';
-import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:logging/logging.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
@@ -43,7 +42,6 @@ class ProjectPointsLayer extends StatefulWidget {
 
 class _ProjectPointsLayerState extends State<ProjectPointsLayer> {
   final Logger _logger = Logger('ProjectPointsLayer');
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
   List<ProjectModel> _projects = [];
   bool _isLoading = false;
@@ -94,7 +92,7 @@ class _ProjectPointsLayerState extends State<ProjectPointsLayer> {
     });
 
     try {
-      final projects = await _dbHelper.getAllProjects();
+      final projects = await context.projectState.getAllProjects();
       if (mounted) {
         setState(() {
           _projects = projects;

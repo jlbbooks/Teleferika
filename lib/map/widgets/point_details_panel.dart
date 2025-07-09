@@ -131,6 +131,7 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
     if (widget.selectedPoint != null && points.length >= 2) {
       final logic = MapControllerLogic(
         project: context.projectState.currentProject!,
+        projectState: context.projectState,
       );
       distanceToLine = logic.distanceFromPointToFirstLastLine(
         widget.selectedPoint!,

@@ -9,14 +9,14 @@ import 'package:latlong2/latlong.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:teleferika/core/logger.dart';
 import 'package:teleferika/core/utils/ordinal_manager.dart';
-import 'package:teleferika/db/database_helper.dart';
+import 'package:teleferika/core/project_state_manager.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/core/app_config.dart';
 
 class MapControllerLogic {
   final ProjectModel project;
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  final ProjectStateManager _projectState;
 
   // Default center if no points are available - use config instead of hardcoded coordinates
   final LatLng _defaultCenter = AppConfig.defaultMapCenter;
@@ -31,7 +31,10 @@ class MapControllerLogic {
   double _glowAnimationValue = 0.0;
   Function(double)? _glowAnimationCallback;
 
-  MapControllerLogic({required this.project});
+  MapControllerLogic({
+    required this.project,
+    required ProjectStateManager projectState,
+  }) : _projectState = projectState;
 
   void dispose() {
     _positionStreamSubscription?.cancel();
@@ -105,7 +108,7 @@ class MapControllerLogic {
 
   // Point operations
   Future<List<PointModel>> loadProjectPoints() async {
-    return await _dbHelper.getPointsForProject(project.id);
+    return _projectState.currentPoints;
   }
 
   /// Loads project points with optional control over automatic map fitting
@@ -139,16 +142,16 @@ class MapControllerLogic {
     }
   }
 
-  Future<int> movePoint(PointModel pointToMove, LatLng newPosition) async {
+  Future<bool> movePoint(PointModel pointToMove, LatLng newPosition) async {
     final updatedPoint = pointToMove.copyWith(
       latitude: newPosition.latitude,
       longitude: newPosition.longitude,
     );
-    return await _dbHelper.updatePoint(updatedPoint);
+    return await _projectState.updatePoint(updatedPoint);
   }
 
-  Future<int> deletePoint(String pointId) async {
-    return await _dbHelper.deletePointById(pointId);
+  Future<bool> deletePoint(String pointId) async {
+    return await _projectState.deletePoint(pointId);
   }
 
   // Map calculations
@@ -323,7 +326,7 @@ class MapControllerLogic {
     double? altitude,
     double? gpsPrecision,
   }) async {
-    final points = await _dbHelper.getPointsForProject(project.id);
+    final points = _projectState.currentPoints;
     final nextOrdinal = OrdinalManager.getNextOrdinal(points);
     return PointModel(
       projectId: project.id,
@@ -340,10 +343,10 @@ class MapControllerLogic {
   }
 
   // Save a new point to the database
-  Future<String> saveNewPoint(PointModel point) async {
+  Future<bool> saveNewPoint(PointModel point) async {
     // Mark the point as saved before inserting
     final savedPoint = point.copyWith(isUnsaved: false);
-    return await _dbHelper.insertPoint(savedPoint);
+    return await _projectState.createPoint(savedPoint);
   }
 
   /// Saves a new point and returns the saved point with proper state management

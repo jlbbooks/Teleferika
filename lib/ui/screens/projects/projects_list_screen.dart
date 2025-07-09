@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
 import 'package:teleferika/core/app_config.dart';
+import 'dart:io';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:teleferika/core/project_provider.dart';
-import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/licensing/licence_model.dart';
@@ -27,9 +29,6 @@ class ProjectsListScreen extends StatefulWidget {
 class _ProjectsListScreenState extends State<ProjectsListScreen>
     with StatusMixin {
   final Logger logger = Logger('ProjectsListScreen');
-  late Future<List<ProjectModel>> _projectsFuture;
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
-
   bool _isSelectionMode = false;
   final Set<String> _selectedProjectIdsForMultiSelect = {};
   String? _highlightedProjectId;
@@ -327,36 +326,86 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
     }
   }
 
-  void _loadProjects() {
-    _projectsFuture = _dbHelper.getAllProjects();
-    _projectsFuture
-        .then((projects) {
-          if (mounted) {
-            setState(() {
-              _currentProjects = projects;
-              // Optionally clear highlight when the whole list reloads,
-              // or persist it if needed. For now, let's clear it.
-              // _highlightedProjectId = null;
-            });
-          }
-        })
-        .catchError((error) {
-          // Handle or log error if needed
-          logger.severe("Error in _loadProjects: $error");
-          if (mounted) {
-            setState(() {
-              _currentProjects = []; // Clear current projects on error
-            });
-          }
+  Future<void> _loadProjects() async {
+    try {
+      final projects = await context.projectState.getAllProjects();
+      if (mounted) {
+        setState(() {
+          _currentProjects = projects;
         });
+        if (AppConfig.cleanupOrphanedImageFiles) {
+          await _cleanupOrphanedPointPhotoDirs(projects);
+        }
+      }
+    } catch (e, stackTrace) {
+      logger.severe('Error loading projects', e, stackTrace);
+      if (mounted) {
+        setState(() {
+          _currentProjects = []; // Clear current projects on error
+        });
+      }
+    }
   }
 
   // This can be used if you only want to refresh data from DB
-  void _refreshProjectsListFromDb() {
-    setState(() {
-      _highlightedProjectId = null; // Clear highlight on full refresh
-      _loadProjects();
-    });
+  Future<void> _refreshProjectsListFromDb() async {
+    try {
+      final projects = await context.projectState.getAllProjects();
+      if (mounted) {
+        setState(() {
+          _currentProjects = projects;
+        });
+        if (AppConfig.cleanupOrphanedImageFiles) {
+          await _cleanupOrphanedPointPhotoDirs(projects);
+        }
+      }
+    } catch (e, stackTrace) {
+      logger.severe('Error refreshing projects', e, stackTrace);
+      if (mounted) {
+        // No need to update state on error
+      }
+    }
+  }
+
+  /// Delete all point photo folders that do not correspond to any existing point in the DB
+  Future<void> _cleanupOrphanedPointPhotoDirs(
+    List<ProjectModel> projects,
+  ) async {
+    try {
+      final appDocDir = await getApplicationDocumentsDirectory();
+      final pointPhotosDir = Directory(p.join(appDocDir.path, 'point_photos'));
+      if (!await pointPhotosDir.exists()) return;
+
+      // Collect all valid point IDs from all projects
+      final validPointIds = <String>{};
+      for (final project in projects) {
+        for (final point in project.points) {
+          validPointIds.add(point.id);
+        }
+      }
+
+      // For each directory in point_photos, delete if not in validPointIds
+      final pointDirs = pointPhotosDir.listSync().whereType<Directory>();
+      for (final dir in pointDirs) {
+        final dirName = p.basename(dir.path);
+        if (!validPointIds.contains(dirName)) {
+          try {
+            await dir.delete(recursive: true);
+            logger.info('Deleted orphaned point photo directory: ${dir.path}');
+          } catch (e) {
+            logger.warning(
+              'Failed to delete orphaned point photo directory: ${dir.path} ($e)',
+            );
+          }
+        }
+      }
+    } catch (e, stackTrace) {
+      logger.warning(
+        'Error during orphaned point photo directory cleanup: $e',
+        e,
+        stackTrace,
+      );
+    }
   }
 
   void _toggleSelection(String projectId) {
@@ -426,15 +475,9 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       if (action == 'saved') {
         logger.info("ProjectTabbedScreen returned: project $id was saved.");
         // Refresh from both database and global state to ensure consistency
-        _projectsFuture = _dbHelper.getAllProjects();
-        _projectsFuture.then((projects) {
-          if (mounted) {
-            setState(() {
-              _currentProjects = projects;
-              _highlightedProjectId = id; // Set highlight after data is loaded
-            });
-            // TODO: Optionally, scroll to the highlighted item
-          }
+        _refreshProjectsListFromDb();
+        setState(() {
+          _highlightedProjectId = id; // Set highlight after data is loaded
         });
 
         // Also clear any global state to ensure fresh data on next load
@@ -582,7 +625,10 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
           _selectedProjectIdsForMultiSelect,
         );
         for (String id in idsToDelete) {
-          await _dbHelper.deleteProject(id);
+          final success = await context.projectState.deleteProject(id);
+          if (!success) {
+            logger.warning("Failed to delete project $id");
+          }
         }
         setState(() {
           _currentProjects.removeWhere(
@@ -1019,40 +1065,21 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
             ),
       body: Stack(
         children: [
-          FutureBuilder<List<ProjectModel>>(
-            future: _projectsFuture,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting &&
-                  _currentProjects.isEmpty) {
-                // Show loader only if _currentProjects is empty (initial load)
-                return const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError && _currentProjects.isEmpty) {
-                logger.severe(
-                  "Error loading projects",
-                  snapshot.error,
-                  snapshot.stackTrace,
-                );
-                return Center(child: Text("Error: ${snapshot.error}"));
-              } else if (_currentProjects.isEmpty) {
-                // Use _currentProjects to determine if the list is empty
-                return Center(
-                  child: Text(
-                    S.of(context)?.no_projects_yet ??
-                        "No projects yet. Tap '+' to add one!",
-                  ),
-                );
-              }
-
-              // Use _currentProjects for building the list for instant UI updates
-              return ListView.builder(
-                itemCount: _currentProjects.length,
-                itemBuilder: (context, index) {
-                  final project = _currentProjects[index];
-                  return _buildProjectItem(project);
-                },
-              );
-            },
-          ),
+          if (_currentProjects.isEmpty)
+            Center(
+              child: Text(
+                S.of(context)?.no_projects_yet ??
+                    "No projects yet. Tap '+' to add one!",
+              ),
+            )
+          else
+            ListView.builder(
+              itemCount: _currentProjects.length,
+              itemBuilder: (context, index) {
+                final project = _currentProjects[index];
+                return _buildProjectItem(project);
+              },
+            ),
           Positioned(
             top: 24,
             right: 24,

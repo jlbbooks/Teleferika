@@ -74,7 +74,7 @@ class MapScreenState extends State<MapScreen>
     // Initialize state manager with current project from global state
     final currentProject =
         context.projectStateListen.currentProject ?? widget.project;
-    _stateManager.initialize(this, currentProject);
+    _stateManager.initialize(this, currentProject, context.projectState);
 
     if (!_stateManager.didInitialLoad) {
       _stateManager.didInitialLoad = true;

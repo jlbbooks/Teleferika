@@ -137,7 +137,10 @@ class AppConfig {
 
   /// If true, the save icon is always shown even if there are no unsaved changes.
   /// If false, the save icon is only shown when there are unsaved changes.
-  static const bool showSaveIconAlways = false;
+  static const bool showSaveIconAlways = true;
+
+  /// If true, orphaned image files and folders will be cleaned up from disk.
+  static const bool cleanupOrphanedImageFiles = true;
 
   static const Duration polylineArrowheadAnimationDuration = Duration(
     seconds: 7,
