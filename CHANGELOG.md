@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.30+71] - 2025-01-27
+### Added
+- Complete project state management refactoring: Centralized all database operations through ProjectStateManager
+- File cleanup functionality: Added cleanupOrphanedImageFiles configuration flag in AppConfig
+- Automatic file cleanup on project deletion: Removes all related files and folders when deleting projects
+- Enhanced error handling and user feedback throughout the application
+
+### Changed
+- Renamed ProjectEditorScreen to ProjectTabbedScreen to better reflect its tabbed interface
+- Removed _editingProject field from ProjectStateManager, now editing directly on _currentProject
+- Updated all UI components to use centralized state management instead of direct database calls
+- Improved method signatures for consistency (e.g., movePoint now takes pointId instead of PointModel)
+- Enhanced save/undo functionality with better state management
+
+### Technical
+- Refactored 20+ files to eliminate direct DatabaseHelper usage
+- Added new methods: _cleanupOrphanedImageFilesForCurrentProject(), _cleanupProjectFiles(), updateProjectInDB()
+- Improved logging and error handling across the application
+- Enhanced performance by reducing redundant database operations
+
 ## [0.9.28+69] - 2025-07-08
 ### Changed
 - Dynamic injection of MapType `cacheStoreName` and update of all usages to use the new pattern.
