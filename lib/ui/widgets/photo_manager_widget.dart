@@ -10,7 +10,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/core/project_state_manager.dart';
 import 'package:teleferika/core/utils/uuid_generator.dart';
-import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/image_model.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
@@ -44,7 +43,6 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
   late List<ImageModel> _images;
   final ImagePicker _picker = ImagePicker();
   bool _isSavingPhotos = false;
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
   // Multi-select state
   bool _selectMode = false;
@@ -82,7 +80,7 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
     setState(() {
       _isSavingPhotos = true;
     });
-    logger.info('Auto-saving image changes for point ID: ${widget.point.id}');
+    logger.info('Updating images for point ID: ${widget.point.id}');
 
     try {
       // Create an updated PointModel with the current list of images
@@ -109,7 +107,7 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
       context.projectState.updatePointInEditingState(pointToSave);
 
       logger.info(
-        'Successfully auto-saved image changes for point ID: ${widget.point.id}. Image count: ${_images.length}',
+        'Successfully updated image changes for point ID: ${widget.point.id}. Image count: ${_images.length}',
       );
       // Notify parent for UI update (e.g., image count)
       widget.onImageListChangedForUI(List<ImageModel>.from(_images));

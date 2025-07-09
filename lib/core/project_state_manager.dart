@@ -4,6 +4,10 @@ import 'package:teleferika/core/utils/ordinal_manager.dart';
 import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
+import 'package:teleferika/core/app_config.dart';
+import 'dart:io';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 /// Global state manager for the current project being edited.
 /// This ensures all widgets have access to the same project data
@@ -125,12 +129,58 @@ class ProjectStateManager extends ChangeNotifier {
       await updateProjectInDB();
       // 4. Reload project and points from DB to ensure state is up to date
       await loadProject(_currentProject!.id);
+      // 5. Cleanup orphaned image files if enabled
+      if (AppConfig.cleanupOrphanedImageFiles) {
+        await _cleanupOrphanedImageFilesForCurrentProject();
+      }
       _hasUnsavedChanges = false;
       logger.info("ProjectStateManager: Project and points saved successfully");
       return true;
     } catch (e, stackTrace) {
       logger.severe("ProjectStateManager: Error saving project", e, stackTrace);
       return false;
+    }
+  }
+
+  /// Delete any image files in the point photo directories that are not referenced by any image in the current project
+  Future<void> _cleanupOrphanedImageFilesForCurrentProject() async {
+    if (_currentProject == null) return;
+    try {
+      final appDocDir = await getApplicationDocumentsDirectory();
+      final pointPhotosDir = Directory(p.join(appDocDir.path, 'point_photos'));
+      if (!await pointPhotosDir.exists()) return;
+
+      // Collect all referenced image file paths in the current project
+      final referencedPaths = <String>{};
+      for (final point in _currentProject!.points) {
+        for (final image in point.images) {
+          referencedPaths.add(image.imagePath);
+        }
+      }
+
+      // For each point directory, delete files not referenced
+      final pointDirs = pointPhotosDir.listSync().whereType<Directory>();
+      for (final dir in pointDirs) {
+        final files = dir.listSync().whereType<File>();
+        for (final file in files) {
+          if (!referencedPaths.contains(file.path)) {
+            try {
+              await file.delete();
+              logger.info('Deleted orphaned image file: ${file.path}');
+            } catch (e) {
+              logger.warning(
+                'Failed to delete orphaned image file: ${file.path} ($e)',
+              );
+            }
+          }
+        }
+      }
+    } catch (e, stackTrace) {
+      logger.warning(
+        'Error during orphaned image file cleanup: $e',
+        e,
+        stackTrace,
+      );
     }
   }
 
@@ -271,11 +321,21 @@ class ProjectStateManager extends ChangeNotifier {
   /// Delete a project from the database
   Future<bool> deleteProject(String projectId) async {
     try {
+      // Get project details before deletion for cleanup
+      final projectToDelete = await _dbHelper.getProjectById(projectId);
+
       await _dbHelper.deleteProject(projectId);
+
       // Clear current project if it's the one being deleted
       if (_currentProject?.id == projectId) {
         clearProject();
       }
+
+      // Cleanup project files and folders if enabled
+      if (AppConfig.cleanupOrphanedImageFiles && projectToDelete != null) {
+        await _cleanupProjectFiles(projectToDelete);
+      }
+
       logger.info("ProjectStateManager: Deleted project $projectId");
       notifyListeners();
       return true;
@@ -286,6 +346,35 @@ class ProjectStateManager extends ChangeNotifier {
         stackTrace,
       );
       return false;
+    }
+  }
+
+  /// Delete all files and folders related to a project
+  Future<void> _cleanupProjectFiles(ProjectModel project) async {
+    try {
+      final appDocDir = await getApplicationDocumentsDirectory();
+      final pointPhotosDir = Directory(p.join(appDocDir.path, 'point_photos'));
+
+      if (!await pointPhotosDir.exists()) return;
+
+      // Delete point photo directories for all points in the project
+      for (final point in project.points) {
+        final pointDir = Directory(p.join(pointPhotosDir.path, point.id));
+        if (await pointDir.exists()) {
+          try {
+            await pointDir.delete(recursive: true);
+            logger.info('Deleted point photo directory: ${pointDir.path}');
+          } catch (e) {
+            logger.warning(
+              'Failed to delete point photo directory: ${pointDir.path} ($e)',
+            );
+          }
+        }
+      }
+
+      logger.info('Cleaned up files for project: ${project.name}');
+    } catch (e, stackTrace) {
+      logger.warning('Error during project file cleanup: $e', e, stackTrace);
     }
   }
 

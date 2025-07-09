@@ -56,7 +56,7 @@ class PointService {
     double newLongitude,
   ) async {
     return await _projectState.movePoint(
-      pointToMove,
+      pointToMove.id,
       newLatitude,
       newLongitude,
     );

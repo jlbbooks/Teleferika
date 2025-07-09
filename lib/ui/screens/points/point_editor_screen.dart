@@ -4,7 +4,6 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:teleferika/core/project_provider.dart';
-import 'package:teleferika/db/database_helper.dart';
 import 'package:teleferika/db/models/image_model.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
@@ -32,7 +31,6 @@ class _PointEditorScreenState extends State<PointEditorScreen>
   late TextEditingController _altitudeController;
   late TextEditingController _gpsPrecisionController;
 
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
   bool _isLoading = false;
   bool _isDeleting = false; // To handle delete loading state
   List<ImageModel> _currentImages = []; // Placeholder for photos

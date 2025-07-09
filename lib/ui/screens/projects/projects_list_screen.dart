@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
 import 'package:teleferika/core/app_config.dart';
+import 'dart:io';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
@@ -330,6 +333,9 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         setState(() {
           _currentProjects = projects;
         });
+        if (AppConfig.cleanupOrphanedImageFiles) {
+          await _cleanupOrphanedPointPhotoDirs(projects);
+        }
       }
     } catch (e, stackTrace) {
       logger.severe('Error loading projects', e, stackTrace);
@@ -349,12 +355,56 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         setState(() {
           _currentProjects = projects;
         });
+        if (AppConfig.cleanupOrphanedImageFiles) {
+          await _cleanupOrphanedPointPhotoDirs(projects);
+        }
       }
     } catch (e, stackTrace) {
       logger.severe('Error refreshing projects', e, stackTrace);
       if (mounted) {
         // No need to update state on error
       }
+    }
+  }
+
+  /// Delete all point photo folders that do not correspond to any existing point in the DB
+  Future<void> _cleanupOrphanedPointPhotoDirs(
+    List<ProjectModel> projects,
+  ) async {
+    try {
+      final appDocDir = await getApplicationDocumentsDirectory();
+      final pointPhotosDir = Directory(p.join(appDocDir.path, 'point_photos'));
+      if (!await pointPhotosDir.exists()) return;
+
+      // Collect all valid point IDs from all projects
+      final validPointIds = <String>{};
+      for (final project in projects) {
+        for (final point in project.points) {
+          validPointIds.add(point.id);
+        }
+      }
+
+      // For each directory in point_photos, delete if not in validPointIds
+      final pointDirs = pointPhotosDir.listSync().whereType<Directory>();
+      for (final dir in pointDirs) {
+        final dirName = p.basename(dir.path);
+        if (!validPointIds.contains(dirName)) {
+          try {
+            await dir.delete(recursive: true);
+            logger.info('Deleted orphaned point photo directory: ${dir.path}');
+          } catch (e) {
+            logger.warning(
+              'Failed to delete orphaned point photo directory: ${dir.path} ($e)',
+            );
+          }
+        }
+      }
+    } catch (e, stackTrace) {
+      logger.warning(
+        'Error during orphaned point photo directory cleanup: $e',
+        e,
+        stackTrace,
+      );
     }
   }
 
