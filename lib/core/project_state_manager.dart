@@ -24,7 +24,7 @@ class ProjectStateManager extends ChangeNotifier {
 
   // Project editing state
   bool _hasUnsavedChanges = false;
-  ProjectModel? _editingProject; // Working copy for editing
+  // Removed: ProjectModel? _editingProject; // Working copy for editing
 
   // Track if there is an unsaved new point (e.g., in MapToolView)
   bool _hasUnsavedNewPoint = false;
@@ -49,7 +49,7 @@ class ProjectStateManager extends ChangeNotifier {
 
   bool get hasUnsavedChanges => _hasUnsavedChanges;
 
-  ProjectModel? get editingProject => _editingProject;
+  // Removed: ProjectModel? get editingProject => _editingProject;
 
   /// Load a project and its points into global state
   Future<void> loadProject(String projectId) async {
@@ -62,12 +62,12 @@ class ProjectStateManager extends ChangeNotifier {
       if (project != null) {
         _currentProject = project;
         _currentPoints = project.points;
-        _editingProject = project; // Initialize editing copy
+        // Removed: _editingProject = project; // Initialize editing copy
         _hasUnsavedChanges = false;
         _hasUnsavedNewPoint = false;
         notifyListeners();
         logger.info(
-          "ProjectStateManager: Loaded project ${project.name} with ${_currentPoints.length} points",
+          "ProjectStateManager: Loaded project  ${project.name} with ${_currentPoints.length} points",
         );
       } else {
         logger.warning(
@@ -90,38 +90,25 @@ class ProjectStateManager extends ChangeNotifier {
   void clearProject() {
     _currentProject = null;
     _currentPoints = [];
-    _editingProject = null;
+    // Removed: _editingProject = null;
     _hasUnsavedChanges = false;
     _hasUnsavedNewPoint = false;
     notifyListeners();
     logger.info("ProjectStateManager: Cleared current project");
   }
 
-  /// Update the editing project (for form changes)
-  void updateEditingProject(
-    ProjectModel project, {
-    bool hasUnsavedChanges = false,
-  }) {
-    _editingProject = project;
-    _hasUnsavedChanges = hasUnsavedChanges;
-    logger.info(
-      "ProjectStateManager: Updated editing project, hasUnsavedChanges: $hasUnsavedChanges",
-    );
-    notifyListeners();
-  }
-
-  /// Save the current editing project to database
+  /// Save the current project to database
   Future<bool> saveProject() async {
-    if (_editingProject == null) return false;
+    if (_currentProject == null) return false;
 
     try {
-      final projectToSave = _editingProject!.copyWith(
+      final projectToSave = _currentProject!.copyWith(
         lastUpdate: DateTime.now(),
       );
       // 1. Update all points first
       final dbPoints = await _dbHelper.getPointsForProject(projectToSave.id);
       final dbPointIds = dbPoints.map((p) => p.id).toSet();
-      final memPoints = _editingProject!.points;
+      final memPoints = _currentProject!.points;
       final memPointIds = memPoints.map((p) => p.id).toSet();
       for (final point in memPoints) {
         if (dbPointIds.contains(point.id)) {
@@ -148,10 +135,10 @@ class ProjectStateManager extends ChangeNotifier {
     }
   }
 
-  /// Undo changes by reloading the project and points from the DB into the editing state
+  /// Undo changes by reloading the project and points from the DB
   Future<void> undoChanges() async {
-    if (_editingProject?.id == null) return;
-    await loadProject(_editingProject!.id);
+    if (_currentProject?.id == null) return;
+    await loadProject(_currentProject!.id);
     logger.info("ProjectStateManager: Changes undone by reloading from DB");
     notifyListeners();
   }
@@ -184,55 +171,55 @@ class ProjectStateManager extends ChangeNotifier {
     }
   }
 
-  /// Add a new point to the editing project (in-memory only, not DB)
+  /// Add a new point to the current project (in-memory only, not DB)
   void addPointInEditingState(PointModel point) {
-    if (_editingProject == null) return;
-    final points = List<PointModel>.from(_editingProject!.points);
+    if (_currentProject == null) return;
+    final points = List<PointModel>.from(_currentProject!.points);
     final nextOrdinal = OrdinalManager.getNextOrdinal(points);
     final pointWithOrdinal = point.copyWith(ordinalNumber: nextOrdinal);
     points.add(pointWithOrdinal);
     final resequenced = OrdinalManager.resequence(points);
-    _editingProject = _editingProject!.copyWith(points: resequenced);
+    _currentProject = _currentProject!.copyWith(points: resequenced);
     _currentPoints = resequenced;
     _hasUnsavedChanges = true;
     notifyListeners();
   }
 
-  /// Update an existing point in the editing project (in-memory only, not DB)
+  /// Update an existing point in the current project (in-memory only, not DB)
   void updatePointInEditingState(PointModel updatedPoint) {
-    if (_editingProject == null) return;
-    final points = List<PointModel>.from(_editingProject!.points);
+    if (_currentProject == null) return;
+    final points = List<PointModel>.from(_currentProject!.points);
     final index = points.indexWhere((p) => p.id == updatedPoint.id);
     if (index != -1) {
       points[index] = updatedPoint;
       final resequenced = OrdinalManager.resequence(points);
-      _editingProject = _editingProject!.copyWith(points: resequenced);
+      _currentProject = _currentProject!.copyWith(points: resequenced);
       _currentPoints = resequenced;
       _hasUnsavedChanges = true;
       notifyListeners();
     } else {
       logger.warning(
-        '[updatePointInEditingState] Point with id=${updatedPoint.id} not found in editing project.',
+        '[updatePointInEditingState] Point with id= ${updatedPoint.id} not found in current project.',
       );
     }
   }
 
-  /// Delete a point from the editing project (in-memory only, not DB)
+  /// Delete a point from the current project (in-memory only, not DB)
   void deletePointInEditingState(String pointId) {
-    if (_editingProject == null) return;
-    final points = List<PointModel>.from(_editingProject!.points);
+    if (_currentProject == null) return;
+    final points = List<PointModel>.from(_currentProject!.points);
     final resequenced = OrdinalManager.removeById(points, pointId);
-    _editingProject = _editingProject!.copyWith(points: resequenced);
+    _currentProject = _currentProject!.copyWith(points: resequenced);
     _currentPoints = resequenced;
     _hasUnsavedChanges = true;
     notifyListeners();
   }
 
-  /// Reorder points in the editing project (in-memory only, not DB)
+  /// Reorder points in the current project (in-memory only, not DB)
   void reorderPointsInEditingState(List<PointModel> newOrder) {
-    if (_editingProject == null) return;
+    if (_currentProject == null) return;
     final resequenced = OrdinalManager.resequence(newOrder);
-    _editingProject = _editingProject!.copyWith(points: resequenced);
+    _currentProject = _currentProject!.copyWith(points: resequenced);
     _currentPoints = resequenced;
     _hasUnsavedChanges = true;
     notifyListeners();
@@ -255,6 +242,135 @@ class ProjectStateManager extends ChangeNotifier {
       );
       rethrow;
     }
+  }
+
+  /// Set the current project and unsaved state (used by UI forms)
+  void setProjectEditState(ProjectModel project, bool hasUnsavedChanges) {
+    _currentProject = project;
+    _hasUnsavedChanges = hasUnsavedChanges;
+    notifyListeners();
+  }
+
+  /// Create a new project in the database
+  Future<bool> createProject(ProjectModel project) async {
+    try {
+      await _dbHelper.insertProject(project);
+      logger.info("ProjectStateManager: Created project ${project.name}");
+      notifyListeners();
+      return true;
+    } catch (e, stackTrace) {
+      logger.severe(
+        "ProjectStateManager: Error creating project",
+        e,
+        stackTrace,
+      );
+      return false;
+    }
+  }
+
+  /// Delete a project from the database
+  Future<bool> deleteProject(String projectId) async {
+    try {
+      await _dbHelper.deleteProject(projectId);
+      // Clear current project if it's the one being deleted
+      if (_currentProject?.id == projectId) {
+        clearProject();
+      }
+      logger.info("ProjectStateManager: Deleted project $projectId");
+      notifyListeners();
+      return true;
+    } catch (e, stackTrace) {
+      logger.severe(
+        "ProjectStateManager: Error deleting project",
+        e,
+        stackTrace,
+      );
+      return false;
+    }
+  }
+
+  /// Get all projects from the database (read-only operation)
+  Future<List<ProjectModel>> getAllProjects() async {
+    try {
+      final projects = await _dbHelper.getAllProjects();
+      logger.info("ProjectStateManager: Retrieved ${projects.length} projects");
+      return projects;
+    } catch (e, stackTrace) {
+      logger.severe(
+        "ProjectStateManager: Error getting all projects",
+        e,
+        stackTrace,
+      );
+      rethrow;
+    }
+  }
+
+  /// Create a new point in the current project (in-memory only, not DB)
+  Future<bool> createPoint(PointModel point) async {
+    if (_currentProject == null) {
+      logger.warning(
+        "ProjectStateManager: Cannot create point - no current project",
+      );
+      return false;
+    }
+    addPointInEditingState(point);
+    logger.info(
+      "ProjectStateManager: Created point ${point.id} in project ${_currentProject!.name}",
+    );
+    return true;
+  }
+
+  /// Update a point in the current project (in-memory only, not DB)
+  Future<bool> updatePoint(PointModel point) async {
+    if (_currentProject == null) {
+      logger.warning(
+        "ProjectStateManager: Cannot update point - no current project",
+      );
+      return false;
+    }
+    updatePointInEditingState(point);
+    logger.info(
+      "ProjectStateManager: Updated point ${point.id} in project ${_currentProject!.name}",
+    );
+    return true;
+  }
+
+  /// Delete a point from the current project (in-memory only, not DB)
+  Future<bool> deletePoint(String pointId) async {
+    if (_currentProject == null) {
+      logger.warning(
+        "ProjectStateManager: Cannot delete point - no current project",
+      );
+      return false;
+    }
+    deletePointInEditingState(pointId);
+    logger.info(
+      "ProjectStateManager: Deleted point $pointId from project ${_currentProject!.name}",
+    );
+    return true;
+  }
+
+  /// Move a point to new coordinates (in-memory only, not DB)
+  Future<bool> movePoint(
+    PointModel point,
+    double newLatitude,
+    double newLongitude,
+  ) async {
+    if (_currentProject == null) {
+      logger.warning(
+        "ProjectStateManager: Cannot move point - no current project",
+      );
+      return false;
+    }
+    final updatedPoint = point.copyWith(
+      latitude: newLatitude,
+      longitude: newLongitude,
+    );
+    updatePointInEditingState(updatedPoint);
+    logger.info(
+      "ProjectStateManager: Moved point ${point.id} to ($newLatitude, $newLongitude)",
+    );
+    return true;
   }
 
   /// Get a specific point by ID

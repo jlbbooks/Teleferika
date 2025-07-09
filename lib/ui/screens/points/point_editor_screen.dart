@@ -171,9 +171,19 @@ class _PointEditorScreenState extends State<PointEditorScreen>
         (p) => p.id == pointToSave.id,
       );
       if (exists) {
-        context.projectState.updatePointInEditingState(pointToSave);
+        final success = await context.projectState.updatePoint(pointToSave);
+        if (!success) {
+          logger.warning("Failed to update point ${pointToSave.id}");
+          showErrorStatus('Error updating point');
+          return;
+        }
       } else {
-        context.projectState.addPointInEditingState(pointToSave);
+        final success = await context.projectState.createPoint(pointToSave);
+        if (!success) {
+          logger.warning("Failed to create point ${pointToSave.id}");
+          showErrorStatus('Error creating point');
+          return;
+        }
       }
       logger.info(
         "Point ID ${widget.point.id} and its images updated successfully. Image count: ${_currentImages.length}",

@@ -1,18 +1,22 @@
 import 'package:teleferika/core/logger.dart';
 import 'package:teleferika/core/utils/ordinal_manager.dart';
-import 'package:teleferika/db/database_helper.dart';
+import 'package:teleferika/core/project_state_manager.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 
 class PointService {
   final ProjectModel project;
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  final ProjectStateManager _projectState;
 
-  PointService({required this.project});
+  PointService({
+    required this.project,
+    required ProjectStateManager projectState,
+  }) : _projectState = projectState;
 
   // Point operations
   Future<List<PointModel>> loadProjectPoints() async {
-    return await _dbHelper.getPointsForProject(project.id);
+    // Use the current points from the state manager
+    return _projectState.currentPoints;
   }
 
   /// Loads project points with optional control over automatic map fitting
@@ -46,20 +50,20 @@ class PointService {
     }
   }
 
-  Future<int> movePoint(
+  Future<bool> movePoint(
     PointModel pointToMove,
     double newLatitude,
     double newLongitude,
   ) async {
-    final updatedPoint = pointToMove.copyWith(
-      latitude: newLatitude,
-      longitude: newLongitude,
+    return await _projectState.movePoint(
+      pointToMove,
+      newLatitude,
+      newLongitude,
     );
-    return await _dbHelper.updatePoint(updatedPoint);
   }
 
-  Future<int> deletePoint(String pointId) async {
-    return await _dbHelper.deletePointById(pointId);
+  Future<bool> deletePoint(String pointId) async {
+    return await _projectState.deletePoint(pointId);
   }
 
   // Create a new point at the specified location
@@ -67,15 +71,17 @@ class PointService {
     double latitude,
     double longitude, {
     double? altitude,
+    double? gpsPrecision,
   }) async {
-    final points = await _dbHelper.getPointsForProject(project.id);
+    final points = _projectState.currentPoints;
     final nextOrdinal = OrdinalManager.getNextOrdinal(points);
     return PointModel(
       projectId: project.id,
       latitude: latitude,
       longitude: longitude,
       altitude: altitude,
-      // Always include altitude if available
+      gpsPrecision: gpsPrecision,
+      // Always include altitude and gpsPrecision if available
       ordinalNumber: nextOrdinal,
       note: null,
       timestamp: DateTime.now(),
@@ -84,10 +90,10 @@ class PointService {
   }
 
   // Save a new point to the database
-  Future<String> saveNewPoint(PointModel point) async {
+  Future<bool> saveNewPoint(PointModel point) async {
     // Mark the point as saved before inserting
     final savedPoint = point.copyWith(isUnsaved: false);
-    return await _dbHelper.insertPoint(savedPoint);
+    return await _projectState.createPoint(savedPoint);
   }
 
   /// Saves a new point and returns the saved point with proper state management

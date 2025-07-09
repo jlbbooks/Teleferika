@@ -100,10 +100,10 @@ class ProjectDetailsSectionState extends State<ProjectDetailsSection>
     });
 
     // Update global state
-    context.projectState.updateEditingProject(
-      _currentProject,
-      hasUnsavedChanges: _dirty,
-    );
+    final projectState = context.projectState;
+    if (projectState.currentProject != null) {
+      projectState.setProjectEditState(_currentProject, _dirty);
+    }
   }
 
   void _onAzimuthChanged() {
@@ -417,15 +417,16 @@ class ProjectDetailsSectionState extends State<ProjectDetailsSection>
 
   @override
   Widget build(BuildContext context) {
+    final projectState = context.projectState;
+    // Update dirty state based on global state
+    _updateDirtyStateFromGlobalState();
+
+    final s = S.of(context);
+    final canCalculate = (projectState.currentProject?.points.length ?? 0) >= 2;
+
     return Consumer<ProjectStateManager>(
       builder: (context, projectState, child) {
-        // Always use the editing project if available
-        final project = projectState.editingProject ?? widget.project;
-        // Update dirty state based on global state
-        _updateDirtyStateFromGlobalState();
-
-        final s = S.of(context);
-        final canCalculate = (project.points.length) >= 2;
+        final project = projectState.currentProject ?? widget.project;
 
         return SingleChildScrollView(
           padding: const EdgeInsets.all(20.0),

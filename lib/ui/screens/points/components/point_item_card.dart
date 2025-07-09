@@ -58,7 +58,10 @@ class PointItemCard extends StatelessWidget {
     // Offset from heading line
     double? offset;
     if (points.length >= 2) {
-      final logic = MapControllerLogic(project: project);
+      final logic = MapControllerLogic(
+        project: context.projectState.currentProject!,
+        projectState: context.projectState,
+      );
       offset = logic.distanceFromPointToFirstLastLine(point, points);
     }
 

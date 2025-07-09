@@ -110,13 +110,20 @@ class MapStateManager extends ChangeNotifier {
     }
   }
 
-  void initialize(TickerProvider vsync, ProjectModel project) {
+  void initialize(
+    TickerProvider vsync,
+    ProjectModel project,
+    ProjectStateManager projectState,
+  ) {
     // Prevent multiple initializations
     if (_isInitialized) {
       return;
     }
 
-    _controller = MapControllerLogic(project: project);
+    _controller = MapControllerLogic(
+      project: project,
+      projectState: projectState,
+    );
 
     arrowheadController = AnimationController(
       vsync: vsync,
