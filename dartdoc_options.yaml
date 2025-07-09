@@ -1,19 +1,69 @@
 # DartDoc configuration for Teleferika
-# Minimal, valid configuration (no duplicate keys)
+# 
+# This file configures how DartDoc generates API documentation for the Teleferika project.
+# DartDoc extracts documentation from code comments and generates HTML documentation
+# that can be viewed in a web browser.
+#
+# For more information about DartDoc options, see:
+# https://dart.dev/tools/dartdoc/options
 
+# Output directory for generated documentation
+# All HTML files, assets, and documentation will be placed in this directory
 output: doc/api
+
+# Whether to include private APIs in the documentation
+# Private APIs are those with names starting with underscore (_)
+# Set to true to include private APIs, false to exclude them
 includePrivate: false
+
+# Whether to include source code in the documentation
+# When true, shows the actual Dart source code alongside the documentation
+# This helps developers understand the implementation details
 includeSource: true
+
+# Whether to use categories to organize the documentation
+# Categories group related classes, functions, and libraries together
+# This makes the documentation more organized and easier to navigate
 useCategories: true
+
+# Files and directories to exclude from documentation generation
+# These patterns use glob syntax to match file paths
 exclude:
-  - "**/*.g.dart"
-  - "**/*.freezed.dart"
-  - "**/generated/**"
+  # Exclude generated files (typically created by build tools)
+  - "**/*.g.dart"           # Generated Dart files (e.g., from json_serializable)
+  - "**/*.freezed.dart"     # Generated files from freezed package
+  - "**/generated/**"       # Any files in generated directories
+
+# External links configuration
+# This creates links to external documentation (like Flutter API docs)
 linkTo:
+  # URL for the Flutter API documentation
+  # This allows linking to Flutter classes and methods in our documentation
   url: "https://api.flutter.dev/"
+  # Display name for the external documentation
   name: "Flutter API"
+
+# Whether to show library names in the documentation
+# When true, library names are displayed prominently in the documentation
+# This helps identify which library a class or function belongs to
 showLibraryNames: true
+
+# Whether to show package names in the documentation
+# When true, package names are displayed in the documentation
+# This helps identify which package a library belongs to
 showPackageNames: true
+
+# Whether to validate links in the documentation
+# When true, DartDoc checks that all links in the documentation are valid
+# This helps catch broken links and improves documentation quality
 validateLinks: true
+
+# Whether to show verbose warnings during documentation generation
+# When true, DartDoc provides more detailed warning messages
+# This is useful for debugging documentation issues
 verboseWarnings: true
+
+# Whether to suppress non-error output during generation
+# When false, DartDoc shows progress information and warnings
+# When true, only error messages are displayed
 quiet: false 
