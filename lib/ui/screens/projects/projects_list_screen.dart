@@ -13,7 +13,7 @@ import 'package:teleferika/licensing/licence_service.dart';
 import 'package:teleferika/licensing/licensed_features_loader.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 
-import 'project_editor_screen.dart';
+import 'project_tabbed_screen.dart';
 
 class ProjectsListScreen extends StatefulWidget {
   final String? appVersion;
@@ -398,7 +398,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       final result = await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => ProjectEditorScreen(project: project, isNew: false),
+          builder: (_) => ProjectTabbedScreen(project: project, isNew: false),
         ),
       );
       _handleNavigationResult(result);
@@ -416,7 +416,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         // For now, let's assume a full refresh might be safest if something non-specific happened.
         // _refreshProjectsListFromDb();
         logger.info(
-          "ProjectEditorScreen returned with no specific ID or action.",
+          "ProjectTabbedScreen returned with no specific ID or action.",
         );
         // Clear global state to ensure fresh data for next navigation
         context.projectState.clearProject();
@@ -424,7 +424,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       }
 
       if (action == 'saved') {
-        logger.info("ProjectEditorScreen returned: project $id was saved.");
+        logger.info("ProjectTabbedScreen returned: project $id was saved.");
         // Refresh from both database and global state to ensure consistency
         _projectsFuture = _dbHelper.getAllProjects();
         _projectsFuture.then((projects) {
@@ -440,7 +440,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         // Also clear any global state to ensure fresh data on next load
         context.projectState.clearProject();
       } else if (action == 'deleted') {
-        logger.info("ProjectEditorScreen returned: project $id was deleted.");
+        logger.info("ProjectTabbedScreen returned: project $id was deleted.");
         setState(() {
           _currentProjects.removeWhere((p) => p.id == id);
           _highlightedProjectId = null; // Ensure no highlight on a deleted item
@@ -454,7 +454,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       } else if (action == 'navigated_back') {
         // User just came back, potentially from viewing an existing project. Highlight it.
         logger.info(
-          "ProjectEditorScreen returned: navigated back from project $id.",
+          "ProjectTabbedScreen returned: navigated back from project $id.",
         );
         setState(() {
           _highlightedProjectId = id;
@@ -463,7 +463,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         context.projectState.clearProject();
       } else if (result['action'] == "created" && result['id'] != null) {
         logger.info(
-          "ProjectEditorScreen returned: project ${result['id']} was created (legacy path).",
+          "ProjectTabbedScreen returned: project ${result['id']} was created (legacy path).",
         );
         _refreshProjectsListFromDb(); // Refresh to get the new item
         setState(() {
@@ -474,7 +474,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       } else {
         // Fallback for your existing conditions, or new unhandled ones
         logger.info(
-          "ProjectEditorScreen returned with result: $result. Refreshing list.",
+          "ProjectTabbedScreen returned with result: $result. Refreshing list.",
         );
         _refreshProjectsListFromDb();
         // If an ID is present in a generic success, highlight it
@@ -489,14 +489,14 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
     } else if (result is bool && result == true) {
       // Generic true, refresh list. Maybe highlight if a context can be inferred.
       logger.info(
-        "ProjectEditorScreen returned generic true. Refreshing list.",
+        "ProjectTabbedScreen returned generic true. Refreshing list.",
       );
       _refreshProjectsListFromDb();
       // Clear global state for generic success
       context.projectState.clearProject();
     } else if (result == null) {
       logger.info(
-        "ProjectEditorScreen returned null (e.g. back press without action). No specific action taken on list.",
+        "ProjectTabbedScreen returned null (e.g. back press without action). No specific action taken on list.",
       );
       // Clear global state when user just navigates back without action
       context.projectState.clearProject();
@@ -510,7 +510,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
   }
 
   void _navigateToAddProjectPage() async {
-    logger.info("Navigating to ProjectEditorScreen for a new project.");
+    logger.info("Navigating to ProjectTabbedScreen for a new project.");
     ProjectModel newProject = ProjectModel(name: '', note: '');
 
     // Clear any previous highlight before navigating
@@ -525,8 +525,8 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       context,
       MaterialPageRoute(
         builder: (context) =>
-            ProjectEditorScreen(project: newProject, isNew: true),
-      ), // Ensure this is your ProjectEditorScreen
+            ProjectTabbedScreen(project: newProject, isNew: true),
+      ), // Ensure this is your ProjectTabbedScreen
     );
 
     _handleNavigationResult(result);

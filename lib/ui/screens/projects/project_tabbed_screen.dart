@@ -1,4 +1,4 @@
-// project_editor_screen.dart
+// project_tabbed_screen.dart
 // ignore_for_file: curly_braces_in_flow_control_structures, unused_field
 
 import 'dart:async';
@@ -59,21 +59,21 @@ double calculateBearingFromPoints(PointModel startPoint, PointModel endPoint) {
   return (bearingDeg + 360) % 360;
 }
 
-class ProjectEditorScreen extends StatefulWidget {
+class ProjectTabbedScreen extends StatefulWidget {
   final ProjectModel project;
   final bool isNew;
 
-  const ProjectEditorScreen({
+  const ProjectTabbedScreen({
     super.key,
     required this.project,
     required this.isNew,
   });
 
   @override
-  State<ProjectEditorScreen> createState() => _ProjectEditorScreenState();
+  State<ProjectTabbedScreen> createState() => _ProjectTabbedScreenState();
 }
 
-class _ProjectEditorScreenState extends State<ProjectEditorScreen>
+class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
     with TickerProviderStateMixin, StatusMixin {
   late TabController _tabController;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
