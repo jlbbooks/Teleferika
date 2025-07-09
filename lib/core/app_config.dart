@@ -134,7 +134,10 @@ class AppConfig {
     GlobalWidgetsLocalizations.delegate,
     GlobalCupertinoLocalizations.delegate,
   ];
-  static const bool saveButtonSavesWholeProject = true;
+
+  /// If true, the save icon is always shown even if there are no unsaved changes.
+  /// If false, the save icon is only shown when there are unsaved changes.
+  static const bool showSaveIconAlways = false;
 
   static const Duration polylineArrowheadAnimationDuration = Duration(
     seconds: 7,

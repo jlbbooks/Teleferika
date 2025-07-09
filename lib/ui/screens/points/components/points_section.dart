@@ -176,9 +176,4 @@ class PointsSectionState extends State<PointsSection> with StatusMixin {
   void refreshPoints() {
     _pointsListScreenKey.currentState?.refreshPoints();
   }
-
-  /// Public method to undo changes in PointsListScreen
-  Future<void> undoChanges() async {
-    await context.projectState.undoChanges();
-  }
 }

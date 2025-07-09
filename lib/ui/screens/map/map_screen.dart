@@ -421,11 +421,6 @@ class MapScreenState extends State<MapScreen>
     setState(() {});
   }
 
-  /// Public method to undo changes (reload from DB)
-  Future<void> undoChanges() async {
-    await _stateManager.undoChanges(context);
-  }
-
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider.value(

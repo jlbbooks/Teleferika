@@ -221,11 +221,6 @@ class PointsListScreenState extends State<PointsListScreen> with StatusMixin {
     return reorderedPoints;
   }
 
-  /// Public method to access undo functionality from parent
-  Future<void> undoChanges() async {
-    await context.projectState.undoChanges();
-  }
-
   /// Public method to access onProjectSaved functionality from parent
   void onProjectSaved() {
     // No backup to clear; nothing needed

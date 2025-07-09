@@ -594,15 +594,6 @@ class MapStateManager extends ChangeNotifier {
     }
   }
 
-  /// Public method to undo changes (reload from DB)
-  Future<void> undoChanges(BuildContext context) async {
-    final projectState = Provider.of<ProjectStateManager>(
-      context,
-      listen: false,
-    );
-    await projectState.undoChanges();
-  }
-
   // Getters for the controller
   MapControllerLogic get controller => _controller;
 

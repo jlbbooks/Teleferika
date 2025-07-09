@@ -462,7 +462,6 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         // Clear global state to ensure fresh data for next navigation
         context.projectState.clearProject();
       } else if (result['action'] == "created" && result['id'] != null) {
-        // This is your existing logic path from _onItemTap, let's integrate it.
         logger.info(
           "ProjectEditorScreen returned: project ${result['id']} was created (legacy path).",
         );

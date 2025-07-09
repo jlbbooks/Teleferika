@@ -18,6 +18,7 @@ import 'package:teleferika/ui/screens/points/components/points_section.dart';
 import '../points/points_list_screen.dart';
 import 'package:teleferika/ui/screens/projects/components/project_details_section.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
+import 'package:teleferika/core/app_config.dart';
 
 enum ProjectEditorTab {
   details, // 0
@@ -234,11 +235,6 @@ class _ProjectEditorScreenState extends State<ProjectEditorScreen>
     } finally {
       setState(() => _isLoading = false);
     }
-  }
-
-  /// Undo changes by reloading the project and points from the DB
-  Future<void> _undoChanges() async {
-    await context.projectState.undoChanges();
   }
 
   void _handleOnPopInvokedWithResult(bool didPop, Object? result) async {
@@ -480,10 +476,15 @@ class _ProjectEditorScreenState extends State<ProjectEditorScreen>
       if (context.projectState.hasUnsavedChanges)
         IconButton(
           icon: const Icon(Icons.undo, color: Colors.orange),
-          onPressed: _isLoading ? null : _undoChanges,
+          onPressed: _isLoading
+              ? null
+              : () async {
+                  await context.projectState.undoChanges();
+                },
           tooltip: 'Undo Changes',
         ),
-      if (context.projectState.hasUnsavedChanges)
+      if (AppConfig.showSaveIconAlways ||
+          context.projectState.hasUnsavedChanges)
         IconButton(
           icon: Icon(Icons.save, color: saveButtonColor),
           onPressed: _isLoading
