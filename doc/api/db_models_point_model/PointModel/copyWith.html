@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the copyWith method from the PointModel class, for the Dart programming language.">
+  <title>copyWith method - PointModel class - point_model library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../../static-assets/styles.css?v1">
+  <link rel="icon" href="../../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../../index.html">teleferika</a></li>
+    <li><a href="../../db_models_point_model/">db&#47;models&#47;point_model.dart</a></li>
+    <li><a href="../../db_models_point_model/PointModel-class.html">PointModel</a></li>
+    <li class="self-crumb">copyWith method</li>
+  </ol>
+  <div class="self-name">copyWith</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="db_models_point_model&#47;PointModel-class-sidebar.html"
+    data-below-sidebar="">
+    <div>
+<h1><span class="kind-method">copyWith</span> method 
+</h1></div>
+
+    <section class="multi-line-signature">
+      
+<span class="returntype"><a href="../../db_models_point_model/PointModel-class.html">PointModel</a></span>
+<span class="name ">copyWith</span>(<wbr>{<ol class="parameter-list"> <li><span class="parameter" id="copyWith-param-id"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span> <span class="parameter-name">id</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-projectId"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span> <span class="parameter-name">projectId</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-latitude"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a>?</span> <span class="parameter-name">latitude</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-longitude"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a>?</span> <span class="parameter-name">longitude</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-altitude"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a>?</span> <span class="parameter-name">altitude</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-gpsPrecision"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a>?</span> <span class="parameter-name">gpsPrecision</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-clearAltitude"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">clearAltitude</span> = <span class="default-value">false</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-clearGpsPrecision"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">clearGpsPrecision</span> = <span class="default-value">false</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-ordinalNumber"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a>?</span> <span class="parameter-name">ordinalNumber</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-note"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span> <span class="parameter-name">note</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-clearNote"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">clearNote</span> = <span class="default-value">false</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-timestamp"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/DateTime-class.html">DateTime</a>?</span> <span class="parameter-name">timestamp</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-clearTimestamp"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">clearTimestamp</span> = <span class="default-value">false</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-images"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../../db_models_image_model/ImageModel-class.html">ImageModel</a></span>&gt;</span>?</span> <span class="parameter-name">images</span>, </span></li>
+<li><span class="parameter" id="copyWith-param-isUnsaved"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a>?</span> <span class="parameter-name">isUnsaved</span>, </span></li>
+</ol>})
+
+      
+
+    </section>
+    
+
+
+    
+<section class="summary source-code" id="source">
+  <h2><span>Implementation</span></h2>
+  <pre class="language-dart"><code class="language-dart">PointModel copyWith({
+  String? id,
+  String? projectId,
+  double? latitude,
+  double? longitude,
+  double? altitude, &#47;&#47; Add to copyWith
+  double? gpsPrecision, &#47;&#47; Add to copyWith
+  bool clearAltitude = false, &#47;&#47; Option to clear altitude
+  bool clearGpsPrecision = false, &#47;&#47; Option to clear gpsPrecision
+  int? ordinalNumber,
+  String? note,
+  bool clearNote = false,
+  DateTime? timestamp,
+  bool clearTimestamp = false,
+  List&lt;ImageModel&gt;? images,
+  bool? isUnsaved,
+}) {
+  final result = PointModel(
+    id: id ?? this.id,
+    projectId: projectId ?? this.projectId,
+    latitude: latitude ?? this.latitude,
+    longitude: longitude ?? this.longitude,
+    altitude: clearAltitude ? null : altitude ?? this.altitude,
+    gpsPrecision: clearGpsPrecision
+        ? null
+        : gpsPrecision ?? this.gpsPrecision,
+    &#47;&#47; Handle clearAltitude and clearGpsPrecision
+    ordinalNumber: ordinalNumber ?? this.ordinalNumber,
+    note: null,
+    &#47;&#47; Will be set below using the setter
+    timestamp: clearTimestamp ? null : timestamp ?? this.timestamp,
+    images: images ?? _images,
+    isUnsaved: isUnsaved ?? this.isUnsaved,
+  );
+
+  &#47;&#47; Use the setter to ensure note is cleaned up
+  if (clearNote) {
+    result.note = &#39;&#39;;
+  } else if (note != null) {
+    result.note = note;
+  } else {
+    result.note = this.note;
+  }
+
+  return result;
+}</code></pre>
+</section>
+
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../../index.html">teleferika</a></li>
+    <li><a href="../../db_models_point_model/">point_model</a></li>
+    <li><a href="../../db_models_point_model/PointModel-class.html">PointModel</a></li>
+    <li class="self-crumb">copyWith method</li>
+</ol>
+
+    <h5>PointModel class</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div><!--/.sidebar-offcanvas-->
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+</div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    teleferika
+      0.9.30+71
+  </span>
+  
+</footer>
+
+
+<script src="../../static-assets/highlight.pack.js?v1"></script>
+<script src="../../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

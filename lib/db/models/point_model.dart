@@ -1,5 +1,63 @@
-// point_model.dart
-// ... other imports
+/// Geographic point model for cable crane line planning.
+///
+/// This class represents a geographic point within a project, containing
+/// coordinates, metadata, and associated images. Points are used to define
+/// the path of cable crane lines and store field measurements.
+///
+/// ## Features
+/// - **Geographic Coordinates**: Latitude, longitude, and optional altitude
+/// - **GPS Precision**: Optional GPS accuracy information
+/// - **Ordering**: Ordinal numbers for sequence within projects
+/// - **Metadata**: Notes, timestamps, and project association
+/// - **Image Support**: Multiple images per point with ordering
+/// - **Validation**: Built-in coordinate and data validation
+///
+/// ## Database Integration
+/// The class includes database table and column name constants for
+/// SQLite integration. It supports both serialization to/from maps
+/// and direct database operations.
+///
+/// ## Usage Examples
+///
+/// ### Creating a new point:
+/// ```dart
+/// final point = PointModel(
+///   projectId: 'project-123',
+///   latitude: 45.12345,
+///   longitude: 11.12345,
+///   altitude: 1200.5,
+///   ordinalNumber: 1,
+///   note: 'Starting point of cable line',
+/// );
+/// ```
+///
+/// ### Calculating distance between points:
+/// ```dart
+/// double distance = point1.distanceFromPoint(point2);
+/// ```
+///
+/// ### Working with images:
+/// ```dart
+/// List<ImageModel> images = point.images;
+/// String note = point.note;
+/// ```
+///
+/// ## Coordinate System
+/// - **Latitude**: -90 to 90 degrees (WGS84)
+/// - **Longitude**: -180 to 180 degrees (WGS84)
+/// - **Altitude**: Optional, in meters above sea level
+/// - **GPS Precision**: Optional, in meters
+///
+/// ## Validation
+/// The class includes comprehensive validation for:
+/// - Coordinate ranges
+/// - Required field presence
+/// - Altitude bounds (-1000 to 8849 meters)
+/// - GPS precision (non-negative)
+///
+/// ## Immutability
+/// The class is designed to be immutable. Use [copyWith] to create
+/// modified versions of points.
 
 import 'package:teleferika/core/utils/uuid_generator.dart';
 import 'dart:math' as math;
@@ -12,25 +70,96 @@ import 'image_model.dart'; // Ensure ImageModel is imported if not already
 /// an ordinal number for ordering within the project, and can contain
 /// multiple images and notes.
 class PointModel {
+  /// Unique identifier for this point.
+  ///
+  /// Generated automatically using UUID v7 if not provided.
+  /// Used for database primary key and internal references.
   final String id;
-  final String projectId;
-  final double latitude;
-  final double longitude;
-  final double? altitude; // New optional altitude field
-  final double? gpsPrecision; // New optional field for GPS precision
-  final int ordinalNumber;
-  String? _note;
-  final DateTime? timestamp;
-  final List<ImageModel> _images; // Made private and immutable
-  final bool isUnsaved; // Track if this is an unsaved new point
 
-  // Getter for images
+  /// Identifier of the project this point belongs to.
+  ///
+  /// Foreign key reference to the projects table.
+  /// Required for database relationships and project organization.
+  final String projectId;
+
+  /// Latitude coordinate in decimal degrees (WGS84).
+  ///
+  /// Must be between -90 and 90 degrees.
+  /// Positive values indicate North, negative values indicate South.
+  final double latitude;
+
+  /// Longitude coordinate in decimal degrees (WGS84).
+  ///
+  /// Must be between -180 and 180 degrees.
+  /// Positive values indicate East, negative values indicate West.
+  final double longitude;
+
+  /// Optional altitude in meters above sea level.
+  ///
+  /// Can be null if altitude data is not available.
+  /// When provided, should be between -1000 and 8849 meters.
+  final double? altitude;
+
+  /// Optional GPS precision/accuracy in meters.
+  ///
+  /// Represents the accuracy of the GPS measurement.
+  /// Lower values indicate higher precision.
+  /// Can be null if precision data is not available.
+  final double? gpsPrecision;
+
+  /// Sequential number for ordering points within a project.
+  ///
+  /// Used to maintain the order of points in cable crane lines.
+  /// Points are typically numbered starting from 0 or 1.
+  final int ordinalNumber;
+
+  /// Private field for storing the point's note.
+  ///
+  /// Access through the public [note] getter/setter which
+  /// provides automatic cleanup of trailing whitespace.
+  String? _note;
+
+  /// Optional timestamp when the point was created or last modified.
+  ///
+  /// Used for tracking when measurements were taken.
+  /// Can be null for legacy data or when timestamp is not available.
+  final DateTime? timestamp;
+
+  /// Private list of images associated with this point.
+  ///
+  /// Made private to ensure immutability. Access through
+  /// the public [images] getter which returns an unmodifiable list.
+  final List<ImageModel> _images;
+
+  /// Flag indicating if this point has not been saved to the database.
+  ///
+  /// Used to track unsaved changes and provide appropriate UI feedback.
+  /// New points created in memory will have this set to true.
+  final bool isUnsaved;
+
+  /// Unmodifiable list of images associated with this point.
+  ///
+  /// Returns a read-only view of the internal image list.
+  /// Images are ordered by their [ImageModel.ordinalNumber].
+  ///
+  /// To modify images, create a new [PointModel] using [copyWith].
   List<ImageModel> get images => List.unmodifiable(_images);
 
-  // Getter for note
+  /// The point's note or description.
+  ///
+  /// Returns an empty string if no note is set.
+  /// The note can contain observations, measurements, or other
+  /// relevant information about the point.
   String get note => _note ?? '';
 
-  // Setter for note that automatically removes trailing blank lines
+  /// Sets the point's note with automatic cleanup.
+  ///
+  /// The setter automatically:
+  /// - Trims leading and trailing whitespace
+  /// - Removes trailing blank lines
+  /// - Converts empty strings to null for database storage
+  ///
+  /// This ensures consistent note formatting across the application.
   set note(String value) {
     if (value.trim().isEmpty) {
       _note = '';
@@ -40,31 +169,102 @@ class PointModel {
     }
   }
 
-  // Database table and column names
+  /// Database table and column name constants.
+  ///
+  /// These constants define the SQLite table structure for points.
+  /// They are used by [DatabaseHelper] for database operations.
+
+  /// Name of the points table in the database.
   static const String tableName = 'points';
+
+  /// Column name for the point's unique identifier.
   static const String columnId = 'id';
+
+  /// Column name for the project foreign key reference.
   static const String columnProjectId = 'project_id';
+
+  /// Column name for the latitude coordinate.
   static const String columnLatitude = 'latitude';
+
+  /// Column name for the longitude coordinate.
   static const String columnLongitude = 'longitude';
-  static const String columnAltitude = 'altitude'; // New column name
+
+  /// Column name for the altitude value.
+  static const String columnAltitude = 'altitude';
+
+  /// Column name for the GPS precision value.
   static const String columnGpsPrecision = 'gps_precision';
+
+  /// Column name for the ordinal number.
   static const String columnOrdinalNumber = 'ordinal_number';
+
+  /// Column name for the note text.
   static const String columnNote = 'note';
+
+  /// Column name for the heading value (legacy, no longer used).
+  ///
+  /// This column was removed in database version 8 but kept for
+  /// reference in case of migration issues.
   static const String columnHeading = 'heading';
+
+  /// Column name for the timestamp.
   static const String columnTimestamp = 'timestamp';
 
+  /// Creates a new [PointModel] instance.
+  ///
+  /// ## Required Parameters
+  /// - [projectId]: The ID of the project this point belongs to
+  /// - [latitude]: Latitude coordinate in decimal degrees (-90 to 90)
+  /// - [longitude]: Longitude coordinate in decimal degrees (-180 to 180)
+  /// - [ordinalNumber]: Sequential number for ordering within the project
+  ///
+  /// ## Optional Parameters
+  /// - [id]: Unique identifier (auto-generated if not provided)
+  /// - [altitude]: Altitude in meters above sea level
+  /// - [gpsPrecision]: GPS accuracy in meters
+  /// - [note]: Optional note or description
+  /// - [timestamp]: When the point was created/modified
+  /// - [images]: List of associated images
+  /// - [isUnsaved]: Whether the point has been saved to database
+  ///
+  /// ## Validation
+  /// The constructor does not perform validation. Use [isValid] to check
+  /// if the point data is valid, or [validationErrors] to get specific issues.
+  ///
+  /// ## Examples
+  /// ```dart
+  /// // Create a basic point
+  /// final point = PointModel(
+  ///   projectId: 'project-123',
+  ///   latitude: 45.12345,
+  ///   longitude: 11.12345,
+  ///   ordinalNumber: 1,
+  /// );
+  ///
+  /// // Create a point with all data
+  /// final point = PointModel(
+  ///   projectId: 'project-123',
+  ///   latitude: 45.12345,
+  ///   longitude: 11.12345,
+  ///   altitude: 1200.5,
+  ///   gpsPrecision: 3.2,
+  ///   ordinalNumber: 1,
+  ///   note: 'Starting point',
+  ///   timestamp: DateTime.now(),
+  /// );
+  /// ```
   PointModel({
     String? id,
     required this.projectId,
     required this.latitude,
     required this.longitude,
-    this.altitude, // Add to constructor
-    this.gpsPrecision, // Add to constructor
+    this.altitude,
+    this.gpsPrecision,
     required this.ordinalNumber,
     String? note,
     this.timestamp,
     List<ImageModel>? images,
-    this.isUnsaved = false, // Default to false for existing points
+    this.isUnsaved = false,
   }) : id = id ?? generateUuid(),
        _images = images ?? [] {
     // Use the setter to ensure note is cleaned up

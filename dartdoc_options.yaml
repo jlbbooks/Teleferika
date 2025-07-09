@@ -1,0 +1,19 @@
+# DartDoc configuration for Teleferika
+# Minimal, valid configuration (no duplicate keys)
+
+output: doc/api
+includePrivate: false
+includeSource: true
+useCategories: true
+exclude:
+  - "**/*.g.dart"
+  - "**/*.freezed.dart"
+  - "**/generated/**"
+linkTo:
+  url: "https://api.flutter.dev/"
+  name: "Flutter API"
+showLibraryNames: true
+showPackageNames: true
+validateLinks: true
+verboseWarnings: true
+quiet: false 

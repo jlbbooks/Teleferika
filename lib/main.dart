@@ -1,4 +1,33 @@
-// main.dart
+/// Teleferika - Cable Crane Line Planning Application
+///
+/// This is the main entry point for the Teleferika Flutter application.
+/// Teleferika is a mobile application designed to support cable crane line
+/// planning for forest operations, helping technicians optimize cable crane
+/// positioning to minimize environmental impact and improve operational efficiency.
+///
+/// ## Features
+/// - GPS-based point collection for cable crane positioning
+/// - Compass integration for directional measurements
+/// - Map visualization with OpenStreetMap integration
+/// - Project management for organizing multiple operations
+/// - Data export capabilities (full version)
+/// - Offline operation support
+///
+/// ## Build Flavors
+/// The application supports two build flavors:
+/// - **opensource**: Open source version without licensed features
+/// - **full**: Full version with licensed features and export functionality
+///
+/// ## Architecture
+/// The application follows a layered architecture:
+/// - **Core**: Configuration, logging, and state management
+/// - **Database**: SQLite-based data persistence
+/// - **UI**: Flutter widgets and screens
+/// - **Map**: Map-related functionality and services
+/// - **Licensing**: Feature control and license management
+///
+/// For more information, see the [README.md](../README.md) file.
+
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -19,6 +48,36 @@ import 'db/database_helper.dart';
 import 'ui/screens/projects/projects_list_screen.dart';
 import 'map/services/map_cache_manager.dart';
 
+/// Main entry point for the Teleferika application.
+///
+/// This function initializes all core services and components before
+/// launching the Flutter application. It performs the following steps:
+///
+/// 1. **Flutter Binding**: Ensures Flutter is properly initialized
+/// 2. **Logging Setup**: Configures the logging system for the application
+/// 3. **License Service**: Initializes the license management system
+/// 4. **Database**: Sets up the SQLite database connection
+/// 5. **Licensed Features**: Loads and registers licensed features (if available)
+/// 6. **Feature Registry**: Initializes the feature control system
+/// 7. **App Launch**: Starts the main application
+///
+/// ## Error Handling
+/// If any critical initialization step fails, the error is logged and
+/// the application will not start. This ensures that the app only runs
+/// when all required services are properly initialized.
+///
+/// ## Build Flavor Support
+/// The initialization process automatically detects the build flavor
+/// and loads appropriate features:
+/// - **opensource**: Basic features only
+/// - **full**: All features including licensed components
+///
+/// ## Dependencies
+/// - [setupLogging]: Configures the logging system
+/// - [LicenceService]: Manages application licensing
+/// - [DatabaseHelper]: Handles database operations
+/// - [LicensedFeaturesLoader]: Loads licensed features
+/// - [FeatureRegistry]: Manages feature availability
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Call the setupLogging function from logger.dart
@@ -58,7 +117,38 @@ void main() async {
   runApp(const MyAppRoot());
 }
 
+/// Root widget for the Teleferika application.
+///
+/// This widget serves as the main entry point for the Flutter widget tree.
+/// It manages the application's initialization state and provides the
+/// overall app structure including:
+///
+/// - **Theme Configuration**: Light and dark theme support
+/// - **Localization**: Multi-language support (English, Italian)
+/// - **State Management**: Provider setup for global state
+/// - **Navigation**: Routes to the main project list screen
+///
+/// ## State Management
+/// The widget uses [Provider] to manage global application state:
+/// - [ProjectStateManager]: Manages current project and points
+/// - [LicenceService]: Provides license status and validation
+///
+/// ## Theme Support
+/// The application supports both light and dark themes with automatic
+/// switching based on system preferences. Themes are defined in [AppConfig].
+///
+/// ## Localization
+/// The app supports multiple languages through Flutter's localization
+/// system. Localization delegates are configured in [AppConfig].
+///
+/// ## Build Configuration
+/// - Debug mode shows a banner when `kDebugMode` is true
+/// - Release mode hides debug information
+/// - Both modes support the same core functionality
 class MyAppRoot extends StatefulWidget {
+  /// Creates a new [MyAppRoot] widget.
+  ///
+  /// The [key] parameter is passed to the superclass constructor.
   const MyAppRoot({super.key});
 
   @override

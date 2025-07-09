@@ -1,3 +1,58 @@
+/// Photo gallery and note editing dialog widgets for Teleferika.
+///
+/// This module provides two main UI components:
+/// - [PhotoGalleryDialog]: Full-screen photo gallery with navigation and editing capabilities
+/// - [NoteEditDialog]: Modal dialog for editing photo notes with rich text input
+///
+/// ## Features
+/// - **Full-screen Photo Gallery**: Swipe navigation between photos with zoom and pan
+/// - **Note Editing**: In-place note editing with rich text support
+/// - **Global State Integration**: Seamless integration with project state management
+/// - **Responsive Design**: Adapts to different screen sizes and orientations
+/// - **Accessibility**: Proper focus management and screen reader support
+/// - **Smooth Animations**: Fluid transitions and gesture-based interactions
+///
+/// ## Usage Examples
+///
+/// ### Opening Photo Gallery:
+/// ```dart
+/// showDialog(
+///   context: context,
+///   builder: (context) => PhotoGalleryDialog(
+///     pointId: 'point-123',
+///     initialIndex: 0,
+///   ),
+/// );
+/// ```
+///
+/// ### Editing Photo Notes:
+/// ```dart
+/// final result = await showDialog<String>(
+///   context: context,
+///   builder: (context) => NoteEditDialog(
+///     initialNote: 'Existing note text',
+///   ),
+/// );
+///
+/// if (result != null) {
+///   // Handle the updated note
+///   print('Updated note: $result');
+/// }
+/// ```
+///
+/// ## Design Principles
+/// - **Dark Theme**: Gallery uses dark background for optimal photo viewing
+/// - **Minimal UI**: Clean interface that doesn't distract from photo content
+/// - **Gesture Support**: Intuitive swipe and pinch gestures for navigation
+/// - **Consistent Styling**: Matches app's overall design language
+///
+/// ## Accessibility Features
+/// - High contrast text and controls
+/// - Screen reader announcements for photo navigation
+/// - Keyboard navigation support
+/// - Focus indicators for interactive elements
+/// - Proper semantic labels for all UI elements
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -7,10 +62,71 @@ import 'package:teleferika/db/models/image_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
-// Shared note edit dialog widget
+/// A modal dialog for editing photo notes with rich text input.
+///
+/// This widget provides a full-screen dialog with a dark theme optimized
+/// for note editing. It includes auto-focus, multi-line text input,
+/// and proper keyboard handling.
+///
+/// ## Features
+/// - **Dark Theme**: Black background with white text for optimal contrast
+/// - **Auto-focus**: Text field automatically receives focus when dialog opens
+/// - **Multi-line Support**: Supports up to 5 lines of text input
+/// - **Keyboard Handling**: Proper keyboard navigation and dismissal
+/// - **Responsive Design**: Adapts to different screen sizes
+/// - **Accessibility**: Screen reader support and proper focus management
+///
+/// ## Usage Examples
+///
+/// ### Basic Note Editing:
+/// ```dart
+/// final result = await showDialog<String>(
+///   context: context,
+///   builder: (context) => NoteEditDialog(
+///     initialNote: 'Existing note text',
+///   ),
+/// );
+///
+/// if (result != null) {
+///   // Handle the updated note
+///   updatePhotoNote(result);
+/// }
+/// ```
+///
+/// ### Creating New Note:
+/// ```dart
+/// final result = await showDialog<String>(
+///   context: context,
+///   builder: (context) => NoteEditDialog(
+///     initialNote: '', // Empty for new note
+///   ),
+/// );
+/// ```
+///
+/// ## Visual Design
+/// - Semi-transparent black background (90% opacity)
+/// - White text with proper contrast
+/// - Rounded corners (12px radius)
+/// - Subtle input field styling
+/// - Clear action buttons (Cancel/Save)
+///
+/// ## Accessibility
+/// - High contrast text and controls
+/// - Proper focus management
+/// - Screen reader announcements
+/// - Keyboard navigation support
+/// - Semantic labels for all interactive elements
 class NoteEditDialog extends StatefulWidget {
+  /// The initial note text to display in the text field.
+  ///
+  /// If empty, the dialog will show "Add a note" in the header.
+  /// If not empty, the dialog will show the existing note text.
   final String initialNote;
 
+  /// Creates a note edit dialog.
+  ///
+  /// The [initialNote] parameter determines the starting text in the
+  /// text field and affects the dialog's header display.
   const NoteEditDialog({super.key, required this.initialNote});
 
   @override
@@ -118,11 +234,94 @@ class _NoteEditDialogState extends State<NoteEditDialog> {
   }
 }
 
-// PhotoGalleryDialog widget for fullscreen preview
+/// A full-screen photo gallery dialog with navigation and editing capabilities.
+///
+/// This widget provides a comprehensive photo viewing experience with swipe
+/// navigation, zoom/pan support, and integrated note editing. It integrates
+/// with the global project state to manage photo data and notes.
+///
+/// ## Features
+/// - **Full-screen Display**: Immersive photo viewing experience
+/// - **Swipe Navigation**: Intuitive left/right swipe to navigate between photos
+/// - **Zoom and Pan**: Pinch to zoom and drag to pan within photos
+/// - **Note Editing**: In-place note editing for each photo
+/// - **Global State Integration**: Seamless updates to project state
+/// - **Responsive Design**: Adapts to different screen sizes and orientations
+/// - **Smooth Animations**: Fluid page transitions and gesture responses
+/// - **Accessibility**: Screen reader support and keyboard navigation
+///
+/// ## Usage Examples
+///
+/// ### Basic Gallery Display:
+/// ```dart
+/// showDialog(
+///   context: context,
+///   builder: (context) => PhotoGalleryDialog(
+///     pointId: 'point-123',
+///     initialIndex: 0, // Start with first photo
+///   ),
+/// );
+/// ```
+///
+/// ### Opening at Specific Photo:
+/// ```dart
+/// showDialog(
+///   context: context,
+///   builder: (context) => PhotoGalleryDialog(
+///     pointId: 'point-123',
+///     initialIndex: 2, // Start with third photo
+///   ),
+/// );
+/// ```
+///
+/// ## Navigation Controls
+/// - **Swipe Left/Right**: Navigate between photos
+/// - **Tap**: Toggle UI controls visibility
+/// - **Pinch**: Zoom in/out on current photo
+/// - **Drag**: Pan around zoomed photo
+/// - **Double Tap**: Reset zoom level
+///
+/// ## Visual Design
+/// - Dark background for optimal photo viewing
+/// - Semi-transparent UI controls
+/// - Smooth fade animations for UI elements
+/// - Clear navigation indicators
+/// - Consistent with app's design language
+///
+/// ## State Management
+/// The widget integrates with the global project state to:
+/// - Fetch photos for the specified point
+/// - Update photo notes in real-time
+/// - Maintain photo ordering and metadata
+/// - Handle state changes and updates
+///
+/// ## Accessibility Features
+/// - Screen reader announcements for photo navigation
+/// - Keyboard navigation support
+/// - High contrast controls
+/// - Proper focus management
+/// - Semantic labels for all interactive elements
+/// - VoiceOver/TalkBack support for photo descriptions
 class PhotoGalleryDialog extends StatefulWidget {
+  /// The unique identifier of the point containing the photos.
+  ///
+  /// This ID is used to fetch the photos from the global project state
+  /// and associate any changes with the correct point.
   final String pointId;
+
+  /// The index of the photo to display initially.
+  ///
+  /// This determines which photo is shown when the gallery opens.
+  /// Must be within the valid range of available photos for the point.
   final int initialIndex;
 
+  /// Creates a photo gallery dialog.
+  ///
+  /// The [pointId] parameter identifies which point's photos to display,
+  /// and [initialIndex] determines which photo to show first.
+  ///
+  /// Throws an exception if the point is not found or if the initial
+  /// index is out of range.
   const PhotoGalleryDialog({
     super.key,
     required this.pointId,

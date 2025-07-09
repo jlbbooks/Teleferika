@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the buildPermissionOverlay method from the MapControls class, for the Dart programming language.">
+  <title>buildPermissionOverlay method - MapControls class - map_controls library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../../static-assets/styles.css?v1">
+  <link rel="icon" href="../../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../../index.html">teleferika</a></li>
+    <li><a href="../../map_map_controls/">map&#47;map_controls.dart</a></li>
+    <li><a href="../../map_map_controls/MapControls-class.html">MapControls</a></li>
+    <li class="self-crumb">buildPermissionOverlay static method</li>
+  </ol>
+  <div class="self-name">buildPermissionOverlay</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="map_map_controls&#47;MapControls-class-sidebar.html"
+    data-below-sidebar="">
+    <div>
+<h1><span class="kind-method">buildPermissionOverlay</span> static method 
+</h1></div>
+
+    <section class="multi-line-signature">
+      
+<span class="returntype">Widget</span>
+<span class="name ">buildPermissionOverlay</span>(<wbr>{<ol class="parameter-list"> <li><span class="parameter" id="buildPermissionOverlay-param-context"><span>required</span> <span class="type-annotation">BuildContext</span> <span class="parameter-name">context</span>, </span></li>
+<li><span class="parameter" id="buildPermissionOverlay-param-hasLocationPermission"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">hasLocationPermission</span>, </span></li>
+<li><span class="parameter" id="buildPermissionOverlay-param-hasSensorPermission"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">hasSensorPermission</span>, </span></li>
+<li><span class="parameter" id="buildPermissionOverlay-param-isCheckingPermissions"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">isCheckingPermissions</span> = <span class="default-value">false</span>, </span></li>
+<li><span class="parameter" id="buildPermissionOverlay-param-onRetryPermissions"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/VoidCallback.html">VoidCallback</a></span> <span class="parameter-name">onRetryPermissions</span>, </span></li>
+</ol>})
+
+      
+
+    </section>
+    
+
+
+    
+<section class="summary source-code" id="source">
+  <h2><span>Implementation</span></h2>
+  <pre class="language-dart"><code class="language-dart">static Widget buildPermissionOverlay({
+  required BuildContext context,
+  required bool hasLocationPermission,
+  required bool hasSensorPermission,
+  bool isCheckingPermissions = false,
+  required VoidCallback onRetryPermissions,
+}) {
+  &#47;&#47; Don&#39;t show overlay while checking permissions or if all permissions are granted
+  if (isCheckingPermissions ||
+      (hasLocationPermission &amp;&amp; hasSensorPermission)) {
+    return const SizedBox.shrink();
+  }
+
+  final s = S.of(context);
+  return Positioned.fill(
+    child: Container(
+      color: Colors.black.withValues(alpha: 0.7),
+      child: Center(
+        child: Container(
+          margin: const EdgeInsets.all(32),
+          child: Card(
+            elevation: 16,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  &#47;&#47; Header icon
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade50,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.warning_amber_rounded,
+                      size: 48,
+                      color: Colors.orange.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  &#47;&#47; Title
+                  Text(
+                    s?.mapPermissionsRequiredTitle ?? &quot;Permissions Required&quot;,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+
+                  &#47;&#47; Permission details
+                  if (!hasLocationPermission) ...[
+                    _buildPermissionItem(
+                      icon: Icons.location_on_outlined,
+                      title:
+                          S.of(context)?.locationPermissionTitle ??
+                          &#39;Location Permission&#39;,
+                      description:
+                          s?.mapLocationPermissionInfoText ??
+                          &quot;Location permission is needed to show your current position and for some map features.&quot;,
+                      color: Colors.blue,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  if (!hasSensorPermission) ...[
+                    _buildPermissionItem(
+                      icon: Icons.compass_calibration_outlined,
+                      title:
+                          S.of(context)?.sensorPermissionTitle ??
+                          &#39;Sensor Permission&#39;,
+                      description:
+                          s?.mapSensorPermissionInfoText ??
+                          &quot;Sensor (compass) permission is needed for direction-based features.&quot;,
+                      color: Colors.green,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  const SizedBox(height: 24),
+
+                  &#47;&#47; Action buttons
+                  Column(
+                    children: [
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.settings),
+                          label: Text(
+                            s?.mapButtonOpenAppSettings ??
+                                &quot;Open App Settings&quot;,
+                          ),
+                          onPressed: () async {
+                            openAppSettings();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 16,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextButton(
+                        onPressed: onRetryPermissions,
+                        child: Text(
+                          s?.mapButtonRetryPermissions ?? &quot;Retry Permissions&quot;,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}</code></pre>
+</section>
+
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../../index.html">teleferika</a></li>
+    <li><a href="../../map_map_controls/">map_controls</a></li>
+    <li><a href="../../map_map_controls/MapControls-class.html">MapControls</a></li>
+    <li class="self-crumb">buildPermissionOverlay static method</li>
+</ol>
+
+    <h5>MapControls class</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div><!--/.sidebar-offcanvas-->
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+</div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    teleferika
+      0.9.30+71
+  </span>
+  
+</footer>
+
+
+<script src="../../static-assets/highlight.pack.js?v1"></script>
+<script src="../../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+

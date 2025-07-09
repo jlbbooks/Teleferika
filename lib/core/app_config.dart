@@ -1,24 +1,86 @@
-// app_config.dart (new file)
+/// Application configuration and constants for Teleferika.
+///
+/// This class contains all application-wide configuration settings,
+/// theme definitions, and constants used throughout the app. It provides
+/// a centralized location for managing app appearance, behavior, and
+/// configuration values.
+///
+/// ## Features
+/// - **Theme Configuration**: Light and dark theme definitions
+/// - **Localization**: Supported locales and delegates
+/// - **Map Configuration**: Default map center and zoom levels
+/// - **UI Constants**: Colors, icons, and styling constants
+/// - **Behavior Settings**: Configurable app behavior flags
+///
+/// ## Usage
+/// All configuration values are accessed as static constants:
+/// ```dart
+/// // Get app name
+/// String name = AppConfig.appName;
+///
+/// // Get theme
+/// ThemeData theme = AppConfig.lightTheme;
+///
+/// // Get default map center
+/// LatLng center = AppConfig.defaultMapCenter;
+/// ```
+///
+/// ## Customization
+/// To modify app behavior, update the appropriate constants in this class.
+/// For theme customization, modify the [lightTheme] and [darkTheme] properties.
+///
+/// ## Constants Categories
+/// - **App Identity**: App name and branding
+/// - **Coordinate UI**: Icons and colors for coordinate display
+/// - **Themes**: Material Design theme configurations
+/// - **Localization**: Language and locale settings
+/// - **Map Settings**: Default map configuration
+/// - **Behavior Flags**: Configurable app behavior
 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 
+/// Application configuration and constants for Teleferika.
+///
+/// This class provides centralized configuration for all app settings,
+/// themes, and constants. It cannot be instantiated as all members are static.
 class AppConfig {
+  /// The official name of the application.
+  ///
+  /// This is used throughout the app for branding and display purposes.
+  /// It should not be translated as it's a brand name.
   static const String appName = 'TeleferiKa';
 
-  // Coordinate icons and colors for consistency across the app
+  /// Coordinate display configuration for consistent UI across the app.
+  ///
+  /// These constants define the icons and colors used to display
+  /// coordinate information (latitude, longitude, altitude, GPS precision)
+  /// throughout the application.
+
+  /// Icon for latitude display (vertical swap icon).
   static const IconData latitudeIcon = Icons.swap_vert;
+
+  /// Color for latitude values and UI elements.
   static const Color latitudeColor = Colors.green;
 
+  /// Icon for longitude display (horizontal swap icon).
   static const IconData longitudeIcon = Icons.swap_horiz;
+
+  /// Color for longitude values and UI elements.
   static const Color longitudeColor = Colors.orange;
 
+  /// Icon for altitude display (terrain icon).
   static const IconData altitudeIcon = Icons.terrain;
+
+  /// Color for altitude values and UI elements.
   static const Color altitudeColor = Colors.brown;
 
+  /// Icon for GPS precision display (location icon).
   static const IconData gpsPrecisionIcon = Icons.my_location;
+
+  /// Color for GPS precision values and UI elements.
   static const Color gpsPrecisionColor = Colors.blueGrey;
 
   static final ThemeData lightTheme = ThemeData(

@@ -1,17 +1,123 @@
+/// Status indicator widget for displaying user feedback messages.
+///
+/// This module provides a comprehensive status notification system that displays
+/// elegant, non-intrusive user feedback messages. It includes different status
+/// types (success, error, info, loading) with appropriate styling and animations.
+///
+/// ## Features
+/// - **Multiple Status Types**: Success, Error, Info, Loading with appropriate icons and colors
+/// - **Smooth Animations**: Fade-in/fade-out with slide effect for smooth transitions
+/// - **Auto-hide**: Configurable duration for automatic dismissal
+/// - **Manual Dismiss**: Close button for user control
+/// - **Tooltips**: Full message visible on hover for truncated text
+/// - **Customizable**: Position, size, and styling options
+/// - **Accessible**: Proper contrast and readable text
+///
+/// ## Usage Examples
+///
+/// ### Basic Usage:
+/// ```dart
+/// StatusIndicator(
+///   status: StatusManager.success('Operation completed successfully!'),
+///   onDismiss: () => print('Status dismissed'),
+/// )
+/// ```
+///
+/// ### With Custom Styling:
+/// ```dart
+/// StatusIndicator(
+///   status: StatusManager.error('Something went wrong'),
+///   margin: EdgeInsets.all(16),
+///   maxWidth: 400,
+///   autoHide: false,
+/// )
+/// ```
+///
+/// ### Loading State:
+/// ```dart
+/// StatusIndicator(
+///   status: StatusManager.loading('Processing your request...'),
+///   autoHide: false, // Loading states typically don't auto-hide
+/// )
+/// ```
+///
+/// ## Status Types
+/// - **Success**: Green color with check icon - for successful operations
+/// - **Error**: Red color with error icon - for errors and failures
+/// - **Info**: Blue color with info icon - for informational messages
+/// - **Loading**: Orange color with spinner - for ongoing operations
+///
+/// ## Accessibility
+/// The widget includes proper contrast ratios, readable text sizes,
+/// and tooltips for truncated messages to ensure accessibility compliance.
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-enum StatusType { success, error, info, loading }
+/// Types of status messages that can be displayed.
+///
+/// Each type has its own visual styling including color, icon, and behavior.
+enum StatusType {
+  /// Success status - green color, check icon
+  success,
 
+  /// Error status - red color, error icon
+  error,
+
+  /// Information status - blue color, info icon
+  info,
+
+  /// Loading status - orange color, spinner animation
+  loading,
+}
+
+/// Configuration class for status messages.
+///
+/// Contains all the information needed to display a status message including
+/// type, message text, visual styling, and behavior settings.
+///
+/// ## Properties
+/// - [type]: The status type (success, error, info, loading)
+/// - [message]: The text message to display
+/// - [icon]: The icon to show alongside the message
+/// - [color]: The background color for the status indicator
+/// - [duration]: How long to show the message before auto-hiding
+///
+/// ## Example
+/// ```dart
+/// StatusInfo(
+///   type: StatusType.success,
+///   message: 'File saved successfully!',
+///   icon: Icons.check_circle,
+///   color: Colors.green,
+///   duration: Duration(seconds: 5),
+/// )
+/// ```
 class StatusInfo {
+  /// The type of status message.
   final StatusType type;
+
+  /// The text message to display to the user.
   final String message;
+
+  /// The icon to display alongside the message.
   final IconData icon;
+
+  /// The background color for the status indicator.
   final Color color;
+
+  /// How long to display the message before automatically hiding it.
+  ///
+  /// Defaults to 3 seconds. Set to [Duration.zero] to disable auto-hide.
   final Duration duration;
 
-  StatusInfo({
+  /// Creates a new status info configuration.
+  ///
+  /// All parameters except [duration] are required. The [duration] parameter
+  /// defaults to 3 seconds for most status types, but loading statuses
+  /// typically use [Duration.zero] to prevent auto-hiding.
+  const StatusInfo({
     required this.type,
     required this.message,
     required this.icon,
@@ -20,7 +126,42 @@ class StatusInfo {
   });
 }
 
+/// Factory class for creating predefined status configurations.
+///
+/// Provides convenient static methods to create common status types
+/// with appropriate styling and behavior. This ensures consistency
+/// across the application and reduces boilerplate code.
+///
+/// ## Usage Examples
+/// ```dart
+/// // Success message
+/// StatusManager.success('Operation completed!')
+///
+/// // Error message
+/// StatusManager.error('Something went wrong')
+///
+/// // Info message
+/// StatusManager.info('Please wait while we process your request')
+///
+/// // Loading message (doesn't auto-hide)
+/// StatusManager.loading('Uploading files...')
+/// ```
 class StatusManager {
+  /// Creates a success status with green styling and check icon.
+  ///
+  /// Success messages are typically shown after successful operations
+  /// like saving files, completing forms, or successful API calls.
+  ///
+  /// **Auto-hide duration**: 3 seconds
+  /// **Color**: Green
+  /// **Icon**: Check circle
+  ///
+  /// Example:
+  /// ```dart
+  /// StatusIndicator(
+  ///   status: StatusManager.success('Project saved successfully!'),
+  /// )
+  /// ```
   static StatusInfo success(String message) => StatusInfo(
     type: StatusType.success,
     message: message,
@@ -28,6 +169,21 @@ class StatusManager {
     color: Colors.green,
   );
 
+  /// Creates an error status with red styling and error icon.
+  ///
+  /// Error messages should be used for failures, validation errors,
+  /// or when operations cannot be completed.
+  ///
+  /// **Auto-hide duration**: 3 seconds
+  /// **Color**: Red
+  /// **Icon**: Error
+  ///
+  /// Example:
+  /// ```dart
+  /// StatusIndicator(
+  ///   status: StatusManager.error('Failed to save project'),
+  /// )
+  /// ```
   static StatusInfo error(String message) => StatusInfo(
     type: StatusType.error,
     message: message,
@@ -35,6 +191,21 @@ class StatusManager {
     color: Colors.red,
   );
 
+  /// Creates an info status with blue styling and info icon.
+  ///
+  /// Info messages are for informational content, tips, or
+  /// non-critical notifications.
+  ///
+  /// **Auto-hide duration**: 3 seconds
+  /// **Color**: Blue
+  /// **Icon**: Info
+  ///
+  /// Example:
+  /// ```dart
+  /// StatusIndicator(
+  ///   status: StatusManager.info('New version available'),
+  /// )
+  /// ```
   static StatusInfo info(String message) => StatusInfo(
     type: StatusType.info,
     message: message,
@@ -42,6 +213,22 @@ class StatusManager {
     color: Colors.blue,
   );
 
+  /// Creates a loading status with orange styling and spinner.
+  ///
+  /// Loading messages indicate ongoing operations. They don't auto-hide
+  /// and should be manually dismissed when the operation completes.
+  ///
+  /// **Auto-hide duration**: Never (Duration.zero)
+  /// **Color**: Orange
+  /// **Icon**: Hourglass (replaced by spinner in widget)
+  ///
+  /// Example:
+  /// ```dart
+  /// StatusIndicator(
+  ///   status: StatusManager.loading('Processing your request...'),
+  ///   autoHide: false, // Recommended for loading states
+  /// )
+  /// ```
   static StatusInfo loading(String message) => StatusInfo(
     type: StatusType.loading,
     message: message,
@@ -51,13 +238,99 @@ class StatusManager {
   );
 }
 
+/// A widget that displays status messages with smooth animations and styling.
+///
+/// The [StatusIndicator] widget provides a non-intrusive way to show user feedback
+/// messages. It supports different status types (success, error, info, loading)
+/// with appropriate visual styling and smooth slide/fade animations.
+///
+/// ## Features
+/// - **Smooth Animations**: Slide-in from right with fade effect
+/// - **Auto-hide**: Configurable duration for automatic dismissal
+/// - **Manual Dismiss**: Close button for user control
+/// - **Tooltips**: Full message visible on hover for truncated text
+/// - **Responsive**: Adapts to different screen sizes
+/// - **Accessible**: High contrast text and proper sizing
+///
+/// ## Usage Examples
+///
+/// ### Basic Success Message:
+/// ```dart
+/// StatusIndicator(
+///   status: StatusManager.success('Operation completed!'),
+///   onDismiss: () => print('Dismissed'),
+/// )
+/// ```
+///
+/// ### Custom Styled Error Message:
+/// ```dart
+/// StatusIndicator(
+///   status: StatusManager.error('Something went wrong'),
+///   margin: EdgeInsets.all(16),
+///   maxWidth: 400,
+///   autoHide: false,
+/// )
+/// ```
+///
+/// ### Loading State (No Auto-hide):
+/// ```dart
+/// StatusIndicator(
+///   status: StatusManager.loading('Processing...'),
+///   autoHide: false,
+/// )
+/// ```
+///
+/// ## Widget Properties
+/// - [status]: The status configuration to display
+/// - [onDismiss]: Callback when user manually dismisses the status
+/// - [margin]: Custom margin around the status indicator
+/// - [maxWidth]: Maximum width of the status message
+/// - [autoHide]: Whether to automatically hide the status after duration
+///
+/// ## Visual Design
+/// The widget uses Material Design principles with:
+/// - Elevated card appearance with rounded corners
+/// - Semi-transparent background with status color
+/// - White text with proper contrast
+/// - Icon + text layout with appropriate spacing
+/// - Smooth slide and fade animations
 class StatusIndicator extends StatefulWidget {
+  /// The status configuration to display.
+  ///
+  /// When null, the widget will be hidden. When a new status is provided,
+  /// the widget will animate in and display the message.
   final StatusInfo? status;
+
+  /// Callback function called when the user manually dismisses the status.
+  ///
+  /// This is typically used to update the parent widget's state or
+  /// perform cleanup actions.
   final VoidCallback? onDismiss;
+
+  /// Custom margin around the status indicator.
+  ///
+  /// Defaults to null, which uses the widget's default positioning.
+  /// Useful for custom positioning or spacing requirements.
   final EdgeInsetsGeometry? margin;
+
+  /// Maximum width of the status message container.
+  ///
+  /// Defaults to 320 logical pixels. Messages longer than this width
+  /// will be truncated with ellipsis and a tooltip will show the full text.
   final double? maxWidth;
+
+  /// Whether to automatically hide the status after the duration specified
+  /// in the [StatusInfo.duration].
+  ///
+  /// Defaults to true. Set to false for loading states or when you want
+  /// manual control over when the status is hidden.
   final bool autoHide;
 
+  /// Creates a status indicator widget.
+  ///
+  /// The [status] parameter determines what message to display and how to style it.
+  /// The [onDismiss] callback is optional and called when the user manually
+  /// dismisses the status. Other parameters allow for custom styling and behavior.
   const StatusIndicator({
     super.key,
     this.status,

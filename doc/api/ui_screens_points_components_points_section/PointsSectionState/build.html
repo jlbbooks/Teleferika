@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="API docs for the build method from the PointsSectionState class, for the Dart programming language.">
+  <title>build method - PointsSectionState class - points_section library - Dart API</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="../../static-assets/github.css?v1">
+  <link rel="stylesheet" href="../../static-assets/styles.css?v1">
+  <link rel="icon" href="../../static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="../../" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li><a href="../../index.html">teleferika</a></li>
+    <li><a href="../../ui_screens_points_components_points_section/">ui&#47;screens&#47;points&#47;components&#47;points_section.dart</a></li>
+    <li><a href="../../ui_screens_points_components_points_section/PointsSectionState-class.html">PointsSectionState</a></li>
+    <li class="self-crumb">build method</li>
+  </ol>
+  <div class="self-name">build</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+<div
+    id="dartdoc-main-content"
+    class="main-content"
+    data-above-sidebar="ui_screens_points_components_points_section&#47;PointsSectionState-class-sidebar.html"
+    data-below-sidebar="">
+    <div>
+<h1><span class="kind-method">build</span> method 
+</h1></div>
+
+    <section class="multi-line-signature">
+      
+  <div>
+    <ol class="annotation-list">
+        <li>@<a href="https://api.flutter.dev/flutter/dart-core/override-constant.html">override</a></li>
+    </ol>
+  </div>
+<span class="returntype">Widget</span>
+<span class="name ">build</span>(<wbr><ol class="parameter-list single-line"> <li><span class="parameter" id="build-param-context"><span class="type-annotation">BuildContext</span> <span class="parameter-name">context</span></span></li>
+</ol>)
+
+      
+
+    </section>
+    
+<section class="desc markdown">
+  <p>Describes the part of the user interface represented by this widget.</p>
+<p>The framework calls this method in a number of different situations. For
+example:</p>
+<ul>
+<li>After calling <a href="../../ui_widgets_status_indicator/StatusMixin/initState.html">initState</a>.</li>
+<li>After calling <a href="../../ui_widgets_status_indicator/StatusMixin/didUpdateWidget.html">didUpdateWidget</a>.</li>
+<li>After receiving a call to <a href="../../ui_widgets_status_indicator/StatusMixin/setState.html">setState</a>.</li>
+<li>After a dependency of this <code>State</code> object changes (e.g., an
+<code>InheritedWidget</code> referenced by the previous <a href="../../ui_screens_points_components_points_section/PointsSectionState/build.html">build</a> changes).</li>
+<li>After calling <a href="../../ui_widgets_status_indicator/StatusMixin/deactivate.html">deactivate</a> and then reinserting the <code>State</code> object into
+the tree at another location.</li>
+</ul>
+<p>This method can potentially be called in every frame and should not have
+any side effects beyond building a widget.</p>
+<p>The framework replaces the subtree below this widget with the widget
+returned by this method, either by updating the existing subtree or by
+removing the subtree and inflating a new subtree, depending on whether the
+widget returned by this method can update the root of the existing
+subtree, as determined by calling <code>Widget.canUpdate</code>.</p>
+<p>Typically implementations return a newly created constellation of widgets
+that are configured with information from this widget's constructor, the
+given <code>BuildContext</code>, and the internal state of this <code>State</code> object.</p>
+<p>The given <code>BuildContext</code> contains information about the location in the
+tree at which this widget is being built. For example, the context
+provides the set of inherited widgets for this location in the tree. The
+<code>BuildContext</code> argument is always the same as the <code>context</code> property of
+this <code>State</code> object and will remain the same for the lifetime of this
+object. The <code>BuildContext</code> argument is provided redundantly here so that
+this method matches the signature for a <code>WidgetBuilder</code>.</p>
+<h2 id="design-discussion">Design discussion</h2>
+<h3 id="why-is-the-build-method-on-state-and-not-statefulwidget">Why is the <a href="../../ui_screens_points_components_points_section/PointsSectionState/build.html">build</a> method on <code>State</code>, and not <code>StatefulWidget</code>?</h3>
+<p>Putting a <code>Widget build(BuildContext context)</code> method on <code>State</code> rather
+than putting a <code>Widget build(BuildContext context, State state)</code> method
+on <code>StatefulWidget</code> gives developers more flexibility when subclassing
+<code>StatefulWidget</code>.</p>
+<p>For example, <code>AnimatedWidget</code> is a subclass of <code>StatefulWidget</code> that
+introduces an abstract <code>Widget build(BuildContext context)</code> method for its
+subclasses to implement. If <code>StatefulWidget</code> already had a <a href="../../ui_screens_points_components_points_section/PointsSectionState/build.html">build</a> method
+that took a <code>State</code> argument, <code>AnimatedWidget</code> would be forced to provide
+its <code>State</code> object to subclasses even though its <code>State</code> object is an
+internal implementation detail of <code>AnimatedWidget</code>.</p>
+<p>Conceptually, <code>StatelessWidget</code> could also be implemented as a subclass of
+<code>StatefulWidget</code> in a similar manner. If the <a href="../../ui_screens_points_components_points_section/PointsSectionState/build.html">build</a> method were on
+<code>StatefulWidget</code> rather than <code>State</code>, that would not be possible anymore.</p>
+<p>Putting the <a href="../../ui_screens_points_components_points_section/PointsSectionState/build.html">build</a> function on <code>State</code> rather than <code>StatefulWidget</code> also
+helps avoid a category of bugs related to closures implicitly capturing
+<code>this</code>. If you defined a closure in a <a href="../../ui_screens_points_components_points_section/PointsSectionState/build.html">build</a> function on a
+<code>StatefulWidget</code>, that closure would implicitly capture <code>this</code>, which is
+the current widget instance, and would have the (immutable) fields of that
+instance in scope:</p>
+<pre class="language-dart"><code class="language-dart">// (this is not valid Flutter code)
+class MyButton extends StatefulWidgetX {
+  MyButton({super.key, required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context, State state) {
+    return SpecialWidget(
+      handler: () { print('color: $color'); },
+    );
+  }
+}
+</code></pre>
+<p>For example, suppose the parent builds <code>MyButton</code> with <code>color</code> being blue,
+the <code>$color</code> in the print function refers to blue, as expected. Now,
+suppose the parent rebuilds <code>MyButton</code> with green. The closure created by
+the first build still implicitly refers to the original widget and the
+<code>$color</code> still prints blue even through the widget has been updated to
+green; should that closure outlive its widget, it would print outdated
+information.</p>
+<p>In contrast, with the <a href="../../ui_screens_points_components_points_section/PointsSectionState/build.html">build</a> function on the <code>State</code> object, closures
+created during <a href="../../ui_screens_points_components_points_section/PointsSectionState/build.html">build</a> implicitly capture the <code>State</code> instance instead of
+the widget instance:</p>
+<pre class="language-dart"><code class="language-dart">class MyButton extends StatefulWidget {
+  const MyButton({super.key, this.color = Colors.teal});
+
+  final Color color;
+  // ...
+}
+
+class MyButtonState extends State&lt;MyButton&gt; {
+  // ...
+  @override
+  Widget build(BuildContext context) {
+    return SpecialWidget(
+      handler: () { print('color: ${widget.color}'); },
+    );
+  }
+}
+</code></pre>
+<p>Now when the parent rebuilds <code>MyButton</code> with green, the closure created by
+the first build still refers to <code>State</code> object, which is preserved across
+rebuilds, but the framework has updated that <code>State</code> object's <a href="../../ui_widgets_status_indicator/StatusMixin/widget.html">widget</a>
+property to refer to the new <code>MyButton</code> instance and <code>${widget.color}</code>
+prints green, as expected.</p>
+<p>See also:</p>
+<ul>
+<li><code>StatefulWidget</code>, which contains the discussion on performance considerations.</li>
+</ul>
+</section>
+
+
+    
+<section class="summary source-code" id="source">
+  <h2><span>Implementation</span></h2>
+  <pre class="language-dart"><code class="language-dart">@override
+Widget build(BuildContext context) {
+  return Consumer&lt;ProjectStateManager&gt;(
+    builder: (context, projectState, child) {
+      final currentProject = projectState.currentProject ?? widget.project;
+      final points = projectState.currentPoints;
+      final s = S.of(context);
+
+      return Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                &#47;&#47; Points List Section
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(12.0),
+                      border: Border.all(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.outline.withValues(alpha: 0.2),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.list_alt,
+                                color: Theme.of(context).colorScheme.primary,
+                                size: 24,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                S.of(context)?.points_list_title ??
+                                    &#39;Points List&#39;,
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface,
+                                    ),
+                              ),
+                              const Spacer(),
+                              IconButton(
+                                onPressed: _addNewPoint,
+                                icon: Icon(
+                                  Icons.add_location_alt,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.primary,
+                                  size: 24,
+                                ),
+                                tooltip:
+                                    s?.compassAddPointButton ?? &#39;Add Point&#39;,
+                                style: IconButton.styleFrom(
+                                  backgroundColor: Theme.of(context)
+                                      .colorScheme
+                                      .primary
+                                      .withValues(alpha: 0.1),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8.0),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Expanded(
+                          child: PointsListScreen(
+                            key: _pointsListScreenKey,
+                            project: currentProject,
+                            points: points,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            top: 24,
+            right: 24,
+            child: StatusIndicator(
+              status: currentStatus,
+              onDismiss: hideStatus,
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}</code></pre>
+</section>
+
+
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li><a href="../../index.html">teleferika</a></li>
+    <li><a href="../../ui_screens_points_components_points_section/">points_section</a></li>
+    <li><a href="../../ui_screens_points_components_points_section/PointsSectionState-class.html">PointsSectionState</a></li>
+    <li class="self-crumb">build method</li>
+</ol>
+
+    <h5>PointsSectionState class</h5>
+    <div id="dartdoc-sidebar-left-content"></div>
+  </div><!--/.sidebar-offcanvas-->
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+</div><!--/.sidebar-offcanvas-->
+</main>
+<footer>
+  <span class="no-break">
+    teleferika
+      0.9.30+71
+  </span>
+  
+</footer>
+
+
+<script src="../../static-assets/highlight.pack.js?v1"></script>
+<script src="../../static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+
