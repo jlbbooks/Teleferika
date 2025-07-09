@@ -59,6 +59,87 @@
     </div>
 
     
+<section class="desc markdown">
+  <p>Project points layer widget for displaying geographic projects on maps.</p>
+<p>This widget provides a comprehensive map layer that displays all projects
+and their associated points as interactive markers and polylines. It can
+be used in any FlutterMap to visualize project data with customizable styling.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li><strong>Point Markers</strong>: Displays each project point as a customizable marker</li>
+<li><strong>Project Polylines</strong>: Connects points within each project with lines</li>
+<li><strong>Project Labels</strong>: Shows project names at strategic locations</li>
+<li><strong>Dynamic Loading</strong>: Loads projects from Provider or database</li>
+<li><strong>Exclusion Support</strong>: Can exclude specific projects from display</li>
+<li><strong>Customizable Styling</strong>: Configurable colors, sizes, and appearance</li>
+<li><strong>Performance Optimized</strong>: Efficient rendering for large datasets</li>
+</ul>
+<h2 id="usage-examples">Usage Examples</h2>
+<h3 id="basic-usage">Basic Usage:</h3>
+<pre class="language-dart"><code class="language-dart">FlutterMap(
+  children: [
+    TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
+    ProjectPointsLayer(),
+  ],
+)
+</code></pre>
+<h3 id="with-custom-styling">With Custom Styling:</h3>
+<pre class="language-dart"><code class="language-dart">ProjectPointsLayer(
+  markerSize: 12.0,
+  markerColor: Colors.red,
+  lineColor: Colors.blue,
+  lineWidth: 2.0,
+)
+</code></pre>
+<h3 id="excluding-current-project">Excluding Current Project:</h3>
+<pre class="language-dart"><code class="language-dart">ProjectPointsLayer(
+  excludeProjectId: currentProject.id,
+  markerColor: Colors.grey,
+)
+</code></pre>
+<h3 id="with-pre-loaded-projects">With Pre-loaded Projects:</h3>
+<pre class="language-dart"><code class="language-dart">ProjectPointsLayer(
+  projects: myProjects,
+  markerColor: Colors.green,
+)
+</code></pre>
+<h2 id="data-sources">Data Sources</h2>
+<p>The widget automatically determines the best data source:</p>
+<ol>
+<li><strong>Direct Projects</strong>: If <code>projects</code> parameter is provided</li>
+<li><strong>Provider State</strong>: If available in the widget tree</li>
+<li><strong>Database Fallback</strong>: Loads all projects from database</li>
+</ol>
+<h2 id="visual-elements">Visual Elements</h2>
+<ul>
+<li><strong>Point Markers</strong>: Circular markers at each geographic point</li>
+<li><strong>Project Lines</strong>: Polylines connecting points in sequence</li>
+<li><strong>Project Labels</strong>: Text labels showing project names</li>
+<li><strong>Exclusion Handling</strong>: Gracefully skips excluded projects</li>
+</ul>
+<h2 id="performance-considerations">Performance Considerations</h2>
+<ul>
+<li>Efficient marker and polyline generation</li>
+<li>Minimal rebuilds during data updates</li>
+<li>Optimized for large numbers of projects</li>
+<li>Memory-conscious data loading</li>
+</ul>
+<h2 id="customization-options">Customization Options</h2>
+<ul>
+<li><strong>Marker Size</strong>: Diameter of point markers</li>
+<li><strong>Marker Colors</strong>: Fill and border colors for markers</li>
+<li><strong>Line Styling</strong>: Color and width of project polylines</li>
+<li><strong>Border Styling</strong>: Marker border color and width</li>
+</ul>
+<h2 id="integration">Integration</h2>
+<p>Designed to work seamlessly with:</p>
+<ul>
+<li>FlutterMap for map display</li>
+<li>Project state management</li>
+<li>Database operations</li>
+<li>Provider pattern for state access</li>
+</ul>
+</section>
 
 
     <section class="summary offset-anchor" id="classes">
@@ -70,7 +151,6 @@
 </dt>
 <dd>
   A reusable widget that displays project points as markers and connects them with polylines.
-Can be used in any FlutterMap to show project data.
 </dd>
 
       </dl>

@@ -30,6 +30,34 @@ We have successfully generated comprehensive UI documentation for the Teleferika
 - **Features**: Dark theme, multi-line input, auto-focus
 - **Documentation**: Complete API reference with styling details
 
+#### 4. **PhotoManagerWidget Widget** (`lib/ui/widgets/photo_manager_widget.dart`)
+- **Purpose**: Complete photo management interface for geographic points
+- **Features**: Camera capture, gallery import, multi-select, auto-save
+- **Documentation**: Detailed API reference with file management details
+- **Accessibility**: Screen reader support and proper focus management
+- **Integration**: Global project state and file system management
+
+#### 5. **ProjectPointsLayer Widget** (`lib/ui/widgets/project_points_layer.dart`)
+- **Purpose**: Map layer for displaying project points and polylines
+- **Features**: Customizable markers, project lines, dynamic loading
+- **Documentation**: Complete API reference with styling options
+- **Performance**: Optimized for large datasets
+- **Integration**: FlutterMap and project state management
+
+#### 6. **PermissionHandlerWidget Widget** (`lib/ui/widgets/permission_handler_widget.dart`)
+- **Purpose**: Comprehensive app permission management
+- **Features**: Multiple permission types, automatic requests, retry mechanism
+- **Documentation**: Detailed API reference with permission flow
+- **Accessibility**: Proper focus management and screen reader support
+- **Integration**: Geolocator and permission_handler packages
+
+#### 7. **CompassCalibrationPanel Widget** (`lib/ui/widgets/compass_calibration_panel.dart`)
+- **Purpose**: Device compass calibration guidance
+- **Features**: Animated figure-8 motion, clear instructions, dismissible
+- **Documentation**: Complete API reference with calibration process
+- **Visual Design**: Semi-transparent overlay with clean card design
+- **Integration**: Device sensors and location services
+
 ### 📚 Documentation Features
 
 #### **Rich Content**

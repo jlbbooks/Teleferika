@@ -5,15 +5,162 @@ import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 
-enum PermissionType { location, sensor, camera, microphone, storage }
+/// Permission types that can be requested by the widget.
+///
+/// Each type corresponds to a specific system permission that the app
+/// may need to function properly.
+enum PermissionType {
+  /// Location permission for GPS and location services.
+  location,
 
+  /// Sensor permission for device sensors (accelerometer, gyroscope, etc.).
+  sensor,
+
+  /// Camera permission for taking photos and video.
+  camera,
+
+  /// Microphone permission for audio recording.
+  microphone,
+
+  /// Storage permission for file system access.
+  storage,
+}
+
+/// Permission handling widget for managing app permissions.
+///
+/// This widget provides a comprehensive solution for requesting and managing
+/// app permissions. It handles permission requests, provides user feedback,
+/// and can show overlays when permissions are missing.
+///
+/// ## Features
+/// - **Multiple Permission Types**: Location, sensors, camera, microphone, storage
+/// - **Automatic Permission Requests**: Handles permission flow automatically
+/// - **User-Friendly Overlays**: Shows permission request dialogs when needed
+/// - **Retry Mechanism**: Allows users to retry permission requests
+/// - **Loading States**: Shows loading indicators during permission checks
+/// - **Customizable UI**: Configurable loading and overlay widgets
+/// - **Permission Status Tracking**: Tracks the status of all requested permissions
+///
+/// ## Usage Examples
+///
+/// ### Basic Permission Handling:
+/// ```dart
+/// PermissionHandlerWidget(
+///   requiredPermissions: [PermissionType.location, PermissionType.camera],
+///   onPermissionsResult: (permissions) {
+///     print('Location: ${permissions[PermissionType.location]}');
+///     print('Camera: ${permissions[PermissionType.camera]}');
+///   },
+///   child: MyAppContent(),
+/// )
+/// ```
+///
+/// ### With Custom Loading Widget:
+/// ```dart
+/// PermissionHandlerWidget(
+///   requiredPermissions: [PermissionType.location],
+///   loadingWidget: Center(
+///     child: Column(
+///       mainAxisAlignment: MainAxisAlignment.center,
+///       children: [
+///         CircularProgressIndicator(),
+///         Text('Checking permissions...'),
+///       ],
+///     ),
+///   ),
+///   onPermissionsResult: handlePermissions,
+///   child: MyAppContent(),
+/// )
+/// ```
+///
+/// ### Without Overlay (Custom UI):
+/// ```dart
+/// PermissionHandlerWidget(
+///   requiredPermissions: [PermissionType.camera],
+///   showOverlay: false,
+///   onPermissionsResult: (permissions) {
+///     if (!permissions[PermissionType.camera]!) {
+///       showCustomPermissionDialog();
+///     }
+///   },
+///   child: MyAppContent(),
+/// )
+/// ```
+///
+/// ## Permission Types
+/// - **Location**: GPS and location services (using Geolocator)
+/// - **Sensor**: Device sensors like accelerometer and gyroscope
+/// - **Camera**: Photo and video capture capabilities
+/// - **Microphone**: Audio recording functionality
+/// - **Storage**: File system read/write access
+///
+/// ## Permission Flow
+/// 1. **Check Current Status**: Verify if permissions are already granted
+/// 2. **Request Permissions**: Show system permission dialogs if needed
+/// 3. **Handle Results**: Process granted/denied permissions
+/// 4. **Show Overlay**: Display custom UI for missing permissions
+/// 5. **Retry Option**: Allow users to retry permission requests
+///
+/// ## UI States
+/// - **Loading**: Shows loading widget during permission checks
+/// - **All Granted**: Shows the child widget normally
+/// - **Missing Permissions**: Shows overlay with permission request UI
+/// - **Retry Mode**: Shows retry button for failed permissions
+///
+/// ## Integration
+/// Designed to work with:
+/// - Geolocator for location permissions
+/// - Permission_handler for other permissions
+/// - Flutter's permission system
+/// - Custom permission request flows
+///
+/// ## Best Practices
+/// - Request only necessary permissions
+/// - Provide clear explanations for permission needs
+/// - Handle permission denials gracefully
+/// - Offer alternative functionality when possible
+/// - Respect user privacy preferences
+
+/// A widget that handles app permission requests and management.
+///
+/// This widget automatically requests the specified permissions and provides
+/// appropriate UI feedback. It can show overlays when permissions are missing
+/// and allows users to retry permission requests.
 class PermissionHandlerWidget extends StatefulWidget {
+  /// List of permissions that the app requires to function properly.
+  ///
+  /// The widget will request each permission in this list and track their status.
+  /// Only request permissions that are actually needed by your app.
   final List<PermissionType> requiredPermissions;
+
+  /// The widget to display when all permissions are granted.
+  ///
+  /// This is the main content of your app that will be shown once
+  /// all required permissions have been granted.
   final Widget child;
+
+  /// Optional custom loading widget to show during permission checks.
+  ///
+  /// If not provided, a default [CircularProgressIndicator] will be shown.
+  /// Useful for providing branded loading experiences.
   final Widget? loadingWidget;
+
+  /// Callback function called with the results of permission requests.
+  ///
+  /// This callback receives a map of permission types to their granted status.
+  /// Called after all permission requests are complete.
   final Function(Map<PermissionType, bool>) onPermissionsResult;
+
+  /// Whether to show the permission overlay when permissions are missing.
+  ///
+  /// If true, shows a custom overlay with permission request UI.
+  /// If false, you must handle missing permissions in your own UI.
   final bool showOverlay;
 
+  /// Creates a permission handler widget.
+  ///
+  /// The [requiredPermissions], [child], and [onPermissionsResult] parameters
+  /// are required. The [loadingWidget] and [showOverlay] parameters are optional.
   const PermissionHandlerWidget({
     super.key,
     required this.requiredPermissions,
@@ -28,10 +175,31 @@ class PermissionHandlerWidget extends StatefulWidget {
       _PermissionHandlerWidgetState();
 }
 
+/// State class for the PermissionHandlerWidget.
+///
+/// Manages the permission request flow, tracks permission status, and handles
+/// the UI states for loading, success, and permission request overlays.
 class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
+  /// Current status of all requested permissions.
+  ///
+  /// Maps each permission type to whether it has been granted.
+  /// Updated after permission requests are completed.
   Map<PermissionType, bool> _permissionStatus = {};
+
+  /// Flag indicating if permissions are currently being checked.
+  ///
+  /// Used to show loading state and prevent concurrent permission requests.
   bool _isCheckingPermissions = true;
+
+  /// Flag indicating if a permission dialog has been shown.
+  ///
+  /// Used to track whether the user has seen permission request dialogs
+  /// and to provide appropriate retry options.
   final bool _hasShownDialog = false;
+
+  /// Flag indicating if the user is retrying permission requests.
+  ///
+  /// Used to show retry UI and handle retry logic for denied permissions.
   bool _isRetrying = false;
 
   @override

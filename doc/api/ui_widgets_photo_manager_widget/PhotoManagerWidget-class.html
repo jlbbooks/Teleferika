@@ -53,6 +53,13 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>A widget for managing photos associated with geographic points.</p>
+<p>This widget provides a complete photo management interface including
+photo capture, gallery viewing, note editing, and file management.
+It integrates with the global project state for data persistence
+and provides real-time updates to the UI.</p>
+</section>
 
 
 
@@ -64,7 +71,7 @@
           <span class="name"><a href="../ui_widgets_photo_manager_widget/PhotoManagerWidget/PhotoManagerWidget.html">PhotoManagerWidget.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation">Key?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-point"><span>required</span> <span class="type-annotation"><a href="../db_models_point_model/PointModel-class.html">PointModel</a></span> <span class="parameter-name">point</span>, </span><span class="parameter" id="-param-onImageListChangedForUI"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onImageListChangedForUI</span>(<span class="parameter" id="param-updatedImages"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../db_models_image_model/ImageModel-class.html">ImageModel</a></span>&gt;</span></span> <span class="parameter-name">updatedImages</span></span>), </span><span class="parameter" id="-param-onPhotosSavedSuccessfully"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/VoidCallback.html">VoidCallback</a>?</span> <span class="parameter-name">onPhotosSavedSuccessfully</span>, </span><span class="parameter" id="-param-setAddPhotoCallback"><span class="type-annotation">void</span> <span class="parameter-name">setAddPhotoCallback</span>(<span class="parameter" id="param-callback"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/VoidCallback.html">VoidCallback</a></span> <span class="parameter-name">callback</span></span>)?</span>})</span>
         </dt>
         <dd>
-          
+          Creates a photo manager widget.
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -106,7 +113,7 @@
 
 </dt>
 <dd>
-  
+  Callback function called when the image list changes.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -118,7 +125,7 @@
 
 </dt>
 <dd>
-  
+  Optional callback function called when photos are successfully saved.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -130,7 +137,7 @@
 
 </dt>
 <dd>
-  
+  The point model that owns the photos being managed.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -154,7 +161,7 @@
 
 </dt>
 <dd>
-  
+  Optional callback to set an external add photo function.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

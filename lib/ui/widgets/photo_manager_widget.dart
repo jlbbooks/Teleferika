@@ -1,3 +1,86 @@
+/// Photo management widget for handling point-associated images.
+///
+/// This widget provides a comprehensive interface for managing photos associated
+/// with geographic points. It supports adding photos from camera or gallery,
+/// viewing photos in a gallery, editing photo notes, and managing photo metadata.
+///
+/// ## Features
+/// - **Photo Capture**: Take photos using device camera
+/// - **Gallery Import**: Select photos from device gallery
+/// - **Photo Gallery**: Full-screen photo viewing with navigation
+/// - **Note Editing**: Add and edit notes for individual photos
+/// - **Multi-select**: Select multiple photos for bulk operations
+/// - **Auto-save**: Automatic saving of photo changes to global state
+/// - **File Management**: Automatic file organization and cleanup
+/// - **Status Feedback**: User feedback through status indicators
+///
+/// ## Usage Examples
+///
+/// ### Basic Photo Management:
+/// ```dart
+/// PhotoManagerWidget(
+///   point: currentPoint,
+///   onImageListChangedForUI: (images) {
+///     // Handle updated image list
+///     setState(() {
+///       pointImages = images;
+///     });
+///   },
+///   onPhotosSavedSuccessfully: () {
+///     // Handle successful save
+///     print('Photos saved successfully');
+///   },
+/// )
+/// ```
+///
+/// ### With Add Photo Callback:
+/// ```dart
+/// PhotoManagerWidget(
+///   point: currentPoint,
+///   onImageListChangedForUI: (images) => updateImages(images),
+///   setAddPhotoCallback: (callback) {
+///     // Store callback for external use
+///     addPhotoCallback = callback;
+///   },
+/// )
+/// ```
+///
+/// ## Photo Operations
+/// - **Add Photo**: Camera capture or gallery selection
+/// - **View Photo**: Full-screen gallery with zoom and navigation
+/// - **Edit Note**: In-place note editing for each photo
+/// - **Delete Photo**: Remove photos with confirmation
+/// - **Reorder Photos**: Drag and drop reordering
+///
+/// ## File Management
+/// Photos are automatically organized in the app's document directory:
+/// - Each point gets its own folder: `point_photos/{pointId}/`
+/// - Photos are saved with unique UUID filenames
+/// - Automatic cleanup of orphaned files
+/// - Optimized image quality (80% compression)
+///
+/// ## State Management
+/// The widget integrates with the global project state to:
+/// - Fetch photos for the specified point
+/// - Update photo metadata in real-time
+/// - Maintain photo ordering and relationships
+/// - Handle state changes and persistence
+///
+/// ## Accessibility Features
+/// - Screen reader support for photo operations
+/// - Keyboard navigation for all controls
+/// - High contrast controls and text
+/// - Proper focus management
+/// - Semantic labels for all interactive elements
+/// - VoiceOver/TalkBack support for photo descriptions
+///
+/// ## Error Handling
+/// - Graceful handling of camera/gallery permission denials
+/// - File system error recovery
+/// - Network error handling for cloud operations
+/// - User-friendly error messages with localization
+/// - Automatic retry mechanisms for failed operations
+
 // ignore_for_file: unused_field
 
 import 'dart:io';
@@ -19,12 +102,42 @@ import 'package:provider/provider.dart';
 
 // import 'package:teleferika/utils/uuid_generator.dart'; // Assuming ImageModel handles this
 
+/// A widget for managing photos associated with geographic points.
+///
+/// This widget provides a complete photo management interface including
+/// photo capture, gallery viewing, note editing, and file management.
+/// It integrates with the global project state for data persistence
+/// and provides real-time updates to the UI.
 class PhotoManagerWidget extends StatefulWidget {
+  /// Callback function called when the image list changes.
+  ///
+  /// This callback is triggered whenever photos are added, removed, or reordered.
+  /// The parent widget should use this to update its UI state with the new image list.
   final Function(List<ImageModel> updatedImages) onImageListChangedForUI;
+
+  /// Optional callback function called when photos are successfully saved.
+  ///
+  /// This callback is triggered after photos are successfully saved to the global state.
+  /// Useful for triggering UI updates or showing success feedback.
   final VoidCallback? onPhotosSavedSuccessfully;
+
+  /// The point model that owns the photos being managed.
+  ///
+  /// This point contains the current list of images and metadata.
+  /// The widget will automatically sync with the global state for this point.
   final PointModel point;
+
+  /// Optional callback to set an external add photo function.
+  ///
+  /// If provided, this callback receives a function that can be called externally
+  /// to trigger the add photo dialog. Useful for integrating with external UI controls.
   final void Function(VoidCallback callback)? setAddPhotoCallback;
 
+  /// Creates a photo manager widget.
+  ///
+  /// The [point] parameter is required and specifies which point's photos to manage.
+  /// The [onImageListChangedForUI] callback is required and handles UI updates when
+  /// the image list changes. Other parameters are optional for additional functionality.
   const PhotoManagerWidget({
     super.key,
     required this.point,
@@ -37,15 +150,42 @@ class PhotoManagerWidget extends StatefulWidget {
   State<PhotoManagerWidget> createState() => _PhotoManagerWidgetState();
 }
 
+/// State class for the PhotoManagerWidget.
+///
+/// Manages the internal state of the photo manager including image list,
+/// selection state, and photo operations. Integrates with the StatusMixin
+/// for user feedback and the global project state for data persistence.
 class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
     with StatusMixin {
+  /// Logger instance for debugging and error tracking.
   final Logger logger = Logger('PhotoManagerWidget');
+
+  /// Current list of images for the point.
+  ///
+  /// This list is kept in sync with the global project state and
+  /// represents the current state of photos for the managed point.
   late List<ImageModel> _images;
+
+  /// Image picker instance for camera and gallery operations.
+  ///
+  /// Used to capture photos from camera or select from device gallery.
   final ImagePicker _picker = ImagePicker();
+
+  /// Flag indicating if photos are currently being saved.
+  ///
+  /// Prevents concurrent save operations and provides UI feedback
+  /// during save operations.
   bool _isSavingPhotos = false;
 
-  // Multi-select state
+  /// Flag indicating if multi-select mode is active.
+  ///
+  /// When true, users can select multiple photos for bulk operations
+  /// like deletion or reordering.
   bool _selectMode = false;
+
+  /// Set of selected image IDs in multi-select mode.
+  ///
+  /// Tracks which images are currently selected for bulk operations.
   final Set<String> _selectedImageIds = {};
 
   @override
@@ -60,6 +200,14 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
     }
   }
 
+  /// Updates the local image list from the global project state.
+  ///
+  /// This method synchronizes the widget's internal image list with the
+  /// current state of the point in the global project state. It ensures
+  /// that the widget displays the most up-to-date photo information.
+  ///
+  /// The images are automatically sorted by their ordinal numbers to
+  /// maintain the correct display order.
   void _updateImagesFromGlobalState() {
     // Get the current point from global state
     final currentPoint = context.projectState.currentPoints.firstWhere(
@@ -73,7 +221,24 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
     logger.finer('Images updated from global state: $_images');
   }
 
-  // This method will now handle the saving of the point with its current images
+  /// Saves the current image list to the global project state.
+  ///
+  /// This method updates the point in the global state with the current
+  /// list of images and triggers the appropriate callbacks. It includes
+  /// validation, error handling, and user feedback through status indicators.
+  ///
+  /// ## Process
+  /// 1. Validates the point data before saving
+  /// 2. Updates the point in global state with current images
+  /// 3. Notifies parent widgets of changes
+  /// 4. Shows success/error feedback to user
+  /// 5. Prevents concurrent save operations
+  ///
+  /// ## Error Handling
+  /// - Validates point data before saving
+  /// - Handles database errors gracefully
+  /// - Shows localized error messages
+  /// - Logs errors for debugging
   Future<void> _savePointWithCurrentImages() async {
     if (_isSavingPhotos) return; // Prevent concurrent saves
 

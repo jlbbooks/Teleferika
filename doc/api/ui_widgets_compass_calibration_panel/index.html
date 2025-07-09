@@ -59,6 +59,75 @@
     </div>
 
     
+<section class="desc markdown">
+  <p>Compass calibration panel widget for guiding users through device calibration.</p>
+<p>This widget displays a full-screen overlay that guides users through the
+process of calibrating their device's compass sensor. It shows an animated
+figure-8 motion and provides clear instructions for the calibration process.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li><strong>Visual Guidance</strong>: Animated GIF showing the required figure-8 motion</li>
+<li><strong>Clear Instructions</strong>: Text explaining the calibration process</li>
+<li><strong>Dismissible</strong>: Optional close button for manual dismissal</li>
+<li><strong>Full-screen Overlay</strong>: Semi-transparent background for focus</li>
+<li><strong>Responsive Design</strong>: Adapts to different screen sizes</li>
+<li><strong>Accessibility</strong>: Proper contrast and readable text</li>
+</ul>
+<h2 id="usage-examples">Usage Examples</h2>
+<h3 id="basic-calibration-panel">Basic Calibration Panel:</h3>
+<pre class="language-dart"><code class="language-dart">CompassCalibrationPanel(
+  onClose: () {
+    // Handle manual dismissal
+    Navigator.of(context).pop();
+  },
+)
+</code></pre>
+<h3 id="without-close-button">Without Close Button:</h3>
+<pre class="language-dart"><code class="language-dart">CompassCalibrationPanel(
+  // Panel will only disappear when calibration is complete
+)
+</code></pre>
+<h3 id="in-a-dialog">In a Dialog:</h3>
+<pre class="language-dart"><code class="language-dart">showDialog(
+  context: context,
+  builder: (context) =&gt; CompassCalibrationPanel(
+    onClose: () =&gt; Navigator.of(context).pop(),
+  ),
+);
+</code></pre>
+<h2 id="calibration-process">Calibration Process</h2>
+<p>The panel guides users through the standard device compass calibration:</p>
+<ol>
+<li><strong>Figure-8 Motion</strong>: User moves device in a figure-8 pattern</li>
+<li><strong>Sensor Detection</strong>: Device detects the calibration motion</li>
+<li><strong>Auto-dismissal</strong>: Panel disappears when calibration is complete</li>
+<li><strong>Manual Option</strong>: User can manually dismiss if needed</li>
+</ol>
+<h2 id="visual-design">Visual Design</h2>
+<ul>
+<li><strong>Semi-transparent Background</strong>: Black overlay (70% opacity)</li>
+<li><strong>White Card</strong>: Clean, centered card with rounded corners</li>
+<li><strong>Animated GIF</strong>: Figure-8 motion demonstration</li>
+<li><strong>Clear Typography</strong>: Bold title and readable instructions</li>
+<li><strong>Consistent Spacing</strong>: Proper padding and margins</li>
+</ul>
+<h2 id="integration">Integration</h2>
+<p>Designed to work with:</p>
+<ul>
+<li>Device compass sensors</li>
+<li>Location services</li>
+<li>Map applications</li>
+<li>Navigation features</li>
+</ul>
+<h2 id="best-practices">Best Practices</h2>
+<ul>
+<li>Show this panel when compass accuracy is low</li>
+<li>Allow users to dismiss if they prefer not to calibrate</li>
+<li>Provide clear, simple instructions</li>
+<li>Use consistent visual design with the app</li>
+<li>Ensure accessibility compliance</li>
+</ul>
+</section>
 
 
     <section class="summary offset-anchor" id="classes">
@@ -69,7 +138,7 @@
 
 </dt>
 <dd>
-  
+  A widget that displays compass calibration instructions to the user.
 </dd>
 
       </dl>

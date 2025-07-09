@@ -54,12 +54,15 @@
 
     
 <section class="desc markdown">
-  <p>A reusable widget that displays project points as markers and connects them with polylines.
-Can be used in any FlutterMap to show project data.</p>
-<p>This widget will:</p>
+  <p>A reusable widget that displays project points as markers and connects them with polylines.</p>
+<p>This widget provides a comprehensive map layer for visualizing geographic projects.
+It automatically loads project data and renders points, polylines, and labels with
+customizable styling options.</p>
+<h2 id="data-loading-strategy">Data Loading Strategy</h2>
 <ol>
-<li>First try to get projects from the Provider if available</li>
-<li>Fall back to loading all projects from the database if no Provider is found</li>
+<li><strong>Direct Projects</strong>: Use provided <a href="../ui_widgets_project_points_layer/ProjectPointsLayer/projects.html">projects</a> list if available</li>
+<li><strong>Provider State</strong>: Access projects through global state if available</li>
+<li><strong>Database Fallback</strong>: Load all projects from database as last resort</li>
 </ol>
 </section>
 
@@ -73,7 +76,7 @@ Can be used in any FlutterMap to show project data.</p>
           <span class="name"><a href="../ui_widgets_project_points_layer/ProjectPointsLayer/ProjectPointsLayer.html">ProjectPointsLayer.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation">Key?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-projects"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../db_models_project_model/ProjectModel-class.html">ProjectModel</a></span>&gt;</span>?</span> <span class="parameter-name">projects</span>, </span><span class="parameter" id="-param-excludeProjectId"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span> <span class="parameter-name">excludeProjectId</span>, </span><span class="parameter" id="-param-markerSize"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a></span> <span class="parameter-name">markerSize</span> = <span class="default-value">8.0</span>, </span><span class="parameter" id="-param-markerColor"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/Color-class.html">Color</a></span> <span class="parameter-name">markerColor</span> = <span class="default-value">Colors.blue</span>, </span><span class="parameter" id="-param-markerBorderColor"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/Color-class.html">Color</a></span> <span class="parameter-name">markerBorderColor</span> = <span class="default-value">Colors.white</span>, </span><span class="parameter" id="-param-markerBorderWidth"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a></span> <span class="parameter-name">markerBorderWidth</span> = <span class="default-value">1.0</span>, </span><span class="parameter" id="-param-lineColor"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/Color-class.html">Color</a></span> <span class="parameter-name">lineColor</span> = <span class="default-value">Colors.black</span>, </span><span class="parameter" id="-param-lineWidth"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a></span> <span class="parameter-name">lineWidth</span> = <span class="default-value">1.0</span></span>})</span>
         </dt>
         <dd>
-          
+          Creates a project points layer widget.
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -91,7 +94,7 @@ Can be used in any FlutterMap to show project data.</p>
 
 </dt>
 <dd>
-  
+  Optional project ID to exclude from display.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -127,7 +130,7 @@ Can be used in any FlutterMap to show project data.</p>
 
 </dt>
 <dd>
-  
+  Color of the project polylines.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -139,7 +142,7 @@ Can be used in any FlutterMap to show project data.</p>
 
 </dt>
 <dd>
-  
+  Width of the project polylines in logical pixels.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -151,7 +154,7 @@ Can be used in any FlutterMap to show project data.</p>
 
 </dt>
 <dd>
-  
+  Color of the marker border.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -163,7 +166,7 @@ Can be used in any FlutterMap to show project data.</p>
 
 </dt>
 <dd>
-  
+  Width of the marker border in logical pixels.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -175,7 +178,7 @@ Can be used in any FlutterMap to show project data.</p>
 
 </dt>
 <dd>
-  
+  Color of the point markers.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -187,7 +190,7 @@ Can be used in any FlutterMap to show project data.</p>
 
 </dt>
 <dd>
-  
+  Size of the point markers in logical pixels.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -199,7 +202,7 @@ Can be used in any FlutterMap to show project data.</p>
 
 </dt>
 <dd>
-  
+  Optional list of projects to display.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

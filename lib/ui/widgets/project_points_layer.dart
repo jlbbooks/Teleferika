@@ -1,3 +1,87 @@
+/// Project points layer widget for displaying geographic projects on maps.
+///
+/// This widget provides a comprehensive map layer that displays all projects
+/// and their associated points as interactive markers and polylines. It can
+/// be used in any FlutterMap to visualize project data with customizable styling.
+///
+/// ## Features
+/// - **Point Markers**: Displays each project point as a customizable marker
+/// - **Project Polylines**: Connects points within each project with lines
+/// - **Project Labels**: Shows project names at strategic locations
+/// - **Dynamic Loading**: Loads projects from Provider or database
+/// - **Exclusion Support**: Can exclude specific projects from display
+/// - **Customizable Styling**: Configurable colors, sizes, and appearance
+/// - **Performance Optimized**: Efficient rendering for large datasets
+///
+/// ## Usage Examples
+///
+/// ### Basic Usage:
+/// ```dart
+/// FlutterMap(
+///   children: [
+///     TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
+///     ProjectPointsLayer(),
+///   ],
+/// )
+/// ```
+///
+/// ### With Custom Styling:
+/// ```dart
+/// ProjectPointsLayer(
+///   markerSize: 12.0,
+///   markerColor: Colors.red,
+///   lineColor: Colors.blue,
+///   lineWidth: 2.0,
+/// )
+/// ```
+///
+/// ### Excluding Current Project:
+/// ```dart
+/// ProjectPointsLayer(
+///   excludeProjectId: currentProject.id,
+///   markerColor: Colors.grey,
+/// )
+/// ```
+///
+/// ### With Pre-loaded Projects:
+/// ```dart
+/// ProjectPointsLayer(
+///   projects: myProjects,
+///   markerColor: Colors.green,
+/// )
+/// ```
+///
+/// ## Data Sources
+/// The widget automatically determines the best data source:
+/// 1. **Direct Projects**: If [projects] parameter is provided
+/// 2. **Provider State**: If available in the widget tree
+/// 3. **Database Fallback**: Loads all projects from database
+///
+/// ## Visual Elements
+/// - **Point Markers**: Circular markers at each geographic point
+/// - **Project Lines**: Polylines connecting points in sequence
+/// - **Project Labels**: Text labels showing project names
+/// - **Exclusion Handling**: Gracefully skips excluded projects
+///
+/// ## Performance Considerations
+/// - Efficient marker and polyline generation
+/// - Minimal rebuilds during data updates
+/// - Optimized for large numbers of projects
+/// - Memory-conscious data loading
+///
+/// ## Customization Options
+/// - **Marker Size**: Diameter of point markers
+/// - **Marker Colors**: Fill and border colors for markers
+/// - **Line Styling**: Color and width of project polylines
+/// - **Border Styling**: Marker border color and width
+///
+/// ## Integration
+/// Designed to work seamlessly with:
+/// - FlutterMap for map display
+/// - Project state management
+/// - Database operations
+/// - Provider pattern for state access
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -9,21 +93,63 @@ import 'package:logging/logging.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 
 /// A reusable widget that displays project points as markers and connects them with polylines.
-/// Can be used in any FlutterMap to show project data.
 ///
-/// This widget will:
-/// 1. First try to get projects from the Provider if available
-/// 2. Fall back to loading all projects from the database if no Provider is found
+/// This widget provides a comprehensive map layer for visualizing geographic projects.
+/// It automatically loads project data and renders points, polylines, and labels with
+/// customizable styling options.
+///
+/// ## Data Loading Strategy
+/// 1. **Direct Projects**: Use provided [projects] list if available
+/// 2. **Provider State**: Access projects through global state if available
+/// 3. **Database Fallback**: Load all projects from database as last resort
 class ProjectPointsLayer extends StatefulWidget {
+  /// Optional list of projects to display.
+  ///
+  /// If provided, these projects will be used directly instead of loading
+  /// from the database or Provider. Useful for performance optimization
+  /// when projects are already available in memory.
   final List<ProjectModel>? projects;
+
+  /// Optional project ID to exclude from display.
+  ///
+  /// If provided, the specified project will not be shown on the map.
+  /// Useful for hiding the current project when showing other projects.
   final String? excludeProjectId;
+
+  /// Size of the point markers in logical pixels.
+  ///
+  /// Defaults to 8.0 pixels. Larger values create more prominent markers.
   final double markerSize;
+
+  /// Color of the point markers.
+  ///
+  /// Defaults to blue. This is the fill color of the circular markers.
   final Color markerColor;
+
+  /// Color of the marker border.
+  ///
+  /// Defaults to white. Creates a border around each marker for better visibility.
   final Color markerBorderColor;
+
+  /// Width of the marker border in logical pixels.
+  ///
+  /// Defaults to 1.0 pixel. Thicker borders provide better contrast.
   final double markerBorderWidth;
+
+  /// Color of the project polylines.
+  ///
+  /// Defaults to black. This is the color of the lines connecting project points.
   final Color lineColor;
+
+  /// Width of the project polylines in logical pixels.
+  ///
+  /// Defaults to 1.0 pixel. Thicker lines are more visible but may overlap.
   final double lineWidth;
 
+  /// Creates a project points layer widget.
+  ///
+  /// All styling parameters are optional and have sensible defaults.
+  /// The widget will automatically load projects if none are provided.
   const ProjectPointsLayer({
     super.key,
     this.projects,
@@ -40,10 +166,24 @@ class ProjectPointsLayer extends StatefulWidget {
   State<ProjectPointsLayer> createState() => _ProjectPointsLayerState();
 }
 
+/// State class for the ProjectPointsLayer widget.
+///
+/// Manages the loading and display of project data, including automatic
+/// data source selection and efficient rendering of map elements.
 class _ProjectPointsLayerState extends State<ProjectPointsLayer> {
+  /// Logger instance for debugging and error tracking.
   final Logger _logger = Logger('ProjectPointsLayer');
 
+  /// Current list of projects to display on the map.
+  ///
+  /// This list is populated from the selected data source and used
+  /// to generate markers, polylines, and labels.
   List<ProjectModel> _projects = [];
+
+  /// Flag indicating if projects are currently being loaded.
+  ///
+  /// Used to prevent concurrent loading operations and provide
+  /// appropriate UI feedback during data loading.
   bool _isLoading = false;
 
   @override

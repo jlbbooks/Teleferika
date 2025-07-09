@@ -53,6 +53,104 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Permission handling widget for managing app permissions.</p>
+<p>This widget provides a comprehensive solution for requesting and managing
+app permissions. It handles permission requests, provides user feedback,
+and can show overlays when permissions are missing.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li><strong>Multiple Permission Types</strong>: Location, sensors, camera, microphone, storage</li>
+<li><strong>Automatic Permission Requests</strong>: Handles permission flow automatically</li>
+<li><strong>User-Friendly Overlays</strong>: Shows permission request dialogs when needed</li>
+<li><strong>Retry Mechanism</strong>: Allows users to retry permission requests</li>
+<li><strong>Loading States</strong>: Shows loading indicators during permission checks</li>
+<li><strong>Customizable UI</strong>: Configurable loading and overlay widgets</li>
+<li><strong>Permission Status Tracking</strong>: Tracks the status of all requested permissions</li>
+</ul>
+<h2 id="usage-examples">Usage Examples</h2>
+<h3 id="basic-permission-handling">Basic Permission Handling:</h3>
+<pre class="language-dart"><code class="language-dart">PermissionHandlerWidget(
+  requiredPermissions: [PermissionType.location, PermissionType.camera],
+  onPermissionsResult: (permissions) {
+    print('Location: ${permissions[PermissionType.location]}');
+    print('Camera: ${permissions[PermissionType.camera]}');
+  },
+  child: MyAppContent(),
+)
+</code></pre>
+<h3 id="with-custom-loading-widget">With Custom Loading Widget:</h3>
+<pre class="language-dart"><code class="language-dart">PermissionHandlerWidget(
+  requiredPermissions: [PermissionType.location],
+  loadingWidget: Center(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        CircularProgressIndicator(),
+        Text('Checking permissions...'),
+      ],
+    ),
+  ),
+  onPermissionsResult: handlePermissions,
+  child: MyAppContent(),
+)
+</code></pre>
+<h3 id="without-overlay-custom-ui">Without Overlay (Custom UI):</h3>
+<pre class="language-dart"><code class="language-dart">PermissionHandlerWidget(
+  requiredPermissions: [PermissionType.camera],
+  showOverlay: false,
+  onPermissionsResult: (permissions) {
+    if (!permissions[PermissionType.camera]!) {
+      showCustomPermissionDialog();
+    }
+  },
+  child: MyAppContent(),
+)
+</code></pre>
+<h2 id="permission-types">Permission Types</h2>
+<ul>
+<li><strong>Location</strong>: GPS and location services (using Geolocator)</li>
+<li><strong>Sensor</strong>: Device sensors like accelerometer and gyroscope</li>
+<li><strong>Camera</strong>: Photo and video capture capabilities</li>
+<li><strong>Microphone</strong>: Audio recording functionality</li>
+<li><strong>Storage</strong>: File system read/write access</li>
+</ul>
+<h2 id="permission-flow">Permission Flow</h2>
+<ol>
+<li><strong>Check Current Status</strong>: Verify if permissions are already granted</li>
+<li><strong>Request Permissions</strong>: Show system permission dialogs if needed</li>
+<li><strong>Handle Results</strong>: Process granted/denied permissions</li>
+<li><strong>Show Overlay</strong>: Display custom UI for missing permissions</li>
+<li><strong>Retry Option</strong>: Allow users to retry permission requests</li>
+</ol>
+<h2 id="ui-states">UI States</h2>
+<ul>
+<li><strong>Loading</strong>: Shows loading widget during permission checks</li>
+<li><strong>All Granted</strong>: Shows the child widget normally</li>
+<li><strong>Missing Permissions</strong>: Shows overlay with permission request UI</li>
+<li><strong>Retry Mode</strong>: Shows retry button for failed permissions</li>
+</ul>
+<h2 id="integration">Integration</h2>
+<p>Designed to work with:</p>
+<ul>
+<li>Geolocator for location permissions</li>
+<li>Permission_handler for other permissions</li>
+<li>Flutter's permission system</li>
+<li>Custom permission request flows</li>
+</ul>
+<h2 id="best-practices">Best Practices</h2>
+<ul>
+<li>Request only necessary permissions</li>
+<li>Provide clear explanations for permission needs</li>
+<li>Handle permission denials gracefully</li>
+<li>Offer alternative functionality when possible</li>
+<li>Respect user privacy preferences
+A widget that handles app permission requests and management.</li>
+</ul>
+<p>This widget automatically requests the specified permissions and provides
+appropriate UI feedback. It can show overlays when permissions are missing
+and allows users to retry permission requests.</p>
+</section>
 
 
 
@@ -64,7 +162,7 @@
           <span class="name"><a href="../ui_widgets_permission_handler_widget/PermissionHandlerWidget/PermissionHandlerWidget.html">PermissionHandlerWidget.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation">Key?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-requiredPermissions"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../ui_widgets_permission_handler_widget/PermissionType.html">PermissionType</a></span>&gt;</span></span> <span class="parameter-name">requiredPermissions</span>, </span><span class="parameter" id="-param-child"><span>required</span> <span class="type-annotation">Widget</span> <span class="parameter-name">child</span>, </span><span class="parameter" id="-param-onPermissionsResult"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onPermissionsResult</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Map-class.html">Map</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../ui_widgets_permission_handler_widget/PermissionType.html">PermissionType</a></span>, <span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>&gt;</span></span></span>), </span><span class="parameter" id="-param-loadingWidget"><span class="type-annotation">Widget?</span> <span class="parameter-name">loadingWidget</span>, </span><span class="parameter" id="-param-showOverlay"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">showOverlay</span> = <span class="default-value">true</span></span>})</span>
         </dt>
         <dd>
-          
+          Creates a permission handler widget.
             <div class="constructor-modifier features">const</div>
         </dd>
     </dl>
@@ -82,7 +180,7 @@
 
 </dt>
 <dd>
-  
+  The widget to display when all permissions are granted.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -118,7 +216,7 @@
 
 </dt>
 <dd>
-  
+  Optional custom loading widget to show during permission checks.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -130,7 +228,7 @@
 
 </dt>
 <dd>
-  
+  Callback function called with the results of permission requests.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -142,7 +240,7 @@
 
 </dt>
 <dd>
-  
+  List of permissions that the app requires to function properly.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>
@@ -166,7 +264,7 @@
 
 </dt>
 <dd>
-  
+  Whether to show the permission overlay when permissions are missing.
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

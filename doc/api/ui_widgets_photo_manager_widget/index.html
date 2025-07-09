@@ -59,6 +59,90 @@
     </div>
 
     
+<section class="desc markdown">
+  <p>Photo management widget for handling point-associated images.</p>
+<p>This widget provides a comprehensive interface for managing photos associated
+with geographic points. It supports adding photos from camera or gallery,
+viewing photos in a gallery, editing photo notes, and managing photo metadata.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li><strong>Photo Capture</strong>: Take photos using device camera</li>
+<li><strong>Gallery Import</strong>: Select photos from device gallery</li>
+<li><strong>Photo Gallery</strong>: Full-screen photo viewing with navigation</li>
+<li><strong>Note Editing</strong>: Add and edit notes for individual photos</li>
+<li><strong>Multi-select</strong>: Select multiple photos for bulk operations</li>
+<li><strong>Auto-save</strong>: Automatic saving of photo changes to global state</li>
+<li><strong>File Management</strong>: Automatic file organization and cleanup</li>
+<li><strong>Status Feedback</strong>: User feedback through status indicators</li>
+</ul>
+<h2 id="usage-examples">Usage Examples</h2>
+<h3 id="basic-photo-management">Basic Photo Management:</h3>
+<pre class="language-dart"><code class="language-dart">PhotoManagerWidget(
+  point: currentPoint,
+  onImageListChangedForUI: (images) {
+    // Handle updated image list
+    setState(() {
+      pointImages = images;
+    });
+  },
+  onPhotosSavedSuccessfully: () {
+    // Handle successful save
+    print('Photos saved successfully');
+  },
+)
+</code></pre>
+<h3 id="with-add-photo-callback">With Add Photo Callback:</h3>
+<pre class="language-dart"><code class="language-dart">PhotoManagerWidget(
+  point: currentPoint,
+  onImageListChangedForUI: (images) =&gt; updateImages(images),
+  setAddPhotoCallback: (callback) {
+    // Store callback for external use
+    addPhotoCallback = callback;
+  },
+)
+</code></pre>
+<h2 id="photo-operations">Photo Operations</h2>
+<ul>
+<li><strong>Add Photo</strong>: Camera capture or gallery selection</li>
+<li><strong>View Photo</strong>: Full-screen gallery with zoom and navigation</li>
+<li><strong>Edit Note</strong>: In-place note editing for each photo</li>
+<li><strong>Delete Photo</strong>: Remove photos with confirmation</li>
+<li><strong>Reorder Photos</strong>: Drag and drop reordering</li>
+</ul>
+<h2 id="file-management">File Management</h2>
+<p>Photos are automatically organized in the app's document directory:</p>
+<ul>
+<li>Each point gets its own folder: <code>point_photos/{pointId}/</code></li>
+<li>Photos are saved with unique UUID filenames</li>
+<li>Automatic cleanup of orphaned files</li>
+<li>Optimized image quality (80% compression)</li>
+</ul>
+<h2 id="state-management">State Management</h2>
+<p>The widget integrates with the global project state to:</p>
+<ul>
+<li>Fetch photos for the specified point</li>
+<li>Update photo metadata in real-time</li>
+<li>Maintain photo ordering and relationships</li>
+<li>Handle state changes and persistence</li>
+</ul>
+<h2 id="accessibility-features">Accessibility Features</h2>
+<ul>
+<li>Screen reader support for photo operations</li>
+<li>Keyboard navigation for all controls</li>
+<li>High contrast controls and text</li>
+<li>Proper focus management</li>
+<li>Semantic labels for all interactive elements</li>
+<li>VoiceOver/TalkBack support for photo descriptions</li>
+</ul>
+<h2 id="error-handling">Error Handling</h2>
+<ul>
+<li>Graceful handling of camera/gallery permission denials</li>
+<li>File system error recovery</li>
+<li>Network error handling for cloud operations</li>
+<li>User-friendly error messages with localization</li>
+<li>Automatic retry mechanisms for failed operations</li>
+</ul>
+</section>
 
 
     <section class="summary offset-anchor" id="classes">
@@ -69,7 +153,7 @@
 
 </dt>
 <dd>
-  
+  A widget for managing photos associated with geographic points.
 </dd>
 
       </dl>
