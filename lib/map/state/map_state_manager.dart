@@ -469,6 +469,8 @@ class MapStateManager extends ChangeNotifier {
       isAddingNewPoint = false;
 
       // Set global unsaved new point flag
+      if (!context.mounted) return;
+
       final projectState = Provider.of<ProjectStateManager>(
         context,
         listen: false,
@@ -574,17 +576,18 @@ class MapStateManager extends ChangeNotifier {
       }
 
       // Recalculate lines with current points
-      recalculateAndDrawLines(context);
+      if (context.mounted) {
+        recalculateAndDrawLines(context);
+      }
 
       // Fit map to points if not skipping
-      if (!skipNextFitToPoints && isMapReady) {
+      if (!skipNextFitToPoints && isMapReady && context.mounted) {
         fitMapToPoints(context);
       }
 
       skipNextFitToPoints = false; // Reset the flag
     } catch (e, stackTrace) {
       logger.severe("MapStateManager: Error refreshing points", e, stackTrace);
-      S.of(context);
       // Status will be handled by the parent component
     } finally {
       isExternalRefresh = false; // Reset flag after refresh

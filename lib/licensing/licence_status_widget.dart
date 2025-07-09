@@ -248,21 +248,25 @@ class _LicenceStatusWidgetState extends State<LicenceStatusWidget> {
     try {
       final licence = await LicenceService.instance.importLicenceFromFile();
       if (licence != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Licence imported successfully: ${licence.email}'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Licence imported successfully: ${licence.email}'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
         _loadLicenceStatus(); // Refresh the display
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to import licence: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to import licence: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -291,20 +295,24 @@ class _LicenceStatusWidgetState extends State<LicenceStatusWidget> {
     if (confirmed == true) {
       try {
         await LicenceService.instance.removeLicence();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Licence removed successfully'),
-            backgroundColor: Colors.orange,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Licence removed successfully'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
         _loadLicenceStatus(); // Refresh the display
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to remove licence: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to remove licence: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }

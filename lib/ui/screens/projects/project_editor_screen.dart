@@ -376,6 +376,8 @@ class _ProjectEditorScreenState extends State<ProjectEditorScreen>
     }
 
     try {
+      if (!mounted) return;
+
       showLoadingStatus(s?.infoExporting ?? 'Exporting...');
 
       final success = await LicensedFeaturesLoader.showExportDialog(

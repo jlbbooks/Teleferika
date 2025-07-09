@@ -596,25 +596,29 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         logger.info(
           "${_selectedProjectIdsForMultiSelect.length} project(s) deleted.",
         );
-        showSuccessStatus(
-          S
-                  .of(context)
-                  ?.point_deleted_success(
-                    _selectedProjectIdsForMultiSelect.length.toString(),
-                  ) ??
-              '${_selectedProjectIdsForMultiSelect.length} project(s) deleted.',
-        );
+        if (mounted) {
+          showSuccessStatus(
+            S
+                    .of(context)
+                    ?.point_deleted_success(
+                      _selectedProjectIdsForMultiSelect.length.toString(),
+                    ) ??
+                '${_selectedProjectIdsForMultiSelect.length} project(s) deleted.',
+          );
+        }
       } catch (e, stackTrace) {
         logger.severe("Error deleting projects", e, stackTrace);
-        showErrorStatus(
-          S
-                  .of(context)
-                  ?.error_deleting_point(
-                    _selectedProjectIdsForMultiSelect.length.toString(),
-                    e.toString(),
-                  ) ??
-              'Error deleting projects: $e',
-        );
+        if (mounted) {
+          showErrorStatus(
+            S
+                    .of(context)
+                    ?.error_deleting_point(
+                      _selectedProjectIdsForMultiSelect.length.toString(),
+                      e.toString(),
+                    ) ??
+                'Error deleting projects: $e',
+          );
+        }
       }
     }
   }
@@ -883,16 +887,22 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                       final licenceStatus = await _licenceService
                           .getLicenceStatus();
                       if (!licenceStatus['isValid']) {
-                        final s = S.of(context);
-                        showErrorStatus(
-                          s?.mapDownloadRequiresValidLicence ??
-                              'Valid licence required for map download',
-                        );
+                        if (context.mounted) {
+                          final s = S.of(context);
+                          showErrorStatus(
+                            s?.mapDownloadRequiresValidLicence ??
+                                'Valid licence required for map download',
+                          );
+                        }
                         return;
                       }
 
                       // Show map download page
-                      await LicensedFeaturesLoader.showMapDownloadPage(context);
+                      if (context.mounted) {
+                        await LicensedFeaturesLoader.showMapDownloadPage(
+                          context,
+                        );
+                      }
                     },
                   ),
                   PopupMenuButton<String>(

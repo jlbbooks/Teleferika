@@ -760,9 +760,9 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
     if (apiKey != null && apiKeyParam != null) {
       // If the URL already has query params, append with &param=...
       if (url.contains('?')) {
-        return '${url}&$apiKeyParam=$apiKey';
+        return '$url&$apiKeyParam=$apiKey';
       } else {
-        return '${url}?$apiKeyParam=$apiKey';
+        return '$url?$apiKeyParam=$apiKey';
       }
     }
     return url;

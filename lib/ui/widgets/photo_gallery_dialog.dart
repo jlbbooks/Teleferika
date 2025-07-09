@@ -41,7 +41,7 @@ class _NoteEditDialogState extends State<NoteEditDialog> {
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.9),
+          color: const Color.fromRGBO(0, 0, 0, 0.9),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -177,6 +177,7 @@ class _PhotoGalleryDialogState extends State<PhotoGalleryDialog> {
 
       // Find the point that contains this image and update it through global state
       final currentImage = _localImages[_currentIndex];
+      if (!mounted) return;
       final point = context.projectState.currentPoints.firstWhere(
         (point) => point.images.any((img) => img.id == currentImage.id),
         orElse: () =>

@@ -250,6 +250,7 @@ class _PointEditorScreenState extends State<PointEditorScreen>
         ),
       );
 
+      if (!mounted) return false;
       if (result == 'save_all_and_exit') {
         await _savePointDetails(calledFromWillPop: true);
         // _savePointDetails will pop if successful. If it's still here, save failed or page didn't pop.
@@ -375,6 +376,7 @@ class _PointEditorScreenState extends State<PointEditorScreen>
             icon: Icon(Icons.arrow_back),
             onPressed: () async {
               if (await _onWillPop()) {
+                if (!context.mounted) return;
                 // Check if we are allowed to pop
                 if (Navigator.canPop(context)) {
                   Navigator.of(context).pop();

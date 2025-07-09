@@ -398,7 +398,9 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
         }
       });
       await _savePointWithCurrentImages();
-      showSuccessStatus(S.of(context)?.save ?? 'Saved');
+      if (mounted) {
+        showSuccessStatus(S.of(context)?.save ?? 'Saved');
+      }
     }
   }
 
@@ -558,7 +560,12 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
                                     borderRadius: BorderRadius.circular(8),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.08),
+                                        color: const Color.fromRGBO(
+                                          0,
+                                          0,
+                                          0,
+                                          0.08,
+                                        ),
                                         blurRadius: 2,
                                         offset: Offset(0, 1),
                                       ),
@@ -651,14 +658,16 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
                                                       _updateOrdinalNumbers();
                                                     });
                                                     await _savePointWithCurrentImages();
-                                                    showErrorStatus(
-                                                      S
-                                                              .of(context)
-                                                              ?.photo_manager_error_deleting_photo(
-                                                                'File not found',
-                                                              ) ??
-                                                          'Photo file missing and removed.',
-                                                    );
+                                                    if (context.mounted) {
+                                                      showErrorStatus(
+                                                        S
+                                                                .of(context)
+                                                                ?.photo_manager_error_deleting_photo(
+                                                                  'File not found',
+                                                                ) ??
+                                                            'Photo file missing and removed.',
+                                                      );
+                                                    }
                                                   }
                                                 });
                                                 return Container(
