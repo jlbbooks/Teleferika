@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.31+72] - 2025-01-27
+### Added
+- **Map Zoom Controls**: Added zoom in/out buttons with zoom level indicator
+  - Positioned at bottom right corner for easy thumb access on mobile devices
+  - Real-time zoom level display with one decimal place precision
+  - Respects map type's min/max zoom constraints from MapType configuration
+  - Visual feedback with pale red color when buttons reach zoom limits
+  - Enhanced zoom functions that set zoom to exact min/max when out of bounds
+  - Comprehensive event handling for all zoom interactions (gestures, buttons, programmatic)
+- **Enhanced Attribution**: Improved attribution widget positioning and styling
+  - Uses RichAttributionWidget for consistent flutter_map integration
+  - Proper clickable attribution with URL support when available
+
+### Changed
+- **Map UI**: Reorganized map controls for better user experience
+  - Zoom controls moved to bottom right for mobile accessibility
+  - Attribution positioned using flutter_map's built-in attribution system
+  - Improved visual hierarchy and spacing of map interface elements
+
+### Technical
+- **Zoom Synchronization**: Implemented robust zoom level tracking across all interaction methods
+  - Dual event handling via onMapEvent and mapController.stream
+  - Handles all MapEvent types that can change zoom (MapEventMove, MapEventRotate, MapEventFlingAnimation, MapEventDoubleTapZoom, MapEventScrollWheelZoom, MapEventNonRotatedSizeChange)
+  - Proper state management with mounted checks and error handling
+
 ## [Unreleased]
 ### Added
 - **MapType**: Added minZoom and maxZoom properties to all map types based on actual HTTP testing
