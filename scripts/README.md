@@ -14,8 +14,11 @@ TeleferiKa includes a comprehensive documentation system using **DartDoc**:
 
 ### 📖 API Documentation
 - **Generated Documentation**: `doc/api/index.html`
-- **Generate Docs**: `fvm dart doc`
+- **Generate Docs**: `./scripts/generate-docs.sh [opensource|full]`
 - **Documentation Guide**: [DOCUMENTATION_GUIDE.md](../DOCUMENTATION_GUIDE.md)
+- **Flavors**:
+  - `opensource`: Main project documentation only
+  - `full`: Main project + licensed features package documentation
 
 ### 🎨 UI Documentation
 - **Widget Documentation**: All reusable UI widgets are fully documented
@@ -59,7 +62,7 @@ Instead of maintaining separate `pubspec.full.yaml` and `pubspec.opensource.yaml
 
 ### Core Setup Scripts
 
-#### `setup-flavor.sh` / `setup-flavor.bat`
+#### `setup-flavor.sh` / `setup-flavor.ps1`
 Main setup script for configuring the project flavor.
 
 **Usage:**
@@ -69,13 +72,13 @@ Main setup script for configuring the project flavor.
 ./scripts/setup-flavor.sh full
 ./scripts/setup-flavor.sh full true  # Clean before setup
 
-# Windows
-scripts\setup-flavor.bat opensource
-scripts\setup-flavor.bat full
-scripts\setup-flavor.bat full true  # Clean before setup
+# Windows (PowerShell)
+.\scripts\setup-flavor.ps1 opensource
+.\scripts\setup-flavor.ps1 full
+.\scripts\setup-flavor.ps1 full true  # Clean before setup
 ```
 
-#### `modify-pubspec.sh` / `modify-pubspec.bat`
+#### `modify-pubspec.sh` / `modify-pubspec.ps1`
 Scripts for managing the licensed package dependency in pubspec.yaml.
 
 **Usage:**
@@ -85,31 +88,55 @@ Scripts for managing the licensed package dependency in pubspec.yaml.
 ./scripts/modify-pubspec.sh remove-licensed
 ./scripts/modify-pubspec.sh status
 
-# Windows
-scripts\modify-pubspec.bat add-licensed
-scripts\modify-pubspec.bat remove-licensed
-scripts\modify-pubspec.bat status
+# Windows (PowerShell)
+.\scripts\modify-pubspec.ps1 add-licensed
+.\scripts\modify-pubspec.ps1 remove-licensed
+.\scripts\modify-pubspec.ps1 status
 ```
 
 ### Build Scripts
 
-#### `build-app.sh`
+#### `build-app.sh` / `build-app.ps1`
 Comprehensive build script with flavor support.
 
 **Usage:**
 ```bash
+# Linux/macOS
 ./scripts/build-app.sh setup opensource
 ./scripts/build-app.sh build opensource --mode release --type apk
 ./scripts/build-app.sh run full --mode debug
 ./scripts/build-app.sh clean
+
+# Windows (PowerShell)
+.\scripts\build-app.ps1 setup opensource
+.\scripts\build-app.ps1 build opensource --mode release --type apk
+.\scripts\build-app.ps1 run full --mode debug
+.\scripts\build-app.ps1 clean
 ```
 
 ### Documentation Scripts
 
 #### Manual Documentation Generation
 ```bash
-# Generate API documentation
-fvm dart doc
+# Linux/macOS
+# Generate API documentation for main project only (opensource)
+./scripts/generate-docs.sh opensource
+
+# Generate API documentation for main project and licensed features package (full)
+./scripts/generate-docs.sh full
+
+# Generate API documentation (defaults to opensource)
+./scripts/generate-docs.sh
+
+# Windows (PowerShell)
+# Generate API documentation for main project only (opensource)
+.\scripts\generate-docs.ps1 opensource
+
+# Generate API documentation for main project and licensed features package (full)
+.\scripts\generate-docs.ps1 full
+
+# Generate API documentation (defaults to opensource)
+.\scripts\generate-docs.ps1
 
 # Open documentation in browser
 open doc/api/index.html  # macOS
@@ -119,9 +146,9 @@ start doc/api/index.html  # Windows
 
 ### Convenience Scripts
 
-- `setup-opensource.sh` / `setup-opensource.bat`: Quick setup for opensource
-- `setup-full.sh` / `setup-full.bat`: Quick setup for full version
-- `test-setup.sh`: Test the setup process
+- `setup-opensource.sh` / `setup-opensource.ps1`: Quick setup for opensource
+- `setup-full.sh` / `setup-full.ps1`: Quick setup for full version
+- `test-setup.sh` / `test-setup.ps1`: Test the setup process
 
 ## Workflow
 
@@ -129,7 +156,11 @@ start doc/api/index.html  # Windows
 
 1. **Initial Setup:**
    ```bash
+   # Linux/macOS
    ./scripts/setup-flavor.sh opensource
+   
+   # Windows (PowerShell)
+   .\scripts\setup-flavor.ps1 opensource
    ```
 
 2. **Development:**
@@ -139,7 +170,11 @@ start doc/api/index.html  # Windows
 
 3. **Building:**
    ```bash
+   # Linux/macOS
    ./scripts/build-app.sh build opensource --mode release --type apk
+   
+   # Windows (PowerShell)
+   .\scripts\build-app.ps1 build opensource --mode release --type apk
    ```
 
 4. **Documentation:**
@@ -152,7 +187,11 @@ start doc/api/index.html  # Windows
 
 1. **Initial Setup:**
    ```bash
+   # Linux/macOS
    ./scripts/setup-flavor.sh full
+   
+   # Windows (PowerShell)
+   .\scripts\setup-flavor.ps1 full
    ```
 
 2. **Development:**
@@ -162,7 +201,11 @@ start doc/api/index.html  # Windows
 
 3. **Building:**
    ```bash
+   # Linux/macOS
    ./scripts/build-app.sh build full --mode release --type apk
+   
+   # Windows (PowerShell)
+   .\scripts\build-app.ps1 build full --mode release --type apk
    ```
 
 4. **Documentation:**
@@ -176,15 +219,21 @@ start doc/api/index.html  # Windows
 ```
 scripts/
 ├── setup-flavor.sh          # Main setup script (Linux/macOS)
-├── setup-flavor.bat         # Main setup script (Windows)
+├── setup-flavor.ps1         # Main setup script (Windows PowerShell)
 ├── modify-pubspec.sh        # Dependency management (Linux/macOS)
-├── modify-pubspec.bat       # Dependency management (Windows)
-├── build-app.sh             # Build script
-├── test-setup.sh            # Setup testing
-├── setup-opensource.sh      # Quick opensource setup
-├── setup-opensource.bat     # Quick opensource setup (Windows)
-├── setup-full.sh            # Quick full setup
-├── setup-full.bat           # Quick full setup (Windows)
+├── modify-pubspec.ps1       # Dependency management (Windows PowerShell)
+├── build-app.sh             # Build script (Linux/macOS)
+├── build-app.ps1            # Build script (Windows PowerShell)
+├── generate-docs.sh         # Documentation generation (Linux/macOS)
+├── generate-docs.ps1        # Documentation generation (Windows PowerShell)
+├── fix-docs-viewport.sh     # Fix viewport accessibility (Linux/macOS)
+├── fix-docs-viewport.ps1    # Fix viewport accessibility (Windows PowerShell)
+├── test-setup.sh            # Setup testing (Linux/macOS)
+├── test-setup.ps1           # Setup testing (Windows PowerShell)
+├── setup-opensource.sh      # Quick opensource setup (Linux/macOS)
+├── setup-opensource.ps1     # Quick opensource setup (Windows PowerShell)
+├── setup-full.sh            # Quick full setup (Linux/macOS)
+├── setup-full.ps1           # Quick full setup (Windows PowerShell)
 └── README.md                # This file
 ```
 
@@ -212,22 +261,30 @@ The project uses a comprehensive DartDoc setup with:
    - Make sure the script is executable: `chmod +x scripts/modify-pubspec.sh`
 
 2. **"Wrong flavor setup"**
-   - Run the setup script again: `./scripts/setup-flavor.sh [flavor]`
+   - Run the setup script again: `./scripts/setup-flavor.sh [flavor]` (Linux/macOS) or `.\scripts\setup-flavor.ps1 [flavor]` (Windows)
 
 3. **Dependencies not updating**
    - Run `fvm flutter clean` and then `fvm flutter pub get`
-   - Or use the clean option: `./scripts/setup-flavor.sh [flavor] true`
+   - Or use the clean option: `./scripts/setup-flavor.sh [flavor] true` (Linux/macOS) or `.\scripts\setup-flavor.ps1 [flavor] true` (Windows)
 
 4. **Documentation generation issues**
    - Check DartDoc configuration: `dartdoc_options.yaml`
    - Regenerate docs: `fvm dart doc`
    - Verify file permissions and paths
 
+5. **PowerShell execution policy issues (Windows)**
+   - Run: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
+   - Or run scripts with: `powershell -ExecutionPolicy Bypass -File .\scripts\script-name.ps1`
+
 ### Testing
 
 Run the test script to verify your setup:
 ```bash
+# Linux/macOS
 ./scripts/test-setup.sh
+
+# Windows (PowerShell)
+.\scripts\test-setup.ps1
 ```
 
 This will test both opensource and full setups and verify the configuration is correct.
@@ -251,4 +308,5 @@ This will test both opensource and full setups and verify the configuration is c
 - Run tests on both flavors
 - Verify documentation generation
 - Check for linting issues: `fvm flutter analyze`
-- Ensure all scripts are executable on Unix systems 
+- Ensure all scripts are executable on Unix systems
+- For Windows, ensure PowerShell execution policy allows script execution 

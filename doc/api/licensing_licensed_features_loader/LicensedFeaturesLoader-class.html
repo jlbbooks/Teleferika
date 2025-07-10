@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="API docs for the LicensedFeaturesLoader class from the licensed_features_loader library, for the Dart programming language.">
   <title>LicensedFeaturesLoader class - licensed_features_loader library - Dart API</title>
 
@@ -53,6 +53,12 @@
 </h1></div>
 
     
+<section class="desc markdown">
+  <p>Licensed Features Loader for the full version of Teleferika</p>
+<p>This class provides access to all premium features including advanced export
+functionality, offline map downloads, and other licensed capabilities.</p>
+<p>In the full version, all features are available and fully functional.</p>
+</section>
 
 
 
@@ -168,7 +174,6 @@
 </dt>
 <dd>
   Check if export functionality is available
-Returns true in the full version
   <div class="features"><span class="feature">no setter</span></div>
 
 </dd>
@@ -181,7 +186,6 @@ Returns true in the full version
 </dt>
 <dd>
   Check if licensed features are available
-Returns true in the full version
   <div class="features"><span class="feature">no setter</span></div>
 
 </dd>
@@ -194,7 +198,6 @@ Returns true in the full version
 </dt>
 <dd>
   Check if map download functionality is available
-Returns true in the full version
   <div class="features"><span class="feature">no setter</span></div>
 
 </dd>
@@ -207,7 +210,6 @@ Returns true in the full version
 </dt>
 <dd>
   Get list of licensed features that are available
-Returns the list of premium features in the full version
   <div class="features"><span class="feature">no setter</span></div>
 
 </dd>
@@ -220,14 +222,13 @@ Returns the list of premium features in the full version
     <dl class="callables">
         <dt id="buildLicensedWidget" class="callable">
   <span class="name"><a href="../licensing_licensed_features_loader/LicensedFeaturesLoader/buildLicensedWidget.html">buildLicensedWidget</a></span><span class="signature">(<wbr><span class="parameter" id="buildLicensedWidget-param-widgetType"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">widgetType</span></span>)
-    <span class="returntype parameter">&#8594; Widget?</span>
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/widgets/Widget-class.html">Widget</a>?</span>
   </span>
   
 
 </dt>
 <dd>
   Build a licensed widget
-Returns the widget if available in the full version
   
 
 </dd>
@@ -241,7 +242,6 @@ Returns the widget if available in the full version
 </dt>
 <dd>
   Export project data using licensed export service
-Returns true if export was successful in the full version
   
 
 </dd>
@@ -255,7 +255,6 @@ Returns true if export was successful in the full version
 </dt>
 <dd>
   Get available export formats
-Returns list of supported formats in the full version
   
 
 </dd>
@@ -269,7 +268,6 @@ Returns list of supported formats in the full version
 </dt>
 <dd>
   Get licence status for feature availability
-Returns licence information in the full version
   
 
 </dd>
@@ -283,7 +281,6 @@ Returns licence information in the full version
 </dt>
 <dd>
   Check if a specific licensed feature is available
-Returns true if the feature is available in the full version
   
 
 </dd>
@@ -296,13 +293,13 @@ Returns true if the feature is available in the full version
 
 </dt>
 <dd>
-  
+  Registers all licensed features with the application's feature registry
   
 
 </dd>
 
         <dt id="showExportDialog" class="callable">
-  <span class="name"><a href="../licensing_licensed_features_loader/LicensedFeaturesLoader/showExportDialog.html">showExportDialog</a></span><span class="signature">(<wbr><span class="parameter" id="showExportDialog-param-context"><span class="type-annotation">BuildContext</span> <span class="parameter-name">context</span>, </span><span class="parameter" id="showExportDialog-param-project"><span class="type-annotation">dynamic</span> <span class="parameter-name">project</span>, </span><span class="parameter" id="showExportDialog-param-points"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a></span> <span class="parameter-name">points</span>, {</span><span class="parameter" id="showExportDialog-param-onExportComplete"><span class="type-annotation">dynamic</span> <span class="parameter-name">onExportComplete</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span></span>)?</span>})
+  <span class="name"><a href="../licensing_licensed_features_loader/LicensedFeaturesLoader/showExportDialog.html">showExportDialog</a></span><span class="signature">(<wbr><span class="parameter" id="showExportDialog-param-context"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/widgets/BuildContext-class.html">BuildContext</a></span> <span class="parameter-name">context</span>, </span><span class="parameter" id="showExportDialog-param-project"><span class="type-annotation">dynamic</span> <span class="parameter-name">project</span>, </span><span class="parameter" id="showExportDialog-param-points"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a></span> <span class="parameter-name">points</span>, {</span><span class="parameter" id="showExportDialog-param-onExportComplete"><span class="type-annotation">dynamic</span> <span class="parameter-name">onExportComplete</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span></span>)?</span>})
     <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>&gt;</span></span>
   </span>
   
@@ -310,13 +307,12 @@ Returns true if the feature is available in the full version
 </dt>
 <dd>
   Show export dialog with format selection
-In the full version, this shows the format selection dialog
   
 
 </dd>
 
         <dt id="showExportUpgradeDialog" class="callable">
-  <span class="name"><a href="../licensing_licensed_features_loader/LicensedFeaturesLoader/showExportUpgradeDialog.html">showExportUpgradeDialog</a></span><span class="signature">(<wbr><span class="parameter" id="showExportUpgradeDialog-param-context"><span class="type-annotation">BuildContext</span> <span class="parameter-name">context</span></span>)
+  <span class="name"><a href="../licensing_licensed_features_loader/LicensedFeaturesLoader/showExportUpgradeDialog.html">showExportUpgradeDialog</a></span><span class="signature">(<wbr><span class="parameter" id="showExportUpgradeDialog-param-context"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/widgets/BuildContext-class.html">BuildContext</a></span> <span class="parameter-name">context</span></span>)
     <span class="returntype parameter">&#8594; void</span>
   </span>
   
@@ -324,13 +320,12 @@ In the full version, this shows the format selection dialog
 </dt>
 <dd>
   Show upgrade dialog for export functionality
-In the full version, this shows information about export features
   
 
 </dd>
 
         <dt id="showMapDownloadPage" class="callable">
-  <span class="name"><a href="../licensing_licensed_features_loader/LicensedFeaturesLoader/showMapDownloadPage.html">showMapDownloadPage</a></span><span class="signature">(<wbr><span class="parameter" id="showMapDownloadPage-param-context"><span class="type-annotation">BuildContext</span> <span class="parameter-name">context</span></span>)
+  <span class="name"><a href="../licensing_licensed_features_loader/LicensedFeaturesLoader/showMapDownloadPage.html">showMapDownloadPage</a></span><span class="signature">(<wbr><span class="parameter" id="showMapDownloadPage-param-context"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/widgets/BuildContext-class.html">BuildContext</a></span> <span class="parameter-name">context</span></span>)
     <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>&gt;</span></span>
   </span>
   
@@ -338,13 +333,12 @@ In the full version, this shows information about export features
 </dt>
 <dd>
   Show map download page
-In the full version, this shows the map download page
   
 
 </dd>
 
         <dt id="showMapDownloadUpgradeDialog" class="callable">
-  <span class="name"><a href="../licensing_licensed_features_loader/LicensedFeaturesLoader/showMapDownloadUpgradeDialog.html">showMapDownloadUpgradeDialog</a></span><span class="signature">(<wbr><span class="parameter" id="showMapDownloadUpgradeDialog-param-context"><span class="type-annotation">BuildContext</span> <span class="parameter-name">context</span></span>)
+  <span class="name"><a href="../licensing_licensed_features_loader/LicensedFeaturesLoader/showMapDownloadUpgradeDialog.html">showMapDownloadUpgradeDialog</a></span><span class="signature">(<wbr><span class="parameter" id="showMapDownloadUpgradeDialog-param-context"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/widgets/BuildContext-class.html">BuildContext</a></span> <span class="parameter-name">context</span></span>)
     <span class="returntype parameter">&#8594; void</span>
   </span>
   
@@ -352,7 +346,6 @@ In the full version, this shows the map download page
 </dt>
 <dd>
   Show upgrade dialog for map download functionality
-In the full version, this shows information about map download features
   
 
 </dd>

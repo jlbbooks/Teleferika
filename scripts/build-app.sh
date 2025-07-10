@@ -33,13 +33,14 @@ show_usage() {
     echo "  run       Run the app"
     echo "  clean     Clean build artifacts"
     echo "  setup     Setup the specified flavor"
+    echo "  docs      Generate API documentation (opensource or full)"
     echo ""
     echo "Flavors:"
     echo "  opensource  Open source version"
     echo "  full        Full version with licensed features"
     echo ""
     echo "Options:"
-    echo "  --platform PLATFORM  Target platform (android-arm64, android-arm, ios)"
+
     echo "  --mode MODE          Build mode (debug, release, profile)"
     echo "  --type TYPE          Build type (apk, appbundle, ios)"
     echo ""
@@ -47,20 +48,20 @@ show_usage() {
     echo "  $0 setup opensource"
     echo "  $0 build opensource --mode release --type apk"
     echo "  $0 run full --mode debug"
+    echo "  $0 docs full"
     echo "  $0 clean"
 }
 
 # Default values
 COMMAND=""
 FLAVOR=""
-PLATFORM="android-arm64"
 MODE="debug"
 TYPE="apk"
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
-        build|run|clean|setup)
+        build|run|clean|setup|docs)
             COMMAND="$1"
             shift
             ;;
@@ -68,10 +69,7 @@ while [[ $# -gt 0 ]]; do
             FLAVOR="$1"
             shift
             ;;
-        --platform)
-            PLATFORM="$2"
-            shift 2
-            ;;
+
         --mode)
             MODE="$2"
             shift 2
@@ -175,7 +173,7 @@ if [ "$COMMAND" = "build" ]; then
     
     case $TYPE in
         apk)
-            if flutter build apk --flavor "$FLAVOR" --$MODE; then
+            if flutter build apk --flavor "$FLAVOR" --"$MODE"; then
                 print_success "✅ APK built successfully"
                 print_status "APK location: build/app/outputs/flutter-apk/app-$FLAVOR-$MODE.apk"
             else
@@ -184,7 +182,7 @@ if [ "$COMMAND" = "build" ]; then
             fi
             ;;
         appbundle)
-            if flutter build appbundle --flavor "$FLAVOR" --$MODE; then
+            if flutter build appbundle --flavor "$FLAVOR" --"$MODE"; then
                 print_success "✅ App bundle built successfully"
                 print_status "Bundle location: build/app/outputs/bundle/${FLAVOR}Release/app-$FLAVOR-release.aab"
             else
@@ -193,7 +191,7 @@ if [ "$COMMAND" = "build" ]; then
             fi
             ;;
         ios)
-            if flutter build ios --flavor "$FLAVOR" --$MODE; then
+            if flutter build ios --flavor "$FLAVOR" --"$MODE"; then
                 print_success "✅ iOS build completed"
             else
                 print_error "❌ iOS build failed"
@@ -211,12 +209,32 @@ fi
 if [ "$COMMAND" = "run" ]; then
     print_status "Running $FLAVOR flavor in $MODE mode..."
     
-    if flutter run --flavor "$FLAVOR" --$MODE; then
+    if flutter run --flavor "$FLAVOR" --"$MODE"; then
         print_success "✅ App started successfully"
     else
         print_error "❌ App failed to start"
         exit 1
     fi
+fi
+
+# Handle docs command
+if [ "$COMMAND" = "docs" ]; then
+    print_status "Generating documentation for $FLAVOR flavor..."
+    if [ -z "$FLAVOR" ]; then
+        FLAVOR="opensource"
+    fi
+    if [ "$FLAVOR" != "opensource" ] && [ "$FLAVOR" != "full" ]; then
+        print_error "Invalid flavor: $FLAVOR"
+        show_usage
+        exit 1
+    fi
+    if ./scripts/generate-docs.sh "$FLAVOR"; then
+        print_success "✅ Documentation generated for $FLAVOR flavor"
+    else
+        print_error "❌ Documentation generation failed for $FLAVOR flavor"
+        exit 1
+    fi
+    exit 0
 fi
 
 print_success "🎉 Command completed successfully!" 

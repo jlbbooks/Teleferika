@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="API docs for the FlutterMapWidget class from the flutter_map_widget library, for the Dart programming language.">
   <title>FlutterMapWidget class - flutter_map_widget library - Dart API</title>
 
@@ -55,13 +55,37 @@
     
 
 
+    <section>
+      <dl class="dl-horizontal">
+        
+  <dt>Inheritance</dt>
+  <dd>
+    <ul class="gt-separated dark clazz-relationships">
+      <li><a href="https://api.flutter.dev/flutter/dart-core/Object-class.html">Object</a></li>
+        <li><a href="https://api.flutter.dev/flutter/foundation/DiagnosticableTree-class.html">DiagnosticableTree</a></li>
+        <li><a href="https://api.flutter.dev/flutter/widgets/Widget-class.html">Widget</a></li>
+        <li><a href="https://api.flutter.dev/flutter/widgets/StatefulWidget-class.html">StatefulWidget</a></li>
+      <li>FlutterMapWidget</li>
+    </ul>
+  </dd>
+
+        
+        
+
+
+        
+        
+
+
+      </dl>
+    </section>
 
     
   <section class="summary offset-anchor" id="constructors">
     <h2>Constructors</h2>
     <dl class="constructor-summary-list">
         <dt id="FlutterMapWidget.new" class="callable">
-          <span class="name"><a href="../map_widgets_flutter_map_widget/FlutterMapWidget/FlutterMapWidget.html">FlutterMapWidget.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation">Key?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-polylinePathPoints"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/latlong2/0.9.1/latlong2/LatLng-class.html">LatLng</a></span>&gt;</span></span> <span class="parameter-name">polylinePathPoints</span>, </span><span class="parameter" id="-param-connectingLine"><span>required</span> <span class="type-annotation"><a href="https://pub.dev/documentation/flutter_map/8.1.1/flutter_map/Polyline-class.html">Polyline</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/Object-class.html">Object</a></span>&gt;</span>?</span> <span class="parameter-name">connectingLine</span>, </span><span class="parameter" id="-param-projectHeadingLine"><span>required</span> <span class="type-annotation"><a href="https://pub.dev/documentation/flutter_map/8.1.1/flutter_map/Polyline-class.html">Polyline</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/Object-class.html">Object</a></span>&gt;</span>?</span> <span class="parameter-name">projectHeadingLine</span>, </span><span class="parameter" id="-param-initialMapCenter"><span>required</span> <span class="type-annotation"><a href="https://pub.dev/documentation/latlong2/0.9.1/latlong2/LatLng-class.html">LatLng</a></span> <span class="parameter-name">initialMapCenter</span>, </span><span class="parameter" id="-param-initialMapZoom"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a></span> <span class="parameter-name">initialMapZoom</span>, </span><span class="parameter" id="-param-tileLayerUrl"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">tileLayerUrl</span>, </span><span class="parameter" id="-param-tileLayerAttribution"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">tileLayerAttribution</span>, </span><span class="parameter" id="-param-attributionUrl"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">attributionUrl</span>, </span><span class="parameter" id="-param-mapController"><span>required</span> <span class="type-annotation"><a href="https://pub.dev/documentation/flutter_map/8.1.1/flutter_map/MapController-class.html">MapController</a></span> <span class="parameter-name">mapController</span>, </span><span class="parameter" id="-param-currentMapType"><span>required</span> <span class="type-annotation"><a href="../map_map_type/MapType-class.html">MapType</a></span> <span class="parameter-name">currentMapType</span>, </span><span class="parameter" id="-param-isMapReady"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">isMapReady</span>, </span><span class="parameter" id="-param-isLoadingPoints"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">isLoadingPoints</span>, </span><span class="parameter" id="-param-isMovePointMode"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">isMovePointMode</span>, </span><span class="parameter" id="-param-selectedPointId"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span> <span class="parameter-name">selectedPointId</span>, </span><span class="parameter" id="-param-currentPosition"><span>required</span> <span class="type-annotation"><a href="https://pub.dev/documentation/geolocator_platform_interface/4.2.6/geolocator_platform_interface/Position-class.html">Position</a>?</span> <span class="parameter-name">currentPosition</span>, </span><span class="parameter" id="-param-hasLocationPermission"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">hasLocationPermission</span>, </span><span class="parameter" id="-param-connectingLineFromFirstToLast"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a>?</span> <span class="parameter-name">connectingLineFromFirstToLast</span>, </span><span class="parameter" id="-param-glowAnimationValue"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a></span> <span class="parameter-name">glowAnimationValue</span>, </span><span class="parameter" id="-param-currentDeviceHeading"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a>?</span> <span class="parameter-name">currentDeviceHeading</span>, </span><span class="parameter" id="-param-locationStreamController"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-async/StreamController-class.html">StreamController</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/flutter_map_location_marker/10.1.0/flutter_map_location_marker/LocationMarkerPosition-class.html">LocationMarkerPosition</a></span>&gt;</span></span> <span class="parameter-name">locationStreamController</span>, </span><span class="parameter" id="-param-arrowheadAnimation"><span>required</span> <span class="type-annotation">Animation<span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a></span>&gt;</span>?</span> <span class="parameter-name">arrowheadAnimation</span>, </span><span class="parameter" id="-param-onPointTap"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onPointTap</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="../db_models_point_model/PointModel-class.html">PointModel</a></span></span>), </span><span class="parameter" id="-param-onMovePoint"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onMovePoint</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="../db_models_point_model/PointModel-class.html">PointModel</a></span>, </span><span class="parameter" id="param-"><span class="type-annotation"><a href="https://pub.dev/documentation/latlong2/0.9.1/latlong2/LatLng-class.html">LatLng</a></span></span>), </span><span class="parameter" id="-param-onMapReady"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/VoidCallback.html">VoidCallback</a></span> <span class="parameter-name">onMapReady</span>, </span><span class="parameter" id="-param-onDeselectPoint"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/VoidCallback.html">VoidCallback</a></span> <span class="parameter-name">onDeselectPoint</span>, </span><span class="parameter" id="-param-onLongPressStart"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onLongPressStart</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="../db_models_point_model/PointModel-class.html">PointModel</a></span>, </span><span class="parameter" id="param-"><span class="type-annotation">LongPressStartDetails</span></span>), </span><span class="parameter" id="-param-onLongPressMoveUpdate"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onLongPressMoveUpdate</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="../db_models_point_model/PointModel-class.html">PointModel</a></span>, </span><span class="parameter" id="param-"><span class="type-annotation">LongPressMoveUpdateDetails</span></span>), </span><span class="parameter" id="-param-onLongPressEnd"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onLongPressEnd</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="../db_models_point_model/PointModel-class.html">PointModel</a></span>, </span><span class="parameter" id="param-"><span class="type-annotation">LongPressEndDetails</span></span>), </span><span class="parameter" id="-param-isSlidingMarker"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">isSlidingMarker</span>, </span><span class="parameter" id="-param-slidingPointId"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span> <span class="parameter-name">slidingPointId</span>, </span><span class="parameter" id="-param-currentSlidePosition"><span>required</span> <span class="type-annotation"><a href="https://pub.dev/documentation/latlong2/0.9.1/latlong2/LatLng-class.html">LatLng</a>?</span> <span class="parameter-name">currentSlidePosition</span>, </span><span class="parameter" id="-param-additionalLayers"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter">Widget</span>&gt;</span>?</span> <span class="parameter-name">additionalLayers</span></span>})</span>
+          <span class="name"><a href="../map_widgets_flutter_map_widget/FlutterMapWidget/FlutterMapWidget.html">FlutterMapWidget.new</a></span><span class="signature">({<span class="parameter" id="-param-key"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a>?</span> <span class="parameter-name">key</span>, </span><span class="parameter" id="-param-polylinePathPoints"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/latlong2/0.9.1/latlong2/LatLng-class.html">LatLng</a></span>&gt;</span></span> <span class="parameter-name">polylinePathPoints</span>, </span><span class="parameter" id="-param-connectingLine"><span>required</span> <span class="type-annotation"><a href="https://pub.dev/documentation/flutter_map/8.1.1/flutter_map/Polyline-class.html">Polyline</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/Object-class.html">Object</a></span>&gt;</span>?</span> <span class="parameter-name">connectingLine</span>, </span><span class="parameter" id="-param-projectHeadingLine"><span>required</span> <span class="type-annotation"><a href="https://pub.dev/documentation/flutter_map/8.1.1/flutter_map/Polyline-class.html">Polyline</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/Object-class.html">Object</a></span>&gt;</span>?</span> <span class="parameter-name">projectHeadingLine</span>, </span><span class="parameter" id="-param-initialMapCenter"><span>required</span> <span class="type-annotation"><a href="https://pub.dev/documentation/latlong2/0.9.1/latlong2/LatLng-class.html">LatLng</a></span> <span class="parameter-name">initialMapCenter</span>, </span><span class="parameter" id="-param-initialMapZoom"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a></span> <span class="parameter-name">initialMapZoom</span>, </span><span class="parameter" id="-param-tileLayerUrl"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">tileLayerUrl</span>, </span><span class="parameter" id="-param-tileLayerAttribution"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">tileLayerAttribution</span>, </span><span class="parameter" id="-param-attributionUrl"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">attributionUrl</span>, </span><span class="parameter" id="-param-mapController"><span>required</span> <span class="type-annotation"><a href="https://pub.dev/documentation/flutter_map/8.1.1/flutter_map/MapController-class.html">MapController</a></span> <span class="parameter-name">mapController</span>, </span><span class="parameter" id="-param-currentMapType"><span>required</span> <span class="type-annotation"><a href="../map_map_type/MapType-class.html">MapType</a></span> <span class="parameter-name">currentMapType</span>, </span><span class="parameter" id="-param-isMapReady"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">isMapReady</span>, </span><span class="parameter" id="-param-isLoadingPoints"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">isLoadingPoints</span>, </span><span class="parameter" id="-param-isMovePointMode"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">isMovePointMode</span>, </span><span class="parameter" id="-param-selectedPointId"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span> <span class="parameter-name">selectedPointId</span>, </span><span class="parameter" id="-param-currentPosition"><span>required</span> <span class="type-annotation"><a href="https://pub.dev/documentation/geolocator_platform_interface/4.2.6/geolocator_platform_interface/Position-class.html">Position</a>?</span> <span class="parameter-name">currentPosition</span>, </span><span class="parameter" id="-param-hasLocationPermission"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">hasLocationPermission</span>, </span><span class="parameter" id="-param-connectingLineFromFirstToLast"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a>?</span> <span class="parameter-name">connectingLineFromFirstToLast</span>, </span><span class="parameter" id="-param-glowAnimationValue"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a></span> <span class="parameter-name">glowAnimationValue</span>, </span><span class="parameter" id="-param-currentDeviceHeading"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a>?</span> <span class="parameter-name">currentDeviceHeading</span>, </span><span class="parameter" id="-param-locationStreamController"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-async/StreamController-class.html">StreamController</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://pub.dev/documentation/flutter_map_location_marker/10.1.0/flutter_map_location_marker/LocationMarkerPosition-class.html">LocationMarkerPosition</a></span>&gt;</span></span> <span class="parameter-name">locationStreamController</span>, </span><span class="parameter" id="-param-arrowheadAnimation"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/animation/Animation-class.html">Animation</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a></span>&gt;</span>?</span> <span class="parameter-name">arrowheadAnimation</span>, </span><span class="parameter" id="-param-onPointTap"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onPointTap</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="../db_models_point_model/PointModel-class.html">PointModel</a></span></span>), </span><span class="parameter" id="-param-onMovePoint"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onMovePoint</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="../db_models_point_model/PointModel-class.html">PointModel</a></span>, </span><span class="parameter" id="param-"><span class="type-annotation"><a href="https://pub.dev/documentation/latlong2/0.9.1/latlong2/LatLng-class.html">LatLng</a></span></span>), </span><span class="parameter" id="-param-onMapReady"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/VoidCallback.html">VoidCallback</a></span> <span class="parameter-name">onMapReady</span>, </span><span class="parameter" id="-param-onDeselectPoint"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-ui/VoidCallback.html">VoidCallback</a></span> <span class="parameter-name">onDeselectPoint</span>, </span><span class="parameter" id="-param-onLongPressStart"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onLongPressStart</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="../db_models_point_model/PointModel-class.html">PointModel</a></span>, </span><span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/gestures/LongPressStartDetails-class.html">LongPressStartDetails</a></span></span>), </span><span class="parameter" id="-param-onLongPressMoveUpdate"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onLongPressMoveUpdate</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="../db_models_point_model/PointModel-class.html">PointModel</a></span>, </span><span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/gestures/LongPressMoveUpdateDetails-class.html">LongPressMoveUpdateDetails</a></span></span>), </span><span class="parameter" id="-param-onLongPressEnd"><span>required</span> <span class="type-annotation">dynamic</span> <span class="parameter-name">onLongPressEnd</span>(<span class="parameter" id="param-"><span class="type-annotation"><a href="../db_models_point_model/PointModel-class.html">PointModel</a></span>, </span><span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/gestures/LongPressEndDetails-class.html">LongPressEndDetails</a></span></span>), </span><span class="parameter" id="-param-isSlidingMarker"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span> <span class="parameter-name">isSlidingMarker</span>, </span><span class="parameter" id="-param-slidingPointId"><span>required</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span> <span class="parameter-name">slidingPointId</span>, </span><span class="parameter" id="-param-currentSlidePosition"><span>required</span> <span class="type-annotation"><a href="https://pub.dev/documentation/latlong2/0.9.1/latlong2/LatLng-class.html">LatLng</a>?</span> <span class="parameter-name">currentSlidePosition</span>, </span><span class="parameter" id="-param-additionalLayers"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/widgets/Widget-class.html">Widget</a></span>&gt;</span>?</span> <span class="parameter-name">additionalLayers</span></span>})</span>
         </dt>
         <dd>
           
@@ -77,7 +101,7 @@
     <dl class="properties">
         <dt id="additionalLayers" class="property">
   <span class="name"><a href="../map_widgets_flutter_map_widget/FlutterMapWidget/additionalLayers.html">additionalLayers</a></span>
-  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter">Widget</span>&gt;</span>?</span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/widgets/Widget-class.html">Widget</a></span>&gt;</span>?</span>
   
 
 </dt>
@@ -89,7 +113,7 @@
 
         <dt id="arrowheadAnimation" class="property">
   <span class="name"><a href="../map_widgets_flutter_map_widget/FlutterMapWidget/arrowheadAnimation.html">arrowheadAnimation</a></span>
-  <span class="signature">&#8594; Animation<span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a></span>&gt;</span>?</span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/animation/Animation-class.html">Animation</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/double-class.html">double</a></span>&gt;</span>?</span>
   
 
 </dt>
@@ -196,7 +220,7 @@
 </dd>
 
         <dt id="hashCode" class="property inherited">
-  <span class="name"><a href="../map_widgets_flutter_map_widget/FlutterMapWidget/hashCode.html">hashCode</a></span>
+  <span class="name"><a href="https://api.flutter.dev/flutter/widgets/Widget/hashCode.html">hashCode</a></span>
   <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span>
   
 
@@ -292,8 +316,8 @@
 </dd>
 
         <dt id="key" class="property inherited">
-  <span class="name"><a href="../map_widgets_flutter_map_widget/FlutterMapWidget/key.html">key</a></span>
-  <span class="signature">&#8594; Key?</span>
+  <span class="name"><a href="https://api.flutter.dev/flutter/widgets/Widget/key.html">key</a></span>
+  <span class="signature">&#8594; <a href="https://api.flutter.dev/flutter/foundation/Key-class.html">Key</a>?</span>
   
 
 </dt>
@@ -341,7 +365,7 @@
 
         <dt id="onLongPressEnd" class="property">
   <span class="name"><a href="../map_widgets_flutter_map_widget/FlutterMapWidget/onLongPressEnd.html">onLongPressEnd</a></span>
-  <span class="signature">&#8594; dynamic Function<span class="signature">(<span class="parameter" id="param-"><span class="type-annotation"><a href="../db_models_point_model/PointModel-class.html">PointModel</a></span>, </span><span class="parameter" id="param-"><span class="type-annotation">LongPressEndDetails</span></span>)</span></span>
+  <span class="signature">&#8594; dynamic Function<span class="signature">(<span class="parameter" id="param-"><span class="type-annotation"><a href="../db_models_point_model/PointModel-class.html">PointModel</a></span>, </span><span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/gestures/LongPressEndDetails-class.html">LongPressEndDetails</a></span></span>)</span></span>
   
 
 </dt>
@@ -353,7 +377,7 @@
 
         <dt id="onLongPressMoveUpdate" class="property">
   <span class="name"><a href="../map_widgets_flutter_map_widget/FlutterMapWidget/onLongPressMoveUpdate.html">onLongPressMoveUpdate</a></span>
-  <span class="signature">&#8594; dynamic Function<span class="signature">(<span class="parameter" id="param-"><span class="type-annotation"><a href="../db_models_point_model/PointModel-class.html">PointModel</a></span>, </span><span class="parameter" id="param-"><span class="type-annotation">LongPressMoveUpdateDetails</span></span>)</span></span>
+  <span class="signature">&#8594; dynamic Function<span class="signature">(<span class="parameter" id="param-"><span class="type-annotation"><a href="../db_models_point_model/PointModel-class.html">PointModel</a></span>, </span><span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/gestures/LongPressMoveUpdateDetails-class.html">LongPressMoveUpdateDetails</a></span></span>)</span></span>
   
 
 </dt>
@@ -365,7 +389,7 @@
 
         <dt id="onLongPressStart" class="property">
   <span class="name"><a href="../map_widgets_flutter_map_widget/FlutterMapWidget/onLongPressStart.html">onLongPressStart</a></span>
-  <span class="signature">&#8594; dynamic Function<span class="signature">(<span class="parameter" id="param-"><span class="type-annotation"><a href="../db_models_point_model/PointModel-class.html">PointModel</a></span>, </span><span class="parameter" id="param-"><span class="type-annotation">LongPressStartDetails</span></span>)</span></span>
+  <span class="signature">&#8594; dynamic Function<span class="signature">(<span class="parameter" id="param-"><span class="type-annotation"><a href="../db_models_point_model/PointModel-class.html">PointModel</a></span>, </span><span class="parameter" id="param-"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/gestures/LongPressStartDetails-class.html">LongPressStartDetails</a></span></span>)</span></span>
   
 
 </dt>
@@ -505,47 +529,47 @@
     <h2>Methods</h2>
     <dl class="callables">
         <dt id="createElement" class="callable inherited">
-  <span class="name"><a href="../map_widgets_flutter_map_widget/FlutterMapWidget/createElement.html">createElement</a></span><span class="signature">(<wbr>)
-    <span class="returntype parameter">&#8594; StatefulElement</span>
+  <span class="name"><a href="https://api.flutter.dev/flutter/widgets/StatefulWidget/createElement.html">createElement</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/widgets/StatefulElement-class.html">StatefulElement</a></span>
   </span>
   
 
 </dt>
 <dd class="inherited">
-  Creates a <code>StatefulElement</code> to manage this widget's location in the tree.
+  Creates a <a href="https://api.flutter.dev/flutter/widgets/StatefulElement-class.html">StatefulElement</a> to manage this widget's location in the tree.
   <div class="features"><span class="feature">inherited</span></div>
 
 </dd>
 
         <dt id="createState" class="callable">
   <span class="name"><a href="../map_widgets_flutter_map_widget/FlutterMapWidget/createState.html">createState</a></span><span class="signature">(<wbr>)
-    <span class="returntype parameter">&#8594; State<span class="signature">&lt;<wbr><span class="type-parameter"><a href="../map_widgets_flutter_map_widget/FlutterMapWidget-class.html">FlutterMapWidget</a></span>&gt;</span></span>
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/widgets/State-class.html">State</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="../map_widgets_flutter_map_widget/FlutterMapWidget-class.html">FlutterMapWidget</a></span>&gt;</span></span>
   </span>
   
 
 </dt>
 <dd>
   Creates the mutable state for this widget at a given location in the tree.
-  
+  <div class="features"><span class="feature">override</span></div>
 
 </dd>
 
         <dt id="debugDescribeChildren" class="callable inherited">
-  <span class="name"><a href="../map_widgets_flutter_map_widget/FlutterMapWidget/debugDescribeChildren.html">debugDescribeChildren</a></span><span class="signature">(<wbr>)
-    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter">DiagnosticsNode</span>&gt;</span></span>
+  <span class="name"><a href="https://api.flutter.dev/flutter/foundation/DiagnosticableTree/debugDescribeChildren.html">debugDescribeChildren</a></span><span class="signature">(<wbr>)
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/List-class.html">List</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/foundation/DiagnosticsNode-class.html">DiagnosticsNode</a></span>&gt;</span></span>
   </span>
   
 
 </dt>
 <dd class="inherited">
-  Returns a list of <code>DiagnosticsNode</code> objects describing this node's
+  Returns a list of <a href="https://api.flutter.dev/flutter/foundation/DiagnosticsNode-class.html">DiagnosticsNode</a> objects describing this node's
 children.
   <div class="features"><span class="feature">inherited</span></div>
 
 </dd>
 
         <dt id="debugFillProperties" class="callable inherited">
-  <span class="name"><a href="../map_widgets_flutter_map_widget/FlutterMapWidget/debugFillProperties.html">debugFillProperties</a></span><span class="signature">(<wbr><span class="parameter" id="debugFillProperties-param-properties"><span class="type-annotation">DiagnosticPropertiesBuilder</span> <span class="parameter-name">properties</span></span>)
+  <span class="name"><a href="https://api.flutter.dev/flutter/widgets/Widget/debugFillProperties.html">debugFillProperties</a></span><span class="signature">(<wbr><span class="parameter" id="debugFillProperties-param-properties"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/DiagnosticPropertiesBuilder-class.html">DiagnosticPropertiesBuilder</a></span> <span class="parameter-name">properties</span></span>)
     <span class="returntype parameter">&#8594; void</span>
   </span>
   
@@ -571,21 +595,21 @@ children.
 </dd>
 
         <dt id="toDiagnosticsNode" class="callable inherited">
-  <span class="name"><a href="../map_widgets_flutter_map_widget/FlutterMapWidget/toDiagnosticsNode.html">toDiagnosticsNode</a></span><span class="signature">(<wbr>{<span class="parameter" id="toDiagnosticsNode-param-name"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span> <span class="parameter-name">name</span>, </span><span class="parameter" id="toDiagnosticsNode-param-style"><span class="type-annotation">DiagnosticsTreeStyle?</span> <span class="parameter-name">style</span></span>})
-    <span class="returntype parameter">&#8594; DiagnosticsNode</span>
+  <span class="name"><a href="https://api.flutter.dev/flutter/foundation/DiagnosticableTree/toDiagnosticsNode.html">toDiagnosticsNode</a></span><span class="signature">(<wbr>{<span class="parameter" id="toDiagnosticsNode-param-name"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span> <span class="parameter-name">name</span>, </span><span class="parameter" id="toDiagnosticsNode-param-style"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/DiagnosticsTreeStyle.html">DiagnosticsTreeStyle</a>?</span> <span class="parameter-name">style</span></span>})
+    <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/foundation/DiagnosticsNode-class.html">DiagnosticsNode</a></span>
   </span>
   
 
 </dt>
 <dd class="inherited">
   Returns a debug representation of the object that is used by debugging
-tools and by <code>DiagnosticsNode.toStringDeep</code>.
+tools and by <a href="https://api.flutter.dev/flutter/foundation/DiagnosticsNode/toStringDeep.html">DiagnosticsNode.toStringDeep</a>.
   <div class="features"><span class="feature">inherited</span></div>
 
 </dd>
 
         <dt id="toString" class="callable inherited">
-  <span class="name"><a href="../map_widgets_flutter_map_widget/FlutterMapWidget/toString.html">toString</a></span><span class="signature">(<wbr>{<span class="parameter" id="toString-param-minLevel"><span class="type-annotation">DiagnosticLevel</span> <span class="parameter-name">minLevel</span> = <span class="default-value">DiagnosticLevel.info</span></span>})
+  <span class="name"><a href="https://api.flutter.dev/flutter/foundation/Diagnosticable/toString.html">toString</a></span><span class="signature">(<wbr>{<span class="parameter" id="toString-param-minLevel"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/DiagnosticLevel.html">DiagnosticLevel</a></span> <span class="parameter-name">minLevel</span> = <span class="default-value">DiagnosticLevel.info</span></span>})
     <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>
   </span>
   
@@ -598,7 +622,7 @@ tools and by <code>DiagnosticsNode.toStringDeep</code>.
 </dd>
 
         <dt id="toStringDeep" class="callable inherited">
-  <span class="name"><a href="../map_widgets_flutter_map_widget/FlutterMapWidget/toStringDeep.html">toStringDeep</a></span><span class="signature">(<wbr>{<span class="parameter" id="toStringDeep-param-prefixLineOne"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">prefixLineOne</span> = <span class="default-value">&#39;&#39;</span>, </span><span class="parameter" id="toStringDeep-param-prefixOtherLines"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span> <span class="parameter-name">prefixOtherLines</span>, </span><span class="parameter" id="toStringDeep-param-minLevel"><span class="type-annotation">DiagnosticLevel</span> <span class="parameter-name">minLevel</span> = <span class="default-value">DiagnosticLevel.debug</span>, </span><span class="parameter" id="toStringDeep-param-wrapWidth"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">wrapWidth</span> = <span class="default-value">65</span></span>})
+  <span class="name"><a href="https://api.flutter.dev/flutter/foundation/DiagnosticableTree/toStringDeep.html">toStringDeep</a></span><span class="signature">(<wbr>{<span class="parameter" id="toStringDeep-param-prefixLineOne"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">prefixLineOne</span> = <span class="default-value">&#39;&#39;</span>, </span><span class="parameter" id="toStringDeep-param-prefixOtherLines"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a>?</span> <span class="parameter-name">prefixOtherLines</span>, </span><span class="parameter" id="toStringDeep-param-minLevel"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/DiagnosticLevel.html">DiagnosticLevel</a></span> <span class="parameter-name">minLevel</span> = <span class="default-value">DiagnosticLevel.debug</span>, </span><span class="parameter" id="toStringDeep-param-wrapWidth"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/int-class.html">int</a></span> <span class="parameter-name">wrapWidth</span> = <span class="default-value">65</span></span>})
     <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>
   </span>
   
@@ -611,7 +635,7 @@ tools and by <code>DiagnosticsNode.toStringDeep</code>.
 </dd>
 
         <dt id="toStringShallow" class="callable inherited">
-  <span class="name"><a href="../map_widgets_flutter_map_widget/FlutterMapWidget/toStringShallow.html">toStringShallow</a></span><span class="signature">(<wbr>{<span class="parameter" id="toStringShallow-param-joiner"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">joiner</span> = <span class="default-value">&#39;, &#39;</span>, </span><span class="parameter" id="toStringShallow-param-minLevel"><span class="type-annotation">DiagnosticLevel</span> <span class="parameter-name">minLevel</span> = <span class="default-value">DiagnosticLevel.debug</span></span>})
+  <span class="name"><a href="https://api.flutter.dev/flutter/foundation/DiagnosticableTree/toStringShallow.html">toStringShallow</a></span><span class="signature">(<wbr>{<span class="parameter" id="toStringShallow-param-joiner"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">joiner</span> = <span class="default-value">&#39;, &#39;</span>, </span><span class="parameter" id="toStringShallow-param-minLevel"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/foundation/DiagnosticLevel.html">DiagnosticLevel</a></span> <span class="parameter-name">minLevel</span> = <span class="default-value">DiagnosticLevel.debug</span></span>})
     <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>
   </span>
   
@@ -624,7 +648,7 @@ tools and by <code>DiagnosticsNode.toStringDeep</code>.
 </dd>
 
         <dt id="toStringShort" class="callable inherited">
-  <span class="name"><a href="../map_widgets_flutter_map_widget/FlutterMapWidget/toStringShort.html">toStringShort</a></span><span class="signature">(<wbr>)
+  <span class="name"><a href="https://api.flutter.dev/flutter/widgets/Widget/toStringShort.html">toStringShort</a></span><span class="signature">(<wbr>)
     <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span>
   </span>
   
@@ -645,7 +669,7 @@ tools and by <code>DiagnosticsNode.toStringDeep</code>.
     <h2>Operators</h2>
     <dl class="callables">
         <dt id="operator ==" class="callable inherited">
-  <span class="name"><a href="../map_widgets_flutter_map_widget/FlutterMapWidget/operator_equals.html">operator ==</a></span><span class="signature">(<wbr><span class="parameter" id="==-param-other"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Object-class.html">Object</a></span> <span class="parameter-name">other</span></span>)
+  <span class="name"><a href="https://api.flutter.dev/flutter/widgets/Widget/operator_equals.html">operator ==</a></span><span class="signature">(<wbr><span class="parameter" id="==-param-other"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/Object-class.html">Object</a></span> <span class="parameter-name">other</span></span>)
     <span class="returntype parameter">&#8594; <a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
   </span>
   

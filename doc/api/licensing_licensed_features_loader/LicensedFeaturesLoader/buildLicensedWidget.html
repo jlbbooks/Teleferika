@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="API docs for the buildLicensedWidget method from the LicensedFeaturesLoader class, for the Dart programming language.">
   <title>buildLicensedWidget method - LicensedFeaturesLoader class - licensed_features_loader library - Dart API</title>
 
@@ -54,7 +54,7 @@
 
     <section class="multi-line-signature">
       
-<span class="returntype">Widget?</span>
+<span class="returntype"><a href="https://api.flutter.dev/flutter/widgets/Widget-class.html">Widget</a>?</span>
 <span class="name ">buildLicensedWidget</span>(<wbr><ol class="parameter-list single-line"> <li><span class="parameter" id="buildLicensedWidget-param-widgetType"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/dart-core/String-class.html">String</a></span> <span class="parameter-name">widgetType</span></span></li>
 </ol>)
 
@@ -63,8 +63,20 @@
     </section>
     
 <section class="desc markdown">
-  <p>Build a licensed widget
-Returns the widget if available in the full version</p>
+  <p>Build a licensed widget</p>
+<p>Creates and returns a widget based on the specified type.</p>
+<h2 id="parameters">Parameters</h2>
+<ul>
+<li><code>widgetType</code>: The type of widget to build</li>
+</ul>
+<h2 id="returns">Returns</h2>
+<p>The requested widget or <code>null</code> if not available</p>
+<h2 id="example">Example</h2>
+<pre class="language-dart"><code class="language-dart">final exportWidget = LicensedFeaturesLoader.buildLicensedWidget('export_widget');
+if (exportWidget != null) {
+  // Use the widget
+}
+</code></pre>
 </section>
 
 

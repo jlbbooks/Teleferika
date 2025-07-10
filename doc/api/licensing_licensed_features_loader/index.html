@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="licensed_features_loader library API docs, for the Dart programming language.">
   <title>licensed_features_loader library - Dart API</title>
 
@@ -59,6 +59,39 @@
     </div>
 
     
+<section class="desc markdown">
+  <p>Licensed Features Loader for Full Version</p>
+<p>This file provides the implementation for loading and managing licensed features
+in the full version of Teleferika. It includes all premium functionality
+including advanced export capabilities and offline map downloads.</p>
+<h2 id="features-available-in-full-version">Features Available in Full Version</h2>
+<ul>
+<li><strong>Advanced Export</strong>: Multiple format support (KML, CSV, GeoJSON, KMZ, Shapefile)</li>
+<li><strong>Map Downloads</strong>: Offline map tile caching and area selection</li>
+<li><strong>Batch Operations</strong>: Process multiple projects simultaneously</li>
+<li><strong>Cloud Sync</strong>: Synchronize data across devices</li>
+<li><strong>Custom Themes</strong>: Personalized user interface themes</li>
+<li><strong>Priority Support</strong>: Enhanced customer support</li>
+</ul>
+<h2 id="usage">Usage</h2>
+<pre class="language-dart"><code class="language-dart">// Register licensed features during app initialization
+await LicensedFeaturesLoader.registerLicensedFeatures();
+
+// Check if a specific feature is available
+if (LicensedFeaturesLoader.hasLicensedFeature('advanced_export')) {
+  // Use export functionality
+}
+
+// Get licence status
+final status = LicensedFeaturesLoader.getLicenceStatus();
+</code></pre>
+<h2 id="integration">Integration</h2>
+<p>This loader integrates with the main application's feature registry
+to provide seamless access to premium functionality throughout the app.</p>
+<h2 id="security">Security</h2>
+<p>All licensed features are validated against the current licence
+before being made available to the user.</p>
+</section>
 
 
     <section class="summary offset-anchor" id="classes">
@@ -69,7 +102,7 @@
 
 </dt>
 <dd>
-  
+  Licensed Features Loader for the full version of Teleferika
 </dd>
 
       </dl>
@@ -90,7 +123,7 @@
 
 </dt>
 <dd>
-  
+  Logger instance for licensed features loader
   <div class="features"><span class="feature">final</span></div>
 
 </dd>

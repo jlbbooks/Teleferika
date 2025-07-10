@@ -61,13 +61,21 @@ Teleferika includes comprehensive documentation generated with **DartDoc**:
    **For Open Source Contributors:**
    
    ```bash
+   # Linux/macOS
    ./scripts/setup-flavor.sh opensource
+   
+   # Windows (PowerShell)
+   .\scripts\setup-flavor.ps1 opensource
    ```
    
    **For Team Members (with licensed features access):**
    
    ```bash
+   # Linux/macOS
    ./scripts/setup-flavor.sh full
+   
+   # Windows (PowerShell)
+   .\scripts\setup-flavor.ps1 full
    ```
 
 4. **Run the app**
@@ -86,6 +94,7 @@ Teleferika supports two flavors:
 ### Switching Between Flavors
 
 ```bash
+# Linux/macOS
 # Switch to opensource
 ./scripts/setup-flavor.sh opensource
 
@@ -94,15 +103,26 @@ Teleferika supports two flavors:
 
 # Clean setup (removes build artifacts)
 ./scripts/setup-flavor.sh full true
+
+# Windows (PowerShell)
+# Switch to opensource
+.\scripts\setup-flavor.ps1 opensource
+
+# Switch to full version
+.\scripts\setup-flavor.ps1 full
+
+# Clean setup (removes build artifacts)
+.\scripts\setup-flavor.ps1 full true
 ```
 
 ## 🛠️ Development Workflow
 
 ### Using the Build Script
 
-The `build-app.sh` script provides a convenient way to manage the project:
+The `build-app.sh` / `build-app.ps1` script provides a convenient way to manage the project:
 
 ```bash
+# Linux/macOS
 # Setup a flavor
 ./scripts/build-app.sh setup opensource
 
@@ -114,6 +134,19 @@ The `build-app.sh` script provides a convenient way to manage the project:
 
 # Clean build artifacts
 ./scripts/build-app.sh clean
+
+# Windows (PowerShell)
+# Setup a flavor
+.\scripts\build-app.ps1 setup opensource
+
+# Build the app
+.\scripts\build-app.ps1 build opensource --mode release --type apk
+
+# Run the app
+.\scripts\build-app.ps1 run full --mode debug
+
+# Clean build artifacts
+.\scripts\build-app.ps1 clean
 ```
 
 ### Manual Flutter Commands
@@ -149,7 +182,11 @@ start doc/api/index.html  # Windows
 Run the test script to verify your development environment:
 
 ```bash
+# Linux/macOS
 ./scripts/test-setup.sh
+
+# Windows (PowerShell)
+.\scripts\test-setup.ps1
 ```
 
 This will test both opensource and full setups and verify the configuration is correct.

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="API docs for the didUpdateWidget method from the MapScreenState class, for the Dart programming language.">
   <title>didUpdateWidget method - MapScreenState class - map_screen library - Dart API</title>
 
@@ -63,7 +63,7 @@
 <span class="name ">didUpdateWidget</span>(<wbr><ol class="parameter-list single-line"> <li><span class="parameter" id="didUpdateWidget-param-oldWidget"><span>covariant</span> <span class="type-annotation"><a href="../../ui_screens_map_map_screen/MapScreen-class.html">MapScreen</a></span> <span class="parameter-name">oldWidget</span></span></li>
 </ol>)
 
-      
+      <div class="features"><span class="feature">override</span></div>
 
     </section>
     
@@ -71,15 +71,15 @@
   <p>Called whenever the widget configuration changes.</p>
 <p>If the parent widget rebuilds and requests that this location in the tree
 update to display a new widget with the same <a href="https://api.flutter.dev/flutter/dart-core/Object/runtimeType.html">runtimeType</a> and
-<code>Widget.key</code>, the framework will update the <a href="../../ui_widgets_status_indicator/StatusMixin/widget.html">widget</a> property of this
-<code>State</code> object to refer to the new widget and then call this method
+<a href="https://api.flutter.dev/flutter/widgets/Widget/key.html">Widget.key</a>, the framework will update the <a href="https://api.flutter.dev/flutter/widgets/State/widget.html">widget</a> property of this
+<a href="https://api.flutter.dev/flutter/widgets/State-class.html">State</a> object to refer to the new widget and then call this method
 with the previous widget as an argument.</p>
-<p>Override this method to respond when the <a href="../../ui_widgets_status_indicator/StatusMixin/widget.html">widget</a> changes (e.g., to start
+<p>Override this method to respond when the <a href="https://api.flutter.dev/flutter/widgets/State/widget.html">widget</a> changes (e.g., to start
 implicit animations).</p>
 <p>The framework always calls <a href="../../ui_screens_map_map_screen/MapScreenState/build.html">build</a> after calling <a href="../../ui_screens_map_map_screen/MapScreenState/didUpdateWidget.html">didUpdateWidget</a>, which
-means any calls to <a href="../../ui_widgets_status_indicator/StatusMixin/setState.html">setState</a> in <a href="../../ui_screens_map_map_screen/MapScreenState/didUpdateWidget.html">didUpdateWidget</a> are redundant.</p>
-<p>If a <code>State</code>'s <a href="../../ui_screens_map_map_screen/MapScreenState/build.html">build</a> method depends on an object that can itself
-change state, for example a <code>ChangeNotifier</code> or <a href="https://api.flutter.dev/flutter/dart-core/Stream-class.html">Stream</a>, or some
+means any calls to <a href="https://api.flutter.dev/flutter/widgets/State/setState.html">setState</a> in <a href="../../ui_screens_map_map_screen/MapScreenState/didUpdateWidget.html">didUpdateWidget</a> are redundant.</p>
+<p>If a <a href="https://api.flutter.dev/flutter/widgets/State-class.html">State</a>'s <a href="../../ui_screens_map_map_screen/MapScreenState/build.html">build</a> method depends on an object that can itself
+change state, for example a <a href="https://api.flutter.dev/flutter/foundation/ChangeNotifier-class.html">ChangeNotifier</a> or <a href="https://api.flutter.dev/flutter/dart-core/Stream-class.html">Stream</a>, or some
 other object to which one can subscribe to receive notifications, then
 be sure to subscribe and unsubscribe properly in <a href="../../ui_screens_map_map_screen/MapScreenState/initState.html">initState</a>,
 <a href="../../ui_screens_map_map_screen/MapScreenState/didUpdateWidget.html">didUpdateWidget</a>, and <a href="../../ui_screens_map_map_screen/MapScreenState/dispose.html">dispose</a>:</p>
@@ -92,7 +92,7 @@ replacing the object.</li>
 </ul>
 <p>Implementations of this method should start with a call to the inherited
 method, as in <code>super.didUpdateWidget(oldWidget)</code>.</p>
-<p><em>See the discussion at <code>Element.rebuild</code> for more information on when this
+<p><em>See the discussion at <a href="https://api.flutter.dev/flutter/widgets/Element/rebuild.html">Element.rebuild</a> for more information on when this
 method is called.</em></p>
 </section>
 

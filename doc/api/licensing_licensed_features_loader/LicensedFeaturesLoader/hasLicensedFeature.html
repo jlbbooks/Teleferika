@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="API docs for the hasLicensedFeature method from the LicensedFeaturesLoader class, for the Dart programming language.">
   <title>hasLicensedFeature method - LicensedFeaturesLoader class - licensed_features_loader library - Dart API</title>
 
@@ -63,8 +63,18 @@
     </section>
     
 <section class="desc markdown">
-  <p>Check if a specific licensed feature is available
-Returns true if the feature is available in the full version</p>
+  <p>Check if a specific licensed feature is available</p>
+<h2 id="parameters">Parameters</h2>
+<ul>
+<li><code>featureName</code>: The name of the feature to check</li>
+</ul>
+<h2 id="returns">Returns</h2>
+<p><code>true</code> if the feature is available, <code>false</code> otherwise</p>
+<h2 id="example">Example</h2>
+<pre class="language-dart"><code class="language-dart">if (LicensedFeaturesLoader.hasLicensedFeature('advanced_export')) {
+  // Show export options
+}
+</code></pre>
 </section>
 
 

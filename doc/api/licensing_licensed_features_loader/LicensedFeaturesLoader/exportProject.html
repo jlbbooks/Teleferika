@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="API docs for the exportProject method from the LicensedFeaturesLoader class, for the Dart programming language.">
   <title>exportProject method - LicensedFeaturesLoader class - licensed_features_loader library - Dart API</title>
 
@@ -65,8 +65,24 @@
     </section>
     
 <section class="desc markdown">
-  <p>Export project data using licensed export service
-Returns true if export was successful in the full version</p>
+  <p>Export project data using licensed export service</p>
+<p>Exports project data in the specified format using the premium
+export functionality.</p>
+<h2 id="parameters">Parameters</h2>
+<ul>
+<li><code>format</code>: The export format (e.g., 'kml', 'csv', 'geojson')</li>
+<li><code>project</code>: The project data to export</li>
+<li><code>points</code>: List of points to include in the export</li>
+</ul>
+<h2 id="returns">Returns</h2>
+<p><code>true</code> if export was successful, <code>false</code> otherwise</p>
+<h2 id="example">Example</h2>
+<pre class="language-dart"><code class="language-dart">final success = await LicensedFeaturesLoader.exportProject(
+  'kml',
+  projectData,
+  pointList,
+);
+</code></pre>
 </section>
 
 

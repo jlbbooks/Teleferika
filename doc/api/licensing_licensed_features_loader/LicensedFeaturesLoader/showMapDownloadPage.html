@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="API docs for the showMapDownloadPage method from the LicensedFeaturesLoader class, for the Dart programming language.">
   <title>showMapDownloadPage method - LicensedFeaturesLoader class - licensed_features_loader library - Dart API</title>
 
@@ -55,7 +55,7 @@
     <section class="multi-line-signature">
       
 <span class="returntype"><a href="https://api.flutter.dev/flutter/dart-core/Future-class.html">Future</a><span class="signature">&lt;<wbr><span class="type-parameter"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>&gt;</span></span>
-<span class="name ">showMapDownloadPage</span>(<wbr><ol class="parameter-list single-line"> <li><span class="parameter" id="showMapDownloadPage-param-context"><span class="type-annotation">BuildContext</span> <span class="parameter-name">context</span></span></li>
+<span class="name ">showMapDownloadPage</span>(<wbr><ol class="parameter-list single-line"> <li><span class="parameter" id="showMapDownloadPage-param-context"><span class="type-annotation"><a href="https://api.flutter.dev/flutter/widgets/BuildContext-class.html">BuildContext</a></span> <span class="parameter-name">context</span></span></li>
 </ol>)
 
       
@@ -63,8 +63,21 @@
     </section>
     
 <section class="desc markdown">
-  <p>Show map download page
-In the full version, this shows the map download page</p>
+  <p>Show map download page</p>
+<p>Navigates to the map download page where users can select
+areas and download offline map tiles.</p>
+<h2 id="parameters">Parameters</h2>
+<ul>
+<li><code>context</code>: The build context for navigation</li>
+</ul>
+<h2 id="returns">Returns</h2>
+<p><code>true</code> if navigation was successful, <code>false</code> otherwise</p>
+<h2 id="example">Example</h2>
+<pre class="language-dart"><code class="language-dart">final success = await LicensedFeaturesLoader.showMapDownloadPage(context);
+if (success) {
+  print('Map download page opened');
+}
+</code></pre>
 </section>
 
 

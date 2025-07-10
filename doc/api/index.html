@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="teleferika API docs, for the Dart programming language.">
   <title>teleferika - Dart API docs</title>
 
@@ -45,10 +45,43 @@
 <section class="desc markdown">
   <h1 id="teleferika">Teleferika</h1>
 <p>A Flutter mobile application for cable crane line planning and forest management.</p>
+<h2 id="-documentation">📚 Documentation</h2>
+<p>Teleferika includes comprehensive documentation generated with <strong>DartDoc</strong>:</p>
+<h3 id="-api-documentation">📖 API Documentation</h3>
+<ul>
+<li><strong>Generated Documentation</strong>: <code>doc/api/index.html</code></li>
+<li><strong>Generate Docs</strong>: <code>fvm dart doc</code></li>
+<li><strong>Documentation Guide</strong>: <a href="./DOCUMENTATION_GUIDE.md">DOCUMENTATION_GUIDE.md</a></li>
+</ul>
+<h3 id="-ui-documentation">🎨 UI Documentation</h3>
+<ul>
+<li><strong>Widget Documentation</strong>: All reusable UI widgets are fully documented</li>
+<li><strong>Usage Examples</strong>: Complete code examples for each widget</li>
+<li><strong>Accessibility Info</strong>: Screen reader support and keyboard navigation</li>
+<li><strong>Visual Design</strong>: Styling guidelines and design principles</li>
+</ul>
+<h3 id="-documentation-coverage">📋 Documentation Coverage</h3>
+<ul>
+<li>✅ <strong>Core Classes</strong>: Configuration, logging, state management</li>
+<li>✅ <strong>Database Models</strong>: All data models with validation</li>
+<li>✅ <strong>UI Widgets</strong>: Complete widget library with examples</li>
+<li>✅ <strong>Map Components</strong>: Map-related functionality</li>
+<li>✅ <strong>Licensing System</strong>: Feature control and license management</li>
+<li>✅ <strong>Localization</strong>: Internationalization support</li>
+</ul>
+<h3 id="-documentation-standards">🔧 Documentation Standards</h3>
+<ul>
+<li><strong>DartDoc Comments</strong>: Triple-slash (<code>///</code>) documentation</li>
+<li><strong>Usage Examples</strong>: Practical code examples</li>
+<li><strong>Parameter Documentation</strong>: Detailed parameter descriptions</li>
+<li><strong>Return Values</strong>: Clear return value documentation</li>
+<li><strong>Error Handling</strong>: Exception and error documentation</li>
+</ul>
 <h2 id="-quick-start">🚀 Quick Start</h2>
 <h3 id="prerequisites">Prerequisites</h3>
 <ul>
 <li><strong>Flutter SDK</strong> (3.0 or higher): <a href="https://docs.flutter.dev/get-started/install">Install Flutter</a></li>
+<li><strong>FVM</strong> (Flutter Version Manager): <a href="https://fvm.app/">Install FVM</a> - Recommended</li>
 <li><strong>Git</strong>: <a href="https://git-scm.com/downloads">Install Git</a></li>
 <li><strong>IDE</strong>: Android Studio or VS Code with Flutter extension</li>
 </ul>
@@ -68,15 +101,23 @@ cd teleferika
 <li>
 <p><strong>Set up the project for your needs</strong></p>
 <p><strong>For Open Source Contributors:</strong></p>
-<pre class="language-bash"><code class="language-bash">./scripts/setup-flavor.sh opensource
+<pre class="language-bash"><code class="language-bash"># Linux/macOS
+./scripts/setup-flavor.sh opensource
+   
+# Windows (PowerShell)
+.\scripts\setup-flavor.ps1 opensource
 </code></pre>
 <p><strong>For Team Members (with licensed features access):</strong></p>
-<pre class="language-bash"><code class="language-bash">./scripts/setup-flavor.sh full
+<pre class="language-bash"><code class="language-bash"># Linux/macOS
+./scripts/setup-flavor.sh full
+   
+# Windows (PowerShell)
+.\scripts\setup-flavor.ps1 full
 </code></pre>
 </li>
 <li>
 <p><strong>Run the app</strong></p>
-<pre class="language-bash"><code class="language-bash">flutter run --flavor opensource  # or 'full' for licensed version
+<pre class="language-bash"><code class="language-bash">fvm flutter run --flavor opensource  # or 'full' for licensed version
 </code></pre>
 </li>
 </ol>
@@ -87,7 +128,8 @@ cd teleferika
 <li><strong><code>full</code></strong>: Full version with licensed features and export functionality</li>
 </ul>
 <h3 id="switching-between-flavors">Switching Between Flavors</h3>
-<pre class="language-bash"><code class="language-bash"># Switch to opensource
+<pre class="language-bash"><code class="language-bash"># Linux/macOS
+# Switch to opensource
 ./scripts/setup-flavor.sh opensource
 
 # Switch to full version
@@ -95,11 +137,22 @@ cd teleferika
 
 # Clean setup (removes build artifacts)
 ./scripts/setup-flavor.sh full true
+
+# Windows (PowerShell)
+# Switch to opensource
+.\scripts\setup-flavor.ps1 opensource
+
+# Switch to full version
+.\scripts\setup-flavor.ps1 full
+
+# Clean setup (removes build artifacts)
+.\scripts\setup-flavor.ps1 full true
 </code></pre>
 <h2 id="-development-workflow">🛠️ Development Workflow</h2>
 <h3 id="using-the-build-script">Using the Build Script</h3>
-<p>The <code>build-app.sh</code> script provides a convenient way to manage the project:</p>
-<pre class="language-bash"><code class="language-bash"># Setup a flavor
+<p>The <code>build-app.sh</code> / <code>build-app.ps1</code> script provides a convenient way to manage the project:</p>
+<pre class="language-bash"><code class="language-bash"># Linux/macOS
+# Setup a flavor
 ./scripts/build-app.sh setup opensource
 
 # Build the app
@@ -110,40 +163,116 @@ cd teleferika
 
 # Clean build artifacts
 ./scripts/build-app.sh clean
+
+# Windows (PowerShell)
+# Setup a flavor
+.\scripts\build-app.ps1 setup opensource
+
+# Build the app
+.\scripts\build-app.ps1 build opensource --mode release --type apk
+
+# Run the app
+.\scripts\build-app.ps1 run full --mode debug
+
+# Clean build artifacts
+.\scripts\build-app.ps1 clean
 </code></pre>
 <h3 id="manual-flutter-commands">Manual Flutter Commands</h3>
-<pre class="language-bash"><code class="language-bash"># Run the app
-flutter run --flavor opensource --debug
-flutter run --flavor full --release
+<pre class="language-bash"><code class="language-bash"># Run the app (using FVM)
+fvm flutter run --flavor opensource --debug
+fvm flutter run --flavor full --release
 
 # Build APK
-flutter build apk --flavor opensource --release
-flutter build apk --flavor full --debug
+fvm flutter build apk --flavor opensource --release
+fvm flutter build apk --flavor full --debug
 
 # Build App Bundle
-flutter build appbundle --flavor opensource --release
-flutter build appbundle --flavor full --release
+fvm flutter build appbundle --flavor opensource --release
+fvm flutter build appbundle --flavor full --release
+</code></pre>
+<h3 id="documentation-generation">Documentation Generation</h3>
+<pre class="language-bash"><code class="language-bash"># Generate API documentation
+fvm dart doc
+
+# Open documentation in browser
+open doc/api/index.html  # macOS
+xdg-open doc/api/index.html  # Linux
+start doc/api/index.html  # Windows
 </code></pre>
 <h2 id="-testing-your-setup">🧪 Testing Your Setup</h2>
 <p>Run the test script to verify your development environment:</p>
-<pre class="language-bash"><code class="language-bash">./scripts/test-setup.sh
+<pre class="language-bash"><code class="language-bash"># Linux/macOS
+./scripts/test-setup.sh
+
+# Windows (PowerShell)
+.\scripts\test-setup.ps1
 </code></pre>
 <p>This will test both opensource and full setups and verify the configuration is correct.</p>
 <h2 id="-project-structure">📁 Project Structure</h2>
 <pre class="language-dart"><code>teleferika/
 ├── lib/                          # Main application code
 │   ├── core/                     # Core utilities and configuration
+│   │   ├── app_config.dart       # App configuration and themes
+│   │   ├── logger.dart           # Logging system
+│   │   ├── project_provider.dart # Global state provider
+│   │   └── utils/                # Utility functions
 │   ├── db/                       # Database models and helpers
+│   │   ├── database_helper.dart  # SQLite database operations
+│   │   └── models/               # Data models
 │   ├── l10n/                     # Localization files
 │   ├── licensing/                # License management
+│   ├── map/                      # Map-related functionality
 │   └── ui/                       # User interface components
+│       ├── screens/              # App screens
+│       └── widgets/              # Reusable UI widgets
 ├── scripts/                      # Build and setup scripts
 ├── licensed_features_package/    # Licensed features (full version only)
 ├── android/                      # Android-specific configuration
 ├── ios/                          # iOS-specific configuration
-└── assets/                       # App assets (images, etc.)
+├── assets/                       # App assets (images, etc.)
+├── doc/                          # Generated documentation
+│   └── api/                      # DartDoc API documentation
+├── dartdoc_options.yaml          # DartDoc configuration
+└── DOCUMENTATION_GUIDE.md        # Documentation guidelines
 </code></pre>
+<h2 id="-key-features">🎯 Key Features</h2>
+<h3 id="core-functionality">Core Functionality</h3>
+<ul>
+<li><strong>GPS-based point collection</strong> for cable crane positioning</li>
+<li><strong>Compass integration</strong> for directional measurements</li>
+<li><strong>Map visualization</strong> with OpenStreetMap integration</li>
+<li><strong>Project management</strong> for organizing multiple operations</li>
+<li><strong>Data export</strong> capabilities (full version)</li>
+<li><strong>Offline operation</strong> support</li>
+</ul>
+<h3 id="ui-components">UI Components</h3>
+<ul>
+<li><strong>Status Indicators</strong>: User feedback and notification widgets</li>
+<li><strong>Photo Management</strong>: Camera integration and gallery management</li>
+<li><strong>Permission Handling</strong>: Comprehensive permission management</li>
+<li><strong>Map Layers</strong>: Customizable map visualization components</li>
+<li><strong>Form Elements</strong>: Input fields and validation</li>
+<li><strong>Navigation</strong>: App bars, tabs, and navigation components</li>
+</ul>
+<h3 id="technical-features">Technical Features</h3>
+<ul>
+<li><strong>Global State Management</strong>: Provider-based state management</li>
+<li><strong>Database Integration</strong>: SQLite with automatic migrations</li>
+<li><strong>Localization</strong>: Multi-language support (English, Italian)</li>
+<li><strong>Theme Support</strong>: Light and dark theme configurations</li>
+<li><strong>Error Handling</strong>: Comprehensive error management</li>
+<li><strong>Logging</strong>: Structured logging throughout the application</li>
+</ul>
 <h2 id="-configuration">🔧 Configuration</h2>
+<h3 id="dartdoc-configuration">DartDoc Configuration</h3>
+<p>The project uses a comprehensive DartDoc setup with:</p>
+<ul>
+<li><strong>Output Directory</strong>: <code>doc/api/</code></li>
+<li><strong>Source Code Inclusion</strong>: Shows actual Dart source code</li>
+<li><strong>External Links</strong>: Links to Flutter API documentation</li>
+<li><strong>Categories</strong>: Organized documentation structure</li>
+<li><strong>Validation</strong>: Link validation and error checking</li>
+</ul>
 <h3 id="android-keystore-setup-for-play-store">Android Keystore Setup (for Play Store)</h3>
 <ol>
 <li>Create a <code>keys</code> directory in the project root</li>
@@ -160,8 +289,17 @@ storeFile=../../keys/keystore.jks
 <ul>
 <li>Development environment setup</li>
 <li>Code style and conventions</li>
+<li>Documentation standards</li>
 <li>Testing procedures</li>
 <li>Pull request process</li>
+</ul>
+<h3 id="documentation-guidelines">Documentation Guidelines</h3>
+<ul>
+<li>Follow the <a href="./DOCUMENTATION_GUIDE.md">DOCUMENTATION_GUIDE.md</a></li>
+<li>Use DartDoc comments for all public APIs</li>
+<li>Include usage examples and parameter documentation</li>
+<li>Maintain consistent documentation style</li>
+<li>Update documentation when adding new features</li>
 </ul>
 <h2 id="-license">📄 License</h2>
 <p>This project is licensed under the MIT License - see the <a href="LICENSE">LICENSE</a> file for details.</p>
@@ -189,8 +327,16 @@ storeFile=../../keys/keystore.jks
 <li>
 <p><strong>Build failures</strong></p>
 <ul>
-<li>Check Flutter version: <code>flutter --version</code></li>
-<li>Clean build: <code>flutter clean &amp;&amp; flutter pub get</code></li>
+<li>Check Flutter version: <code>fvm flutter --version</code></li>
+<li>Clean build: <code>fvm flutter clean &amp;&amp; fvm flutter pub get</code></li>
+</ul>
+</li>
+<li>
+<p><strong>Documentation generation issues</strong></p>
+<ul>
+<li>Check DartDoc configuration: <code>dartdoc_options.yaml</code></li>
+<li>Regenerate docs: <code>fvm dart doc</code></li>
+<li>Verify file permissions and paths</li>
 </ul>
 </li>
 </ol>
@@ -198,28 +344,28 @@ storeFile=../../keys/keystore.jks
 <ul>
 <li>Check the <a href="https://docs.flutter.dev/">Flutter documentation</a></li>
 <li>Review the <a href="./CONTRIBUTING.md">Contribution Guidelines</a></li>
+<li>Consult the <a href="./DOCUMENTATION_GUIDE.md">Documentation Guide</a></li>
 <li>Open an issue on GitHub for bugs or feature requests</li>
 </ul>
 <h2 id="-description">📖 Description</h2>
 <p>Teleferika is a mobile application designed to support cable crane line planning for forest operations. The application helps technicians optimize cable crane positioning to minimize environmental impact and improve operational efficiency.</p>
-<h3 id="key-features">Key Features</h3>
-<ul>
-<li><strong>GPS-based point collection</strong> for cable crane positioning</li>
-<li><strong>Compass integration</strong> for directional measurements</li>
-<li><strong>Map visualization</strong> with OpenStreetMap integration</li>
-<li><strong>Project management</strong> for organizing multiple operations</li>
-<li><strong>Data export</strong> capabilities (full version)</li>
-<li><strong>Offline operation</strong> support</li>
-</ul>
 <h3 id="target-users">Target Users</h3>
 <ul>
-<li>Forest technicians and operators</li>
-<li>Cable crane operators</li>
-<li>Environmental consultants</li>
-<li>Forest management professionals</li>
+<li><strong>Forest Technicians</strong>: Professionals managing cable crane operations</li>
+<li><strong>Surveyors</strong>: Field workers collecting geographic data</li>
+<li><strong>Project Managers</strong>: Coordinating multiple forest operations</li>
+<li><strong>Environmental Planners</strong>: Assessing and minimizing environmental impact</li>
 </ul>
-<hr>
-<p><strong>Note</strong>: The full version with licensed features requires access to the private licensed features repository. Open source contributors can use the opensource flavor which provides core functionality without export features.</p>
+<h3 id="use-cases">Use Cases</h3>
+<ul>
+<li><strong>Cable Crane Planning</strong>: Design optimal cable crane routes</li>
+<li><strong>Field Data Collection</strong>: GPS-based point collection and measurements</li>
+<li><strong>Project Organization</strong>: Manage multiple forest operations</li>
+<li><strong>Data Export</strong>: Export project data for analysis and reporting</li>
+<li><strong>Offline Operation</strong>: Work in remote areas without internet connectivity</li>
+</ul>
+<h2 id="-version-history">🔄 Version History</h2>
+<p>See <a href="./CHANGELOG.md">CHANGELOG.md</a> for a detailed history of changes and updates.</p>
 </section>
 
 
@@ -349,7 +495,7 @@ storeFile=../../keys/keystore.jks
   <span class="name"><a href="licensing_licensed_features_loader/">licensing/licensed_features_loader</a></span> 
 
 </dt>
-<dd>
+<dd>Licensed Features Loader for Full Version
 </dd>
 
           <dt id="licensed_features_loader_stub">

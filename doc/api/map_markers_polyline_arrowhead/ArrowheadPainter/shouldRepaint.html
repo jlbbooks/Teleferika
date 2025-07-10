@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="API docs for the shouldRepaint method from the ArrowheadPainter class, for the Dart programming language.">
   <title>shouldRepaint method - ArrowheadPainter class - polyline_arrowhead library - Dart API</title>
 
@@ -60,17 +60,17 @@
     </ol>
   </div>
 <span class="returntype"><a href="https://api.flutter.dev/flutter/dart-core/bool-class.html">bool</a></span>
-<span class="name ">shouldRepaint</span>(<wbr><ol class="parameter-list single-line"> <li><span class="parameter" id="shouldRepaint-param-oldDelegate"><span>covariant</span> <span class="type-annotation">CustomPainter</span> <span class="parameter-name">oldDelegate</span></span></li>
+<span class="name ">shouldRepaint</span>(<wbr><ol class="parameter-list single-line"> <li><span class="parameter" id="shouldRepaint-param-oldDelegate"><span>covariant</span> <span class="type-annotation"><a href="https://api.flutter.dev/flutter/rendering/CustomPainter-class.html">CustomPainter</a></span> <span class="parameter-name">oldDelegate</span></span></li>
 </ol>)
 
-      
+      <div class="features"><span class="feature">override</span></div>
 
     </section>
     
 <section class="desc markdown">
   <p>Called whenever a new instance of the custom painter delegate class is
-provided to the <code>RenderCustomPaint</code> object, or any time that a new
-<code>CustomPaint</code> object is created with a new instance of the custom painter
+provided to the <a href="https://api.flutter.dev/flutter/rendering/RenderCustomPaint-class.html">RenderCustomPaint</a> object, or any time that a new
+<a href="https://api.flutter.dev/flutter/widgets/CustomPaint-class.html">CustomPaint</a> object is created with a new instance of the custom painter
 delegate class (which amounts to the same thing, because the latter is
 implemented in terms of the former).</p>
 <p>If the new instance represents different information than the old
@@ -84,9 +84,9 @@ be repainted). It's also possible that the <a href="../../map_markers_polyline_a
 without <a href="../../map_markers_polyline_arrowhead/ArrowheadPainter/shouldRepaint.html">shouldRepaint</a> being called at all (e.g. if the box changes
 size).</p>
 <p>If a custom delegate has a particularly expensive paint function such that
-repaints should be avoided as much as possible, a <code>RepaintBoundary</code> or
-<code>RenderRepaintBoundary</code> (or other render object with
-<code>RenderObject.isRepaintBoundary</code> set to true) might be helpful.</p>
+repaints should be avoided as much as possible, a <a href="https://api.flutter.dev/flutter/widgets/RepaintBoundary-class.html">RepaintBoundary</a> or
+<a href="https://api.flutter.dev/flutter/rendering/RenderRepaintBoundary-class.html">RenderRepaintBoundary</a> (or other render object with
+<a href="https://api.flutter.dev/flutter/rendering/RenderObject/isRepaintBoundary.html">RenderObject.isRepaintBoundary</a> set to true) might be helpful.</p>
 <p>The <code>oldDelegate</code> argument will never be null.</p>
 </section>
 
