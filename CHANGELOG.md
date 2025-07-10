@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.32+73] - 2025-07-10
+### Added
+- Conditional localization mechanism for licensed features (LfpLocalizations)
+- Localization support for licensed features package
+- Enhanced map marker and point interaction features
+
+### Changed
+- Improved handling of unsaved points in map interactions
+- Enhanced MapMarkers to accept custom points list
+- Center map to current location when adding a point
+- Updated setup-flavor.sh for robust flavor-aware localization
+
+### Technical
+- Bumped licensed_features_package version and updated subproject commit
+- Updated CONTRIBUTING.md with documentation for conditional localization
+
 ## [0.9.31+72] - 2025-01-27
 ### Added
 - **Map Zoom Controls**: Added zoom in/out buttons with zoom level indicator

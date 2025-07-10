@@ -1,0 +1,11 @@
+<en-GB>
+- Conditional localization for premium features
+- Improved map marker and point interactions
+- Enhanced localization support for premium features
+</en-GB>
+
+<it-IT>
+- Localizzazione condizionale per le funzionalità premium
+- Migliorate le interazioni con i marker e i punti sulla mappa
+- Supporto localizzazione avanzato per le funzionalità premium
+</it-IT> 
