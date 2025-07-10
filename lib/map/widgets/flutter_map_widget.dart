@@ -125,6 +125,64 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
   void initState() {
     super.initState();
     _currentZoom = widget.initialMapZoom;
+
+    // Add listener to map controller to catch all zoom changes
+    widget.mapController.mapEventStream.listen((MapEvent event) {
+      // Handle all map events that might change zoom level
+      if (event is MapEventMove ||
+          event is MapEventRotate ||
+          event is MapEventFlingAnimation ||
+          event is MapEventDoubleTapZoom ||
+          event is MapEventScrollWheelZoom ||
+          event is MapEventNonRotatedSizeChange) {
+        final newZoom = event.camera.zoom;
+        if (_currentZoom != newZoom) {
+          final logger = Logger('FlutterMapWidget');
+          logger.info(
+            'FlutterMapWidget: Zoom changed from $_currentZoom to $newZoom via controller stream (event: ${event.runtimeType})',
+          );
+          if (mounted) {
+            setState(() {
+              _currentZoom = newZoom;
+            });
+          }
+        }
+      }
+    });
+  }
+
+  // Zoom in function with bounds checking
+  void _zoomIn() {
+    final newZoom = _currentZoom + 1.0;
+    if (newZoom <= widget.currentMapType.maxZoom) {
+      widget.mapController.move(widget.mapController.camera.center, newZoom);
+    } else {
+      // Set to maximum zoom if out of bounds
+      widget.mapController.move(
+        widget.mapController.camera.center,
+        widget.currentMapType.maxZoom.toDouble(),
+      );
+    }
+  }
+
+  // Zoom out function with bounds checking
+  void _zoomOut() {
+    final newZoom = _currentZoom - 1.0;
+    if (newZoom >= widget.currentMapType.minZoom) {
+      widget.mapController.move(widget.mapController.camera.center, newZoom);
+    } else {
+      // Set to minimum zoom if out of bounds
+      widget.mapController.move(
+        widget.mapController.camera.center,
+        widget.currentMapType.minZoom.toDouble(),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    // Clean up any listeners if needed
+    super.dispose();
   }
 
   @override
@@ -140,12 +198,20 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
               initialCenter: widget.initialMapCenter,
               initialZoom: widget.initialMapZoom,
               keepAlive: true,
+              minZoom: widget.currentMapType.minZoom.toDouble(),
+              maxZoom: widget.currentMapType.maxZoom.toDouble(),
               onMapEvent: (MapEvent event) {
-                if (event is MapEventMove) {
+                // Handle all map events that might change zoom
+                if (event is MapEventMove ||
+                    event is MapEventRotate ||
+                    event is MapEventFlingAnimation ||
+                    event is MapEventDoubleTapZoom ||
+                    event is MapEventScrollWheelZoom ||
+                    event is MapEventNonRotatedSizeChange) {
                   final newZoom = event.camera.zoom;
                   if (_currentZoom != newZoom) {
                     logger.info(
-                      'FlutterMapWidget: Zoom changed from $_currentZoom to $newZoom',
+                      'FlutterMapWidget: Zoom changed from $_currentZoom to $newZoom (event: ${event.runtimeType})',
                     );
                     setState(() {
                       _currentZoom = newZoom;
@@ -207,6 +273,7 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
                     },
                   ),
                 ],
+                alignment: AttributionAlignment.bottomLeft,
               ),
               const MapCompass.cupertino(hideIfRotatedNorth: true),
               // Add azimuth arrow marker on top of current location (drawn first, so it's below the location marker)
@@ -432,6 +499,106 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
               // Add additional layers if provided
               if (widget.additionalLayers != null) ...widget.additionalLayers!,
             ],
+          ),
+
+          // Zoom controls overlay - bottom right corner
+          Positioned(
+            right: 16.0,
+            bottom: 16.0,
+            child: Column(
+              children: [
+                // Zoom in button
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8.0),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 4.0,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    onPressed: _currentZoom >= widget.currentMapType.maxZoom
+                        ? null
+                        : _zoomIn,
+                    icon: Icon(
+                      Icons.add,
+                      color: _currentZoom >= widget.currentMapType.maxZoom
+                          ? Colors.red.withValues(alpha: 0.5)
+                          : Colors.black87,
+                    ),
+                    iconSize: 20.0,
+                    padding: const EdgeInsets.all(8.0),
+                    constraints: const BoxConstraints(
+                      minWidth: 40.0,
+                      minHeight: 40.0,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8.0),
+                // Zoom level indicator
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8.0,
+                    vertical: 4.0,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6.0),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 4.0,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    '${_currentZoom.toStringAsFixed(1)}',
+                    style: const TextStyle(
+                      fontSize: 12.0,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8.0),
+                // Zoom out button
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8.0),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 4.0,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    onPressed: _currentZoom <= widget.currentMapType.minZoom
+                        ? null
+                        : _zoomOut,
+                    icon: Icon(
+                      Icons.remove,
+                      color: _currentZoom <= widget.currentMapType.minZoom
+                          ? Colors.red.withValues(alpha: 0.5)
+                          : Colors.black87,
+                    ),
+                    iconSize: 20.0,
+                    padding: const EdgeInsets.all(8.0),
+                    constraints: const BoxConstraints(
+                      minWidth: 40.0,
+                      minHeight: 40.0,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       );
