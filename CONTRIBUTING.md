@@ -559,3 +559,15 @@ Contributors will be recognized in:
 - Contributor hall of fame
 
 Thank you for contributing to Teleferika! 🚀
+
+## Conditional Localization for Licensed Features
+
+This project uses a conditional export mechanism to include or exclude premium localizations (LfpLocalizations) based on the selected flavor (opensource or full):
+
+- `licensed_features_package/lib/l10n/lfp_localizations_conditional.dart` is not edited directly. It is managed by the setup-flavor scripts and points to either the real or stub implementation.
+- For the **full** flavor, it exports the real `lfp_localizations.dart`.
+- For the **opensource** flavor, it exports the stub `lfp_localizations_stub.dart` (which provides no-op implementations).
+- The correct file is copied by `scripts/setup-flavor.sh` or `scripts/setup-flavor.ps1` depending on the selected flavor.
+- In your app, always import LfpLocalizations from `lfp_localizations_conditional.dart`.
+
+This ensures that localization delegates and supportedLocales can be referenced safely in both flavors without build errors.

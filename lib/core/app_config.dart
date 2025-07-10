@@ -40,7 +40,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:licensed_features_package/l10n/lfp_localizations.dart';
+import 'package:licensed_features_package/l10n/lfp_localizations_conditional.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 
 /// Application configuration and constants for Teleferika.

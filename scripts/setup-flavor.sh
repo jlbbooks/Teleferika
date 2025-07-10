@@ -177,6 +177,13 @@ case $FLAVOR in
         cp "$LICENSED_PACKAGE_DIR/lib/licensed_features_loader_full.dart" "lib/licensing/licensed_features_loader.dart"
         print_success "Copied full loader"
 
+        # Copy the correct lfp_localizations_conditional.dart
+        if [[ "$FLAVOR" == "full" ]]; then
+          cp "$(dirname "$0")/../licensed_features_package/lib/l10n/lfp_localizations_conditional_full.dart" "$(dirname "$0")/../licensed_features_package/lib/l10n/lfp_localizations_conditional.dart"
+        else
+          cp "$(dirname "$0")/../licensed_features_package/lib/l10n/lfp_localizations_conditional_opensource.dart" "$(dirname "$0")/../licensed_features_package/lib/l10n/lfp_localizations_conditional.dart"
+        fi
+
         print_success "✅ Full version configuration applied"
         ;;
 
