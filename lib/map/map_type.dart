@@ -12,6 +12,8 @@ class MapType {
   final String? apiKey;
   final String? apiKeyParameterName;
   final String? cacheStoreName;
+  final int minZoom;
+  final int maxZoom;
 
   const MapType({
     required this.id,
@@ -25,6 +27,8 @@ class MapType {
     this.apiKey,
     this.apiKeyParameterName,
     this.cacheStoreName,
+    required this.minZoom,
+    required this.maxZoom,
   });
 
   // All map types defined directly in the list
@@ -37,6 +41,8 @@ class MapType {
       tileLayerAttribution: '© OpenStreetMap contributors',
       attributionUrl: 'https://openstreetmap.org/copyright',
       icon: Icons.map,
+      minZoom: 0,
+      maxZoom: 19,
     ),
     MapType(
       id: 'satellite',
@@ -48,6 +54,8 @@ class MapType {
           '© Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
       attributionUrl: 'https://www.esri.com/en-us/home',
       icon: Icons.satellite_alt,
+      minZoom: 0,
+      maxZoom: 23,
     ),
     MapType(
       id: 'terrain',
@@ -59,6 +67,8 @@ class MapType {
           '© Esri — Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012',
       attributionUrl: 'https://www.esri.com/en-us/home',
       icon: Icons.layers,
+      minZoom: 0,
+      maxZoom: 23,
     ),
     MapType(
       id: 'openTopoMap',
@@ -68,6 +78,8 @@ class MapType {
       tileLayerAttribution: '© OpenTopoMap contributors',
       attributionUrl: 'https://opentopomap.org/',
       icon: Icons.terrain_outlined,
+      minZoom: 0,
+      maxZoom: 17,
     ),
     MapType(
       id: 'cartoPositron',
@@ -79,6 +91,8 @@ class MapType {
       attributionUrl: 'https://carto.com/',
       icon: Icons.map_outlined,
       supportsRetina: true,
+      minZoom: 0,
+      maxZoom: 20,
     ),
     MapType(
       id: 'thunderforestOutdoors',
@@ -92,6 +106,8 @@ class MapType {
       icon: Icons.hiking,
       apiKey: null,
       apiKeyParameterName: 'apikey',
+      minZoom: 0,
+      maxZoom: 22,
     ),
     MapType(
       id: 'thunderforestLandscape',
@@ -105,6 +121,8 @@ class MapType {
       icon: Icons.landscape,
       apiKey: null,
       apiKeyParameterName: 'apikey',
+      minZoom: 0,
+      maxZoom: 22,
     ),
   ];
 
@@ -125,6 +143,8 @@ class MapType {
       apiKey: base.apiKey,
       apiKeyParameterName: base.apiKeyParameterName,
       cacheStoreName: 'mapStore_${base.id}',
+      minZoom: base.minZoom,
+      maxZoom: base.maxZoom,
     );
   }
 }

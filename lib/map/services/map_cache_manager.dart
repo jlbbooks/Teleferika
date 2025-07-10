@@ -5,6 +5,15 @@ import 'package:logging/logging.dart';
 import 'package:teleferika/map/map_type.dart';
 
 /// Service to manage cache stores, handle errors, and provide fallback mechanisms
+///
+/// RESEARCHED ZOOM LEVELS (tested via HTTP requests):
+/// - OpenStreetMap: 0-19 (confirmed: 0=200, 19=200, 20=404)
+/// - Esri Satellite (World_Imagery): 0-23 (confirmed: 0=200, 23=200)
+/// - Esri World Topo (World_Topo_Map): 0-23 (confirmed: 0=200, 23=200)
+/// - OpenTopoMap: 0-17 (confirmed: 0=200, 17=200, 18=404)
+/// - CartoDB Positron: 0-20 (confirmed: 0=200, 20=200)
+/// - Thunderforest Outdoors: 0-22 (confirmed: 0=200, 22=200, 23=404)
+/// - Thunderforest Landscape: 0-22 (same as Outdoors, based on Thunderforest docs)
 class MapCacheManager {
   static final Logger _logger = Logger('MapCacheManager');
 
