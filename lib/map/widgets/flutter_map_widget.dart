@@ -20,6 +20,7 @@ import 'package:teleferika/map/markers/polyline_arrowhead.dart';
 import 'package:teleferika/map/services/geometry_service.dart';
 import 'package:teleferika/map/services/map_cache_manager.dart';
 import 'package:teleferika/map/map_type.dart';
+import 'package:teleferika/map/state/map_state_manager.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class FlutterMapWidget extends StatefulWidget {
@@ -384,23 +385,42 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
                 ),
               // Point markers - rendered second (top layer)
               MarkerLayer(
-                markers: MapMarkers.buildAllMapMarkers(
-                  context: context,
-                  selectedPointId: widget.selectedPointId,
-                  isMovePointMode: widget.isMovePointMode,
-                  glowAnimationValue: widget.glowAnimationValue,
-                  currentPosition: widget.currentPosition,
-                  hasLocationPermission: widget.hasLocationPermission,
-                  headingFromFirstToLast: widget.connectingLineFromFirstToLast,
-                  onPointTap: widget.onPointTap,
-                  currentDeviceHeading: widget.currentDeviceHeading,
-                  // Slide functionality parameters
-                  onLongPressStart: widget.onLongPressStart,
-                  onLongPressMoveUpdate: widget.onLongPressMoveUpdate,
-                  onLongPressEnd: widget.onLongPressEnd,
-                  isSlidingMarker: widget.isSlidingMarker,
-                  slidingPointId: widget.slidingPointId,
-                ),
+                markers: () {
+                  // Get points from global state
+                  final projectState = context.projectStateListen;
+                  List<PointModel> points = List.from(
+                    projectState.currentPoints,
+                  );
+                  // Get MapStateManager from Provider
+                  final mapStateManager = Provider.of<MapStateManager>(
+                    context,
+                    listen: false,
+                  );
+                  final newPoint = mapStateManager.newPoint;
+                  if (newPoint != null &&
+                      !points.any((p) => p.id == newPoint.id)) {
+                    points.add(newPoint);
+                  }
+                  return MapMarkers.buildAllMapMarkers(
+                    context: context,
+                    selectedPointId: widget.selectedPointId,
+                    isMovePointMode: widget.isMovePointMode,
+                    glowAnimationValue: widget.glowAnimationValue,
+                    currentPosition: widget.currentPosition,
+                    hasLocationPermission: widget.hasLocationPermission,
+                    headingFromFirstToLast:
+                        widget.connectingLineFromFirstToLast,
+                    onPointTap: widget.onPointTap,
+                    currentDeviceHeading: widget.currentDeviceHeading,
+                    // Slide functionality parameters
+                    onLongPressStart: widget.onLongPressStart,
+                    onLongPressMoveUpdate: widget.onLongPressMoveUpdate,
+                    onLongPressEnd: widget.onLongPressEnd,
+                    isSlidingMarker: widget.isSlidingMarker,
+                    slidingPointId: widget.slidingPointId,
+                    points: points, // <-- pass custom points list
+                  );
+                }(),
                 rotate: true,
               ),
               // Sliding indicator - shows where the marker will be placed during sliding

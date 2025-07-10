@@ -27,9 +27,10 @@ class MapMarkers {
     required Function(PointModel, LongPressEndDetails) onLongPressEnd,
     required bool isSlidingMarker,
     required String? slidingPointId,
+    List<PointModel>? points, // <-- new optional parameter
   }) {
-    // Get points from global state
-    final projectPoints = context.projectStateListen.currentPoints;
+    // Use provided points if given, otherwise get from global state
+    final projectPoints = points ?? context.projectStateListen.currentPoints;
 
     List<Marker> projectPointMarkers = projectPoints.map((point) {
       return Marker(
