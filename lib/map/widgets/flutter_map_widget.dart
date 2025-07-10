@@ -557,7 +557,7 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
                     ],
                   ),
                   child: Text(
-                    '${_currentZoom.toStringAsFixed(1)}',
+                    _currentZoom.toStringAsFixed(1),
                     style: const TextStyle(
                       fontSize: 12.0,
                       fontWeight: FontWeight.w600,

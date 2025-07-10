@@ -160,6 +160,14 @@ class MapScreenState extends State<MapScreen>
   }
 
   void _handleAddPointButtonPressed() async {
+    // Center the map to the current location if available
+    if (_stateManager.currentPosition != null) {
+      final pos = _stateManager.currentPosition!;
+      _stateManager.mapController.move(
+        LatLng(pos.latitude, pos.longitude),
+        _stateManager.mapController.camera.zoom,
+      );
+    }
     await _stateManager.handleAddPointButtonPressed(context);
     if (!mounted) return;
     setState(() {});
