@@ -3,8 +3,13 @@ import 'package:flutter/material.dart';
 // Custom marker: red transparent accuracy circle with current location icon
 class CurrentLocationAccuracyMarker extends StatelessWidget {
   final double? accuracy;
+  final double zoomLevel;
 
-  const CurrentLocationAccuracyMarker({super.key, this.accuracy});
+  const CurrentLocationAccuracyMarker({
+    super.key,
+    this.accuracy,
+    required this.zoomLevel,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +18,10 @@ class CurrentLocationAccuracyMarker extends StatelessWidget {
       children: [
         CustomPaint(
           size: const Size(60, 60),
-          painter: AccuracyCirclePainter(accuracy: accuracy),
+          painter: AccuracyCirclePainter(
+            accuracy: accuracy,
+            zoomLevel: zoomLevel,
+          ),
         ),
         const Icon(Icons.my_location, color: Colors.black, size: 20),
       ],
@@ -23,21 +31,47 @@ class CurrentLocationAccuracyMarker extends StatelessWidget {
 
 class AccuracyCirclePainter extends CustomPainter {
   final double? accuracy;
+  final double zoomLevel;
 
-  AccuracyCirclePainter({this.accuracy});
+  AccuracyCirclePainter({this.accuracy, required this.zoomLevel});
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final double accuracyRadius = (accuracy != null)
-        ? (accuracy!.clamp(5, 50) / 50.0) * (size.width / 2)
-        : size.width / 2;
+
+    // Calculate the actual radius in pixels based on GPS accuracy and zoom level
+    double accuracyRadius;
+
+    if (accuracy != null && accuracy! > 0) {
+      // Convert meters to pixels at the current zoom level
+      // At zoom level 0, 1 pixel = ~156543 meters (at equator)
+      // Each zoom level doubles the resolution
+      final metersPerPixelAtZoom0 = 156543.0; // meters per pixel at zoom 0
+      final metersPerPixel = metersPerPixelAtZoom0 / (1 << zoomLevel.round());
+
+      // Calculate radius in pixels
+      final radiusInPixels = accuracy! / metersPerPixel;
+
+      // Clamp the radius to reasonable bounds (5 to 50 pixels)
+      accuracyRadius = radiusInPixels.clamp(5.0, 50.0);
+    } else {
+      // Default radius if no accuracy data
+      accuracyRadius = size.width / 2;
+    }
+
     final paint = Paint()
       ..color = Colors.red.withValues(alpha: 0.4)
       ..style = PaintingStyle.fill;
+
     canvas.drawCircle(center, accuracyRadius, paint);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    if (oldDelegate is AccuracyCirclePainter) {
+      return oldDelegate.accuracy != accuracy ||
+          oldDelegate.zoomLevel != zoomLevel;
+    }
+    return true;
+  }
 }

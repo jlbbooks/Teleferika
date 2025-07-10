@@ -308,6 +308,7 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
                 style: LocationMarkerStyle(
                   marker: CurrentLocationAccuracyMarker(
                     accuracy: widget.currentPosition?.accuracy,
+                    zoomLevel: _currentZoom,
                   ),
                   markerSize: const Size.square(60),
                   markerDirection: MarkerDirection.heading,
