@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.33+74] - 2025-07-10
+### Fixed
+- **Export Functionality**: Fixed hanging export dialog issue in licensed features
+  - Replaced modal dialog approach with OverlayEntry for reliable dismissal
+  - Added comprehensive logging to track export operation flow
+  - Improved error handling to ensure loading dialog is always dismissed
+  - Enhanced parameter validation with detailed debugging information
+  - Export operations now complete successfully and provide proper user feedback
+
+### Technical
+- Enhanced GPS accuracy circle implementation with proper meters-to-pixels conversion
+- Restored map download page initialization methods (_initializeZoomLevels and _loadLastKnownLocation)
+- Improved map preferences service integration for last known location loading
+
 ## [0.9.32+73] - 2025-07-10
 ### Added
 - Conditional localization mechanism for licensed features (LfpLocalizations)
