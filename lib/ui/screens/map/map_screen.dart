@@ -416,7 +416,10 @@ class MapScreenState extends State<MapScreen>
       _stateManager.endSlidingMarker(context);
       setState(() {});
 
-      showSuccessStatus('Point ${point.name} moved!');
+      // Only show status if not a NEW (unsaved) point
+      if (!point.isUnsaved) {
+        showSuccessStatus('Point ${point.name} moved!');
+      }
     }
   }
 

@@ -628,6 +628,21 @@ class MapStateManager extends ChangeNotifier {
     }
 
     try {
+      // Special handling for unsaved new point
+      if (newPoint != null && slidingPointId == newPoint!.id) {
+        // Update the newPoint's coordinates directly
+        newPoint = newPoint!.copyWith(
+          latitude: currentSlidePosition!.latitude,
+          longitude: currentSlidePosition!.longitude,
+        );
+        // Reset slide state
+        isSlidingMarker = false;
+        slidingPointId = null;
+        originalPosition = null;
+        currentSlidePosition = null;
+        notifyListeners();
+        return;
+      }
       // Get the point to update
       final projectState = Provider.of<ProjectStateManager>(
         context,
