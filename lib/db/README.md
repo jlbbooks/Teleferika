@@ -276,6 +276,61 @@ The migration maintains full backward compatibility:
 - Database helper provides the same methods
 - External packages (like licensed_features_package) work without changes
 
+### Data Migration from Old sqflite Database
+
+When users upgrade from the old sqflite version to the new drift version, their existing data needs to be migrated. This is handled automatically by the migration system.
+
+#### Migration Components
+
+1. **`SqliteMigrationHelper`**: Handles the actual data migration from old to new database
+2. **`MigrationService`**: Manages the migration process and user feedback
+3. **Automatic Detection**: The system automatically detects if migration is needed
+
+#### Migration Process
+
+1. **Detection**: App checks for old sqflite database on startup
+2. **Statistics**: Calculates how much data needs to be migrated
+3. **Migration**: Transfers all projects, points, and images to new database
+4. **Backup**: Creates a backup of the old database
+5. **Cleanup**: Removes the old database after successful migration
+6. **User Feedback**: Shows migration progress and results to user
+
+#### Migration Features
+
+- **Automatic**: No user intervention required
+- **Safe**: Creates backup before migration
+- **Comprehensive**: Migrates all data types (projects, points, images)
+- **Error Handling**: Graceful handling of migration failures
+- **Progress Feedback**: User sees migration progress and results
+- **Rollback**: Old database is preserved until migration succeeds
+
+#### Usage in App
+
+```dart
+// In your app startup (e.g., main.dart or initial screen)
+final migrationResult = await MigrationService.performMigrationIfNeeded();
+
+if (migrationResult.status != MigrationStatus.notNeeded) {
+  MigrationService.showMigrationDialog(context, migrationResult);
+}
+```
+
+#### Migration Statistics
+
+The migration system provides detailed statistics:
+- Number of projects migrated
+- Number of points migrated  
+- Number of images migrated
+- Migration success/failure status
+
+#### Error Handling
+
+If migration fails:
+- Old database remains untouched
+- User is informed of the error
+- App continues to work normally
+- Migration can be retried later
+
 ## Best Practices
 
 ### Database Operations
@@ -363,6 +418,22 @@ flutter packages pub run build_runner build
 2. **Data Integrity**: Ensure data consistency across migrations
 3. **Performance Impact**: Consider performance implications of schema changes
 4. **Rollback Strategy**: Plan for migration rollbacks if needed
+
+## Database Files
+
+The application uses the following database files:
+
+- **Drift Database**: `Teleferika.db` - New drift-based database (created fresh)
+- **Old Database**: `photogrammetry.db` - Legacy sqflite database (preserved for migration)
+
+### Database Naming Strategy
+
+To ensure safe migration from sqflite to drift:
+
+1. **Drift Database**: Uses `Teleferika.db` to avoid conflicts with existing data
+2. **Old Database**: Preserves `photogrammetry.db` for data migration
+3. **Initialization**: Drift database is initialized in `main()` before any UI loads
+4. **Migration**: Old data is migrated in `LoadingScreen` after drift is ready
 
 ---
 

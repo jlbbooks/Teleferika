@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:teleferika/core/app_config.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/licensing/feature_registry.dart';
+// --- Migration imports ---
+import 'package:teleferika/db/migration_service.dart';
 
 class LoadingScreen extends StatefulWidget {
   final String? appVersion;
@@ -17,6 +19,23 @@ class _LoadingScreenState extends State<LoadingScreen> {
   @override
   void initState() {
     super.initState();
+    _runMigrationIfNeeded();
+  }
+
+  Future<void> _runMigrationIfNeeded() async {
+    // Wait for the first frame so context is available
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Show migration progress dialog if needed
+      final migrationNeeded = await MigrationService.performMigrationIfNeeded();
+      if (migrationNeeded.status != MigrationStatus.notNeeded) {
+        // Show result dialog
+        if (mounted) {
+          await MigrationService.showMigrationDialog(context, migrationNeeded);
+        }
+      }
+      // After migration, continue with your normal loading flow (e.g., navigation)
+      // You can add navigation here if needed
+    });
   }
 
   @override

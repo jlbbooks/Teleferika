@@ -409,7 +409,7 @@ LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     try {
       final dbFolder = await getApplicationDocumentsDirectory();
-      final file = File(p.join(dbFolder.path, 'photogrammetry.db'));
+      final file = File(p.join(dbFolder.path, 'Teleferika.db'));
       logger.info('Database file path: ${file.path}');
 
       final database = NativeDatabase.createInBackground(file);
