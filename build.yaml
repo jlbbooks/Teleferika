@@ -1,0 +1,21 @@
+targets:
+  $default:
+    builders:
+      drift_dev|drift_dev:
+        options:
+          # Generate manager classes
+          generate_manager: true
+          # Use data class names for companions
+          use_data_class_name_for_companions: true
+          # Store DateTime values as text (ISO8601)
+          store_date_time_values_as_text: true
+          # Generate values in copyWith methods
+          generate_values_in_copy_with: true
+          # Use named parameters
+          named_parameters: true
+          # Apply converters on variables
+          apply_converters_on_variables: true
+          # Write to columns mixins
+          write_to_columns_mixins: true
+          # Assume correct reference
+          assume_correct_reference: true 

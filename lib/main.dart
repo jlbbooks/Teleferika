@@ -38,13 +38,13 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:teleferika/core/app_config.dart';
 import 'package:teleferika/core/project_state_manager.dart';
+import 'package:teleferika/db/drift_database_helper.dart';
 import 'package:teleferika/licensing/feature_registry.dart';
 import 'package:teleferika/licensing/licence_service.dart';
 import 'package:teleferika/licensing/licensed_features_loader.dart';
 import 'package:teleferika/ui/screens/loading/loading_screen.dart';
 
 import 'core/logger.dart';
-import 'db/database_helper.dart';
 import 'ui/screens/projects/projects_list_screen.dart';
 import 'map/services/map_cache_manager.dart';
 
@@ -93,7 +93,7 @@ void main() async {
     logger.info('LicenceService initialized');
 
     // Initialize database
-    await DatabaseHelper.instance.database;
+    await DriftDatabaseHelper.instance.database;
     logger.info('Database initialized');
 
     logger.info('App initialization complete');

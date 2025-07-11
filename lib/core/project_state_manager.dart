@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 import 'package:teleferika/core/utils/ordinal_manager.dart';
-import 'package:teleferika/db/database_helper.dart';
+import 'package:teleferika/db/drift_database_helper.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/core/app_config.dart';
@@ -20,7 +20,7 @@ class ProjectStateManager extends ChangeNotifier {
 
   ProjectStateManager._internal();
 
-  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  final DriftDatabaseHelper _dbHelper = DriftDatabaseHelper.instance;
 
   ProjectModel? _currentProject;
   List<PointModel> _currentPoints = [];
