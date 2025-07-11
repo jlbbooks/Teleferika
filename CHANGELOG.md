@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.11.0+76] - 2025-07-11
+### Added
+- **Database Migration System**: Complete migration from sqflite to Drift database framework
+  - Implemented automatic data migration from old sqflite database to new Drift database
+  - Added comprehensive migration service with user feedback during startup
+  - Created migration helper classes for seamless data transfer
+  - Integrated migration checks into app loading screen for transparent user experience
+  - Added detailed documentation for migration process and components
+
+### Changed
+- **Database Framework**: Migrated from sqflite to Drift for improved type safety and performance
+  - Replaced database_helper.dart with drift_database_helper.dart
+  - Updated database schema with Drift table definitions and data classes
+  - Enhanced database operations with type-safe queries and better error handling
+  - Improved database file naming to 'Teleferika.db' for consistency
+  - Updated build scripts to use modern 'dart run build_runner' commands
+
+### Technical
+- **Build System Updates**: Modernized build runner commands across all scripts
+  - Updated setup-flavor.sh and setup-flavor.ps1 to use 'dart run build_runner build'
+  - Replaced deprecated 'flutter packages pub run build_runner' commands
+  - Enhanced documentation with updated command references
+  - Improved build process consistency and reliability
+
 ## [0.10.0+76] - 2025-07-11
 ### Changed
 - **FlutterMap 8.2.0 Migration**: Updated to flutter_map 8.2.0 and removed deprecated dependencies
