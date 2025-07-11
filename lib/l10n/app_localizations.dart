@@ -1645,8 +1645,8 @@ abstract class S {
   /// Label for the gallery option in the add photo menu.
   ///
   /// In en, this message translates to:
-  /// **'Gallery'**
-  String get photo_manager_gallery;
+  /// **'{platform, select, android{Gallery} ios{Photos} other{Gallery}}'**
+  String photo_manager_gallery(String platform);
 
   /// Label for the camera option in the add photo menu.
   ///

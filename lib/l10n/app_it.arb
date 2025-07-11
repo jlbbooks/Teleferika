@@ -1221,9 +1221,15 @@
   "@photo_manager_no_photos": {
     "description": "Messaggio mostrato quando non ci sono foto nella gestione foto."
   },
-  "photo_manager_gallery": "Galleria",
+  "photo_manager_gallery": "{platform, select, android{Galleria} ios{Foto} other{Galleria}}",
   "@photo_manager_gallery": {
-    "description": "Etichetta per l'opzione galleria nel menu aggiungi foto."
+    "description": "Etichetta per l'opzione galleria nel menu aggiungi foto.",
+    "placeholders": {
+      "platform": {
+        "type": "String",
+        "example": "android"
+      }
+    }
   },
   "photo_manager_camera": "Fotocamera",
   "@photo_manager_camera": {

@@ -471,7 +471,18 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
             children: <Widget>[
               ListTile(
                 leading: const Icon(Icons.photo_library),
-                title: Text(S.of(context)?.photo_manager_gallery ?? 'Gallery'),
+                title: Text(
+                  S
+                          .of(context)
+                          ?.photo_manager_gallery(
+                            Platform.isAndroid
+                                ? 'android'
+                                : Platform.isIOS
+                                ? 'ios'
+                                : 'other',
+                          ) ??
+                      'Gallery',
+                ),
                 onTap: () {
                   logger.info('Gallery option selected.');
                   Navigator.of(context).pop();

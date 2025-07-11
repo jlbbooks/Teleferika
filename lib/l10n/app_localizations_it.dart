@@ -920,7 +920,14 @@ class SIt extends S {
   String get photo_manager_no_photos => 'Nessuna foto ancora.';
 
   @override
-  String get photo_manager_gallery => 'Galleria';
+  String photo_manager_gallery(String platform) {
+    String _temp0 = intl.Intl.selectLogic(platform, {
+      'android': 'Galleria',
+      'ios': 'Foto',
+      'other': 'Galleria',
+    });
+    return '$_temp0';
+  }
 
   @override
   String get photo_manager_camera => 'Fotocamera';

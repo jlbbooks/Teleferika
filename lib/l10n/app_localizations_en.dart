@@ -911,7 +911,14 @@ class SEn extends S {
   String get photo_manager_no_photos => 'No photos yet.';
 
   @override
-  String get photo_manager_gallery => 'Gallery';
+  String photo_manager_gallery(String platform) {
+    String _temp0 = intl.Intl.selectLogic(platform, {
+      'android': 'Gallery',
+      'ios': 'Photos',
+      'other': 'Gallery',
+    });
+    return '$_temp0';
+  }
 
   @override
   String get photo_manager_camera => 'Camera';
