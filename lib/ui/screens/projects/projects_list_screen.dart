@@ -99,7 +99,8 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       String versionInfo = '';
       if (widget.appVersion != null && widget.appVersion!.isNotEmpty) {
         versionInfo =
-            '${S.of(context)?.app_version_label(widget.appVersion!) ?? 'App Version: ${widget.appVersion}'}';
+            S.of(context)?.app_version_label(widget.appVersion!) ??
+            'App Version: ${widget.appVersion}';
       }
 
       Widget content;
@@ -280,7 +281,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
           ),
           _buildInfoRow(
             'Data Hash',
-            licence.generateDataHash().substring(0, 16) + '...',
+            '${licence.generateDataHash().substring(0, 16)}...',
           ),
         ]),
 
@@ -1022,34 +1023,36 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         logger.info('Has export feature: $hasExport');
 
         // Show licence details in dialog
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Enhanced Licence Test Results'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Email: ${importedLicence.email}'),
-                Text('Valid Until: ${importedLicence.validUntil.toLocal()}'),
-                Text('Features: ${importedLicence.features.join(', ')}'),
-                Text('Algorithm: ${importedLicence.algorithm}'),
-                Text(
-                  'Device Fingerprint: ${importedLicence.deviceFingerprint.substring(0, 16)}...',
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Enhanced Licence Test Results'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Email: ${importedLicence.email}'),
+                  Text('Valid Until: ${importedLicence.validUntil.toLocal()}'),
+                  Text('Features: ${importedLicence.features.join(', ')}'),
+                  Text('Algorithm: ${importedLicence.algorithm}'),
+                  Text(
+                    'Device Fingerprint: ${importedLicence.deviceFingerprint.substring(0, 16)}...',
+                  ),
+                  const SizedBox(height: 8),
+                  Text('Has Export Feature: $hasExport'),
+                  Text('Is Valid: ${importedLicence.isValid}'),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Close'),
                 ),
-                const SizedBox(height: 8),
-                Text('Has Export Feature: $hasExport'),
-                Text('Is Valid: ${importedLicence.isValid}'),
               ],
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Close'),
-              ),
-            ],
-          ),
-        );
+          );
+        }
       } else {
         showErrorStatus('Failed to save enhanced licence');
       }
@@ -1067,42 +1070,44 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       final deviceInfo = await DeviceFingerprint.getDeviceInfo();
 
       // Show fingerprint in dialog
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Device Fingerprint'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Fingerprint: ${fingerprint.substring(0, 32)}...'),
-              const SizedBox(height: 16),
-              const Text(
-                'Device Info:',
-                style: TextStyle(fontWeight: FontWeight.bold),
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Device Fingerprint'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Fingerprint: ${fingerprint.substring(0, 32)}...'),
+                const SizedBox(height: 16),
+                const Text(
+                  'Device Info:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                ...deviceInfo.entries.map(
+                  (entry) => Text('${entry.key}: ${entry.value}'),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
               ),
-              ...deviceInfo.entries.map(
-                (entry) => Text('${entry.key}: ${entry.value}'),
+              TextButton(
+                onPressed: () {
+                  // Copy fingerprint to clipboard
+                  // You can add clipboard functionality here
+                  Navigator.pop(context);
+                  showInfoStatus('Fingerprint copied to clipboard');
+                },
+                child: const Text('Copy'),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
-            ),
-            TextButton(
-              onPressed: () {
-                // Copy fingerprint to clipboard
-                // You can add clipboard functionality here
-                Navigator.pop(context);
-                showInfoStatus('Fingerprint copied to clipboard');
-              },
-              child: const Text('Copy'),
-            ),
-          ],
-        ),
-      );
+        );
+      }
     } catch (e, stackTrace) {
       logger.severe('Error generating device fingerprint', e, stackTrace);
       showErrorStatus('Failed to generate fingerprint: $e');
