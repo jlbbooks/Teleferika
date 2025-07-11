@@ -722,17 +722,7 @@ class DatabaseHelper {
   Future<int> deleteImage(String id) async {
     Database db = await instance.database;
     // TODO: Potentially re-sequence image ordinals if they have their own sequence per point
-    // For now, simple delete
-    // ImageModel? image = await getImageById(id); // You'd need a getImageById
-    // if (image != null) {
-    //   PointModel? point = await getPointById(image.pointId);
-    //   if (point != null) {
-    //     await _updateProjectTimestamp(point.projectId);
-    //   }
-    // }
-    ImageModel? image = await getImageById(
-      id,
-    ); // getImageById would need to be created
+    ImageModel? image = await getImageById(id);
 
     final result = await db.delete(
       ImageModel.tableName,
