@@ -11,13 +11,11 @@ import 'package:path_provider/path_provider.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
-import 'package:teleferika/licensing/licence_model.dart';
 import 'package:teleferika/licensing/licence_service.dart';
+import 'package:teleferika/licensing/licence_model.dart' as lm;
 import 'package:teleferika/licensing/licensed_features_loader.dart';
-import 'package:teleferika/licensing/enhanced_licence_service.dart';
 import 'package:teleferika/licensing/device_fingerprint.dart';
 import 'package:teleferika/licensing/licence_generator_utility.dart';
-import 'package:teleferika/licensing/enhanced_licence_model.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 
 import 'project_tabbed_screen.dart';
@@ -41,9 +39,9 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
   // Keep a local copy of projects to manipulate for instant UI updates
   List<ProjectModel> _currentProjects = [];
 
-  final LicenceService _licenceService =
-      LicenceService.instance; // Get LicenceService instance
-  Licence? _activeLicence; // To hold the loaded licence status
+  final EnhancedLicenceService _licenceService =
+      EnhancedLicenceService.instance; // Get EnhancedLicenceService instance
+  lm.EnhancedLicence? _activeLicence; // To hold the loaded licence status
 
   @override
   void initState() {
@@ -82,7 +80,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
 
   void _showLicenceInfoDialog() {
     // Reload to ensure we have the latest
-    _licenceService.currentLicence.then((licence) {
+    _licenceService.currentLicence.then((licence) async {
       if (!mounted) return;
       setState(() {
         _activeLicence = licence;
@@ -90,7 +88,6 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
 
       String title =
           S.of(context)?.license_information_title ?? 'Licence Information';
-      String contentText;
       List<Widget> actions = [
         TextButton(
           child: Text(S.of(context)?.close_button ?? 'Close'),
@@ -102,50 +99,32 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       String versionInfo = '';
       if (widget.appVersion != null && widget.appVersion!.isNotEmpty) {
         versionInfo =
-            '\n${S.of(context)?.app_version_label(widget.appVersion!) ?? 'App Version: ${widget.appVersion}'}';
+            '${S.of(context)?.app_version_label(widget.appVersion!) ?? 'App Version: ${widget.appVersion}'}';
       }
 
-      if (_activeLicence != null && _activeLicence!.isValid) {
-        contentText =
-            (S
-                    .of(context)
-                    ?.licence_active_content(
-                      _activeLicence!.email,
-                      DateFormat.yMMMd().add_Hm().format(
-                        _activeLicence!.validUntil.toLocal(),
-                      ),
-                    ) ??
-                'Licensed to: ${_activeLicence!.email}\nStatus: Active\nValid Until: ${DateFormat.yMMMd().add_Hm().format(_activeLicence!.validUntil.toLocal())}') +
-            versionInfo;
-      } else if (_activeLicence != null && !_activeLicence!.isValid) {
-        contentText =
-            (S
-                    .of(context)
-                    ?.licence_expired_content(
-                      _activeLicence!.email,
-                      DateFormat.yMMMd().add_Hm().format(
-                        _activeLicence!.validUntil.toLocal(),
-                      ),
-                    ) ??
-                'Licensed to: ${_activeLicence!.email}\nStatus: Expired\nValid Until: ${DateFormat.yMMMd().add_Hm().format(_activeLicence!.validUntil.toLocal())}\n\nPlease import a valid licence.') +
-            versionInfo;
-        actions.insert(
-          0,
-          TextButton(
-            child: Text(
-              S.of(context)?.import_new_licence ?? 'Import New Licence',
+      Widget content;
+      if (_activeLicence != null) {
+        // Enhanced license information display
+        content = _buildEnhancedLicenceInfo(_activeLicence!, versionInfo);
+
+        // Add action buttons based on license status
+        if (!_activeLicence!.isValid) {
+          actions.insert(
+            0,
+            TextButton(
+              child: Text(
+                S.of(context)?.import_new_licence ?? 'Import New Licence',
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _handleImportLicence();
+              },
             ),
-            onPressed: () {
-              Navigator.of(context).pop();
-              _handleImportLicence();
-            },
-          ),
-        );
+          );
+        }
       } else {
-        contentText =
-            (S.of(context)?.licence_none_content ??
-                'No active licence found. Please import a licence file to unlock premium features.') +
-            versionInfo;
+        // No license found
+        content = _buildNoLicenceInfo(versionInfo);
         actions.insert(
           0,
           TextButton(
@@ -162,13 +141,275 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text(title),
-            content: Text(contentText),
+            title: Row(
+              children: [
+                Icon(
+                  _activeLicence != null && _activeLicence!.isValid
+                      ? Icons.verified_user
+                      : Icons.security,
+                  color: _activeLicence != null && _activeLicence!.isValid
+                      ? Colors.green
+                      : (_activeLicence != null && !_activeLicence!.isValid
+                            ? Colors.red
+                            : Colors.grey),
+                ),
+                const SizedBox(width: 8),
+                Expanded(child: Text(title)),
+              ],
+            ),
+            content: SingleChildScrollView(child: content),
             actions: actions,
           );
         },
       );
     });
+  }
+
+  Widget _buildEnhancedLicenceInfo(
+    lm.EnhancedLicence licence,
+    String versionInfo,
+  ) {
+    final isExpired = !licence.isValid;
+    final isExpiringSoon = licence.expiresSoon;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Status section
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isExpired
+                ? Colors.red.shade50
+                : (isExpiringSoon
+                      ? Colors.orange.shade50
+                      : Colors.green.shade50),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isExpired
+                  ? Colors.red.shade200
+                  : (isExpiringSoon
+                        ? Colors.orange.shade200
+                        : Colors.green.shade200),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    isExpired
+                        ? Icons.error
+                        : (isExpiringSoon ? Icons.warning : Icons.check_circle),
+                    color: isExpired
+                        ? Colors.red
+                        : (isExpiringSoon ? Colors.orange : Colors.green),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    isExpired
+                        ? 'License Expired'
+                        : (isExpiringSoon
+                              ? 'License Expiring Soon'
+                              : 'License Active'),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isExpired
+                          ? Colors.red
+                          : (isExpiringSoon ? Colors.orange : Colors.green),
+                    ),
+                  ),
+                ],
+              ),
+              if (isExpired || isExpiringSoon) ...[
+                const SizedBox(height: 4),
+                Text(
+                  isExpired
+                      ? 'This license has expired and needs to be renewed.'
+                      : 'This license will expire soon. Consider renewing.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isExpired
+                        ? Colors.red.shade700
+                        : Colors.orange.shade700,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // License details section
+        _buildInfoSection('License Details', Icons.info_outline, [
+          _buildInfoRow('Email', licence.email),
+          _buildInfoRow('Customer ID', licence.customerId ?? 'Not specified'),
+          _buildInfoRow(
+            'Issued',
+            DateFormat.yMMMd().add_Hm().format(licence.issuedAt.toLocal()),
+          ),
+          _buildInfoRow(
+            'Valid Until',
+            DateFormat.yMMMd().add_Hm().format(licence.validUntil.toLocal()),
+          ),
+          _buildInfoRow('Days Remaining', '${licence.daysRemaining} days'),
+          _buildInfoRow('Max Devices', '${licence.maxDevices}'),
+          _buildInfoRow('Version', licence.version),
+        ]),
+
+        const SizedBox(height: 16),
+
+        // Features section
+        _buildInfoSection('Available Features', Icons.star, [
+          ...licence.features.map((feature) => _buildFeatureRow(feature)),
+        ]),
+
+        const SizedBox(height: 16),
+
+        // Technical details section
+        _buildInfoSection('Technical Details', Icons.security, [
+          _buildInfoRow('Algorithm', licence.algorithm),
+          _buildInfoRow(
+            'Device Fingerprint',
+            '${licence.deviceFingerprint.substring(0, 16)}...',
+          ),
+          _buildInfoRow(
+            'Data Hash',
+            licence.generateDataHash().substring(0, 16) + '...',
+          ),
+        ]),
+
+        if (versionInfo.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _buildInfoSection('App Information', Icons.app_settings_alt, [
+            _buildInfoRow('App Version', versionInfo),
+          ]),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildNoLicenceInfo(String versionInfo) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.info_outline, color: Colors.grey, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    'No License Found',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'No active license found. Please import a license file to unlock premium features.',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        if (versionInfo.isNotEmpty) ...[
+          _buildInfoSection('App Information', Icons.app_settings_alt, [
+            _buildInfoRow('App Version', versionInfo),
+          ]),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildInfoSection(String title, IconData icon, List<Widget> children) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 18, color: Colors.grey.shade600),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: Colors.grey.shade700,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Column(children: children),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              '$label:',
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 12,
+                color: Colors.grey.shade600,
+              ),
+            ),
+          ),
+          Expanded(child: Text(value, style: const TextStyle(fontSize: 12))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeatureRow(String feature) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Icon(Icons.check_circle, color: Colors.green, size: 16),
+          const SizedBox(width: 8),
+          Expanded(child: Text(feature, style: const TextStyle(fontSize: 12))),
+        ],
+      ),
+    );
   }
 
   void _showPremiumFeaturesDialog() {
@@ -301,7 +542,8 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       if (mounted) {
         if (importedLicence != null) {
           setState(() {
-            _activeLicence = importedLicence; // Update local state
+            _activeLicence =
+                importedLicence as lm.EnhancedLicence?; // Update local state
           });
           showSuccessStatus(
             S
@@ -678,8 +920,25 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
     try {
       logger.info('Testing import of demo license...');
 
-      // Create a demo license
-      final demoLicence = Licence.createDemo();
+      // Generate actual device fingerprint for the demo license
+      final deviceFingerprint = await DeviceFingerprint.generate();
+      logger.info(
+        'Generated device fingerprint for demo: ${deviceFingerprint.substring(0, 8)}...',
+      );
+
+      // Create a demo license with the actual device fingerprint
+      final demoLicence = lm.EnhancedLicence(
+        email: 'demo@example.com',
+        deviceFingerprint: deviceFingerprint,
+        validUntil: DateTime.now().add(const Duration(days: 30)),
+        features: ['advanced_export', 'map_download'],
+        customerId: 'demo',
+        maxDevices: 1,
+        issuedAt: DateTime.now(),
+        version: '1.0',
+        signature: 'demo-signature',
+        algorithm: 'RSA-SHA256',
+      );
       logger.info(
         'Created demo license: ${demoLicence.email}, valid: ${demoLicence.isValid}',
       );
@@ -744,12 +1003,10 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
 
       // Parse and validate the licence directly
       final licenceData = jsonDecode(licenceJson) as Map<String, dynamic>;
-      final importedLicence = EnhancedLicence.fromJson(licenceData);
+      final importedLicence = lm.EnhancedLicence.fromJson(licenceData);
 
       // Save the licence using the service
-      final saved = await EnhancedLicenceService.instance.saveLicence(
-        importedLicence,
-      );
+      final saved = await _licenceService.saveLicence(importedLicence);
 
       if (saved) {
         showSuccessStatus(
@@ -757,13 +1014,11 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         );
 
         // Show detailed status
-        final status = await EnhancedLicenceService.instance.getLicenceStatus();
+        final status = await _licenceService.validateLicence(importedLicence);
         logger.info('Enhanced licence status: $status');
 
         // Test feature access
-        final hasExport = await EnhancedLicenceService.instance.hasFeature(
-          'advanced_export',
-        );
+        final hasExport = await _licenceService.hasFeature('advanced_export');
         logger.info('Has export feature: $hasExport');
 
         // Show licence details in dialog
@@ -887,7 +1142,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         await EnhancedLicenceService.instance.importLicenceFromFile();
         showErrorStatus('Invalid licence was accepted - this is wrong!');
       } catch (e) {
-        if (e is LicenceError) {
+        if (e is lm.LicenceError) {
           showInfoStatus('Invalid licence correctly rejected: ${e.code}');
         } else {
           showErrorStatus('Unexpected error: $e');
@@ -896,76 +1151,6 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
     } catch (e, stackTrace) {
       logger.severe('Error testing licence validation', e, stackTrace);
       showErrorStatus('Validation test failed: $e');
-    }
-  }
-
-  Future<void> _compareLicenceSystems() async {
-    try {
-      logger.info('Comparing old vs new licence systems...');
-
-      // Initialize both services
-      await _licenceService.initialize();
-      await EnhancedLicenceService.instance.initialize();
-
-      // Get status from both systems
-      final oldStatus = await _licenceService.getLicenceStatus();
-      final newStatus = await EnhancedLicenceService.instance
-          .getLicenceStatus();
-
-      // Show comparison dialog
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Licence System Comparison'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Old System:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Text('Has Licence: ${oldStatus['hasLicence']}'),
-              Text('Is Valid: ${oldStatus['isValid']}'),
-              Text('Email: ${oldStatus['email'] ?? 'None'}'),
-              const SizedBox(height: 16),
-              const Text(
-                'New System:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Text('Has Licence: ${newStatus['hasLicence']}'),
-              Text('Is Valid: ${newStatus['isValid']}'),
-              Text('Email: ${newStatus['email'] ?? 'None'}'),
-              Text('Algorithm: ${newStatus['algorithm'] ?? 'None'}'),
-              if (newStatus['validationErrors'] != null &&
-                  (newStatus['validationErrors'] as List).isNotEmpty)
-                Text('Errors: ${newStatus['validationErrors']}'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
-            ),
-          ],
-        ),
-      );
-    } catch (e, stackTrace) {
-      logger.severe('Error comparing licence systems', e, stackTrace);
-      showErrorStatus('Comparison failed: $e');
-    }
-  }
-
-  Future<void> _clearEnhancedLicence() async {
-    try {
-      logger.info('Clearing enhanced licence...');
-
-      await EnhancedLicenceService.instance.clearAllData();
-
-      showInfoStatus('Enhanced licence cleared successfully!');
-    } catch (e, stackTrace) {
-      logger.severe('Error clearing enhanced licence', e, stackTrace);
-      showErrorStatus('Failed to clear enhanced licence: $e');
     }
   }
 
@@ -1236,12 +1421,6 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                         case 'test_validation':
                           _testLicenceValidation();
                           break;
-                        case 'compare_systems':
-                          _compareLicenceSystems();
-                          break;
-                        case 'clear_enhanced_license':
-                          _clearEnhancedLicence();
-                          break;
                         case 'clear_license':
                           _clearLicense();
                           break;
@@ -1324,27 +1503,6 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                                 Icon(Icons.security, size: 20),
                                 SizedBox(width: 8),
                                 Text('Test Licence Validation'),
-                              ],
-                            ),
-                          ),
-                          PopupMenuItem<String>(
-                            value: 'compare_systems',
-                            child: Row(
-                              children: [
-                                Icon(Icons.compare_arrows, size: 20),
-                                SizedBox(width: 8),
-                                Text('Compare Licence Systems'),
-                              ],
-                            ),
-                          ),
-                          const PopupMenuDivider(),
-                          PopupMenuItem<String>(
-                            value: 'clear_enhanced_license',
-                            child: Row(
-                              children: [
-                                Icon(Icons.clear_all, size: 20),
-                                SizedBox(width: 8),
-                                Text('Clear Enhanced Licence'),
                               ],
                             ),
                           ),

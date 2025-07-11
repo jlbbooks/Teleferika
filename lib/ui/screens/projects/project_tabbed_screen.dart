@@ -90,8 +90,8 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
 
   bool _projectWasSuccessfullySaved = false;
 
-  final LicenceService _licenceService =
-      LicenceService.instance; // Get instance
+  final EnhancedLicenceService _licenceService =
+      EnhancedLicenceService.instance; // Get instance
 
   // Add a GlobalKey to access the ProjectDetailsSection state
   final GlobalKey<ProjectDetailsSectionState> _detailsTabKey =

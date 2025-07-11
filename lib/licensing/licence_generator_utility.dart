@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:logging/logging.dart';
 import 'package:teleferika/licensing/device_fingerprint.dart';
-import 'package:teleferika/licensing/enhanced_licence_model.dart';
+import 'package:teleferika/licensing/licence_model.dart';
 
 /// Utility for generating test licences
 /// This is for demonstration and testing purposes only
@@ -146,12 +146,12 @@ class LicenceGeneratorUtility {
       final deviceInfo = await DeviceFingerprint.getDeviceInfo();
       final fingerprint = await DeviceFingerprint.generate();
 
-      print('=== Device Information ===');
+      _logger.info('=== Device Information ===');
       deviceInfo.forEach((key, value) {
-        print('$key: $value');
+        _logger.info('$key: $value');
       });
-      print('Device Fingerprint: ${fingerprint.substring(0, 16)}...');
-      print('========================');
+      _logger.info('Device Fingerprint: ${fingerprint.substring(0, 16)}...');
+      _logger.info('========================');
     } catch (e, stackTrace) {
       _logger.severe('Error printing device info', e, stackTrace);
     }
@@ -171,14 +171,14 @@ class LicenceGeneratorUtility {
         jsonDecode(content) as Map<String, dynamic>,
       );
 
-      print('=== Licence Validation ===');
-      print('Email: ${licence.email}');
-      print('Valid Until: ${licence.validUntil}');
-      print('Features: ${licence.features}');
-      print('Algorithm: ${licence.algorithm}');
-      print('Is Valid: ${licence.isValid}');
-      print('Days Remaining: ${licence.daysRemaining}');
-      print('========================');
+      _logger.info('=== Licence Validation ===');
+      _logger.info('Email: ${licence.email}');
+      _logger.info('Valid Until: ${licence.validUntil}');
+      _logger.info('Features: ${licence.features}');
+      _logger.info('Algorithm: ${licence.algorithm}');
+      _logger.info('Is Valid: ${licence.isValid}');
+      _logger.info('Days Remaining: ${licence.daysRemaining}');
+      _logger.info('========================');
 
       return licence.isValid;
     } catch (e, stackTrace) {
