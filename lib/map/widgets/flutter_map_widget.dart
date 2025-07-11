@@ -103,7 +103,7 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
   double _currentZoom = 14.0; // Default zoom level
 
   // Get the appropriate tile provider based on the current map type
-  TileProvider _getTileProvider(MapType mapType) {
+  TileProvider? _getTileProvider(MapType mapType) {
     final logger = Logger('FlutterMapWidget');
     logger.info(
       'Getting tile provider for ${mapType.name} with cache store: ${MapType.of(mapType.id).cacheStoreName ?? 'mapStore_${mapType.id}'}',
@@ -115,10 +115,14 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
       return tileProvider;
     } catch (e) {
       logger.warning(
-        'Failed to create cached tile provider, using cancellable provider: $e',
+        'Failed to create cached tile provider, using default provider: $e',
       );
-      // Fallback to cancellable network tile provider
-      return MapCacheManager.getCancellableTileProvider();
+      // Fallback to default tile provider (supports aborting requests natively in flutter_map 8.2.0)
+      return NetworkTileProvider(
+        cachingProvider: BuiltInMapCachingProvider.getOrCreateInstance(
+          maxCacheSize: 1_000_000_000, // 1 GB is the default
+        ),
+      );
     }
   }
 

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
-import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:logging/logging.dart';
 import 'package:teleferika/map/map_type.dart';
 
@@ -238,11 +237,5 @@ class MapCacheManager {
       final hasTiles = await hasTilesInStore(storeName);
       _logger.info('${mapType.name}: $storeName - Has tiles: $hasTiles');
     }
-  }
-
-  /// Get a cancellable tile provider for when caching is not available
-  static CancellableNetworkTileProvider getCancellableTileProvider() {
-    _logger.info('Creating cancellable tile provider');
-    return CancellableNetworkTileProvider();
   }
 }

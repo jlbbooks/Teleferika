@@ -46,7 +46,7 @@ captures/ # Flutter screenshot captures
 # Note: You SHOULD commit .fvm/fvm_config.json or .fvm_version (whichever your FVM setup uses)
 # So, a more specific rule for FVM might be:
 .fvm/*
-!.fvm/fvm_config.json
+#!.fvm/fvm_config.json
 # or just ensure you don't commit the flutter_sdk symlink if .fvm/ itself is not ignored.
 # Safest is often to ignore the whole .fvm directory and explicitly add the config file if necessary,
 # but the standard `.fvm/` entry is common if you manually manage the config file commit.
