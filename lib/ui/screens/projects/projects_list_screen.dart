@@ -1,4 +1,5 @@
 import 'dart:async'; // For Timer
+import 'dart:convert'; // For jsonDecode
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -13,6 +14,10 @@ import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/licensing/licence_model.dart';
 import 'package:teleferika/licensing/licence_service.dart';
 import 'package:teleferika/licensing/licensed_features_loader.dart';
+import 'package:teleferika/licensing/enhanced_licence_service.dart';
+import 'package:teleferika/licensing/device_fingerprint.dart';
+import 'package:teleferika/licensing/licence_generator_utility.dart';
+import 'package:teleferika/licensing/enhanced_licence_model.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 
 import 'project_tabbed_screen.dart';
@@ -719,6 +724,251 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
     }
   }
 
+  // Enhanced Licence Testing Methods
+  Future<void> _testEnhancedLicence() async {
+    try {
+      logger.info('Testing enhanced licence system...');
+
+      // Initialize enhanced service
+      await EnhancedLicenceService.instance.initialize();
+
+      // Generate device fingerprint
+      final fingerprint = await DeviceFingerprint.generate();
+      logger.info('Device fingerprint: ${fingerprint.substring(0, 16)}...');
+
+      // Generate test licence
+      final licenceJson = await LicenceGeneratorUtility.createDemoLicence(
+        email: 'test@enhanced.com',
+        validUntil: DateTime.now().add(const Duration(days: 365)),
+      );
+
+      // Parse and validate the licence directly
+      final licenceData = jsonDecode(licenceJson) as Map<String, dynamic>;
+      final importedLicence = EnhancedLicence.fromJson(licenceData);
+
+      // Save the licence using the service
+      final saved = await EnhancedLicenceService.instance.saveLicence(
+        importedLicence,
+      );
+
+      if (saved) {
+        showSuccessStatus(
+          'Enhanced licence imported: ${importedLicence.email}',
+        );
+
+        // Show detailed status
+        final status = await EnhancedLicenceService.instance.getLicenceStatus();
+        logger.info('Enhanced licence status: $status');
+
+        // Test feature access
+        final hasExport = await EnhancedLicenceService.instance.hasFeature(
+          'advanced_export',
+        );
+        logger.info('Has export feature: $hasExport');
+
+        // Show licence details in dialog
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Enhanced Licence Test Results'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Email: ${importedLicence.email}'),
+                Text('Valid Until: ${importedLicence.validUntil.toLocal()}'),
+                Text('Features: ${importedLicence.features.join(', ')}'),
+                Text('Algorithm: ${importedLicence.algorithm}'),
+                Text(
+                  'Device Fingerprint: ${importedLicence.deviceFingerprint.substring(0, 16)}...',
+                ),
+                const SizedBox(height: 8),
+                Text('Has Export Feature: $hasExport'),
+                Text('Is Valid: ${importedLicence.isValid}'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
+            ],
+          ),
+        );
+      } else {
+        showErrorStatus('Failed to save enhanced licence');
+      }
+    } catch (e, stackTrace) {
+      logger.severe('Error testing enhanced licence', e, stackTrace);
+      showErrorStatus('Enhanced licence test failed: $e');
+    }
+  }
+
+  Future<void> _generateDeviceFingerprint() async {
+    try {
+      logger.info('Generating device fingerprint...');
+
+      final fingerprint = await DeviceFingerprint.generate();
+      final deviceInfo = await DeviceFingerprint.getDeviceInfo();
+
+      // Show fingerprint in dialog
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Device Fingerprint'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Fingerprint: ${fingerprint.substring(0, 32)}...'),
+              const SizedBox(height: 16),
+              const Text(
+                'Device Info:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              ...deviceInfo.entries.map(
+                (entry) => Text('${entry.key}: ${entry.value}'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+            TextButton(
+              onPressed: () {
+                // Copy fingerprint to clipboard
+                // You can add clipboard functionality here
+                Navigator.pop(context);
+                showInfoStatus('Fingerprint copied to clipboard');
+              },
+              child: const Text('Copy'),
+            ),
+          ],
+        ),
+      );
+    } catch (e, stackTrace) {
+      logger.severe('Error generating device fingerprint', e, stackTrace);
+      showErrorStatus('Failed to generate fingerprint: $e');
+    }
+  }
+
+  Future<void> _testLicenceValidation() async {
+    try {
+      logger.info('Testing licence validation...');
+
+      await EnhancedLicenceService.instance.initialize();
+
+      // Test with invalid licence
+      final invalidLicenceJson = '''
+{
+  "data": {
+    "email": "test@invalid.com",
+    "deviceFingerprint": "invalid_fingerprint",
+    "validUntil": "2020-01-01T00:00:00Z",
+    "features": ["test_feature"],
+    "maxDevices": 1,
+    "issuedAt": "2020-01-01T00:00:00Z",
+    "version": "2.0"
+  },
+  "signature": "invalid_signature",
+  "algorithm": "RSA-SHA256"
+}
+''';
+
+      // Save invalid licence to temp file
+      final tempDir = await getTemporaryDirectory();
+      final invalidFile = File('${tempDir.path}/invalid_licence.lic');
+      await invalidFile.writeAsString(invalidLicenceJson);
+
+      // Try to import invalid licence
+      try {
+        await EnhancedLicenceService.instance.importLicenceFromFile();
+        showErrorStatus('Invalid licence was accepted - this is wrong!');
+      } catch (e) {
+        if (e is LicenceError) {
+          showInfoStatus('Invalid licence correctly rejected: ${e.code}');
+        } else {
+          showErrorStatus('Unexpected error: $e');
+        }
+      }
+    } catch (e, stackTrace) {
+      logger.severe('Error testing licence validation', e, stackTrace);
+      showErrorStatus('Validation test failed: $e');
+    }
+  }
+
+  Future<void> _compareLicenceSystems() async {
+    try {
+      logger.info('Comparing old vs new licence systems...');
+
+      // Initialize both services
+      await _licenceService.initialize();
+      await EnhancedLicenceService.instance.initialize();
+
+      // Get status from both systems
+      final oldStatus = await _licenceService.getLicenceStatus();
+      final newStatus = await EnhancedLicenceService.instance
+          .getLicenceStatus();
+
+      // Show comparison dialog
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Licence System Comparison'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Old System:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text('Has Licence: ${oldStatus['hasLicence']}'),
+              Text('Is Valid: ${oldStatus['isValid']}'),
+              Text('Email: ${oldStatus['email'] ?? 'None'}'),
+              const SizedBox(height: 16),
+              const Text(
+                'New System:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text('Has Licence: ${newStatus['hasLicence']}'),
+              Text('Is Valid: ${newStatus['isValid']}'),
+              Text('Email: ${newStatus['email'] ?? 'None'}'),
+              Text('Algorithm: ${newStatus['algorithm'] ?? 'None'}'),
+              if (newStatus['validationErrors'] != null &&
+                  (newStatus['validationErrors'] as List).isNotEmpty)
+                Text('Errors: ${newStatus['validationErrors']}'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      );
+    } catch (e, stackTrace) {
+      logger.severe('Error comparing licence systems', e, stackTrace);
+      showErrorStatus('Comparison failed: $e');
+    }
+  }
+
+  Future<void> _clearEnhancedLicence() async {
+    try {
+      logger.info('Clearing enhanced licence...');
+
+      await EnhancedLicenceService.instance.clearAllData();
+
+      showInfoStatus('Enhanced licence cleared successfully!');
+    } catch (e, stackTrace) {
+      logger.severe('Error clearing enhanced licence', e, stackTrace);
+      showErrorStatus('Failed to clear enhanced licence: $e');
+    }
+  }
+
   Widget _buildProjectItem(ProjectModel project) {
     // Determine if the item should be highlighted
     bool isHighlighted = project.id == _highlightedProjectId;
@@ -977,6 +1227,21 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                         case 'test_license':
                           _testImportExampleLicence();
                           break;
+                        case 'test_enhanced_licence':
+                          _testEnhancedLicence();
+                          break;
+                        case 'generate_fingerprint':
+                          _generateDeviceFingerprint();
+                          break;
+                        case 'test_validation':
+                          _testLicenceValidation();
+                          break;
+                        case 'compare_systems':
+                          _compareLicenceSystems();
+                          break;
+                        case 'clear_enhanced_license':
+                          _clearEnhancedLicence();
+                          break;
                         case 'clear_license':
                           _clearLicense();
                           break;
@@ -1028,6 +1293,58 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                                   S.of(context)?.install_demo_license ??
                                       'Install Demo License',
                                 ),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'test_enhanced_licence',
+                            child: Row(
+                              children: [
+                                Icon(Icons.bug_report, size: 20),
+                                SizedBox(width: 8),
+                                Text('Test Enhanced Licence'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuDivider(),
+                          PopupMenuItem<String>(
+                            value: 'generate_fingerprint',
+                            child: Row(
+                              children: [
+                                Icon(Icons.fingerprint, size: 20),
+                                SizedBox(width: 8),
+                                Text('Generate Device Fingerprint'),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'test_validation',
+                            child: Row(
+                              children: [
+                                Icon(Icons.security, size: 20),
+                                SizedBox(width: 8),
+                                Text('Test Licence Validation'),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'compare_systems',
+                            child: Row(
+                              children: [
+                                Icon(Icons.compare_arrows, size: 20),
+                                SizedBox(width: 8),
+                                Text('Compare Licence Systems'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuDivider(),
+                          PopupMenuItem<String>(
+                            value: 'clear_enhanced_license',
+                            child: Row(
+                              children: [
+                                Icon(Icons.clear_all, size: 20),
+                                SizedBox(width: 8),
+                                Text('Clear Enhanced Licence'),
                               ],
                             ),
                           ),

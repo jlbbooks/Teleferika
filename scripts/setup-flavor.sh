@@ -143,16 +143,16 @@ case $FLAVOR in
             print_warning "Directory '$LICENSED_PACKAGE_DIR' exists but is not a git repository."
             print_status "Removing existing directory and re-cloning..."
             rm -rf "$LICENSED_PACKAGE_DIR"
-            git clone "$LICENSED_REPO_URL" "$LICENSED_PACKAGE_DIR"
-            if [ $? -ne 0 ]; then
+            if ! git clone "$LICENSED_REPO_URL" "$LICENSED_PACKAGE_DIR"
+            then
                 print_error "Failed to clone licensed features repository from $LICENSED_REPO_URL."
                 print_error "Please ensure you have access to the repository and SSH keys are set up if needed."
                 exit 1
             fi
         else
             print_status "Cloning licensed features from $LICENSED_REPO_URL into $LICENSED_PACKAGE_DIR..."
-            git clone "$LICENSED_REPO_URL" "$LICENSED_PACKAGE_DIR"
-            if [ $? -ne 0 ]; then
+            if ! git clone "$LICENSED_REPO_URL" "$LICENSED_PACKAGE_DIR"
+            then
                 print_error "Failed to clone licensed features repository from $LICENSED_REPO_URL."
                 print_error "Please ensure you have access to the repository and SSH keys are set up if needed."
                 exit 1
