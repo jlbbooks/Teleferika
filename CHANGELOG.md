@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.0+76] - 2025-07-11
+### Changed
+- **FlutterMap 8.2.0 Migration**: Updated to flutter_map 8.2.0 and removed deprecated dependencies
+  - Removed `flutter_map_cancellable_tile_provider` package (deprecated since flutter_map 8.2.0)
+  - Updated tile provider fallback logic to use flutter_map's native `NetworkTileProvider`
+  - Simplified fallback mechanism by leveraging flutter_map 8.2.0's built-in request aborting support
+  - Updated MapCacheManager to remove deprecated `getCancellableTileProvider()` method
+  - Enhanced MapAreaSelector to use `NetworkTileProvider` with built-in caching
+  - Improved map download service to use default tile provider behavior
+
+### Technical
+- **Dependency Cleanup**: Removed unnecessary package dependencies
+  - Eliminated deprecated `flutter_map_cancellable_tile_provider` import from all files
+  - Updated import statements to use flutter_map's native tile provider classes
+  - Simplified tile provider selection logic across the application
+  - Enhanced error handling for tile provider fallback scenarios
+
+
 ## [0.9.33+74] - 2025-07-10
 ### Fixed
 - **Export Functionality**: Fixed hanging export dialog issue in licensed features
@@ -15,6 +33,7 @@ All notable changes to this project will be documented in this file.
 - Enhanced GPS accuracy circle implementation with proper meters-to-pixels conversion
 - Restored map download page initialization methods (_initializeZoomLevels and _loadLastKnownLocation)
 - Improved map preferences service integration for last known location loading
+
 
 ## [0.9.32+73] - 2025-07-10
 ### Added
