@@ -964,6 +964,50 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
   }
 
   Future<void> _clearLicense() async {
+    // Check if there's a license to clear
+    if (_activeLicence == null) {
+      showInfoStatus('No license installed to clear.');
+      return;
+    }
+
+    // Show confirmation dialog first
+    bool confirmClear =
+        await showDialog<bool>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Row(
+                children: [
+                  Icon(Icons.warning, color: Colors.orange, size: 24),
+                  const SizedBox(width: 8),
+                  Text(S.of(context)?.clear_license ?? 'Clear License'),
+                ],
+              ),
+              content: Text(
+                'Are you sure you want to clear the current license? This action cannot be undone and will remove access to premium features.',
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: Text(S.of(context)?.dialog_cancel ?? 'Cancel'),
+                  onPressed: () => Navigator.of(context).pop(false),
+                ),
+                TextButton(
+                  child: Text(
+                    S.of(context)?.clear_license ?? 'Clear License',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  onPressed: () => Navigator.of(context).pop(true),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+
+    if (!confirmClear) {
+      return; // User cancelled
+    }
+
     try {
       logger.info('Clearing license...');
 
