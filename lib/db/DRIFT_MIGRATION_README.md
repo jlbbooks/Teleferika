@@ -31,7 +31,7 @@ This document explains the migration from the existing sqflite-based database to
 ### Phase 2: Code Generation
 ```bash
 # Run the Drift code generator
-flutter packages pub run build_runner build
+dart run build_runner build
 ```
 
 ### Phase 3: Migration Implementation
@@ -202,8 +202,8 @@ test('should migrate data from sqflite to Drift', () async {
 1. **Code Generation Errors**
    ```bash
    # Clean and regenerate
-   flutter packages pub run build_runner clean
-   flutter packages pub run build_runner build
+   dart run build_runner clean
+   dart run build_runner build
    ```
 
 2. **Migration Failures**

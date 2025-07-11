@@ -132,7 +132,7 @@ class ProjectModel {
 Run the code generation to update the generated files:
 
 ```bash
-flutter packages pub run build_runner build
+dart run build_runner build
 ```
 
 ### Available Migration Operations
@@ -359,7 +359,7 @@ If migration fails:
 
 ### Common Issues
 
-1. **Code Generation Errors**: Run `flutter packages pub run build_runner build`
+1. **Code Generation Errors**: Run `dart run build_runner build`
 2. **Migration Failures**: Check logs for specific error messages
 3. **Type Errors**: Ensure all model fields match table definitions
 4. **Performance Issues**: Use transactions for bulk operations
@@ -393,14 +393,14 @@ Run code generation after schema changes:
 
 ```bash
 # Generate code
-flutter packages pub run build_runner build
+dart run build_runner build
 
 # Watch for changes (development)
-flutter packages pub run build_runner watch
+dart run build_runner watch
 
 # Clean and regenerate
-flutter packages pub run build_runner clean
-flutter packages pub run build_runner build
+dart run build_runner clean
+dart run build_runner build
 ```
 
 ## Future Considerations

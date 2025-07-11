@@ -222,7 +222,7 @@ if ($LASTEXITCODE -eq 0) {
 Write-Status "Generating code if needed..."
 if (Select-String -Path "pubspec.yaml" -Pattern "build_runner" -Quiet) {
     Write-Status "Running build_runner..."
-    $buildResult = flutter packages pub run build_runner build --delete-conflicting-outputs 2>&1
+    $buildResult = dart run build_runner build --delete-conflicting-outputs 2>&1
     if ($LASTEXITCODE -eq 0) {
         Write-Success "✅ Code generation completed"
     } else {

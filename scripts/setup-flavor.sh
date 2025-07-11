@@ -207,7 +207,7 @@ fi
 print_status "Generating code if needed..."
 if grep -q "build_runner" pubspec.yaml; then
     print_status "Running build_runner..."
-    if flutter packages pub run build_runner build --delete-conflicting-outputs; then
+    if dart run build_runner build --delete-conflicting-outputs; then
         print_success "✅ Code generation completed"
     else
         print_error "Build runner failed."
