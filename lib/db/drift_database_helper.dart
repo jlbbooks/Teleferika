@@ -14,8 +14,12 @@ import 'database.dart';
 
 /// Drift-based database helper that provides a similar interface to the original DatabaseHelper
 /// but uses Drift for type-safe database operations.
+///
+/// ## Database Versioning
+/// Drift handles database versioning through the `schemaVersion` property in `TeleferikaDatabase`.
+/// Schema migrations are managed in the `MigrationStrategy` in the database class.
+/// This helper class doesn't need to track version numbers as Drift handles this automatically.
 class DriftDatabaseHelper {
-  static const _databaseVersion = 1; // Start fresh with Drift
   static final Logger _logger = Logger('DriftDatabaseHelper');
 
   DriftDatabaseHelper._privateConstructor() {
