@@ -625,6 +625,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
           _selectedProjectIdsForMultiSelect,
         );
         for (String id in idsToDelete) {
+          // ignore: use_build_context_synchronously
           final success = await context.projectState.deleteProject(id);
           if (!success) {
             logger.warning("Failed to delete project $id");

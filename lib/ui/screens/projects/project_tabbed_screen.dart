@@ -159,7 +159,9 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
     }
     // Optionally reload from DB to get any DB-generated fields
     // Reload the project into global state to ensure we have the latest data
+    // ignore: use_build_context_synchronously
     await context.projectState.loadProject(widget.project.id);
+    // ignore: use_build_context_synchronously
     final dbProject = context.projectState.currentProject;
     if (dbProject != null && mounted) {
       setState(() {

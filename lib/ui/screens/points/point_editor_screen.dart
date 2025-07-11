@@ -207,10 +207,12 @@ class _PointEditorScreenState extends State<PointEditorScreen>
         e,
         stackTrace,
       );
-      showErrorStatus(
-        S.of(context)?.error_saving_point(e.toString()) ??
-            'Error saving point: ${e.toString()}',
-      );
+      if (mounted) {
+        showErrorStatus(
+          S.of(context)?.error_saving_point(e.toString()) ??
+              'Error saving point: ${e.toString()}',
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {
