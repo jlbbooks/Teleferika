@@ -5,9 +5,9 @@
   "licenceKey": "DEMO-KEY-12345",
   "features": [
     "export_csv",
-    "export_kml",
+    "export_basic",
     "map_download",
-    "advanced_export"
+    "export_advanced"
   ],
   "customerId": "CUST001",
   "version": "1.0.0"

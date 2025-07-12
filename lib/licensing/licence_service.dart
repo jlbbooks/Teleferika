@@ -474,10 +474,10 @@ class LicenceService {
   Future<bool> installDevelopmentLicense({
     required String email,
     List<String> features = const [
-      'export_csv',
-      'export_kml',
-      'map_download',
-      'advanced_export',
+              'export_csv',
+        'export_basic',
+        'map_download',
+        'export_advanced',
     ],
     int maxDevices = 1,
   }) async {

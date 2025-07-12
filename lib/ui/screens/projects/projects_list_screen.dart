@@ -987,9 +987,9 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         email: 'dev@example.com',
         features: [
           'export_csv',
-          'export_kml',
+          'export_basic',
           'map_download',
-          'advanced_export',
+          'export_advanced',
         ],
         maxDevices: 1,
       );
@@ -1204,9 +1204,9 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
     // Available features for request
     const availableFeatures = [
       'export_csv',
-      'export_kml',
+      'export_basic',
       'map_download',
-      'advanced_export',
+      'export_advanced',
     ];
 
     return showDialog<Map<String, dynamic>>(
