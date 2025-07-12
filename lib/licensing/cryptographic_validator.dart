@@ -34,13 +34,24 @@ vwIDAQAB
     String base64Signature,
   ) async {
     try {
+      _logger.info('Starting signature verification...');
       final publicKeyPem = await _getPublicKeyPem();
+      _logger.info(
+        'Got public key PEM (first 50 chars): ${publicKeyPem.substring(0, 50)}...',
+      );
+
       final publicKey = _parsePublicKeyFromPem(publicKeyPem);
+      _logger.info('Parsed public key successfully');
+
       final signer = RSASigner(SHA256Digest(), '0609608648016503040201');
       signer.init(false, PublicKeyParameter<RSAPublicKey>(publicKey));
 
       final signatureBytes = base64Decode(base64Signature);
       final dataBytes = Uint8List.fromList(utf8.encode(data));
+
+      _logger.info(
+        'Data length: ${dataBytes.length}, Signature length: ${signatureBytes.length}',
+      );
 
       final isValid = signer.verifySignature(
         dataBytes,
@@ -48,6 +59,8 @@ vwIDAQAB
       );
       if (!isValid) {
         _logger.warning('Signature verification failed');
+      } else {
+        _logger.info('Signature verification successful');
       }
       return isValid;
     } catch (e, stackTrace) {
