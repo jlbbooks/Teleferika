@@ -1392,5 +1392,137 @@
   "pointDetailsSectionTitle": "Dettagli Punto",
   "@pointDetailsSectionTitle": {
     "description": "Titolo della sezione dettagli punto (coordinate, altitudine, nota) nell'editor punto."
+  },
+  "no_license_to_clear": "Nessuna licenza installata da rimuovere.",
+  "@no_license_to_clear": {
+    "description": "Messaggio mostrato quando si tenta di rimuovere una licenza ma nessuna è installata."
+  },
+  "enhanced_licence_test_results": "Risultati Test Licenza Avanzata",
+  "@enhanced_licence_test_results": {
+    "description": "Titolo per il dialogo risultati test licenza avanzata."
+  },
+  "email_label": "Email:",
+  "@email_label": {
+    "description": "Etichetta per il campo email."
+  },
+  "valid_until_label": "Valida fino a:",
+  "@valid_until_label": {
+    "description": "Etichetta per il campo valida fino a."
+  },
+  "features_label": "Funzionalità:",
+  "@features_label": {
+    "description": "Etichetta per il campo funzionalità."
+  },
+  "algorithm_label": "Algoritmo:",
+  "@algorithm_label": {
+    "description": "Etichetta per il campo algoritmo."
+  },
+  "has_export_feature_label": "Ha funzionalità di esportazione:",
+  "@has_export_feature_label": {
+    "description": "Etichetta per lo stato della funzionalità di esportazione."
+  },
+  "is_valid_label": "È valida:",
+  "@is_valid_label": {
+    "description": "Etichetta per lo stato di validità."
+  },
+  "device_fingerprint_title": "Impronta Digitale Dispositivo",
+  "@device_fingerprint_title": {
+    "description": "Titolo per il dialogo impronta digitale dispositivo."
+  },
+  "fingerprint_label": "Impronta digitale:",
+  "@fingerprint_label": {
+    "description": "Etichetta per il campo impronta digitale."
+  },
+  "device_info_label": "Informazioni Dispositivo:",
+  "@device_info_label": {
+    "description": "Etichetta per la sezione informazioni dispositivo."
+  },
+  "copy_button": "Copia",
+  "@copy_button": {
+    "description": "Etichetta per il pulsante copia."
+  },
+  "license_status_label": "Stato Licenza",
+  "@license_status_label": {
+    "description": "Etichetta per lo stato della licenza."
+  },
+  "test_enhanced_licence": "Test Licenza Avanzata",
+  "@test_enhanced_licence": {
+    "description": "Etichetta per il pulsante test licenza avanzata."
+  },
+  "generate_device_fingerprint": "Genera Impronta Digitale Dispositivo",
+  "@generate_device_fingerprint": {
+    "description": "Etichetta per il pulsante genera impronta digitale dispositivo."
+  },
+  "test_licence_validation": "Test Validazione Licenza",
+  "@test_licence_validation": {
+    "description": "Etichetta per il pulsante test validazione licenza."
+  },
+  "error_importing_licence": "Errore durante l'importazione della licenza: {error}",
+  "@error_importing_licence": {
+    "description": "Messaggio di errore quando l'importazione della licenza fallisce.",
+    "placeholders": {
+      "error": { "type": "String", "example": "Formato non valido" }
+    }
+  },
+  "error_importing_demo_license": "Errore durante l'importazione della licenza demo: {error}",
+  "@error_importing_demo_license": {
+    "description": "Messaggio di errore quando l'importazione della licenza demo fallisce.",
+    "placeholders": {
+      "error": { "type": "String", "example": "Formato non valido" }
+    }
+  },
+  "error_clearing_license": "Errore durante la rimozione della licenza: {error}",
+  "@error_clearing_license": {
+    "description": "Messaggio di errore quando la rimozione della licenza fallisce.",
+    "placeholders": {
+      "error": { "type": "String", "example": "Permesso negato" }
+    }
+  },
+  "failed_to_save_enhanced_licence": "Impossibile salvare la licenza avanzata",
+  "@failed_to_save_enhanced_licence": {
+    "description": "Messaggio di errore quando il salvataggio della licenza avanzata fallisce."
+  },
+  "enhanced_licence_test_failed": "Test licenza avanzata fallito: {error}",
+  "@enhanced_licence_test_failed": {
+    "description": "Messaggio di errore quando il test della licenza avanzata fallisce.",
+    "placeholders": {
+      "error": { "type": "String", "example": "Errore di rete" }
+    }
+  },
+  "fingerprint_copied_to_clipboard": "Impronta digitale copiata negli appunti",
+  "@fingerprint_copied_to_clipboard": {
+    "description": "Messaggio di successo quando l'impronta digitale viene copiata negli appunti."
+  },
+  "failed_to_generate_fingerprint": "Impossibile generare l'impronta digitale: {error}",
+  "@failed_to_generate_fingerprint": {
+    "description": "Messaggio di errore quando la generazione dell'impronta digitale fallisce.",
+    "placeholders": {
+      "error": { "type": "String", "example": "Errore dispositivo" }
+    }
+  },
+  "invalid_licence_accepted_error": "Licenza non valida accettata - questo è sbagliato!",
+  "@invalid_licence_accepted_error": {
+    "description": "Messaggio di errore quando una licenza non valida viene accettata erroneamente."
+  },
+  "invalid_licence_correctly_rejected": "Licenza non valida correttamente rifiutata: {code}",
+  "@invalid_licence_correctly_rejected": {
+    "description": "Messaggio informativo quando una licenza non valida viene correttamente rifiutata.",
+    "placeholders": {
+      "code": { "type": "String", "example": "FIRMA_NON_VALIDA" }
+    }
+  },
+  "unexpected_error": "Errore imprevisto: {error}",
+  "@unexpected_error": {
+    "description": "Messaggio di errore generico per errori imprevisti.",
+    "placeholders": {
+      "error": { "type": "String", "example": "Errore sconosciuto" }
+    }
+  },
+  "validation_test_failed": "Test di validazione fallito: {error}",
+  "@validation_test_failed": {
+    "description": "Messaggio di errore quando il test di validazione fallisce.",
+    "placeholders": {
+      "error": { "type": "String", "example": "Errore test" }
+    }
   }
 }

@@ -1827,6 +1827,168 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Point Details'**
   String get pointDetailsSectionTitle;
+
+  /// Message shown when trying to clear a license but none is installed.
+  ///
+  /// In en, this message translates to:
+  /// **'No license installed to clear.'**
+  String get no_license_to_clear;
+
+  /// Title for enhanced licence test results dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Enhanced Licence Test Results'**
+  String get enhanced_licence_test_results;
+
+  /// Label for email field.
+  ///
+  /// In en, this message translates to:
+  /// **'Email:'**
+  String get email_label;
+
+  /// Label for valid until field.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid Until:'**
+  String get valid_until_label;
+
+  /// Label for features field.
+  ///
+  /// In en, this message translates to:
+  /// **'Features:'**
+  String get features_label;
+
+  /// Label for algorithm field.
+  ///
+  /// In en, this message translates to:
+  /// **'Algorithm:'**
+  String get algorithm_label;
+
+  /// Label for export feature status.
+  ///
+  /// In en, this message translates to:
+  /// **'Has Export Feature:'**
+  String get has_export_feature_label;
+
+  /// Label for validity status.
+  ///
+  /// In en, this message translates to:
+  /// **'Is Valid:'**
+  String get is_valid_label;
+
+  /// Title for device fingerprint dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Device Fingerprint'**
+  String get device_fingerprint_title;
+
+  /// Label for fingerprint field.
+  ///
+  /// In en, this message translates to:
+  /// **'Fingerprint:'**
+  String get fingerprint_label;
+
+  /// Label for device info section.
+  ///
+  /// In en, this message translates to:
+  /// **'Device Info:'**
+  String get device_info_label;
+
+  /// Label for copy button.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get copy_button;
+
+  /// Label for license status.
+  ///
+  /// In en, this message translates to:
+  /// **'License Status'**
+  String get license_status_label;
+
+  /// Label for test enhanced licence button.
+  ///
+  /// In en, this message translates to:
+  /// **'Test Enhanced Licence'**
+  String get test_enhanced_licence;
+
+  /// Label for generate device fingerprint button.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate Device Fingerprint'**
+  String get generate_device_fingerprint;
+
+  /// Label for test licence validation button.
+  ///
+  /// In en, this message translates to:
+  /// **'Test Licence Validation'**
+  String get test_licence_validation;
+
+  /// Error message when importing licence fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Error importing licence: {error}'**
+  String error_importing_licence(String error);
+
+  /// Error message when importing demo license fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Error importing demo license: {error}'**
+  String error_importing_demo_license(String error);
+
+  /// Error message when clearing license fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Error clearing license: {error}'**
+  String error_clearing_license(String error);
+
+  /// Error message when saving enhanced licence fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save enhanced licence'**
+  String get failed_to_save_enhanced_licence;
+
+  /// Error message when enhanced licence test fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Enhanced licence test failed: {error}'**
+  String enhanced_licence_test_failed(String error);
+
+  /// Success message when fingerprint is copied to clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Fingerprint copied to clipboard'**
+  String get fingerprint_copied_to_clipboard;
+
+  /// Error message when generating fingerprint fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to generate fingerprint: {error}'**
+  String failed_to_generate_fingerprint(String error);
+
+  /// Error message when invalid licence is incorrectly accepted.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid licence was accepted - this is wrong!'**
+  String get invalid_licence_accepted_error;
+
+  /// Info message when invalid licence is correctly rejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid licence correctly rejected: {code}'**
+  String invalid_licence_correctly_rejected(String code);
+
+  /// Generic error message for unexpected errors.
+  ///
+  /// In en, this message translates to:
+  /// **'Unexpected error: {error}'**
+  String unexpected_error(String error);
+
+  /// Error message when validation test fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Validation test failed: {error}'**
+  String validation_test_failed(String error);
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

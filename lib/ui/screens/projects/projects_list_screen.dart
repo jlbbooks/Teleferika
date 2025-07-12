@@ -569,7 +569,10 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
     } catch (e) {
       // Catch general exceptions from importLicenceFromFile
       if (mounted) {
-        showErrorStatus('Error importing licence: $e');
+        showErrorStatus(
+          S.of(context)?.error_importing_licence(e.toString()) ??
+              'Error importing licence: $e',
+        );
       }
     }
   }
@@ -959,14 +962,19 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       }
     } catch (e, stackTrace) {
       logger.severe('Error testing demo license import', e, stackTrace);
-      showErrorStatus('Error importing demo license: $e');
+      showErrorStatus(
+        S.of(context)?.error_importing_demo_license(e.toString()) ??
+            'Error importing demo license: $e',
+      );
     }
   }
 
   Future<void> _clearLicense() async {
     // Check if there's a license to clear
     if (_activeLicence == null) {
-      showInfoStatus('No license installed to clear.');
+      showInfoStatus(
+        S.of(context)?.no_license_to_clear ?? 'No license installed to clear.',
+      );
       return;
     }
 
@@ -1024,7 +1032,10 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       }
     } catch (e, stackTrace) {
       logger.severe('Error clearing license', e, stackTrace);
-      showErrorStatus('Error clearing license: $e');
+      showErrorStatus(
+        S.of(context)?.error_clearing_license(e.toString()) ??
+            'Error clearing license: $e',
+      );
     }
   }
 
@@ -1071,38 +1082,59 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
-              title: const Text('Enhanced Licence Test Results'),
+              title: Text(
+                S.of(context)?.enhanced_licence_test_results ??
+                    'Enhanced Licence Test Results',
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Email: ${importedLicence.email}'),
-                  Text('Valid Until: ${importedLicence.validUntil.toLocal()}'),
-                  Text('Features: ${importedLicence.features.join(', ')}'),
-                  Text('Algorithm: ${importedLicence.algorithm}'),
                   Text(
-                    'Device Fingerprint: ${importedLicence.deviceFingerprint.substring(0, 16)}...',
+                    '${S.of(context)?.email_label ?? 'Email:'} ${importedLicence.email}',
+                  ),
+                  Text(
+                    '${S.of(context)?.valid_until_label ?? 'Valid Until:'} ${importedLicence.validUntil.toLocal()}',
+                  ),
+                  Text(
+                    '${S.of(context)?.features_label ?? 'Features:'} ${importedLicence.features.join(', ')}',
+                  ),
+                  Text(
+                    '${S.of(context)?.algorithm_label ?? 'Algorithm:'} ${importedLicence.algorithm}',
+                  ),
+                  Text(
+                    '${S.of(context)?.fingerprint_label ?? 'Device Fingerprint:'} ${importedLicence.deviceFingerprint.substring(0, 16)}...',
                   ),
                   const SizedBox(height: 8),
-                  Text('Has Export Feature: $hasExport'),
-                  Text('Is Valid: ${importedLicence.isValid}'),
+                  Text(
+                    '${S.of(context)?.has_export_feature_label ?? 'Has Export Feature:'} $hasExport',
+                  ),
+                  Text(
+                    '${S.of(context)?.is_valid_label ?? 'Is Valid:'} ${importedLicence.isValid}',
+                  ),
                 ],
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Close'),
+                  child: Text(S.of(context)?.close_button ?? 'Close'),
                 ),
               ],
             ),
           );
         }
       } else {
-        showErrorStatus('Failed to save enhanced licence');
+        showErrorStatus(
+          S.of(context)?.failed_to_save_enhanced_licence ??
+              'Failed to save enhanced licence',
+        );
       }
     } catch (e, stackTrace) {
       logger.severe('Error testing enhanced licence', e, stackTrace);
-      showErrorStatus('Enhanced licence test failed: $e');
+      showErrorStatus(
+        S.of(context)?.enhanced_licence_test_failed(e.toString()) ??
+            'Enhanced licence test failed: $e',
+      );
     }
   }
 
@@ -1118,16 +1150,20 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Device Fingerprint'),
+            title: Text(
+              S.of(context)?.device_fingerprint_title ?? 'Device Fingerprint',
+            ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Fingerprint: ${fingerprint.substring(0, 32)}...'),
+                Text(
+                  '${S.of(context)?.fingerprint_label ?? 'Fingerprint:'} ${fingerprint.substring(0, 32)}...',
+                ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Device Info:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                Text(
+                  S.of(context)?.device_info_label ?? 'Device Info:',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 ...deviceInfo.entries.map(
                   (entry) => Text('${entry.key}: ${entry.value}'),
@@ -1137,16 +1173,19 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Close'),
+                child: Text(S.of(context)?.close_button ?? 'Close'),
               ),
               TextButton(
                 onPressed: () {
                   // Copy fingerprint to clipboard
                   // You can add clipboard functionality here
                   Navigator.pop(context);
-                  showInfoStatus('Fingerprint copied to clipboard');
+                  showInfoStatus(
+                    S.of(context)?.fingerprint_copied_to_clipboard ??
+                        'Fingerprint copied to clipboard',
+                  );
                 },
-                child: const Text('Copy'),
+                child: Text(S.of(context)?.copy_button ?? 'Copy'),
               ),
             ],
           ),
@@ -1154,7 +1193,10 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       }
     } catch (e, stackTrace) {
       logger.severe('Error generating device fingerprint', e, stackTrace);
-      showErrorStatus('Failed to generate fingerprint: $e');
+      showErrorStatus(
+        S.of(context)?.failed_to_generate_fingerprint(e.toString()) ??
+            'Failed to generate fingerprint: $e',
+      );
     }
   }
 
@@ -1189,17 +1231,29 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       // Try to import invalid licence
       try {
         await EnhancedLicenceService.instance.importLicenceFromFile();
-        showErrorStatus('Invalid licence was accepted - this is wrong!');
+        showErrorStatus(
+          S.of(context)?.invalid_licence_accepted_error ??
+              'Invalid licence was accepted - this is wrong!',
+        );
       } catch (e) {
         if (e is lm.LicenceError) {
-          showInfoStatus('Invalid licence correctly rejected: ${e.code}');
+          showInfoStatus(
+            S.of(context)?.invalid_licence_correctly_rejected(e.code) ??
+                'Invalid licence correctly rejected: ${e.code}',
+          );
         } else {
-          showErrorStatus('Unexpected error: $e');
+          showErrorStatus(
+            S.of(context)?.unexpected_error(e.toString()) ??
+                'Unexpected error: $e',
+          );
         }
       }
     } catch (e, stackTrace) {
       logger.severe('Error testing licence validation', e, stackTrace);
-      showErrorStatus('Validation test failed: $e');
+      showErrorStatus(
+        S.of(context)?.validation_test_failed(e.toString()) ??
+            'Validation test failed: $e',
+      );
     }
   }
 
@@ -1497,7 +1551,10 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                                   size: 20,
                                 ),
                                 const SizedBox(width: 8),
-                                const Text('License Status'),
+                                Text(
+                                  S.of(context)?.license_status_label ??
+                                      'License Status',
+                                ),
                               ],
                             ),
                           ),
@@ -1530,7 +1587,10 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                               children: [
                                 Icon(Icons.bug_report, size: 20),
                                 SizedBox(width: 8),
-                                Text('Test Enhanced Licence'),
+                                Text(
+                                  S.of(context)?.test_enhanced_licence ??
+                                      'Test Enhanced Licence',
+                                ),
                               ],
                             ),
                           ),
@@ -1541,7 +1601,10 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                               children: [
                                 Icon(Icons.fingerprint, size: 20),
                                 SizedBox(width: 8),
-                                Text('Generate Device Fingerprint'),
+                                Text(
+                                  S.of(context)?.generate_device_fingerprint ??
+                                      'Generate Device Fingerprint',
+                                ),
                               ],
                             ),
                           ),
@@ -1551,7 +1614,10 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                               children: [
                                 Icon(Icons.security, size: 20),
                                 SizedBox(width: 8),
-                                Text('Test Licence Validation'),
+                                Text(
+                                  S.of(context)?.test_licence_validation ??
+                                      'Test Licence Validation',
+                                ),
                               ],
                             ),
                           ),
