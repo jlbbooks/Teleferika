@@ -7,6 +7,9 @@ import 'package:teleferika/licensing/device_fingerprint.dart';
 import 'package:teleferika/licensing/licence_model.dart';
 import 'package:teleferika/licensing/cryptographic_validator.dart';
 
+// Import status constants
+import 'package:teleferika/licensing/licence_model.dart' show Licence;
+
 /// Unified licence service with comprehensive validation, device fingerprinting, and status tracking
 class LicenceService {
   static final Logger _logger = Logger('LicenceService');
@@ -130,8 +133,8 @@ class LicenceService {
   /// Validate a licence with comprehensive checks
   Future<LicenceValidationResult> validateLicence(Licence licence) async {
     try {
-      // 1. Check if licence is expired
-      if (!licence.isValid) {
+      // 1. Check if licence is expired (but allow requested licenses)
+      if (licence.status != Licence.statusRequested && !licence.isValid) {
         return LicenceValidationResult(
           isValid: false,
           error: LicenceError(
@@ -143,12 +146,14 @@ class LicenceService {
       }
 
       // 2. Verify cryptographic signature
-      // For testing purposes, we'll skip verification for demo/test licences
-      // In production, this should always verify the real signature
-      if (licence.email.contains('demo') || licence.email.contains('test')) {
-        // This is a test/demo licence - skip signature verification
+      // Skip verification for demo/test licences and requested licences
+      // In production, this should always verify the real signature for active licences
+      if (licence.email.contains('demo') ||
+          licence.email.contains('test') ||
+          licence.status == Licence.statusRequested) {
+        // Skip signature verification for test/demo/requested licences
         _logger.info(
-          'Skipping signature verification for test/demo licence: ${licence.email}',
+          'Skipping signature verification for ${licence.status} licence: ${licence.email}',
         );
       } else if (!CryptographicValidator.verifySignature(
         licence.dataForSigning,

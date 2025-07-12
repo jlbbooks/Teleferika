@@ -170,7 +170,30 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         content = _buildLicenceInfo(_activeLicence!, versionInfo);
 
         // Add action buttons based on license status
-        if (!_activeLicence!.isValid) {
+        if (_activeLicence!.status == lm.Licence.statusRequested) {
+          // For requested licenses, show refresh and request new options
+          actions.insert(
+            0,
+            TextButton(
+              child: Text('Refresh Status'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _loadActiveLicence(); // This will check with server
+              },
+            ),
+          );
+          actions.insert(
+            1,
+            TextButton(
+              child: Text('Request New License'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _requestLicence();
+              },
+            ),
+          );
+        } else if (!_activeLicence!.isValid) {
+          // For invalid licenses, show import option
           actions.insert(
             0,
             TextButton(
@@ -206,14 +229,22 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
             title: Row(
               children: [
                 Icon(
-                  _activeLicence != null && _activeLicence!.isValid
-                      ? Icons.verified_user
-                      : Icons.security,
-                  color: _activeLicence != null && _activeLicence!.isValid
-                      ? Colors.green
-                      : (_activeLicence != null && !_activeLicence!.isValid
-                            ? Colors.red
-                            : Colors.grey),
+                  _activeLicence != null &&
+                          _activeLicence!.status == lm.Licence.statusRequested
+                      ? Icons.pending
+                      : (_activeLicence != null && _activeLicence!.isValid
+                            ? Icons.verified_user
+                            : Icons.security),
+                  color:
+                      _activeLicence != null &&
+                          _activeLicence!.status == lm.Licence.statusRequested
+                      ? Colors.blue
+                      : (_activeLicence != null && _activeLicence!.isValid
+                            ? Colors.green
+                            : (_activeLicence != null &&
+                                      !_activeLicence!.isValid
+                                  ? Colors.red
+                                  : Colors.grey)),
                 ),
                 const SizedBox(width: 8),
                 Expanded(child: Text(title)),
@@ -228,7 +259,8 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
   }
 
   Widget _buildLicenceInfo(lm.Licence licence, String versionInfo) {
-    final isExpired = !licence.isValid;
+    final isRequested = licence.status == lm.Licence.statusRequested;
+    final isExpired = !licence.isValid && !isRequested;
     final isExpiringSoon = licence.expiresSoon;
 
     return Column(
@@ -240,18 +272,22 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
           width: double.infinity,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: isExpired
-                ? Colors.red.shade50
-                : (isExpiringSoon
-                      ? Colors.orange.shade50
-                      : Colors.green.shade50),
+            color: isRequested
+                ? Colors.blue.shade50
+                : (isExpired
+                      ? Colors.red.shade50
+                      : (isExpiringSoon
+                            ? Colors.orange.shade50
+                            : Colors.green.shade50)),
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: isExpired
-                  ? Colors.red.shade200
-                  : (isExpiringSoon
-                        ? Colors.orange.shade200
-                        : Colors.green.shade200),
+              color: isRequested
+                  ? Colors.blue.shade200
+                  : (isExpired
+                        ? Colors.red.shade200
+                        : (isExpiringSoon
+                              ? Colors.orange.shade200
+                              : Colors.green.shade200)),
             ),
           ),
           child: Column(
@@ -260,31 +296,51 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
               Row(
                 children: [
                   Icon(
-                    isExpired
-                        ? Icons.error
-                        : (isExpiringSoon ? Icons.warning : Icons.check_circle),
-                    color: isExpired
-                        ? Colors.red
-                        : (isExpiringSoon ? Colors.orange : Colors.green),
+                    isRequested
+                        ? Icons.pending
+                        : (isExpired
+                              ? Icons.error
+                              : (isExpiringSoon
+                                    ? Icons.warning
+                                    : Icons.check_circle)),
+                    color: isRequested
+                        ? Colors.blue
+                        : (isExpired
+                              ? Colors.red
+                              : (isExpiringSoon
+                                    ? Colors.orange
+                                    : Colors.green)),
                     size: 20,
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    isExpired
-                        ? 'License Expired'
-                        : (isExpiringSoon
-                              ? 'License Expiring Soon'
-                              : 'License Active'),
+                    isRequested
+                        ? 'License Requested'
+                        : (isExpired
+                              ? 'License Expired'
+                              : (isExpiringSoon
+                                    ? 'License Expiring Soon'
+                                    : 'License Active')),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: isExpired
-                          ? Colors.red
-                          : (isExpiringSoon ? Colors.orange : Colors.green),
+                      color: isRequested
+                          ? Colors.blue
+                          : (isExpired
+                                ? Colors.red
+                                : (isExpiringSoon
+                                      ? Colors.orange
+                                      : Colors.green)),
                     ),
                   ),
                 ],
               ),
-              if (isExpired || isExpiringSoon) ...[
+              if (isRequested) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Your license request is pending approval. You will be notified when it is approved or denied.',
+                  style: TextStyle(fontSize: 12, color: Colors.blue.shade700),
+                ),
+              ] else if (isExpired || isExpiringSoon) ...[
                 const SizedBox(height: 4),
                 Text(
                   isExpired
@@ -308,6 +364,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         _buildInfoSection('License Details', Icons.info_outline, [
           _buildInfoRow('Email', licence.email),
           _buildInfoRow('Customer ID', licence.customerId),
+          _buildInfoRow('Status', licence.status),
           _buildInfoRow(
             'Issued',
             DateFormat.yMMMd().add_Hm().format(licence.issuedAt.toLocal()),
@@ -316,7 +373,8 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
             'Valid Until',
             DateFormat.yMMMd().add_Hm().format(licence.validUntil.toLocal()),
           ),
-          _buildInfoRow('Days Remaining', '${licence.daysRemaining} days'),
+          if (!isRequested)
+            _buildInfoRow('Days Remaining', '${licence.daysRemaining} days'),
           _buildInfoRow('Max Devices', '${licence.maxDevices}'),
           _buildInfoRow('Version', licence.version),
         ]),
@@ -324,9 +382,24 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         const SizedBox(height: 16),
 
         // Features section
-        _buildInfoSection('Available Features', Icons.star, [
-          ...licence.features.map((feature) => _buildFeatureRow(feature)),
-        ]),
+        _buildInfoSection(
+          isRequested ? 'Requested Features' : 'Available Features',
+          Icons.star,
+          [
+            if (isRequested) ...[
+              Text(
+                'Features will be available once your license is approved:',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+            ...licence.features.map((feature) => _buildFeatureRow(feature)),
+          ],
+        ),
 
         const SizedBox(height: 16),
 
