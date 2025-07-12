@@ -117,8 +117,9 @@ class LicenceService {
 // Simple feature list
 List<String> get availableFeatures => [
   'premium_banner',
-  'premium_settings',
   'export_widget',
+  'map_download',
+  'advanced_export',
   // ...
 ];
 ```
@@ -154,11 +155,7 @@ class FeatureRegistry {
       tier: FeatureTier.professional,
       description: 'Export to KML, GeoJSON, Shapefile',
     ),
-    'batch_operations': FeatureDefinition(
-      name: 'Batch Operations',
-      tier: FeatureTier.enterprise,
-      description: 'Process multiple projects simultaneously',
-    ),
+
   };
   
   static bool hasFeatureAccess(String featureName, FeatureTier userTier) {
@@ -372,10 +369,7 @@ class LicensingConfig {
       'max_zoom_level': 18,
       'max_tiles_per_download': 10000,
     },
-    'batch_operations': {
-      'max_concurrent_operations': 5,
-      'max_projects_per_batch': 50,
-    },
+
   };
   
   // Tier configurations

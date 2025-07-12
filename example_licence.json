@@ -4,10 +4,10 @@
   "validUntil": "2025-12-31T23:59:59.000Z",
   "licenceKey": "DEMO-KEY-12345",
   "features": [
-    "export",
-    "advanced_mapping",
-    "cloud_sync",
-    "premium_support"
+    "export_csv",
+    "export_kml",
+    "map_download",
+    "advanced_export"
   ],
   "customerId": "CUST001",
   "version": "1.0.0"

@@ -123,13 +123,7 @@ class LicenceGeneratorUtility {
     String email = 'demo@example.com',
     DateTime? validUntil,
   }) async {
-    final features = [
-      'advanced_export',
-      'map_download',
-      'batch_operations',
-      'cloud_sync',
-      'custom_themes',
-    ];
+    final features = ['advanced_export', 'map_download'];
 
     return await generateTestLicence(
       email: email,
