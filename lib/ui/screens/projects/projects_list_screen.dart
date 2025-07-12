@@ -1509,15 +1509,13 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                         case 'license_info':
                           _showLicenceInfoDialog();
                           break;
-                        case 'premium_features':
-                          _showPremiumFeaturesDialog();
+                        case 'import_license':
+                          _handleImportLicence();
                           break;
                         case 'test_license':
                           _testImportExampleLicence();
                           break;
-                        case 'test_enhanced_licence':
-                          _testLicence();
-                          break;
+
                         case 'generate_fingerprint':
                           _generateDeviceFingerprint();
                           break;
@@ -1551,59 +1549,87 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                                   size: 20,
                                 ),
                                 const SizedBox(width: 8),
-                                Text(
-                                  S.of(context)?.license_status_label ??
-                                      'License Status',
-                                ),
-                              ],
-                            ),
-                          ),
-                          // const PopupMenuItem<String>(
-                          //   value: 'premium_features',
-                          //   child: Row(
-                          //     children: [
-                          //       Icon(Icons.star, size: 20),
-                          //       SizedBox(width: 8),
-                          //       Text('Premium Features'),
-                          //     ],
-                          //   ),
-                          // ),
-                          PopupMenuItem<String>(
-                            value: 'test_license',
-                            child: Row(
-                              children: [
-                                Icon(Icons.bug_report, size: 20),
-                                SizedBox(width: 8),
-                                Text(
-                                  S.of(context)?.install_demo_license ??
-                                      'Install Demo License',
+                                Expanded(
+                                  child: Text(
+                                    S.of(context)?.license_status_label ??
+                                        'License Status',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               ],
                             ),
                           ),
                           PopupMenuItem<String>(
-                            value: 'test_enhanced_licence',
+                            value: 'import_license',
                             child: Row(
                               children: [
-                                Icon(Icons.bug_report, size: 20),
+                                Icon(Icons.file_upload, size: 20),
                                 SizedBox(width: 8),
-                                Text(
-                                  S.of(context)?.test_enhanced_licence ??
-                                      'Test Enhanced Licence',
+                                Expanded(
+                                  child: Text(
+                                    S.of(context)?.import_licence ??
+                                        'Import License',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               ],
                             ),
                           ),
                           const PopupMenuDivider(),
                           PopupMenuItem<String>(
+                            enabled: false,
+                            child: Text(
+                              'Development & Testing',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey.shade600,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'test_license',
+                            child: Row(
+                              children: [
+                                Icon(Icons.bug_report, size: 20),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    S.of(context)?.install_demo_license ??
+                                        'Install Demo License',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const PopupMenuDivider(),
+                          PopupMenuItem<String>(
+                            enabled: false,
+                            child: Text(
+                              'Technical Tools',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey.shade600,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                          PopupMenuItem<String>(
                             value: 'generate_fingerprint',
                             child: Row(
                               children: [
                                 Icon(Icons.fingerprint, size: 20),
                                 SizedBox(width: 8),
-                                Text(
-                                  S.of(context)?.generate_device_fingerprint ??
-                                      'Generate Device Fingerprint',
+                                Expanded(
+                                  child: Text(
+                                    S
+                                            .of(context)
+                                            ?.generate_device_fingerprint ??
+                                        'Generate Device Fingerprint',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               ],
                             ),
@@ -1614,9 +1640,12 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                               children: [
                                 Icon(Icons.security, size: 20),
                                 SizedBox(width: 8),
-                                Text(
-                                  S.of(context)?.test_licence_validation ??
-                                      'Test Licence Validation',
+                                Expanded(
+                                  child: Text(
+                                    S.of(context)?.test_licence_validation ??
+                                        'Test Licence Validation',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               ],
                             ),
