@@ -7,21 +7,20 @@ import 'package:teleferika/licensing/device_fingerprint.dart';
 import 'package:teleferika/licensing/licence_model.dart';
 import 'package:teleferika/licensing/cryptographic_validator.dart';
 
-/// Enhanced licence service with cryptographic validation and device fingerprinting
-class EnhancedLicenceService {
-  static final Logger _logger = Logger('EnhancedLicenceService');
-  static const String _licenceKey = 'enhanced_app_licence';
+/// Unified licence service with comprehensive validation, device fingerprinting, and status tracking
+class LicenceService {
+  static final Logger _logger = Logger('LicenceService');
+  static const String _licenceKey = 'app_licence';
   static const String _deviceFingerprintKey = 'device_fingerprint';
 
   SharedPreferences? _prefs;
-  EnhancedLicence? _currentLicence;
+  Licence? _currentLicence;
   bool _isInitialized = false;
 
-  static final EnhancedLicenceService _instance =
-      EnhancedLicenceService._internal();
-  factory EnhancedLicenceService() => _instance;
-  EnhancedLicenceService._internal();
-  static EnhancedLicenceService get instance => _instance;
+  static final LicenceService _instance = LicenceService._internal();
+  factory LicenceService() => _instance;
+  LicenceService._internal();
+  static LicenceService get instance => _instance;
 
   /// Initialize the service
   Future<void> initialize() async {
@@ -31,13 +30,9 @@ class EnhancedLicenceService {
       await _initPrefs();
       await loadLicence();
       _isInitialized = true;
-      _logger.info('EnhancedLicenceService initialized');
+      _logger.info('LicenceService initialized');
     } catch (e, stackTrace) {
-      _logger.severe(
-        'Failed to initialize EnhancedLicenceService',
-        e,
-        stackTrace,
-      );
+      _logger.severe('Failed to initialize LicenceService', e, stackTrace);
       rethrow;
     }
   }
@@ -48,7 +43,7 @@ class EnhancedLicenceService {
   }
 
   /// Load licence from storage
-  Future<EnhancedLicence?> loadLicence() async {
+  Future<Licence?> loadLicence() async {
     if (_currentLicence != null) return _currentLicence;
 
     await _initPrefs();
@@ -56,7 +51,7 @@ class EnhancedLicenceService {
 
     if (licenceJson != null && licenceJson.isNotEmpty) {
       try {
-        final licence = EnhancedLicence.fromJson(
+        final licence = Licence.fromJson(
           jsonDecode(licenceJson) as Map<String, dynamic>,
         );
 
@@ -71,25 +66,21 @@ class EnhancedLicenceService {
         }
 
         _currentLicence = licence;
-        _logger.info('Enhanced licence loaded: ${licence.email}');
+        _logger.info('Licence loaded: ${licence.email}');
         return licence;
       } catch (e, stackTrace) {
-        _logger.severe(
-          'Error decoding enhanced licence from storage',
-          e,
-          stackTrace,
-        );
+        _logger.severe('Error decoding licence from storage', e, stackTrace);
         await removeLicence();
         return null;
       }
     }
 
-    _logger.info('No enhanced licence found in storage');
+    _logger.info('No licence found in storage');
     return null;
   }
 
   /// Save licence to storage
-  Future<bool> saveLicence(EnhancedLicence licence) async {
+  Future<bool> saveLicence(Licence licence) async {
     await _initPrefs();
 
     try {
@@ -106,10 +97,10 @@ class EnhancedLicenceService {
       await _prefs?.setString(_licenceKey, licenceJson);
 
       _currentLicence = licence;
-      _logger.info('Enhanced licence saved: ${licence.email}');
+      _logger.info('Licence saved: ${licence.email}');
       return true;
     } catch (e, stackTrace) {
-      _logger.severe('Error saving enhanced licence to storage', e, stackTrace);
+      _logger.severe('Error saving licence to storage', e, stackTrace);
       return false;
     }
   }
@@ -122,18 +113,14 @@ class EnhancedLicenceService {
       await _prefs?.remove(_licenceKey);
       await _prefs?.remove(_deviceFingerprintKey);
       _currentLicence = null;
-      _logger.info('Enhanced licence removed from storage');
+      _logger.info('Licence removed from storage');
     } catch (e, stackTrace) {
-      _logger.severe(
-        'Error removing enhanced licence from storage',
-        e,
-        stackTrace,
-      );
+      _logger.severe('Error removing licence from storage', e, stackTrace);
     }
   }
 
   /// Get current licence
-  Future<EnhancedLicence?> get currentLicence async {
+  Future<Licence?> get currentLicence async {
     if (!_isInitialized) {
       await initialize();
     }
@@ -141,9 +128,7 @@ class EnhancedLicenceService {
   }
 
   /// Validate a licence with comprehensive checks
-  Future<LicenceValidationResult> validateLicence(
-    EnhancedLicence licence,
-  ) async {
+  Future<LicenceValidationResult> validateLicence(Licence licence) async {
     try {
       // 1. Check if licence is expired
       if (!licence.isValid) {
@@ -203,9 +188,9 @@ class EnhancedLicenceService {
         );
       }
 
-      return LicenceValidationResult(isValid: true);
+      return LicenceValidationResult(isValid: true, licence: licence);
     } catch (e, stackTrace) {
-      _logger.severe('Error validating enhanced licence', e, stackTrace);
+      _logger.severe('Error validating licence', e, stackTrace);
       return LicenceValidationResult(
         isValid: false,
         error: LicenceError(
@@ -261,7 +246,7 @@ class EnhancedLicenceService {
   }
 
   /// Import a licence from a user-selected file
-  Future<EnhancedLicence?> importLicenceFromFile() async {
+  Future<Licence?> importLicenceFromFile() async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -298,103 +283,100 @@ class EnhancedLicenceService {
         );
       }
 
-      // Parse and validate licence
-      final importedLicence = EnhancedLicence.fromJson(
+      // Parse licence from file content
+      final licence = Licence.fromJson(
         jsonDecode(content) as Map<String, dynamic>,
       );
 
       // Validate the licence
-      final validationResult = await validateLicence(importedLicence);
+      final validationResult = await validateLicence(licence);
       if (!validationResult.isValid) {
         throw validationResult.error!;
       }
 
       // Save the licence
-      final saved = await saveLicence(importedLicence);
+      final saved = await saveLicence(licence);
       if (!saved) {
         throw LicenceError(
           code: 'SAVE_FAILED',
-          userMessage: 'Failed to save imported licence',
+          userMessage: 'Failed to save licence',
         );
       }
 
-      _logger.info(
-        'Enhanced licence imported successfully: ${importedLicence.email}',
-      );
-      return importedLicence;
-    } catch (e) {
-      _logger.severe('Error importing enhanced licence from file', e);
-
-      if (e is LicenceError) {
-        rethrow;
-      }
-
-      throw LicenceError(
-        code: 'IMPORT_FAILED',
-        userMessage: 'Could not import licence',
-        technicalDetails: e.toString(),
-      );
+      _logger.info('Licence imported successfully: ${licence.email}');
+      return licence;
+    } catch (e, stackTrace) {
+      _logger.severe('Error importing licence from file', e, stackTrace);
+      rethrow;
     }
-  }
-
-  /// Generate device fingerprint for licence request
-  Future<String> generateDeviceFingerprint() async {
-    return await DeviceFingerprint.generate();
-  }
-
-  /// Get device information for debugging
-  Future<Map<String, dynamic>> getDeviceInfo() async {
-    return await DeviceFingerprint.getDeviceInfo();
   }
 
   /// Get licence status information
   Future<Map<String, dynamic>> getLicenceStatus() async {
     final licence = await currentLicence;
-
     if (licence == null) {
       return {
         'hasLicence': false,
-        'isValid': false,
-        'expiresSoon': false,
-        'daysRemaining': 0,
-        'features': [],
-        'validationErrors': [],
+        'status': 'none',
+        'message': 'No licence found',
       };
     }
 
     final validationResult = await validateLicence(licence);
+    if (!validationResult.isValid) {
+      return {
+        'hasLicence': true,
+        'status': 'invalid',
+        'message': validationResult.error?.userMessage ?? 'Licence is invalid',
+        'error': validationResult.error?.code,
+      };
+    }
 
     return {
       'hasLicence': true,
-      'isValid': validationResult.isValid,
-      'expiresSoon': licence.expiresSoon,
-      'daysRemaining': licence.daysRemaining,
-      'features': licence.availableFeatures,
+      'status': 'valid',
       'email': licence.email,
       'validUntil': licence.validUntil.toIso8601String(),
-      'customerId': licence.customerId,
-      'version': licence.version,
-      'algorithm': licence.algorithm,
-      'maxDevices': licence.maxDevices,
-      'issuedAt': licence.issuedAt.toIso8601String(),
-      'validationErrors': validationResult.isValid
-          ? []
-          : [validationResult.error?.code],
+      'daysRemaining': licence.daysRemaining,
+      'expiresSoon': licence.expiresSoon,
+      'features': licence.availableFeatures,
+      'usageCount': licence.usageCount,
+      'lastUsed': licence.lastUsed.toIso8601String(),
     };
   }
 
-  /// Clear all licence data (for testing or reset)
+  /// Create a demo licence for testing
+  Future<Licence> createDemoLicence() async {
+    final deviceFingerprint = await DeviceFingerprint.generate();
+
+    final licence = Licence(
+      email: 'demo@example.com',
+      customerId: 'DEMO001',
+      deviceFingerprint: deviceFingerprint,
+      issuedAt: DateTime.now(),
+      validUntil: DateTime.now().add(const Duration(days: 30)),
+      features: ['export_csv', 'export_kml', 'map_download'],
+      maxDevices: 1,
+      version: '2.0',
+      signature: 'demo-signature-12345',
+      algorithm: 'RSA-SHA256',
+      status: 'active',
+      usageCount: 0,
+      lastUsed: DateTime.now(),
+    );
+
+    await saveLicence(licence);
+    _logger.info('Demo licence created: ${licence.email}');
+    return licence;
+  }
+
+  /// Clear all licence data
   Future<void> clearAllData() async {
     await _initPrefs();
-
-    try {
-      await _prefs?.clear();
-      _currentLicence = null;
-      _isInitialized = false;
-      _logger.info('All enhanced licence data cleared');
-    } catch (e, stackTrace) {
-      _logger.severe('Error clearing enhanced licence data', e, stackTrace);
-    }
+    await _prefs?.clear();
+    _currentLicence = null;
+    _isInitialized = false;
+    _logger.info('All licence data cleared');
   }
 }
 
@@ -402,6 +384,11 @@ class EnhancedLicenceService {
 class LicenceValidationResult {
   final bool isValid;
   final LicenceError? error;
+  final Licence? licence;
 
-  const LicenceValidationResult({required this.isValid, this.error});
+  const LicenceValidationResult({
+    required this.isValid,
+    this.error,
+    this.licence,
+  });
 }

@@ -74,7 +74,7 @@ import 'map/services/map_cache_manager.dart';
 ///
 /// ## Dependencies
 /// - [setupLogging]: Configures the logging system
-/// - [EnhancedLicenceService]: Manages application licensing
+/// - [LicenceService]: Manages application licensing
 /// - [DatabaseHelper]: Handles database operations
 /// - [LicensedFeaturesLoader]: Loads licensed features
 /// - [FeatureRegistry]: Manages feature availability
@@ -89,8 +89,8 @@ void main() async {
     logger.info('Starting app initialization...');
 
     // Initialize licence service
-    await EnhancedLicenceService.instance.initialize();
-    logger.info('EnhancedLicenceService initialized');
+    await LicenceService.instance.initialize();
+    logger.info('LicenceService initialized');
 
     // Initialize database
     await DriftDatabaseHelper.instance.database;
@@ -131,7 +131,7 @@ void main() async {
 /// ## State Management
 /// The widget uses [Provider] to manage global application state:
 /// - [ProjectStateManager]: Manages current project and points
-/// - [EnhancedLicenceService]: Provides license status and validation
+/// - [LicenceService]: Provides licence status and validation
 ///
 /// ## Theme Support
 /// The application supports both light and dark themes with automatic
@@ -227,9 +227,7 @@ class _MyAppRootState extends State<MyAppRoot> {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ProjectStateManager()),
-        Provider<EnhancedLicenceService>.value(
-          value: EnhancedLicenceService.instance,
-        ),
+        Provider<LicenceService>.value(value: LicenceService.instance),
       ],
       child: MaterialApp(
         title: 'Teleferika',

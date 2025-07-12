@@ -167,7 +167,7 @@ class LicenceGeneratorUtility {
       }
 
       final content = await file.readAsString();
-      final licence = EnhancedLicence.fromJson(
+      final licence = Licence.fromJson(
         jsonDecode(content) as Map<String, dynamic>,
       );
 

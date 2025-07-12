@@ -39,9 +39,9 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
   // Keep a local copy of projects to manipulate for instant UI updates
   List<ProjectModel> _currentProjects = [];
 
-  final EnhancedLicenceService _licenceService =
-      EnhancedLicenceService.instance; // Get EnhancedLicenceService instance
-  lm.EnhancedLicence? _activeLicence; // To hold the loaded licence status
+  final LicenceService _licenceService =
+      LicenceService.instance; // Get LicenceService instance
+  lm.Licence? _activeLicence; // To hold the loaded licence status
 
   @override
   void initState() {
@@ -106,7 +106,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       Widget content;
       if (_activeLicence != null) {
         // Enhanced license information display
-        content = _buildEnhancedLicenceInfo(_activeLicence!, versionInfo);
+        content = _buildLicenceInfo(_activeLicence!, versionInfo);
 
         // Add action buttons based on license status
         if (!_activeLicence!.isValid) {
@@ -166,10 +166,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
     });
   }
 
-  Widget _buildEnhancedLicenceInfo(
-    lm.EnhancedLicence licence,
-    String versionInfo,
-  ) {
+  Widget _buildLicenceInfo(lm.Licence licence, String versionInfo) {
     final isExpired = !licence.isValid;
     final isExpiringSoon = licence.expiresSoon;
 
@@ -249,7 +246,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         // License details section
         _buildInfoSection('License Details', Icons.info_outline, [
           _buildInfoRow('Email', licence.email),
-          _buildInfoRow('Customer ID', licence.customerId ?? 'Not specified'),
+          _buildInfoRow('Customer ID', licence.customerId),
           _buildInfoRow(
             'Issued',
             DateFormat.yMMMd().add_Hm().format(licence.issuedAt.toLocal()),
@@ -544,7 +541,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         if (importedLicence != null) {
           setState(() {
             _activeLicence =
-                importedLicence as lm.EnhancedLicence?; // Update local state
+                importedLicence as lm.Licence?; // Update local state
           });
           showSuccessStatus(
             S
@@ -931,17 +928,20 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       );
 
       // Create a demo license with the actual device fingerprint
-      final demoLicence = lm.EnhancedLicence(
+      final demoLicence = lm.Licence(
         email: 'demo@example.com',
+        customerId: 'DEMO001',
         deviceFingerprint: deviceFingerprint,
-        validUntil: DateTime.now().add(const Duration(days: 30)),
-        features: ['advanced_export', 'map_download'],
-        customerId: 'demo',
-        maxDevices: 1,
         issuedAt: DateTime.now(),
-        version: '1.0',
-        signature: 'demo-signature',
+        validUntil: DateTime.now().add(const Duration(days: 30)),
+        features: ['export_csv', 'export_kml', 'map_download'],
+        maxDevices: 1,
+        version: '2.0',
+        signature: 'demo-signature-12345',
         algorithm: 'RSA-SHA256',
+        status: 'active',
+        usageCount: 0,
+        lastUsed: DateTime.now(),
       );
       logger.info(
         'Created demo license: ${demoLicence.email}, valid: ${demoLicence.isValid}',
@@ -1040,12 +1040,12 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
   }
 
   // Enhanced Licence Testing Methods
-  Future<void> _testEnhancedLicence() async {
+  Future<void> _testLicence() async {
     try {
       logger.info('Testing enhanced licence system...');
 
-      // Initialize enhanced service
-      await EnhancedLicenceService.instance.initialize();
+      // Initialize licence service
+      await LicenceService.instance.initialize();
 
       // Generate device fingerprint
       final fingerprint = await DeviceFingerprint.generate();
@@ -1059,7 +1059,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
 
       // Parse and validate the licence directly
       final licenceData = jsonDecode(licenceJson) as Map<String, dynamic>;
-      final importedLicence = lm.EnhancedLicence.fromJson(licenceData);
+      final importedLicence = lm.Licence.fromJson(licenceData);
 
       // Save the licence using the service
       final saved = await _licenceService.saveLicence(importedLicence);
@@ -1204,7 +1204,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
     try {
       logger.info('Testing licence validation...');
 
-      await EnhancedLicenceService.instance.initialize();
+      await LicenceService.instance.initialize();
 
       // Test with invalid licence
       final invalidLicenceJson = '''
@@ -1230,7 +1230,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
 
       // Try to import invalid licence
       try {
-        await EnhancedLicenceService.instance.importLicenceFromFile();
+        await LicenceService.instance.importLicenceFromFile();
         showErrorStatus(
           S.of(context)?.invalid_licence_accepted_error ??
               'Invalid licence was accepted - this is wrong!',
@@ -1516,7 +1516,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                           _testImportExampleLicence();
                           break;
                         case 'test_enhanced_licence':
-                          _testEnhancedLicence();
+                          _testLicence();
                           break;
                         case 'generate_fingerprint':
                           _generateDeviceFingerprint();

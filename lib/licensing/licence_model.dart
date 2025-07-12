@@ -3,77 +3,138 @@ import 'package:crypto/crypto.dart';
 import 'package:logging/logging.dart';
 import 'package:teleferika/licensing/device_fingerprint.dart';
 
-/// Enhanced licence model with cryptographic validation and device fingerprinting
-class EnhancedLicence {
-  static final Logger _logger = Logger('EnhancedLicence');
+/// Unified licence model with comprehensive validation, device fingerprinting, and status tracking
+class Licence {
+  static final Logger _logger = Logger('Licence');
 
   final String email;
+  final String customerId;
   final String deviceFingerprint;
+  final DateTime issuedAt;
   final DateTime validUntil;
   final List<String> features;
-  final String? customerId;
   final int maxDevices;
-  final DateTime issuedAt;
   final String version;
   final String signature;
   final String algorithm;
+  final String status; // 'active', 'expired', 'revoked'
+  final DateTime? revokedAt;
+  final String? revokedReason;
+  final int usageCount;
+  final DateTime lastUsed;
 
-  const EnhancedLicence({
+  const Licence({
     required this.email,
+    required this.customerId,
     required this.deviceFingerprint,
+    required this.issuedAt,
     required this.validUntil,
     required this.features,
-    this.customerId,
     required this.maxDevices,
-    required this.issuedAt,
     required this.version,
     required this.signature,
     required this.algorithm,
+    required this.status,
+    this.revokedAt,
+    this.revokedReason,
+    required this.usageCount,
+    required this.lastUsed,
   });
 
-  /// Create licence from JSON data
-  factory EnhancedLicence.fromJson(Map<String, dynamic> json) {
+  /// Create licence from JSON data (client-side format)
+  factory Licence.fromJson(Map<String, dynamic> json) {
     try {
-      final data = json['data'] as Map<String, dynamic>;
+      // Handle both server format (flat) and client format (nested data)
+      Map<String, dynamic> data;
+      String signature;
+      String algorithm;
 
-      return EnhancedLicence(
+      if (json.containsKey('data')) {
+        // Client format: nested data with separate signature
+        data = json['data'] as Map<String, dynamic>;
+        signature = json['signature'] as String;
+        algorithm = json['algorithm'] as String;
+      } else {
+        // Server format: flat structure
+        data = json;
+        signature = json['signature'] as String;
+        algorithm = json['algorithm'] as String;
+      }
+
+      return Licence(
         email: data['email'] as String,
+        customerId: data['customerId'] as String,
         deviceFingerprint: data['deviceFingerprint'] as String,
+        issuedAt: DateTime.parse(data['issuedAt'] as String),
         validUntil: DateTime.parse(data['validUntil'] as String),
         features: (data['features'] as List<dynamic>).cast<String>(),
-        customerId: data['customerId'] as String?,
         maxDevices: data['maxDevices'] as int,
-        issuedAt: DateTime.parse(data['issuedAt'] as String),
         version: data['version'] as String,
-        signature: json['signature'] as String,
-        algorithm: json['algorithm'] as String,
+        signature: signature,
+        algorithm: algorithm,
+        status: data['status'] as String? ?? 'active',
+        revokedAt: data['revokedAt'] != null
+            ? DateTime.parse(data['revokedAt'] as String)
+            : null,
+        revokedReason: data['revokedReason'] as String?,
+        usageCount: data['usageCount'] as int? ?? 0,
+        lastUsed: data['lastUsed'] != null
+            ? DateTime.parse(data['lastUsed'] as String)
+            : DateTime.now(),
       );
     } catch (e, stackTrace) {
-      _logger.severe('Error parsing enhanced licence from JSON', e, stackTrace);
+      _logger.severe('Error parsing licence from JSON', e, stackTrace);
       rethrow;
     }
   }
 
-  /// Convert licence to JSON
+  /// Convert licence to JSON (client-side format)
   Map<String, dynamic> toJson() {
     return {
       'data': {
         'email': email,
+        'customerId': customerId,
         'deviceFingerprint': deviceFingerprint,
+        'issuedAt': issuedAt.toIso8601String(),
         'validUntil': validUntil.toIso8601String(),
         'features': features,
-        'customerId': customerId,
         'maxDevices': maxDevices,
-        'issuedAt': issuedAt.toIso8601String(),
         'version': version,
+        'status': status,
+        'revokedAt': revokedAt?.toIso8601String(),
+        'revokedReason': revokedReason,
+        'usageCount': usageCount,
+        'lastUsed': lastUsed.toIso8601String(),
       },
       'signature': signature,
       'algorithm': algorithm,
     };
   }
 
+  /// Convert licence to server JSON format (flat structure)
+  Map<String, dynamic> toServerJson() {
+    return {
+      'email': email,
+      'customerId': customerId,
+      'deviceFingerprint': deviceFingerprint,
+      'issuedAt': issuedAt.toIso8601String(),
+      'validUntil': validUntil.toIso8601String(),
+      'features': features,
+      'maxDevices': maxDevices,
+      'version': version,
+      'signature': signature,
+      'algorithm': algorithm,
+      'status': status,
+      'revokedAt': revokedAt?.toIso8601String(),
+      'revokedReason': revokedReason,
+      'usageCount': usageCount,
+      'lastUsed': lastUsed.toIso8601String(),
+    };
+  }
+
   /// Check if licence is currently valid
   bool get isValid {
+    if (status != 'active') return false;
     return DateTime.now().isBefore(validUntil);
   }
 
@@ -102,12 +163,12 @@ class EnhancedLicence {
   String get dataForSigning {
     final data = {
       'email': email,
+      'customerId': customerId,
       'deviceFingerprint': deviceFingerprint,
+      'issuedAt': issuedAt.toIso8601String(),
       'validUntil': validUntil.toIso8601String(),
       'features': features,
-      'customerId': customerId,
       'maxDevices': maxDevices,
-      'issuedAt': issuedAt.toIso8601String(),
       'version': version,
     };
     return jsonEncode(data);
@@ -127,41 +188,65 @@ class EnhancedLicence {
   }
 
   /// Create a copy with updated fields
-  EnhancedLicence copyWith({
+  Licence copyWith({
     String? email,
+    String? customerId,
     String? deviceFingerprint,
+    DateTime? issuedAt,
     DateTime? validUntil,
     List<String>? features,
-    String? customerId,
     int? maxDevices,
-    DateTime? issuedAt,
     String? version,
     String? signature,
     String? algorithm,
+    String? status,
+    DateTime? revokedAt,
+    String? revokedReason,
+    int? usageCount,
+    DateTime? lastUsed,
   }) {
-    return EnhancedLicence(
+    return Licence(
       email: email ?? this.email,
+      customerId: customerId ?? this.customerId,
       deviceFingerprint: deviceFingerprint ?? this.deviceFingerprint,
+      issuedAt: issuedAt ?? this.issuedAt,
       validUntil: validUntil ?? this.validUntil,
       features: features ?? this.features,
-      customerId: customerId ?? this.customerId,
       maxDevices: maxDevices ?? this.maxDevices,
-      issuedAt: issuedAt ?? this.issuedAt,
       version: version ?? this.version,
       signature: signature ?? this.signature,
       algorithm: algorithm ?? this.algorithm,
+      status: status ?? this.status,
+      revokedAt: revokedAt ?? this.revokedAt,
+      revokedReason: revokedReason ?? this.revokedReason,
+      usageCount: usageCount ?? this.usageCount,
+      lastUsed: lastUsed ?? this.lastUsed,
+    );
+  }
+
+  /// Create a copy with updated usage statistics
+  Licence withUsageUpdate() {
+    return copyWith(usageCount: usageCount + 1, lastUsed: DateTime.now());
+  }
+
+  /// Create a revoked copy
+  Licence withRevocation({required String reason}) {
+    return copyWith(
+      status: 'revoked',
+      revokedAt: DateTime.now(),
+      revokedReason: reason,
     );
   }
 
   @override
   String toString() {
-    return 'EnhancedLicence(email: $email, validUntil: ${validUntil.toLocal()}, isValid: $isValid, features: $features)';
+    return 'Licence(email: $email, status: $status, validUntil: ${validUntil.toLocal()}, isValid: $isValid, features: $features)';
   }
 
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
-    return other is EnhancedLicence &&
+    return other is Licence &&
         other.email == email &&
         other.deviceFingerprint == deviceFingerprint &&
         other.validUntil == validUntil &&
@@ -190,4 +275,17 @@ class LicenceError extends Error {
   String toString() {
     return 'LicenceError(code: $code, message: $userMessage${technicalDetails != null ? ', details: $technicalDetails' : ''})';
   }
+}
+
+/// Result of licence validation
+class LicenceValidationResult {
+  final bool isValid;
+  final LicenceError? error;
+  final Licence? licence;
+
+  const LicenceValidationResult({
+    required this.isValid,
+    this.error,
+    this.licence,
+  });
 }
