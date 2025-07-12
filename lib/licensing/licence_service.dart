@@ -58,13 +58,33 @@ class LicenceService {
           jsonDecode(licenceJson) as Map<String, dynamic>,
         );
 
-        // Validate the loaded licence
+        // For requested licenses, load them without validation so UI can show status
+        if (licence.status == Licence.statusRequested) {
+          _currentLicence = licence;
+          _logger.info(
+            'Requested licence loaded: ${licence.email} (status: ${licence.status})',
+          );
+          return licence;
+        }
+
+        // Validate the loaded licence for non-requested licenses
         final validationResult = await validateLicence(licence);
         if (!validationResult.isValid) {
           _logger.warning(
-            'Loaded licence validation failed: ${validationResult.error?.code}',
+            'Loaded licence validation failed: ${validationResult.error?.code} - ${validationResult.error?.userMessage}',
           );
+
+          // Clear invalid license from cache and storage
           await removeLicence();
+
+          // If it's a revoked/denied license, log it specifically
+          if (licence.status == Licence.statusRevoked ||
+              licence.status == Licence.statusDenied) {
+            _logger.info(
+              'Removed ${licence.status} license from cache: ${licence.email}',
+            );
+          }
+
           return null;
         }
 
@@ -87,12 +107,31 @@ class LicenceService {
     await _initPrefs();
 
     try {
-      // Validate licence before saving
+      // For requested licenses, we allow them to be saved so the UI can show their status
+      // but we don't validate them as "valid" for feature access
+      if (licence.status == Licence.statusRequested) {
+        final String licenceJson = jsonEncode(licence.toJson());
+        await _prefs?.setString(_licenceKey, licenceJson);
+
+        _currentLicence = licence;
+        _logger.info(
+          'Requested licence saved: ${licence.email} (status: ${licence.status})',
+        );
+        return true;
+      }
+
+      // For other licenses, validate before saving
       final validationResult = await validateLicence(licence);
       if (!validationResult.isValid) {
         _logger.warning(
-          'Attempted to save invalid licence: ${validationResult.error?.code}',
+          'Attempted to save invalid licence: ${validationResult.error?.code} - ${validationResult.error?.userMessage}',
         );
+
+        // Clear any existing invalid license from cache
+        if (_currentLicence != null) {
+          await removeLicence();
+        }
+
         return false;
       }
 
@@ -133,7 +172,32 @@ class LicenceService {
   /// Validate a licence with comprehensive checks
   Future<LicenceValidationResult> validateLicence(Licence licence) async {
     try {
-      // 1. Check if licence is expired (but allow requested licenses)
+      // 1. Check license status first - this is the most important check
+      if (licence.status == Licence.statusRevoked) {
+        return LicenceValidationResult(
+          isValid: false,
+          error: LicenceError(
+            code: 'LICENCE_REVOKED',
+            userMessage: 'Licence has been revoked',
+            technicalDetails:
+                'Revoked at: ${licence.revokedAt}, Reason: ${licence.revokedReason}',
+          ),
+        );
+      }
+
+      if (licence.status == Licence.statusDenied) {
+        return LicenceValidationResult(
+          isValid: false,
+          error: LicenceError(
+            code: 'LICENCE_DENIED',
+            userMessage: 'Licence request was denied',
+            technicalDetails:
+                'Denied at: ${licence.revokedAt}, Reason: ${licence.revokedReason}',
+          ),
+        );
+      }
+
+      // 2. Check if licence is expired (but allow requested licenses)
       if (licence.status != Licence.statusRequested && !licence.isValid) {
         return LicenceValidationResult(
           isValid: false,
@@ -145,35 +209,50 @@ class LicenceService {
         );
       }
 
-      // 2. Verify cryptographic signature
-      // Skip verification for demo/test licences and requested licences
-      // In production, this should always verify the real signature for active licences
-      if (licence.email.contains('demo') ||
-          licence.email.contains('test') ||
-          licence.status == Licence.statusRequested) {
-        // Skip signature verification for test/demo/requested licences
-        _logger.info(
-          'Skipping signature verification for ${licence.status} licence: ${licence.email}',
-        );
-      } else if (!await CryptographicValidator.verifySignature(
-        data: licence.dataForSigning,
-        signature: licence.signature,
-        algorithm: licence.algorithm,
-      )) {
-        // Clear the public key cache if signature verification fails
-        CryptographicValidator.clearCache();
-
+      // 3. Check if licence is active (reject requested, revoked, denied licenses)
+      if (licence.status != Licence.statusActive) {
         return LicenceValidationResult(
           isValid: false,
           error: LicenceError(
-            code: 'INVALID_SIGNATURE',
-            userMessage: 'Licence signature is invalid',
-            technicalDetails: 'Cryptographic validation failed',
+            code: 'LICENCE_NOT_ACTIVE',
+            userMessage: 'Licence is not active',
+            technicalDetails: 'Status: ${licence.status}',
           ),
         );
       }
 
-      // 3. Validate device fingerprint
+      // 4. Verify cryptographic signature for active licenses
+      // Skip verification for demo/test licences only
+      if (licence.email.contains('demo') || licence.email.contains('test')) {
+        // Skip signature verification for test/demo licences
+        _logger.info(
+          'Skipping signature verification for test/demo licence: ${licence.email}',
+        );
+      } else {
+        // Always verify signature for active licenses
+        if (!await CryptographicValidator.verifySignature(
+          data: licence.dataForSigning,
+          signature: licence.signature,
+          algorithm: licence.algorithm,
+        )) {
+          // Clear the public key cache if signature verification fails
+          CryptographicValidator.clearCache();
+
+          return LicenceValidationResult(
+            isValid: false,
+            error: LicenceError(
+              code: 'INVALID_SIGNATURE',
+              userMessage: 'Licence signature is invalid',
+              technicalDetails: 'Cryptographic validation failed',
+            ),
+          );
+        }
+        _logger.info(
+          'Signature verification successful for active licence: ${licence.email}',
+        );
+      }
+
+      // 5. Validate device fingerprint
       if (!await licence.validateDeviceFingerprint()) {
         return LicenceValidationResult(
           isValid: false,
@@ -185,7 +264,7 @@ class LicenceService {
         );
       }
 
-      // 4. Validate algorithm
+      // 6. Validate algorithm
       if (licence.algorithm != 'RSA-SHA256') {
         return LicenceValidationResult(
           isValid: false,
@@ -237,6 +316,15 @@ class LicenceService {
     final licence = await currentLicence;
     if (licence == null) return false;
 
+    // For requested licenses, deny all features
+    if (licence.status == Licence.statusRequested) {
+      _logger.info(
+        'Denying feature $featureName for requested licence: ${licence.email}',
+      );
+      return false;
+    }
+
+    // For other licenses, validate them
     final validationResult = await validateLicence(licence);
     if (!validationResult.isValid) return false;
 
@@ -248,6 +336,15 @@ class LicenceService {
     final licence = await currentLicence;
     if (licence == null) return [];
 
+    // For requested licenses, return empty list
+    if (licence.status == Licence.statusRequested) {
+      _logger.info(
+        'No features available for requested licence: ${licence.email}',
+      );
+      return [];
+    }
+
+    // For other licenses, validate them
     final validationResult = await validateLicence(licence);
     if (!validationResult.isValid) return [];
 

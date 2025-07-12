@@ -158,6 +158,7 @@ class LicenceRequestService {
           lastUsed: licence.lastUsed,
         );
 
+        _logger.info('Created revoked license: ${revokedLicence.email}');
         return revokedLicence;
       } else {
         _logger.warning('License status check failed: ${response.statusCode}');
