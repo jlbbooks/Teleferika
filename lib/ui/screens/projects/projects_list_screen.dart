@@ -15,7 +15,6 @@ import 'package:teleferika/licensing/licence_service.dart';
 import 'package:teleferika/licensing/licence_model.dart' as lm;
 import 'package:teleferika/licensing/licence_model.dart' show Licence;
 import 'package:teleferika/licensing/licensed_features_loader.dart';
-import 'package:teleferika/licensing/device_fingerprint.dart';
 import 'package:teleferika/licensing/licence_request_service.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 
@@ -169,7 +168,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         // Enhanced license information display
         content = _buildLicenceInfo(_activeLicence!, versionInfo);
 
-                          // Always show refresh status option for any license
+        // Always show refresh status option for any license
         actions.insert(
           0,
           TextButton(
@@ -177,7 +176,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
             onPressed: () async {
               // Show loading indicator in dialog
               showInfoStatus('Checking license status with server...');
-              
+
               try {
                 // Check with server
                 final updatedLicence = await _licenceRequestService
@@ -187,7 +186,9 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                 if (updatedLicence.status != _activeLicence!.status) {
                   await _licenceService.saveLicence(updatedLicence);
                   _activeLicence = updatedLicence;
-                  logger.info('License status updated: ${updatedLicence.status}');
+                  logger.info(
+                    'License status updated: ${updatedLicence.status}',
+                  );
 
                   // Show status message to user
                   final statusMessage = _licenceRequestService.getStatusMessage(
@@ -207,7 +208,9 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                     showSuccessStatus(statusMessage);
                   }
                 } else {
-                  showInfoStatus('License status unchanged: ${updatedLicence.status}');
+                  showInfoStatus(
+                    'License status unchanged: ${updatedLicence.status}',
+                  );
                 }
 
                 // Update the dialog content
@@ -219,7 +222,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                 // Continue with local license if server check fails
                 logger.warning('Server check failed, using local license: $e');
                 showErrorStatus('Failed to check with server: $e');
-                
+
                 // Still update the dialog to show current local status
                 if (mounted) {
                   Navigator.of(context).pop();
@@ -1089,69 +1092,6 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
     }
   }
 
-  // Enhanced Licence Testing Methods
-  Future<void> _generateDeviceFingerprint() async {
-    try {
-      logger.info('Generating device fingerprint...');
-
-      final fingerprint = await DeviceFingerprint.generate();
-      final deviceInfo = await DeviceFingerprint.getDeviceInfo();
-
-      // Show fingerprint in dialog
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text(
-              S.of(context)?.device_fingerprint_title ?? 'Device Fingerprint',
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${S.of(context)?.fingerprint_label ?? 'Fingerprint:'} ${fingerprint.substring(0, 32)}...',
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  S.of(context)?.device_info_label ?? 'Device Info:',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                ...deviceInfo.entries.map(
-                  (entry) => Text('${entry.key}: ${entry.value}'),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(S.of(context)?.close_button ?? 'Close'),
-              ),
-              TextButton(
-                onPressed: () {
-                  // Copy fingerprint to clipboard
-                  // You can add clipboard functionality here
-                  Navigator.pop(context);
-                  showInfoStatus(
-                    S.of(context)?.fingerprint_copied_to_clipboard ??
-                        'Fingerprint copied to clipboard',
-                  );
-                },
-                child: Text(S.of(context)?.copy_button ?? 'Copy'),
-              ),
-            ],
-          ),
-        );
-      }
-    } catch (e, stackTrace) {
-      logger.severe('Error generating device fingerprint', e, stackTrace);
-      showErrorStatus(
-        S.of(context)?.failed_to_generate_fingerprint(e.toString()) ??
-            'Failed to generate fingerprint: $e',
-      );
-    }
-  }
-
   Future<void> _requestLicence() async {
     try {
       // Show license request dialog
@@ -1254,7 +1194,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                     const SizedBox(height: 8),
                     ...availableFeatures.map(
                       (feature) => CheckboxListTile(
-                        title: Text(feature.replaceAll('_', ' ').toUpperCase()),
+                        title: Text(_getFeatureDisplayName(feature)),
                         value: selectedFeatures.contains(feature),
                         onChanged: (bool? value) {
                           setState(() {
@@ -1305,6 +1245,21 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         );
       },
     );
+  }
+
+  String _getFeatureDisplayName(String feature) {
+    switch (feature) {
+      case 'export_csv':
+        return 'CSV Export';
+      case 'export_basic':
+        return 'Basic Export';
+      case 'map_download':
+        return 'Map Download';
+      case 'export_advanced':
+        return 'Advanced Export';
+      default:
+        return feature.replaceAll('_', ' ').toUpperCase();
+    }
   }
 
   Future<void> _testLicenceValidation() async {
@@ -1630,10 +1585,6 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                         case 'test_license':
                           _testImportExampleLicence();
                           break;
-
-                        case 'generate_fingerprint':
-                          _generateDeviceFingerprint();
-                          break;
                         case 'test_validation':
                           _testLicenceValidation();
                           break;
@@ -1737,36 +1688,6 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                             ),
                           ),
 
-                          const PopupMenuDivider(),
-                          PopupMenuItem<String>(
-                            enabled: false,
-                            child: Text(
-                              'Technical Tools',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey.shade600,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                          PopupMenuItem<String>(
-                            value: 'generate_fingerprint',
-                            child: Row(
-                              children: [
-                                Icon(Icons.fingerprint, size: 20),
-                                SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    S
-                                            .of(context)
-                                            ?.generate_device_fingerprint ??
-                                        'Generate Device Fingerprint',
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
                           PopupMenuItem<String>(
                             value: 'test_validation',
                             child: Row(

@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:crypto/crypto.dart';
 import 'package:logging/logging.dart';
 import 'package:teleferika/licensing/device_fingerprint.dart';
 import 'package:teleferika/licensing/licence_model.dart';
