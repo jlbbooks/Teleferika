@@ -8,7 +8,6 @@ import 'package:teleferika/licensing/licence_model.dart';
 import 'package:teleferika/licensing/cryptographic_validator.dart';
 
 // Import status constants
-import 'package:teleferika/licensing/licence_model.dart' show Licence;
 
 /// Unified licence service with comprehensive validation, device fingerprinting, and status tracking
 class LicenceService {

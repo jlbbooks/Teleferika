@@ -95,7 +95,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
               )) {
                 showErrorStatus('$statusMessage - Please contact support.');
               } else if (updatedLicence.status == Licence.statusActive) {
-                showSuccessStatus('$statusMessage');
+                showSuccessStatus(statusMessage);
               }
             }
           }
@@ -169,19 +169,70 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         // Enhanced license information display
         content = _buildLicenceInfo(_activeLicence!, versionInfo);
 
+                          // Always show refresh status option for any license
+        actions.insert(
+          0,
+          TextButton(
+            child: Text('Refresh Status'),
+            onPressed: () async {
+              // Show loading indicator in dialog
+              showInfoStatus('Checking license status with server...');
+              
+              try {
+                // Check with server
+                final updatedLicence = await _licenceRequestService
+                    .checkLicenceStatus(_activeLicence!);
+
+                // Save updated license if status changed
+                if (updatedLicence.status != _activeLicence!.status) {
+                  await _licenceService.saveLicence(updatedLicence);
+                  _activeLicence = updatedLicence;
+                  logger.info('License status updated: ${updatedLicence.status}');
+
+                  // Show status message to user
+                  final statusMessage = _licenceRequestService.getStatusMessage(
+                    updatedLicence.status,
+                  );
+                  if (_licenceRequestService.needsAdminAction(
+                    updatedLicence.status,
+                  )) {
+                    showInfoStatus(
+                      '$statusMessage - Please wait for admin approval.',
+                    );
+                  } else if (_licenceRequestService.isPermanentlyInvalid(
+                    updatedLicence.status,
+                  )) {
+                    showErrorStatus('$statusMessage - Please contact support.');
+                  } else if (updatedLicence.status == Licence.statusActive) {
+                    showSuccessStatus(statusMessage);
+                  }
+                } else {
+                  showInfoStatus('License status unchanged: ${updatedLicence.status}');
+                }
+
+                // Update the dialog content
+                if (mounted) {
+                  Navigator.of(context).pop();
+                  _showLicenceInfoDialog(); // Reopen dialog with updated info
+                }
+              } catch (e) {
+                // Continue with local license if server check fails
+                logger.warning('Server check failed, using local license: $e');
+                showErrorStatus('Failed to check with server: $e');
+                
+                // Still update the dialog to show current local status
+                if (mounted) {
+                  Navigator.of(context).pop();
+                  _showLicenceInfoDialog();
+                }
+              }
+            },
+          ),
+        );
+
         // Add action buttons based on license status
         if (_activeLicence!.status == lm.Licence.statusRequested) {
-          // For requested licenses, show refresh and request new options
-          actions.insert(
-            0,
-            TextButton(
-              child: Text('Refresh Status'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                _loadActiveLicence(); // This will check with server
-              },
-            ),
-          );
+          // For requested licenses, show request new option
           actions.insert(
             1,
             TextButton(
@@ -1552,14 +1603,19 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                           : Icons.security,
                       color: _activeLicence != null && _activeLicence!.isValid
                           ? Colors.green
-                          : (_activeLicence != null && !_activeLicence!.isValid
-                                ? Colors.red
-                                : Colors.grey),
+                          : (_activeLicence != null &&
+                                    _activeLicence!.status ==
+                                        lm.Licence.statusRequested
+                                ? Colors.orange
+                                : (_activeLicence != null &&
+                                          !_activeLicence!.isValid
+                                      ? Colors.red
+                                      : Colors.grey)),
                     ),
                     tooltip:
                         "Licence Status / Import\n"
                         "License: ${_activeLicence?.email ?? 'None'}\n"
-                        "Valid: ${_activeLicence?.isValid ?? 'Unknown'}",
+                        "Status: ${_activeLicence?.status ?? 'None'}",
                     onSelected: (String value) {
                       switch (value) {
                         case 'license_info':
@@ -1602,9 +1658,13 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                                           _activeLicence!.isValid
                                       ? Colors.green
                                       : (_activeLicence != null &&
-                                                !_activeLicence!.isValid
-                                            ? Colors.red
-                                            : Colors.grey),
+                                                _activeLicence!.status ==
+                                                    lm.Licence.statusRequested
+                                            ? Colors.orange
+                                            : (_activeLicence != null &&
+                                                      !_activeLicence!.isValid
+                                                  ? Colors.red
+                                                  : Colors.grey)),
                                   size: 20,
                                 ),
                                 const SizedBox(width: 8),
