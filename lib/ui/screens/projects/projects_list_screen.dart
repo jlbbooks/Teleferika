@@ -929,52 +929,41 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
 
   Future<void> _testImportExampleLicence() async {
     try {
-      logger.info('Testing import of demo license...');
+      logger.info('Installing development license...');
 
-      // Generate actual device fingerprint for the demo license
-      final deviceFingerprint = await DeviceFingerprint.generate();
-      logger.info(
-        'Generated device fingerprint for demo: ${deviceFingerprint.substring(0, 8)}...',
-      );
-
-      // Create a demo license with the actual device fingerprint
-      final demoLicence = lm.Licence(
-        email: 'demo@example.com',
-        customerId: 'DEMO001',
-        deviceFingerprint: deviceFingerprint,
-        issuedAt: DateTime.now(),
-        validUntil: DateTime.now().add(const Duration(days: 30)),
-        features: ['export_csv', 'export_kml', 'map_download'],
+      // Install a development license using the new method
+      final saved = await _licenceService.installDevelopmentLicense(
+        email: 'dev@example.com',
+        features: [
+          'export_csv',
+          'export_kml',
+          'map_download',
+          'advanced_export',
+        ],
         maxDevices: 1,
-        version: '2.0',
-        signature: 'demo-signature-12345',
-        algorithm: 'RSA-SHA256',
-        status: lm.Licence.statusDevelopment,
-        usageCount: 0,
-        lastUsed: DateTime.now(),
       );
-      logger.info(
-        'Created demo license: ${demoLicence.email}, valid: ${demoLicence.isValid}',
-      );
-
-      // Save the license
-      final saved = await _licenceService.saveLicence(demoLicence);
-      logger.info('License saved: $saved');
 
       if (saved && mounted) {
+        // Reload the license to update the UI
+        final license = await _licenceService.currentLicence;
         setState(() {
-          _activeLicence = demoLicence;
+          _activeLicence = license;
         });
         showSuccessStatus(
           S.of(context)?.demo_license_imported_successfully ??
-              'Demo license imported successfully!',
+              'Development license installed successfully!',
+        );
+      } else {
+        showErrorStatus(
+          S.of(context)?.error_importing_demo_license('Failed to save') ??
+              'Error installing development license: Failed to save',
         );
       }
     } catch (e, stackTrace) {
-      logger.severe('Error testing demo license import', e, stackTrace);
+      logger.severe('Error installing development license', e, stackTrace);
       showErrorStatus(
         S.of(context)?.error_importing_demo_license(e.toString()) ??
-            'Error importing demo license: $e',
+            'Error installing development license: $e',
       );
     }
   }
@@ -1680,8 +1669,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                                 SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    S.of(context)?.install_demo_license ??
-                                        'Install Demo License',
+                                    'Install Development License',
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),

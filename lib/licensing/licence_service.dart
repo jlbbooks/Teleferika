@@ -210,7 +210,8 @@ class LicenceService {
       }
 
       // 3. Check if licence is active (reject requested, revoked, denied licenses)
-      if (licence.status != Licence.statusActive) {
+      if (licence.status != Licence.statusActive &&
+          licence.status != Licence.statusDevelopment) {
         return LicenceValidationResult(
           isValid: false,
           error: LicenceError(
@@ -222,11 +223,13 @@ class LicenceService {
       }
 
       // 4. Verify cryptographic signature for active licenses
-      // Skip verification for demo/test licences only
-      if (licence.email.contains('demo') || licence.email.contains('test')) {
-        // Skip signature verification for test/demo licences
+      // Skip verification for demo/test licences and development licenses
+      if (licence.email.contains('demo') ||
+          licence.email.contains('test') ||
+          licence.status == Licence.statusDevelopment) {
+        // Skip signature verification for test/demo/development licences
         _logger.info(
-          'Skipping signature verification for test/demo licence: ${licence.email}',
+          'Skipping signature verification for ${licence.status} licence: ${licence.email}',
         );
       } else {
         // Always verify signature for active licenses
@@ -324,6 +327,14 @@ class LicenceService {
       return false;
     }
 
+    // For development licenses, allow all features without validation
+    if (licence.status == Licence.statusDevelopment) {
+      _logger.info(
+        'Allowing feature $featureName for development licence: ${licence.email}',
+      );
+      return licence.hasFeature(featureName);
+    }
+
     // For other licenses, validate them
     final validationResult = await validateLicence(licence);
     if (!validationResult.isValid) return false;
@@ -342,6 +353,14 @@ class LicenceService {
         'No features available for requested licence: ${licence.email}',
       );
       return [];
+    }
+
+    // For development licenses, return all features without validation
+    if (licence.status == Licence.statusDevelopment) {
+      _logger.info(
+        'All features available for development licence: ${licence.email}',
+      );
+      return licence.availableFeatures;
     }
 
     // For other licenses, validate them
@@ -451,29 +470,62 @@ class LicenceService {
     };
   }
 
-  /// Create a demo licence for testing
-  Future<Licence> createDemoLicence() async {
-    final deviceFingerprint = await DeviceFingerprint.generate();
+  /// Install a development license for testing purposes
+  /// This bypasses normal validation and creates a fully valid license
+  Future<bool> installDevelopmentLicense({
+    required String email,
+    List<String> features = const [
+      'export_csv',
+      'export_kml',
+      'map_download',
+      'advanced_export',
+    ],
+    int maxDevices = 1,
+  }) async {
+    await _initPrefs();
 
-    final licence = Licence(
-      email: 'demo@example.com',
-      customerId: 'DEMO001',
-      deviceFingerprint: deviceFingerprint,
-      issuedAt: DateTime.now(),
-      validUntil: DateTime.now().add(const Duration(days: 30)),
-      features: ['export_csv', 'export_kml', 'map_download'],
-      maxDevices: 1,
-      version: '2.0',
-      signature: 'demo-signature-12345',
-      algorithm: 'RSA-SHA256',
-      status: 'active',
-      usageCount: 0,
-      lastUsed: DateTime.now(),
-    );
+    try {
+      _logger.info('Installing development license for: $email');
 
-    await saveLicence(licence);
-    _logger.info('Demo licence created: ${licence.email}');
-    return licence;
+      // Create a development license that's always valid
+      final developmentLicense = Licence(
+        email: email,
+        customerId: '',
+        deviceFingerprint: await DeviceFingerprint.generate(),
+        issuedAt: DateTime.now(),
+        validUntil: DateTime.now().add(const Duration(days: 365)),
+        features: features,
+        maxDevices: maxDevices,
+        version: '2.0',
+        signature: 'development_signature_bypass',
+        algorithm: 'RSA-SHA256',
+        status: Licence.statusDevelopment, // Use development status
+        revokedAt: null,
+        revokedReason: null,
+        usageCount: 0,
+        lastUsed: DateTime.now(),
+      );
+
+      // Save the development license without validation
+      final String licenceJson = jsonEncode(developmentLicense.toJson());
+      await _prefs?.setString(_licenceKey, licenceJson);
+
+      _currentLicence = developmentLicense;
+      _logger.info('Development license installed successfully: $email');
+      return true;
+    } catch (e) {
+      _logger.severe('Failed to install development license', e);
+      return false;
+    }
+  }
+
+  /// Check if current license is a development license
+  bool get isDevelopmentLicense {
+    final licence = _currentLicence;
+    if (licence == null) return false;
+
+    return licence.status == Licence.statusDevelopment ||
+        licence.signature == 'development_signature_bypass';
   }
 
   /// Clear all licence data
