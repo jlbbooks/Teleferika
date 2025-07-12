@@ -225,8 +225,8 @@ class AppConfig {
   /// The server provides license validation, generation, and management services.
 
   /// License server hostname or IP address.
-  /// Defaults to localhost for development.
-  static const String licenseServerHost = 'localhost';
+  /// Defaults to host machine IP for development with Android emulator.
+  static const String licenseServerHost = '192.168.0.178';
 
   /// License server port number.
   /// Defaults to 8899 to match the license server configuration.

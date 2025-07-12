@@ -46,13 +46,20 @@ class LicenceRequestService {
       };
 
       // Make API call to server
+      final url = '${AppConfig.licenseServerUrl}/license/requestLicence';
+      _logger.info('Making license request to: $url');
+      _logger.info('Request data: ${jsonEncode(requestData)}');
+
       final response = await http
           .post(
-            Uri.parse('${AppConfig.licenseServerUrl}/license/requestLicence'),
+            Uri.parse(url),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode(requestData),
           )
           .timeout(const Duration(seconds: 30));
+
+      _logger.info('Response status: ${response.statusCode}');
+      _logger.info('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body) as Map<String, dynamic>;
@@ -107,14 +114,16 @@ class LicenceRequestService {
 
       _logger.info('Checking license status for ${licence.email}');
 
+      final url =
+          '${AppConfig.licenseServerUrl}/license/status/${licence.email}';
+      _logger.info('Making status check request to: $url');
+
       final response = await http
-          .get(
-            Uri.parse(
-              '${AppConfig.licenseServerUrl}/license/status/${licence.email}',
-            ),
-            headers: {'Content-Type': 'application/json'},
-          )
+          .get(Uri.parse(url), headers: {'Content-Type': 'application/json'})
           .timeout(const Duration(seconds: 30));
+
+      _logger.info('Status check response status: ${response.statusCode}');
+      _logger.info('Status check response body: ${response.body}');
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body) as Map<String, dynamic>;
