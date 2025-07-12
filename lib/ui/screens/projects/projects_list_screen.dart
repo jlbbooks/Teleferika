@@ -989,7 +989,6 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       final saved = await _licenceService.installDevelopmentLicense(
         email: 'dev@example.com',
         features: [
-          'export_csv',
           'export_basic',
           'map_download',
           'export_advanced',
@@ -1143,7 +1142,6 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
 
     // Available features for request
     const availableFeatures = [
-      'export_csv',
       'export_basic',
       'map_download',
       'export_advanced',
@@ -1249,8 +1247,6 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
 
   String _getFeatureDisplayName(String feature) {
     switch (feature) {
-      case 'export_csv':
-        return 'CSV Export';
       case 'export_basic':
         return 'Basic Export';
       case 'map_download':

@@ -61,7 +61,7 @@ The `License` class supports both client and server JSON formats:
     "deviceFingerprint": "device-123",
     "issuedAt": "2024-01-01T12:00:00.000Z",
     "validUntil": "2024-12-31T23:59:59.000Z",
-    "features": ["export_csv", "export_basic"],
+    "features": ["export_basic"],
     "maxDevices": 1,
     "version": "2.0",
     "status": "active",
@@ -81,7 +81,7 @@ The `License` class supports both client and server JSON formats:
   "deviceFingerprint": "device-123",
   "issuedAt": "2024-01-01T12:00:00.000Z",
   "validUntil": "2024-12-31T23:59:59.000Z",
-      "features": ["export_csv", "export_basic"],
+      "features": ["export_basic"],
   "maxDevices": 1,
   "version": "2.0",
   "signature": "base64-signature",
@@ -102,7 +102,7 @@ final license = License(
   deviceFingerprint: 'device-123',
   issuedAt: DateTime.now(),
   validUntil: DateTime.now().add(const Duration(days: 365)),
-  features: ['export_csv', 'export_kml'],
+  features: ['export_kml'],
   maxDevices: 1,
   version: '2.0',
   signature: 'signature',
@@ -126,9 +126,7 @@ if (license.expiresSoon) {
 }
 
 // Check for specific features
-if (license.hasFeature('export_csv')) {
-  print('CSV export is available');
-}
+// (example: if (license.hasFeature('export_kml')) { ... })
 ```
 
 ### Updating Usage Statistics

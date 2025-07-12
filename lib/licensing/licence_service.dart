@@ -472,13 +472,12 @@ class LicenceService {
   /// Install a development license for testing purposes
   /// This bypasses normal validation and creates a fully valid license
   Future<bool> installDevelopmentLicense({
-    required String email,
-    List<String> features = const [
-              'export_csv',
+          required String email,
+      List<String> features = const [
         'export_basic',
         'map_download',
         'export_advanced',
-    ],
+      ],
     int maxDevices = 1,
   }) async {
     await _initPrefs();

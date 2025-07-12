@@ -4,7 +4,6 @@
   "validUntil": "2025-12-31T23:59:59.000Z",
   "licenceKey": "DEMO-KEY-12345",
   "features": [
-    "export_csv",
     "export_basic",
     "map_download",
     "export_advanced"
