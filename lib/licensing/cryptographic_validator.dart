@@ -5,7 +5,6 @@ import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:logging/logging.dart';
 import 'package:pointycastle/pointycastle.dart';
-import 'package:teleferika/core/logger.dart';
 import 'package:pointycastle/digests/sha256.dart';
 import 'package:pointycastle/signers/rsa_signer.dart';
 
@@ -54,8 +53,22 @@ class CryptographicValidator {
       final dataBytes = utf8.encode(data);
       final signatureBytes = base64Decode(signature);
 
+      _logger.info('Data length: ${dataBytes.length}');
+      _logger.info('Signature length: ${signatureBytes.length}');
+      _logger.info('Data for signing: $data');
+
+      // Debug: Let's also log the exact bytes being verified
+      _logger.info('Data bytes (first 100): ${dataBytes.take(100).toList()}');
+      _logger.info(
+        'Signature bytes (first 50): ${signatureBytes.take(50).toList()}',
+      );
+
+      // The server signs the SHA256 hash of the data, not the raw data
+      final hash = sha256.convert(dataBytes);
+      _logger.info('SHA256 hash: ${hash.toString()}');
+
       final isValid = signer.verifySignature(
-        dataBytes,
+        Uint8List.fromList(hash.bytes),
         RSASignature(signatureBytes),
       );
       _logger.info('Signature verification result: $isValid');
