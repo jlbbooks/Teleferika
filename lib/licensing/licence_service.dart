@@ -156,9 +156,13 @@ class LicenceService {
           'Skipping signature verification for ${licence.status} licence: ${licence.email}',
         );
       } else if (!await CryptographicValidator.verifySignature(
-        licence.dataForSigning,
-        licence.signature,
+        data: licence.dataForSigning,
+        signature: licence.signature,
+        algorithm: licence.algorithm,
       )) {
+        // Clear the public key cache if signature verification fails
+        CryptographicValidator.clearCache();
+
         return LicenceValidationResult(
           isValid: false,
           error: LicenceError(

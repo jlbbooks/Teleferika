@@ -133,9 +133,35 @@ class LicenceRequestService {
           'License status check successful: ${updatedLicence.status}',
         );
         return updatedLicence;
+      } else if (response.statusCode == 404) {
+        // License not found on server - mark as revoked
+        _logger.warning(
+          'License not found on server (404), marking as revoked',
+        );
+
+        // Create a revoked version of the license
+        final revokedLicence = Licence(
+          email: licence.email,
+          customerId: licence.customerId,
+          deviceFingerprint: licence.deviceFingerprint,
+          issuedAt: licence.issuedAt,
+          validUntil: licence.validUntil,
+          features: licence.features,
+          maxDevices: licence.maxDevices,
+          version: licence.version,
+          signature: licence.signature,
+          algorithm: licence.algorithm,
+          status: Licence.statusRevoked,
+          revokedAt: DateTime.now(),
+          revokedReason: 'License deleted from server',
+          usageCount: licence.usageCount,
+          lastUsed: licence.lastUsed,
+        );
+
+        return revokedLicence;
       } else {
         _logger.warning('License status check failed: ${response.statusCode}');
-        // Return original license if check fails
+        // Return original license if check fails for other reasons
         return licence;
       }
     } catch (e, stackTrace) {
