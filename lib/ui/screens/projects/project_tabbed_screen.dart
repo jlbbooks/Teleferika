@@ -369,7 +369,7 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
 
     // Check if licence is valid
     final licenceStatus = await _licenceService.getLicenceStatus();
-    if (!licenceStatus['isValid']) {
+    if (licenceStatus['status'] != 'valid') {
       showErrorStatus(
         s?.exportRequiresValidLicence ?? 'Valid licence required for export',
       );

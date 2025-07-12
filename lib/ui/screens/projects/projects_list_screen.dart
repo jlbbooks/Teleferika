@@ -1470,7 +1470,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                       // Check if licence is valid
                       final licenceStatus = await _licenceService
                           .getLicenceStatus();
-                      if (!licenceStatus['isValid']) {
+                      if (licenceStatus['status'] != 'valid') {
                         if (context.mounted) {
                           final s = S.of(context);
                           showErrorStatus(
