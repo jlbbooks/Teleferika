@@ -1,5 +1,5 @@
 import 'dart:async'; // For Timer
-import 'dart:convert'; // For jsonDecode
+// For jsonDecode
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -13,9 +13,10 @@ import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/licensing/licence_service.dart';
 import 'package:teleferika/licensing/licence_model.dart' as lm;
+import 'package:teleferika/licensing/licence_model.dart' show Licence;
 import 'package:teleferika/licensing/licensed_features_loader.dart';
 import 'package:teleferika/licensing/device_fingerprint.dart';
-import 'package:teleferika/licensing/licence_generator_utility.dart';
+import 'package:teleferika/licensing/licence_request_service.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 
 import 'project_tabbed_screen.dart';
@@ -41,6 +42,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
 
   final LicenceService _licenceService =
       LicenceService.instance; // Get LicenceService instance
+  final LicenceRequestService _licenceRequestService = LicenceRequestService();
   lm.Licence? _activeLicence; // To hold the loaded licence status
 
   @override
@@ -63,6 +65,46 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       logger.info('License loaded: ${_activeLicence?.email ?? 'null'}');
       logger.info('License valid: ${_activeLicence?.isValid ?? 'null'}');
 
+      // Check with server if license exists and requires validation
+      if (_activeLicence != null &&
+          Licence.requiresServerValidation(_activeLicence!.status)) {
+        try {
+          logger.info('Checking license status with server...');
+          final updatedLicence = await _licenceRequestService
+              .checkLicenceStatus(_activeLicence!);
+
+          // Save updated license if status changed
+          if (updatedLicence.status != _activeLicence!.status) {
+            await _licenceService.saveLicence(updatedLicence);
+            _activeLicence = updatedLicence;
+            logger.info('License status updated: ${updatedLicence.status}');
+
+            // Show status message to user
+            if (mounted) {
+              final statusMessage = _licenceRequestService.getStatusMessage(
+                updatedLicence.status,
+              );
+              if (_licenceRequestService.needsAdminAction(
+                updatedLicence.status,
+              )) {
+                showInfoStatus(
+                  '$statusMessage - Please wait for admin approval.',
+                );
+              } else if (_licenceRequestService.isPermanentlyInvalid(
+                updatedLicence.status,
+              )) {
+                showErrorStatus('$statusMessage - Please contact support.');
+              } else if (updatedLicence.status == Licence.statusActive) {
+                showSuccessStatus('$statusMessage');
+              }
+            }
+          }
+        } catch (e) {
+          // Continue with local license if server check fails
+          logger.warning('Server check failed, using local license: $e');
+        }
+      }
+
       if (mounted) {
         setState(() {
           // Trigger a rebuild to update the UI with license status
@@ -82,6 +124,25 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
     // Reload to ensure we have the latest
     _licenceService.currentLicence.then((licence) async {
       if (!mounted) return;
+
+      // Check with server if license exists and requires validation
+      if (licence != null && Licence.requiresServerValidation(licence.status)) {
+        try {
+          showInfoStatus('Checking license status with server...');
+          final updatedLicence = await _licenceRequestService
+              .checkLicenceStatus(licence);
+
+          // Save updated license if status changed
+          if (updatedLicence.status != licence.status) {
+            await _licenceService.saveLicence(updatedLicence);
+            licence = updatedLicence;
+          }
+        } catch (e) {
+          // Continue with local license if server check fails
+          logger.warning('Server check failed, using local license: $e');
+        }
+      }
+
       setState(() {
         _activeLicence = licence;
       });
@@ -408,130 +469,6 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         ],
       ),
     );
-  }
-
-  void _showPremiumFeaturesDialog() {
-    final hasLicensedFeatures = LicensedFeaturesLoader.hasLicensedFeatures;
-    final availableFeatures = LicensedFeaturesLoader.licensedFeatures;
-
-    // Add version info if available
-    String versionInfo = '';
-    if (widget.appVersion != null && widget.appVersion!.isNotEmpty) {
-      versionInfo =
-          '\n${S.of(context)?.app_version_label(widget.appVersion!) ?? 'App Version: ${widget.appVersion}'}';
-    }
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Row(
-            children: [
-              Icon(
-                hasLicensedFeatures ? Icons.star : Icons.star_border,
-                color: hasLicensedFeatures ? Colors.amber : Colors.grey,
-              ),
-              const SizedBox(width: 8),
-              Text(S.of(context)?.premium_features_title ?? 'Premium Features'),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (hasLicensedFeatures) ...[
-                Text(
-                  S.of(context)?.premium_features_available ??
-                      'Premium features are available in this build!',
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  S.of(context)?.available_features ?? 'Available Features:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                ...availableFeatures.map(
-                  (feature) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.check_circle,
-                          color: Colors.green,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text(feature)),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Show a sample premium widget
-                if (LicensedFeaturesLoader.buildLicensedWidget(
-                      'premium_banner',
-                    ) !=
-                    null)
-                  LicensedFeaturesLoader.buildLicensedWidget('premium_banner')!,
-              ] else ...[
-                Text(
-                  S.of(context)?.premium_features_not_available ??
-                      'Premium features are not available in this build.',
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  S.of(context)?.opensource_version ??
-                      'This is the opensource version of the app.',
-                ),
-              ],
-              if (versionInfo.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Text(
-                  versionInfo,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ],
-            ],
-          ),
-          actions: [
-            TextButton(
-              child: Text(S.of(context)?.close_button ?? 'Close'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            if (hasLicensedFeatures)
-              TextButton(
-                child: Text(S.of(context)?.try_feature ?? 'Try Feature'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  _demonstrateLicensedFeature();
-                },
-              ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _demonstrateLicensedFeature() {
-    // Demonstrate a licensed function
-    try {
-      final licenceInfo = LicensedFeaturesLoader.getLicenceStatus();
-      if (licenceInfo != null) {
-        showSuccessStatus(
-          S.of(context)?.licence_status(licenceInfo['status']) ??
-              'Licence Status: ${licenceInfo['status']}',
-        );
-      }
-    } catch (e) {
-      showErrorStatus(
-        S.of(context)?.feature_demo_failed(e.toString()) ??
-            'Feature demonstration failed: $e',
-      );
-    }
   }
 
   Future<void> _handleImportLicence() async {
@@ -939,7 +876,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         version: '2.0',
         signature: 'demo-signature-12345',
         algorithm: 'RSA-SHA256',
-        status: 'active',
+        status: lm.Licence.statusDevelopment,
         usageCount: 0,
         lastUsed: DateTime.now(),
       );
@@ -1040,104 +977,6 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
   }
 
   // Enhanced Licence Testing Methods
-  Future<void> _testLicence() async {
-    try {
-      logger.info('Testing enhanced licence system...');
-
-      // Initialize licence service
-      await LicenceService.instance.initialize();
-
-      // Generate device fingerprint
-      final fingerprint = await DeviceFingerprint.generate();
-      logger.info('Device fingerprint: ${fingerprint.substring(0, 16)}...');
-
-      // Generate test licence
-      final licenceJson = await LicenceGeneratorUtility.createDemoLicence(
-        email: 'test@enhanced.com',
-        validUntil: DateTime.now().add(const Duration(days: 365)),
-      );
-
-      // Parse and validate the licence directly
-      final licenceData = jsonDecode(licenceJson) as Map<String, dynamic>;
-      final importedLicence = lm.Licence.fromJson(licenceData);
-
-      // Save the licence using the service
-      final saved = await _licenceService.saveLicence(importedLicence);
-
-      if (saved) {
-        showSuccessStatus(
-          'Enhanced licence imported: ${importedLicence.email}',
-        );
-
-        // Show detailed status
-        final status = await _licenceService.validateLicence(importedLicence);
-        logger.info('Enhanced licence status: $status');
-
-        // Test feature access
-        final hasExport = await _licenceService.hasFeature('advanced_export');
-        logger.info('Has export feature: $hasExport');
-
-        // Show licence details in dialog
-        if (mounted) {
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: Text(
-                S.of(context)?.enhanced_licence_test_results ??
-                    'Enhanced Licence Test Results',
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${S.of(context)?.email_label ?? 'Email:'} ${importedLicence.email}',
-                  ),
-                  Text(
-                    '${S.of(context)?.valid_until_label ?? 'Valid Until:'} ${importedLicence.validUntil.toLocal()}',
-                  ),
-                  Text(
-                    '${S.of(context)?.features_label ?? 'Features:'} ${importedLicence.features.join(', ')}',
-                  ),
-                  Text(
-                    '${S.of(context)?.algorithm_label ?? 'Algorithm:'} ${importedLicence.algorithm}',
-                  ),
-                  Text(
-                    '${S.of(context)?.fingerprint_label ?? 'Device Fingerprint:'} ${importedLicence.deviceFingerprint.substring(0, 16)}...',
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${S.of(context)?.has_export_feature_label ?? 'Has Export Feature:'} $hasExport',
-                  ),
-                  Text(
-                    '${S.of(context)?.is_valid_label ?? 'Is Valid:'} ${importedLicence.isValid}',
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(S.of(context)?.close_button ?? 'Close'),
-                ),
-              ],
-            ),
-          );
-        }
-      } else {
-        showErrorStatus(
-          S.of(context)?.failed_to_save_enhanced_licence ??
-              'Failed to save enhanced licence',
-        );
-      }
-    } catch (e, stackTrace) {
-      logger.severe('Error testing enhanced licence', e, stackTrace);
-      showErrorStatus(
-        S.of(context)?.enhanced_licence_test_failed(e.toString()) ??
-            'Enhanced licence test failed: $e',
-      );
-    }
-  }
-
   Future<void> _generateDeviceFingerprint() async {
     try {
       logger.info('Generating device fingerprint...');
@@ -1198,6 +1037,161 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
             'Failed to generate fingerprint: $e',
       );
     }
+  }
+
+  Future<void> _requestLicence() async {
+    try {
+      // Show license request dialog
+      final result = await _showLicenceRequestDialog();
+      if (result == null) return; // User cancelled
+
+      final email = result['email'] as String;
+      final features = result['features'] as List<String>;
+      final maxDevices = result['maxDevices'] as int;
+
+      // Show loading indicator
+      showInfoStatus('Requesting license...');
+
+      // Request license from server
+      final requestedLicence = await _licenceRequestService.requestLicence(
+        email: email,
+        requestedFeatures: features,
+        maxDevices: maxDevices,
+      );
+
+      // Save the requested license
+      final saved = await _licenceService.saveLicence(requestedLicence);
+
+      if (saved && mounted) {
+        setState(() {
+          _activeLicence = requestedLicence;
+        });
+
+        showSuccessStatus(
+          'License requested successfully! Status: ${requestedLicence.status}',
+        );
+
+        // Show license info dialog with status
+        _showLicenceInfoDialog();
+      }
+    } catch (e) {
+      if (e is lm.LicenceError) {
+        showErrorStatus(e.userMessage);
+      } else {
+        showErrorStatus('Error requesting license: $e');
+      }
+    }
+  }
+
+  Future<Map<String, dynamic>?> _showLicenceRequestDialog() async {
+    final emailController = TextEditingController();
+    final maxDevicesController = TextEditingController(text: '1');
+    final selectedFeatures = <String>{};
+
+    // Available features for request
+    const availableFeatures = [
+      'export_csv',
+      'export_kml',
+      'map_download',
+      'advanced_export',
+    ];
+
+    return showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Row(
+                children: [
+                  const Icon(Icons.request_page, color: Colors.blue),
+                  const SizedBox(width: 8),
+                  Text('Request License'),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: emailController,
+                      decoration: InputDecoration(
+                        labelText: S.of(context)?.email_label ?? 'Email',
+                        hintText: 'your.email@example.com',
+                        prefixIcon: const Icon(Icons.email),
+                      ),
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: maxDevicesController,
+                      decoration: InputDecoration(
+                        labelText: 'Max Devices',
+                        hintText: '1-5',
+                        prefixIcon: const Icon(Icons.devices),
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Requested Features:',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    ...availableFeatures.map(
+                      (feature) => CheckboxListTile(
+                        title: Text(feature.replaceAll('_', ' ').toUpperCase()),
+                        value: selectedFeatures.contains(feature),
+                        onChanged: (bool? value) {
+                          setState(() {
+                            if (value == true) {
+                              selectedFeatures.add(feature);
+                            } else {
+                              selectedFeatures.remove(feature);
+                            }
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final email = emailController.text.trim();
+                    final maxDevices =
+                        int.tryParse(maxDevicesController.text) ?? 1;
+
+                    if (email.isEmpty) {
+                      showErrorStatus('Email is required');
+                      return;
+                    }
+
+                    if (selectedFeatures.isEmpty) {
+                      showErrorStatus('Please select at least one feature');
+                      return;
+                    }
+
+                    Navigator.of(context).pop({
+                      'email': email,
+                      'features': selectedFeatures.toList(),
+                      'maxDevices': maxDevices.clamp(1, 5),
+                    });
+                  },
+                  child: Text('Request'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _testLicenceValidation() async {
@@ -1512,6 +1506,9 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                         case 'import_license':
                           _handleImportLicence();
                           break;
+                        case 'request_license':
+                          _requestLicence();
+                          break;
                         case 'test_license':
                           _testImportExampleLicence();
                           break;
@@ -1569,6 +1566,21 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                                   child: Text(
                                     S.of(context)?.import_licence ??
                                         'Import License',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'request_license',
+                            child: Row(
+                              children: [
+                                Icon(Icons.request_page, size: 20),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Request License',
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),

@@ -542,7 +542,7 @@ packages:
     source: hosted
     version: "0.2.8"
   http:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: http
       sha256: "559ab0d950643c9a04512f4c4bd1c435dcb5af1aa9c848f3bf5867347044328a"

@@ -42,6 +42,7 @@ dependencies:
   flutter_map_location_marker: ^10.1.0
   flutter_map_tile_caching: ^10.1.1
   geolocator: ^14.0.2
+  http: ^1.5.0-beta
   image_picker: ^1.1.2
   intl: ^0.20.2
   latlong2: ^0.9.1

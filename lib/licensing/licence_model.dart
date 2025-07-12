@@ -7,6 +7,19 @@ import 'package:teleferika/licensing/device_fingerprint.dart';
 class Licence {
   static final Logger _logger = Logger('Licence');
 
+  /// License status constants
+  static const String statusActive = 'active';
+  static const String statusExpired = 'expired';
+  static const String statusRevoked = 'revoked';
+  static const String statusRequested = 'requested';
+  static const String statusDenied = 'denied';
+  static const String statusDevelopment = 'development';
+
+  /// Check if a status requires server validation
+  static bool requiresServerValidation(String status) {
+    return status != statusDevelopment;
+  }
+
   final String email;
   final String customerId;
   final String deviceFingerprint;
@@ -134,7 +147,12 @@ class Licence {
 
   /// Check if licence is currently valid
   bool get isValid {
-    if (status != 'active') return false;
+    // Development licenses are always considered valid
+    if (status == statusDevelopment) return true;
+
+    // Only active licenses are valid
+    if (status != statusActive) return false;
+
     return DateTime.now().isBefore(validUntil);
   }
 
