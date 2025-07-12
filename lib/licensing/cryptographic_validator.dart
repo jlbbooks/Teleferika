@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:io';
 import 'package:logging/logging.dart';
 import 'package:pointycastle/pointycastle.dart';
 import 'package:pointycastle/signers/rsa_signer.dart';
@@ -9,8 +10,13 @@ import 'package:pointycastle/digests/sha256.dart';
 class CryptographicValidator {
   static final Logger _logger = Logger('CryptographicValidator');
 
-  // Embedded public key for signature verification
-  static const String _publicKeyPem = '''
+  // Cache for the server's public key
+  static String? _cachedPublicKeyPem;
+  static DateTime? _cacheTimestamp;
+  static const Duration _cacheExpiry = Duration(minutes: 30);
+
+  // Fallback public key (the original hardcoded one)
+  static const String _fallbackPublicKeyPem = '''
 -----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkb1SRPu4W7u8BuSc1tXG
 J9pB8E8Zl59UB7THVU+2wtgtSAFFqGN9z2DZJ7V/qYFB88IZq1Yd65cz/uvOat8I
@@ -23,9 +29,13 @@ vwIDAQAB
 ''';
 
   /// Verifies the RSA-SHA256 signature of the given data
-  static bool verifySignature(String data, String base64Signature) {
+  static Future<bool> verifySignature(
+    String data,
+    String base64Signature,
+  ) async {
     try {
-      final publicKey = _parsePublicKeyFromPem(_publicKeyPem);
+      final publicKeyPem = await _getPublicKeyPem();
+      final publicKey = _parsePublicKeyFromPem(publicKeyPem);
       final signer = RSASigner(SHA256Digest(), '0609608648016503040201');
       signer.init(false, PublicKeyParameter<RSAPublicKey>(publicKey));
 
@@ -43,6 +53,54 @@ vwIDAQAB
     } catch (e, stackTrace) {
       _logger.severe('Error verifying signature', e, stackTrace);
       return false;
+    }
+  }
+
+  /// Gets the public key PEM from server or cache
+  static Future<String> _getPublicKeyPem() async {
+    // Check if we have a valid cached key
+    if (_cachedPublicKeyPem != null && _cacheTimestamp != null) {
+      final now = DateTime.now();
+      if (now.difference(_cacheTimestamp!).compareTo(_cacheExpiry) < 0) {
+        _logger.info('Using cached public key');
+        return _cachedPublicKeyPem!;
+      }
+    }
+
+    try {
+      _logger.info('Fetching public key from server...');
+
+      // Try to fetch from server
+      final client = HttpClient();
+      final request = await client.getUrl(
+        Uri.parse('http://192.168.0.178:8899/public-key'),
+      );
+      final response = await request.close();
+
+      if (response.statusCode == 200) {
+        final responseBody = await response.transform(utf8.decoder).join();
+        final jsonResponse = jsonDecode(responseBody) as Map<String, dynamic>;
+        final publicKey = jsonResponse['publicKey'] as String;
+
+        // Cache the key
+        _cachedPublicKeyPem = publicKey;
+        _cacheTimestamp = DateTime.now();
+
+        _logger.info('Successfully fetched and cached public key from server');
+        return publicKey;
+      } else {
+        _logger.warning(
+          'Failed to fetch public key from server, using fallback',
+        );
+        return _fallbackPublicKeyPem;
+      }
+    } catch (e, stackTrace) {
+      _logger.warning(
+        'Error fetching public key from server, using fallback',
+        e,
+        stackTrace,
+      );
+      return _fallbackPublicKeyPem;
     }
   }
 

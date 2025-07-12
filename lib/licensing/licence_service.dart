@@ -155,7 +155,7 @@ class LicenceService {
         _logger.info(
           'Skipping signature verification for ${licence.status} licence: ${licence.email}',
         );
-      } else if (!CryptographicValidator.verifySignature(
+      } else if (!await CryptographicValidator.verifySignature(
         licence.dataForSigning,
         licence.signature,
       )) {
