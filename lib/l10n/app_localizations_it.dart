@@ -752,6 +752,9 @@ class SIt extends S {
   String get import_licence => 'Importa licenza';
 
   @override
+  String get request_new_license => 'Richiedi Nuova Licenza';
+
+  @override
   String get premium_features_title => 'Funzionalità Premium';
 
   @override
@@ -1059,4 +1062,105 @@ class SIt extends S {
 
   @override
   String get pointDetailsSectionTitle => 'Dettagli Punto';
+
+  @override
+  String get no_license_to_clear => 'Nessuna licenza installata da rimuovere.';
+
+  @override
+  String get enhanced_licence_test_results => 'Risultati Test Licenza Avanzata';
+
+  @override
+  String get email_label => 'Email:';
+
+  @override
+  String get valid_until_label => 'Valida fino a:';
+
+  @override
+  String get features_label => 'Funzionalità:';
+
+  @override
+  String get algorithm_label => 'Algoritmo:';
+
+  @override
+  String get has_export_feature_label => 'Ha funzionalità di esportazione:';
+
+  @override
+  String get is_valid_label => 'È valida:';
+
+  @override
+  String get device_fingerprint_title => 'Impronta Digitale Dispositivo';
+
+  @override
+  String get fingerprint_label => 'Impronta digitale:';
+
+  @override
+  String get device_info_label => 'Informazioni Dispositivo:';
+
+  @override
+  String get copy_button => 'Copia';
+
+  @override
+  String get license_status_label => 'Stato Licenza';
+
+  @override
+  String get test_enhanced_licence => 'Test Licenza Avanzata';
+
+  @override
+  String get generate_device_fingerprint =>
+      'Genera Impronta Digitale Dispositivo';
+
+  @override
+  String get test_licence_validation => 'Test Validazione Licenza';
+
+  @override
+  String error_importing_licence(String error) {
+    return 'Errore durante l\'importazione della licenza: $error';
+  }
+
+  @override
+  String error_importing_demo_license(String error) {
+    return 'Errore durante l\'importazione della licenza demo: $error';
+  }
+
+  @override
+  String error_clearing_license(String error) {
+    return 'Errore durante la rimozione della licenza: $error';
+  }
+
+  @override
+  String get failed_to_save_enhanced_licence =>
+      'Impossibile salvare la licenza avanzata';
+
+  @override
+  String enhanced_licence_test_failed(String error) {
+    return 'Test licenza avanzata fallito: $error';
+  }
+
+  @override
+  String get fingerprint_copied_to_clipboard =>
+      'Impronta digitale copiata negli appunti';
+
+  @override
+  String failed_to_generate_fingerprint(String error) {
+    return 'Impossibile generare l\'impronta digitale: $error';
+  }
+
+  @override
+  String get invalid_licence_accepted_error =>
+      'Licenza non valida accettata - questo è sbagliato!';
+
+  @override
+  String invalid_licence_correctly_rejected(String code) {
+    return 'Licenza non valida correttamente rifiutata: $code';
+  }
+
+  @override
+  String unexpected_error(String error) {
+    return 'Errore imprevisto: $error';
+  }
+
+  @override
+  String validation_test_failed(String error) {
+    return 'Test di validazione fallito: $error';
+  }
 }

@@ -1,4 +1,5 @@
 import 'dart:async'; // For Timer
+// For jsonDecode
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -10,9 +11,11 @@ import 'package:path_provider/path_provider.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
-import 'package:teleferika/licensing/licence_model.dart';
 import 'package:teleferika/licensing/licence_service.dart';
+import 'package:teleferika/licensing/licence_model.dart' as lm;
+import 'package:teleferika/licensing/licence_model.dart' show Licence;
 import 'package:teleferika/licensing/licensed_features_loader.dart';
+import 'package:teleferika/licensing/licence_request_service.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 
 import 'project_tabbed_screen.dart';
@@ -38,7 +41,8 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
 
   final LicenceService _licenceService =
       LicenceService.instance; // Get LicenceService instance
-  Licence? _activeLicence; // To hold the loaded licence status
+  final LicenceRequestService _licenceRequestService = LicenceRequestService();
+  lm.Licence? _activeLicence; // To hold the loaded licence status
 
   @override
   void initState() {
@@ -60,6 +64,46 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       logger.info('License loaded: ${_activeLicence?.email ?? 'null'}');
       logger.info('License valid: ${_activeLicence?.isValid ?? 'null'}');
 
+      // Check with server if license exists and requires validation
+      if (_activeLicence != null &&
+          Licence.requiresServerValidation(_activeLicence!.status)) {
+        try {
+          logger.info('Checking license status with server...');
+          final updatedLicence = await _licenceRequestService
+              .checkLicenceStatus(_activeLicence!);
+
+          // Save updated license if status changed
+          if (updatedLicence.status != _activeLicence!.status) {
+            await _licenceService.saveLicence(updatedLicence);
+            _activeLicence = updatedLicence;
+            logger.info('License status updated: ${updatedLicence.status}');
+
+            // Show status message to user
+            if (mounted) {
+              final statusMessage = _licenceRequestService.getStatusMessage(
+                updatedLicence.status,
+              );
+              if (_licenceRequestService.needsAdminAction(
+                updatedLicence.status,
+              )) {
+                showInfoStatus(
+                  '$statusMessage - Please wait for admin approval.',
+                );
+              } else if (_licenceRequestService.isPermanentlyInvalid(
+                updatedLicence.status,
+              )) {
+                showErrorStatus('$statusMessage - Please contact support.');
+              } else if (updatedLicence.status == Licence.statusActive) {
+                showSuccessStatus(statusMessage);
+              }
+            }
+          }
+        } catch (e) {
+          // Continue with local license if server check fails
+          logger.warning('Server check failed, using local license: $e');
+        }
+      }
+
       if (mounted) {
         setState(() {
           // Trigger a rebuild to update the UI with license status
@@ -77,15 +121,33 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
 
   void _showLicenceInfoDialog() {
     // Reload to ensure we have the latest
-    _licenceService.currentLicence.then((licence) {
+    _licenceService.currentLicence.then((licence) async {
       if (!mounted) return;
+
+      // Check with server if license exists and requires validation
+      if (licence != null && Licence.requiresServerValidation(licence.status)) {
+        try {
+          showInfoStatus('Checking license status with server...');
+          final updatedLicence = await _licenceRequestService
+              .checkLicenceStatus(licence);
+
+          // Save updated license if status changed
+          if (updatedLicence.status != licence.status) {
+            await _licenceService.saveLicence(updatedLicence);
+            licence = updatedLicence;
+          }
+        } catch (e) {
+          // Continue with local license if server check fails
+          logger.warning('Server check failed, using local license: $e');
+        }
+      }
+
       setState(() {
         _activeLicence = licence;
       });
 
       String title =
           S.of(context)?.license_information_title ?? 'Licence Information';
-      String contentText;
       List<Widget> actions = [
         TextButton(
           child: Text(S.of(context)?.close_button ?? 'Close'),
@@ -97,50 +159,133 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       String versionInfo = '';
       if (widget.appVersion != null && widget.appVersion!.isNotEmpty) {
         versionInfo =
-            '\n${S.of(context)?.app_version_label(widget.appVersion!) ?? 'App Version: ${widget.appVersion}'}';
+            S.of(context)?.app_version_label(widget.appVersion!) ??
+            'App Version: ${widget.appVersion}';
       }
 
-      if (_activeLicence != null && _activeLicence!.isValid) {
-        contentText =
-            (S
-                    .of(context)
-                    ?.licence_active_content(
-                      _activeLicence!.email,
-                      DateFormat.yMMMd().add_Hm().format(
-                        _activeLicence!.validUntil.toLocal(),
-                      ),
-                    ) ??
-                'Licensed to: ${_activeLicence!.email}\nStatus: Active\nValid Until: ${DateFormat.yMMMd().add_Hm().format(_activeLicence!.validUntil.toLocal())}') +
-            versionInfo;
-      } else if (_activeLicence != null && !_activeLicence!.isValid) {
-        contentText =
-            (S
-                    .of(context)
-                    ?.licence_expired_content(
-                      _activeLicence!.email,
-                      DateFormat.yMMMd().add_Hm().format(
-                        _activeLicence!.validUntil.toLocal(),
-                      ),
-                    ) ??
-                'Licensed to: ${_activeLicence!.email}\nStatus: Expired\nValid Until: ${DateFormat.yMMMd().add_Hm().format(_activeLicence!.validUntil.toLocal())}\n\nPlease import a valid licence.') +
-            versionInfo;
+      Widget content;
+      if (_activeLicence != null) {
+        // Enhanced license information display
+        content = _buildLicenceInfo(_activeLicence!, versionInfo);
+
+        // Always show refresh status option for any license
         actions.insert(
           0,
           TextButton(
-            child: Text(
-              S.of(context)?.import_new_licence ?? 'Import New Licence',
-            ),
-            onPressed: () {
-              Navigator.of(context).pop();
-              _handleImportLicence();
+            child: Text('Refresh Status'),
+            onPressed: () async {
+              // Show loading indicator in dialog
+              showInfoStatus('Checking license status with server...');
+
+              try {
+                // Check with server
+                final updatedLicence = await _licenceRequestService
+                    .checkLicenceStatus(_activeLicence!);
+
+                // Save updated license if status changed
+                if (updatedLicence.status != _activeLicence!.status) {
+                  await _licenceService.saveLicence(updatedLicence);
+                  _activeLicence = updatedLicence;
+                  logger.info(
+                    'License status updated: ${updatedLicence.status}',
+                  );
+
+                  // Show status message to user
+                  final statusMessage = _licenceRequestService.getStatusMessage(
+                    updatedLicence.status,
+                  );
+                  if (_licenceRequestService.needsAdminAction(
+                    updatedLicence.status,
+                  )) {
+                    showInfoStatus(
+                      '$statusMessage - Please wait for admin approval.',
+                    );
+                  } else if (_licenceRequestService.isPermanentlyInvalid(
+                    updatedLicence.status,
+                  )) {
+                    showErrorStatus('$statusMessage - Please contact support.');
+                  } else if (updatedLicence.status == Licence.statusActive) {
+                    showSuccessStatus(statusMessage);
+                  }
+                } else {
+                  showInfoStatus(
+                    'License status unchanged: ${updatedLicence.status}',
+                  );
+                }
+
+                // Update the dialog content
+                if (mounted) {
+                  Navigator.of(context).pop();
+                  _showLicenceInfoDialog(); // Reopen dialog with updated info
+                }
+              } catch (e) {
+                // Continue with local license if server check fails
+                logger.warning('Server check failed, using local license: $e');
+                showErrorStatus('Failed to check with server: $e');
+
+                // Still update the dialog to show current local status
+                if (mounted) {
+                  Navigator.of(context).pop();
+                  _showLicenceInfoDialog();
+                }
+              }
             },
           ),
         );
+
+        // Add action buttons based on license status
+        if (_activeLicence!.status == lm.Licence.statusRequested) {
+          // For requested licenses, show request new option
+          actions.insert(
+            1,
+            TextButton(
+              child: Text('Request New License'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _requestLicence();
+              },
+            ),
+          );
+        } else if (!_activeLicence!.isValid) {
+          // For invalid licenses, show both import and request options
+          actions.insert(
+            0,
+            TextButton(
+              child: Text(
+                S.of(context)?.import_new_licence ?? 'Import New Licence',
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _handleImportLicence();
+              },
+            ),
+          );
+          actions.insert(
+            1,
+            TextButton(
+              child: Text('Request New License'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _requestLicence();
+              },
+            ),
+          );
+        } else if (_activeLicence!.expiresSoon) {
+          // For licenses expiring soon, show request option
+          actions.insert(
+            1,
+            TextButton(
+              child: Text('Request New License'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _requestLicence();
+              },
+            ),
+          );
+        }
       } else {
-        contentText =
-            (S.of(context)?.licence_none_content ??
-                'No active licence found. Please import a licence file to unlock premium features.') +
-            versionInfo;
+        // No license found
+        content = _buildNoLicenceInfo(versionInfo);
         actions.insert(
           0,
           TextButton(
@@ -151,14 +296,47 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
             },
           ),
         );
+        actions.insert(
+          1,
+          TextButton(
+            child: Text('Request New License'),
+            onPressed: () {
+              Navigator.of(context).pop();
+              _requestLicence();
+            },
+          ),
+        );
       }
 
       showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text(title),
-            content: Text(contentText),
+            title: Row(
+              children: [
+                Icon(
+                  _activeLicence != null &&
+                          _activeLicence!.status == lm.Licence.statusRequested
+                      ? Icons.pending
+                      : (_activeLicence != null && _activeLicence!.isValid
+                            ? Icons.verified_user
+                            : Icons.security),
+                  color:
+                      _activeLicence != null &&
+                          _activeLicence!.status == lm.Licence.statusRequested
+                      ? Colors.blue
+                      : (_activeLicence != null && _activeLicence!.isValid
+                            ? Colors.green
+                            : (_activeLicence != null &&
+                                      !_activeLicence!.isValid
+                                  ? Colors.red
+                                  : Colors.grey)),
+                ),
+                const SizedBox(width: 8),
+                Expanded(child: Text(title)),
+              ],
+            ),
+            content: SingleChildScrollView(child: content),
             actions: actions,
           );
         },
@@ -166,128 +344,289 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
     });
   }
 
-  void _showPremiumFeaturesDialog() {
-    final hasLicensedFeatures = LicensedFeaturesLoader.hasLicensedFeatures;
-    final availableFeatures = LicensedFeaturesLoader.licensedFeatures;
+  Widget _buildLicenceInfo(lm.Licence licence, String versionInfo) {
+    final isRequested = licence.status == lm.Licence.statusRequested;
+    final isExpired = !licence.isValid && !isRequested;
+    final isExpiringSoon = licence.expiresSoon;
 
-    // Add version info if available
-    String versionInfo = '';
-    if (widget.appVersion != null && widget.appVersion!.isNotEmpty) {
-      versionInfo =
-          '\n${S.of(context)?.app_version_label(widget.appVersion!) ?? 'App Version: ${widget.appVersion}'}';
-    }
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Row(
-            children: [
-              Icon(
-                hasLicensedFeatures ? Icons.star : Icons.star_border,
-                color: hasLicensedFeatures ? Colors.amber : Colors.grey,
-              ),
-              const SizedBox(width: 8),
-              Text(S.of(context)?.premium_features_title ?? 'Premium Features'),
-            ],
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Status section
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isRequested
+                ? Colors.blue.shade50
+                : (isExpired
+                      ? Colors.red.shade50
+                      : (isExpiringSoon
+                            ? Colors.orange.shade50
+                            : Colors.green.shade50)),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isRequested
+                  ? Colors.blue.shade200
+                  : (isExpired
+                        ? Colors.red.shade200
+                        : (isExpiringSoon
+                              ? Colors.orange.shade200
+                              : Colors.green.shade200)),
+            ),
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (hasLicensedFeatures) ...[
-                Text(
-                  S.of(context)?.premium_features_available ??
-                      'Premium features are available in this build!',
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  S.of(context)?.available_features ?? 'Available Features:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                ...availableFeatures.map(
-                  (feature) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.check_circle,
-                          color: Colors.green,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text(feature)),
-                      ],
+              Row(
+                children: [
+                  Icon(
+                    isRequested
+                        ? Icons.pending
+                        : (isExpired
+                              ? Icons.error
+                              : (isExpiringSoon
+                                    ? Icons.warning
+                                    : Icons.check_circle)),
+                    color: isRequested
+                        ? Colors.blue
+                        : (isExpired
+                              ? Colors.red
+                              : (isExpiringSoon
+                                    ? Colors.orange
+                                    : Colors.green)),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    isRequested
+                        ? 'License Requested'
+                        : (isExpired
+                              ? 'License Expired'
+                              : (isExpiringSoon
+                                    ? 'License Expiring Soon'
+                                    : 'License Active')),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isRequested
+                          ? Colors.blue
+                          : (isExpired
+                                ? Colors.red
+                                : (isExpiringSoon
+                                      ? Colors.orange
+                                      : Colors.green)),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                // Show a sample premium widget
-                if (LicensedFeaturesLoader.buildLicensedWidget(
-                      'premium_banner',
-                    ) !=
-                    null)
-                  LicensedFeaturesLoader.buildLicensedWidget('premium_banner')!,
-              ] else ...[
+                ],
+              ),
+              if (isRequested) ...[
+                const SizedBox(height: 4),
                 Text(
-                  S.of(context)?.premium_features_not_available ??
-                      'Premium features are not available in this build.',
+                  'Your license request is pending approval. You will be notified when it is approved or denied.',
+                  style: TextStyle(fontSize: 12, color: Colors.blue.shade700),
                 ),
-                const SizedBox(height: 8),
+              ] else if (isExpired || isExpiringSoon) ...[
+                const SizedBox(height: 4),
                 Text(
-                  S.of(context)?.opensource_version ??
-                      'This is the opensource version of the app.',
-                ),
-              ],
-              if (versionInfo.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Text(
-                  versionInfo,
-                  style: const TextStyle(
+                  isExpired
+                      ? 'This license has expired and needs to be renewed. You can request a new license or import an existing one.'
+                      : 'This license will expire soon. Consider requesting a new license or importing an existing one.',
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey,
-                    fontStyle: FontStyle.italic,
+                    color: isExpired
+                        ? Colors.red.shade700
+                        : Colors.orange.shade700,
                   ),
                 ),
               ],
             ],
           ),
-          actions: [
-            TextButton(
-              child: Text(S.of(context)?.close_button ?? 'Close'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            if (hasLicensedFeatures)
-              TextButton(
-                child: Text(S.of(context)?.try_feature ?? 'Try Feature'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  _demonstrateLicensedFeature();
-                },
+        ),
+
+        const SizedBox(height: 16),
+
+        // License details section
+        _buildInfoSection('License Details', Icons.info_outline, [
+          _buildInfoRow('Email', licence.email),
+          _buildInfoRow('Status', licence.status),
+          _buildInfoRow(
+            'Issued',
+            DateFormat.yMMMd().add_Hm().format(licence.issuedAt.toLocal()),
+          ),
+          _buildInfoRow(
+            'Valid Until',
+            DateFormat.yMMMd().add_Hm().format(licence.validUntil.toLocal()),
+          ),
+          if (!isRequested)
+            _buildInfoRow('Days Remaining', '${licence.daysRemaining} days'),
+          _buildInfoRow('Max Devices', '${licence.maxDevices}'),
+          _buildInfoRow('Version', licence.version),
+        ]),
+
+        const SizedBox(height: 16),
+
+        // Features section
+        _buildInfoSection(
+          isRequested ? 'Requested Features' : 'Available Features',
+          Icons.star,
+          [
+            if (isRequested) ...[
+              Text(
+                'Features will be available once your license is approved:',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                  fontStyle: FontStyle.italic,
+                ),
               ),
+              const SizedBox(height: 8),
+            ],
+            ...licence.features.map((feature) => _buildFeatureRow(feature)),
           ],
-        );
-      },
+        ),
+
+        const SizedBox(height: 16),
+
+        // Technical details section
+        _buildInfoSection('Technical Details', Icons.security, [
+          _buildInfoRow('Algorithm', licence.algorithm),
+          _buildInfoRow(
+            'Device Fingerprint',
+            '${licence.deviceFingerprint.substring(0, 16)}...',
+          ),
+          _buildInfoRow(
+            'Data Hash',
+            '${licence.generateDataHash().substring(0, 16)}...',
+          ),
+        ]),
+
+        if (versionInfo.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _buildInfoSection('App Information', Icons.app_settings_alt, [
+            _buildInfoRow('App Version', versionInfo),
+          ]),
+        ],
+      ],
     );
   }
 
-  void _demonstrateLicensedFeature() {
-    // Demonstrate a licensed function
-    try {
-      final licenceInfo = LicensedFeaturesLoader.getLicenceStatus();
-      if (licenceInfo != null) {
-        showSuccessStatus(
-          S.of(context)?.licence_status(licenceInfo['status']) ??
-              'Licence Status: ${licenceInfo['status']}',
-        );
-      }
-    } catch (e) {
-      showErrorStatus(
-        S.of(context)?.feature_demo_failed(e.toString()) ??
-            'Feature demonstration failed: $e',
-      );
-    }
+  Widget _buildNoLicenceInfo(String versionInfo) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.info_outline, color: Colors.grey, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    'No License Found',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'No active license found. You can import an existing license file or request a new license from the server.',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        if (versionInfo.isNotEmpty) ...[
+          _buildInfoSection('App Information', Icons.app_settings_alt, [
+            _buildInfoRow('App Version', versionInfo),
+          ]),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildInfoSection(String title, IconData icon, List<Widget> children) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 18, color: Colors.grey.shade600),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: Colors.grey.shade700,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Column(children: children),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              '$label:',
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 12,
+                color: Colors.grey.shade600,
+              ),
+            ),
+          ),
+          Expanded(child: Text(value, style: const TextStyle(fontSize: 12))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeatureRow(String feature) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Icon(Icons.check_circle, color: Colors.green, size: 16),
+          const SizedBox(width: 8),
+          Expanded(child: Text(feature, style: const TextStyle(fontSize: 12))),
+        ],
+      ),
+    );
   }
 
   Future<void> _handleImportLicence() async {
@@ -296,7 +635,8 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       if (mounted) {
         if (importedLicence != null) {
           setState(() {
-            _activeLicence = importedLicence; // Update local state
+            _activeLicence =
+                importedLicence as lm.Licence?; // Update local state
           });
           showSuccessStatus(
             S
@@ -321,7 +661,10 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
     } catch (e) {
       // Catch general exceptions from importLicenceFromFile
       if (mounted) {
-        showErrorStatus('Error importing licence: $e');
+        showErrorStatus(
+          S.of(context)?.error_importing_licence(e.toString()) ??
+              'Error importing licence: $e',
+        );
       }
     }
   }
@@ -671,34 +1014,87 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
 
   Future<void> _testImportExampleLicence() async {
     try {
-      logger.info('Testing import of demo license...');
+      logger.info('Installing development license...');
 
-      // Create a demo license
-      final demoLicence = Licence.createDemo();
-      logger.info(
-        'Created demo license: ${demoLicence.email}, valid: ${demoLicence.isValid}',
+      // Install a development license using the new method
+      final saved = await _licenceService.installDevelopmentLicense(
+        email: 'dev@example.com',
+        features: ['export_basic', 'map_download', 'export_advanced'],
+        maxDevices: 1,
       );
 
-      // Save the license
-      final saved = await _licenceService.saveLicence(demoLicence);
-      logger.info('License saved: $saved');
-
       if (saved && mounted) {
+        // Reload the license to update the UI
+        final license = await _licenceService.currentLicence;
         setState(() {
-          _activeLicence = demoLicence;
+          _activeLicence = license;
         });
         showSuccessStatus(
           S.of(context)?.demo_license_imported_successfully ??
-              'Demo license imported successfully!',
+              'Development license installed successfully!',
+        );
+      } else {
+        showErrorStatus(
+          S.of(context)?.error_importing_demo_license('Failed to save') ??
+              'Error installing development license: Failed to save',
         );
       }
     } catch (e, stackTrace) {
-      logger.severe('Error testing demo license import', e, stackTrace);
-      showErrorStatus('Error importing demo license: $e');
+      logger.severe('Error installing development license', e, stackTrace);
+      showErrorStatus(
+        S.of(context)?.error_importing_demo_license(e.toString()) ??
+            'Error installing development license: $e',
+      );
     }
   }
 
   Future<void> _clearLicense() async {
+    // Check if there's a license to clear
+    if (_activeLicence == null) {
+      showInfoStatus(
+        S.of(context)?.no_license_to_clear ?? 'No license installed to clear.',
+      );
+      return;
+    }
+
+    // Show confirmation dialog first
+    bool confirmClear =
+        await showDialog<bool>(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: Row(
+                children: [
+                  Icon(Icons.warning, color: Colors.orange, size: 24),
+                  const SizedBox(width: 8),
+                  Text(S.of(context)?.clear_license ?? 'Clear License'),
+                ],
+              ),
+              content: Text(
+                'Are you sure you want to clear the current license? This action cannot be undone and will remove access to premium features.',
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: Text(S.of(context)?.dialog_cancel ?? 'Cancel'),
+                  onPressed: () => Navigator.of(context).pop(false),
+                ),
+                TextButton(
+                  child: Text(
+                    S.of(context)?.clear_license ?? 'Clear License',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  onPressed: () => Navigator.of(context).pop(true),
+                ),
+              ],
+            );
+          },
+        ) ??
+        false;
+
+    if (!confirmClear) {
+      return; // User cancelled
+    }
+
     try {
       logger.info('Clearing license...');
 
@@ -715,7 +1111,234 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       }
     } catch (e, stackTrace) {
       logger.severe('Error clearing license', e, stackTrace);
-      showErrorStatus('Error clearing license: $e');
+      showErrorStatus(
+        S.of(context)?.error_clearing_license(e.toString()) ??
+            'Error clearing license: $e',
+      );
+    }
+  }
+
+  Future<void> _requestLicence() async {
+    try {
+      // Show license request dialog
+      final result = await _showLicenceRequestDialog();
+      if (result == null) return; // User cancelled
+
+      final email = result['email'] as String;
+      final features = result['features'] as List<String>;
+      final maxDevices = result['maxDevices'] as int;
+
+      // Show loading indicator
+      showInfoStatus('Requesting license...');
+
+      // Request license from server
+      final requestedLicence = await _licenceRequestService.requestLicence(
+        email: email,
+        requestedFeatures: features,
+        maxDevices: maxDevices,
+      );
+
+      // Save the requested license
+      final saved = await _licenceService.saveLicence(requestedLicence);
+
+      if (saved && mounted) {
+        setState(() {
+          _activeLicence = requestedLicence;
+        });
+
+        showSuccessStatus(
+          'License requested successfully! Status: ${requestedLicence.status}',
+        );
+
+        // Show license info dialog with status
+        _showLicenceInfoDialog();
+      }
+    } catch (e) {
+      if (e is lm.LicenceError) {
+        showErrorStatus(e.userMessage);
+      } else {
+        showErrorStatus('Error requesting license: $e');
+      }
+    }
+  }
+
+  Future<Map<String, dynamic>?> _showLicenceRequestDialog() async {
+    final emailController = TextEditingController();
+    final maxDevicesController = TextEditingController(text: '1');
+    final selectedFeatures = <String>{};
+
+    // Available features for request
+    const availableFeatures = [
+      'export_basic',
+      'map_download',
+      'export_advanced',
+    ];
+
+    return showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Row(
+                children: [
+                  const Icon(Icons.request_page, color: Colors.blue),
+                  const SizedBox(width: 8),
+                  Text('Request License'),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TextField(
+                      controller: emailController,
+                      decoration: InputDecoration(
+                        labelText: S.of(context)?.email_label ?? 'Email',
+                        hintText: 'your.email@example.com',
+                        prefixIcon: const Icon(Icons.email),
+                      ),
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: maxDevicesController,
+                      decoration: InputDecoration(
+                        labelText: 'Max Devices',
+                        hintText: '1-5',
+                        prefixIcon: const Icon(Icons.devices),
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Requested Features:',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    ...availableFeatures.map(
+                      (feature) => CheckboxListTile(
+                        title: Text(_getFeatureDisplayName(feature)),
+                        value: selectedFeatures.contains(feature),
+                        onChanged: (bool? value) {
+                          setState(() {
+                            if (value == true) {
+                              selectedFeatures.add(feature);
+                            } else {
+                              selectedFeatures.remove(feature);
+                            }
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final email = emailController.text.trim();
+                    final maxDevices =
+                        int.tryParse(maxDevicesController.text) ?? 1;
+
+                    if (email.isEmpty) {
+                      showErrorStatus('Email is required');
+                      return;
+                    }
+
+                    if (selectedFeatures.isEmpty) {
+                      showErrorStatus('Please select at least one feature');
+                      return;
+                    }
+
+                    Navigator.of(context).pop({
+                      'email': email,
+                      'features': selectedFeatures.toList(),
+                      'maxDevices': maxDevices.clamp(1, 5),
+                    });
+                  },
+                  child: Text('Request'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  String _getFeatureDisplayName(String feature) {
+    switch (feature) {
+      case 'export_basic':
+        return 'Basic Export';
+      case 'map_download':
+        return 'Map Download';
+      case 'export_advanced':
+        return 'Advanced Export';
+      default:
+        return feature.replaceAll('_', ' ').toUpperCase();
+    }
+  }
+
+  Future<void> _testLicenceValidation() async {
+    try {
+      logger.info('Testing licence validation...');
+
+      await LicenceService.instance.initialize();
+
+      // Test with invalid licence
+      final invalidLicenceJson = '''
+{
+  "data": {
+    "email": "test@invalid.com",
+    "deviceFingerprint": "invalid_fingerprint",
+    "validUntil": "2020-01-01T00:00:00Z",
+    "features": ["test_feature"],
+    "maxDevices": 1,
+    "issuedAt": "2020-01-01T00:00:00Z",
+    "version": "2.0"
+  },
+  "signature": "invalid_signature",
+  "algorithm": "RSA-SHA256"
+}
+''';
+
+      // Save invalid licence to temp file
+      final tempDir = await getTemporaryDirectory();
+      final invalidFile = File('${tempDir.path}/invalid_licence.lic');
+      await invalidFile.writeAsString(invalidLicenceJson);
+
+      // Try to import invalid licence
+      try {
+        await LicenceService.instance.importLicenceFromFile();
+        showErrorStatus(
+          S.of(context)?.invalid_licence_accepted_error ??
+              'Invalid licence was accepted - this is wrong!',
+        );
+      } catch (e) {
+        if (e is lm.LicenceError) {
+          showInfoStatus(
+            S.of(context)?.invalid_licence_correctly_rejected(e.code) ??
+                'Invalid licence correctly rejected: ${e.code}',
+          );
+        } else {
+          showErrorStatus(
+            S.of(context)?.unexpected_error(e.toString()) ??
+                'Unexpected error: $e',
+          );
+        }
+      }
+    } catch (e, stackTrace) {
+      logger.severe('Error testing licence validation', e, stackTrace);
+      showErrorStatus(
+        S.of(context)?.validation_test_failed(e.toString()) ??
+            'Validation test failed: $e',
+      );
     }
   }
 
@@ -932,7 +1555,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                       // Check if licence is valid
                       final licenceStatus = await _licenceService
                           .getLicenceStatus();
-                      if (!licenceStatus['isValid']) {
+                      if (licenceStatus['status'] != 'valid') {
                         if (context.mounted) {
                           final s = S.of(context);
                           showErrorStatus(
@@ -958,24 +1581,35 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                           : Icons.security,
                       color: _activeLicence != null && _activeLicence!.isValid
                           ? Colors.green
-                          : (_activeLicence != null && !_activeLicence!.isValid
-                                ? Colors.red
-                                : Colors.grey),
+                          : (_activeLicence != null &&
+                                    _activeLicence!.status ==
+                                        lm.Licence.statusRequested
+                                ? Colors.orange
+                                : (_activeLicence != null &&
+                                          !_activeLicence!.isValid
+                                      ? Colors.red
+                                      : Colors.grey)),
                     ),
                     tooltip:
                         "Licence Status / Import\n"
                         "License: ${_activeLicence?.email ?? 'None'}\n"
-                        "Valid: ${_activeLicence?.isValid ?? 'Unknown'}",
+                        "Status: ${_activeLicence?.status ?? 'None'}",
                     onSelected: (String value) {
                       switch (value) {
                         case 'license_info':
                           _showLicenceInfoDialog();
                           break;
-                        case 'premium_features':
-                          _showPremiumFeaturesDialog();
+                        case 'import_license':
+                          _handleImportLicence();
+                          break;
+                        case 'request_license':
+                          _requestLicence();
                           break;
                         case 'test_license':
                           _testImportExampleLicence();
+                          break;
+                        case 'test_validation':
+                          _testLicenceValidation();
                           break;
                         case 'clear_license':
                           _clearLicense();
@@ -998,35 +1632,97 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                                           _activeLicence!.isValid
                                       ? Colors.green
                                       : (_activeLicence != null &&
-                                                !_activeLicence!.isValid
-                                            ? Colors.red
-                                            : Colors.grey),
+                                                _activeLicence!.status ==
+                                                    lm.Licence.statusRequested
+                                            ? Colors.orange
+                                            : (_activeLicence != null &&
+                                                      !_activeLicence!.isValid
+                                                  ? Colors.red
+                                                  : Colors.grey)),
                                   size: 20,
                                 ),
                                 const SizedBox(width: 8),
-                                const Text('License Status'),
+                                Expanded(
+                                  child: Text(
+                                    S.of(context)?.license_status_label ??
+                                        'License Status',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
-                          // const PopupMenuItem<String>(
-                          //   value: 'premium_features',
-                          //   child: Row(
-                          //     children: [
-                          //       Icon(Icons.star, size: 20),
-                          //       SizedBox(width: 8),
-                          //       Text('Premium Features'),
-                          //     ],
-                          //   ),
-                          // ),
+                          PopupMenuItem<String>(
+                            value: 'import_license',
+                            child: Row(
+                              children: [
+                                Icon(Icons.file_upload, size: 20),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    S.of(context)?.import_licence ??
+                                        'Import License',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'request_license',
+                            child: Row(
+                              children: [
+                                Icon(Icons.request_page, size: 20),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Request License',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuDivider(),
+                          PopupMenuItem<String>(
+                            enabled: false,
+                            child: Text(
+                              'Development & Testing',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey.shade600,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
                           PopupMenuItem<String>(
                             value: 'test_license',
                             child: Row(
                               children: [
                                 Icon(Icons.bug_report, size: 20),
                                 SizedBox(width: 8),
-                                Text(
-                                  S.of(context)?.install_demo_license ??
-                                      'Install Demo License',
+                                Expanded(
+                                  child: Text(
+                                    'Install Development License',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          PopupMenuItem<String>(
+                            value: 'test_validation',
+                            child: Row(
+                              children: [
+                                Icon(Icons.security, size: 20),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    S.of(context)?.test_licence_validation ??
+                                        'Test Licence Validation',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               ],
                             ),

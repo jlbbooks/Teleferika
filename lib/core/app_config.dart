@@ -217,7 +217,25 @@ class AppConfig {
 
   // Default map center (Trento, Italy) - used as fallback when no last known location
   static const LatLng defaultMapCenter = LatLng(46.0669, 11.1211);
-  static const double defaultMapZoom = 12.0;
+  static const double defaultMapZoom = 14.0;
+
+  /// License server configuration
+  ///
+  /// These settings control the connection to the license management server.
+  /// The server provides license validation, generation, and management services.
+
+  /// License server hostname or IP address.
+  /// Defaults to host machine IP for development with Android emulator.
+  static const String licenseServerHost = '192.168.0.178';
+
+  /// License server port number.
+  /// Defaults to 8899 to match the license server configuration.
+  static const int licenseServerPort = 8899;
+
+  /// Full license server URL for API endpoints.
+  /// Constructed from host and port for convenience.
+  static String get licenseServerUrl =>
+      'http://$licenseServerHost:$licenseServerPort';
 
   // Private constructor to prevent instantiation if all members are static
   AppConfig._();

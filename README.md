@@ -212,6 +212,7 @@ teleferika/
 │       └── widgets/              # Reusable UI widgets
 ├── scripts/                      # Build and setup scripts
 ├── licensed_features_package/    # Licensed features (full version only)
+├── license_server/               # License server (full version only)
 ├── android/                      # Android-specific configuration
 ├── ios/                          # iOS-specific configuration
 ├── assets/                       # App assets (images, etc.)

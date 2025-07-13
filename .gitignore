@@ -79,4 +79,62 @@ ehthumbs_vista.db
 *.code-workspace
 
 
+
+
+# Generated files
+*.g.dart
+*.freezed.dart
+*.mocks.dart
+
+# Build runner and generated files
+.dart_tool/build/
+build/
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# IDE specific
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Backup files
+*.backup
+*.bak
+*.orig
+
+# Keys and certificates
 keys/
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# CSV files with sensitive data
+*.csv
+!example_*.csv
+!sample_*.csv

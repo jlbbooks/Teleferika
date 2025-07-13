@@ -131,7 +131,7 @@ void main() async {
 /// ## State Management
 /// The widget uses [Provider] to manage global application state:
 /// - [ProjectStateManager]: Manages current project and points
-/// - [LicenceService]: Provides license status and validation
+/// - [LicenceService]: Provides licence status and validation
 ///
 /// ## Theme Support
 /// The application supports both light and dark themes with automatic

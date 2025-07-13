@@ -744,6 +744,9 @@ class SEn extends S {
   String get import_licence => 'Import Licence';
 
   @override
+  String get request_new_license => 'Request New License';
+
+  @override
   String get premium_features_title => 'Premium Features';
 
   @override
@@ -1049,4 +1052,104 @@ class SEn extends S {
 
   @override
   String get pointDetailsSectionTitle => 'Point Details';
+
+  @override
+  String get no_license_to_clear => 'No license installed to clear.';
+
+  @override
+  String get enhanced_licence_test_results => 'Enhanced Licence Test Results';
+
+  @override
+  String get email_label => 'Email:';
+
+  @override
+  String get valid_until_label => 'Valid Until:';
+
+  @override
+  String get features_label => 'Features:';
+
+  @override
+  String get algorithm_label => 'Algorithm:';
+
+  @override
+  String get has_export_feature_label => 'Has Export Feature:';
+
+  @override
+  String get is_valid_label => 'Is Valid:';
+
+  @override
+  String get device_fingerprint_title => 'Device Fingerprint';
+
+  @override
+  String get fingerprint_label => 'Fingerprint:';
+
+  @override
+  String get device_info_label => 'Device Info:';
+
+  @override
+  String get copy_button => 'Copy';
+
+  @override
+  String get license_status_label => 'License Status';
+
+  @override
+  String get test_enhanced_licence => 'Test Enhanced Licence';
+
+  @override
+  String get generate_device_fingerprint => 'Generate Device Fingerprint';
+
+  @override
+  String get test_licence_validation => 'Test Licence Validation';
+
+  @override
+  String error_importing_licence(String error) {
+    return 'Error importing licence: $error';
+  }
+
+  @override
+  String error_importing_demo_license(String error) {
+    return 'Error importing demo license: $error';
+  }
+
+  @override
+  String error_clearing_license(String error) {
+    return 'Error clearing license: $error';
+  }
+
+  @override
+  String get failed_to_save_enhanced_licence =>
+      'Failed to save enhanced licence';
+
+  @override
+  String enhanced_licence_test_failed(String error) {
+    return 'Enhanced licence test failed: $error';
+  }
+
+  @override
+  String get fingerprint_copied_to_clipboard =>
+      'Fingerprint copied to clipboard';
+
+  @override
+  String failed_to_generate_fingerprint(String error) {
+    return 'Failed to generate fingerprint: $error';
+  }
+
+  @override
+  String get invalid_licence_accepted_error =>
+      'Invalid licence was accepted - this is wrong!';
+
+  @override
+  String invalid_licence_correctly_rejected(String code) {
+    return 'Invalid licence correctly rejected: $code';
+  }
+
+  @override
+  String unexpected_error(String error) {
+    return 'Unexpected error: $error';
+  }
+
+  @override
+  String validation_test_failed(String error) {
+    return 'Validation test failed: $error';
+  }
 }

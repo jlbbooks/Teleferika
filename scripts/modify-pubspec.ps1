@@ -138,12 +138,13 @@ function Remove-LicensedPackage {
         
         # Skip indented lines after licensed_features_package
         if ($skipNext) {
-            if ($line -match "^\s*[a-zA-Z]") {
-                # Found a non-indented line, stop skipping
-                $skipNext = $false
-            } else {
+            # Check if this line is indented (starts with spaces)
+            if ($line -match "^\s+") {
                 # Still indented, continue skipping
                 continue
+            } else {
+                # Found a non-indented line, stop skipping
+                $skipNext = $false
             }
         }
         

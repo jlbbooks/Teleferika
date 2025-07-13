@@ -571,3 +571,19 @@ This project uses a conditional export mechanism to include or exclude premium l
 - In your app, always import LfpLocalizations from `lfp_localizations_conditional.dart`.
 
 This ensures that localization delegates and supportedLocales can be referenced safely in both flavors without build errors.
+
+## Submodules
+
+This project uses Git submodules for external dependencies:
+
+### `licensed_features_package`
+- **Purpose**: Contains licensed features and export functionality
+- **Availability**: Only available in the **full** flavor
+- **Management**: Automatically cloned/updated by setup scripts for full flavor
+- **Opensource**: Not present in opensource flavor (removed during setup)
+
+### `license_server`
+- **Purpose**: License validation and management server
+- **Availability**: Only available in the **full** flavor
+- **Management**: Automatically cloned/updated by setup scripts for full flavor
+- **Opensource**: Not present in opensource flavor (removed during setup)

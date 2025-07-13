@@ -998,6 +998,10 @@
   "@import_licence": {
     "description": "Label for import licence button."
   },
+  "request_new_license": "Request New License",
+  "@request_new_license": {
+    "description": "Label for request new license button."
+  },
   "premium_features_title": "Premium Features",
   "@premium_features_title": {
     "description": "Title for premium features section."
@@ -1394,5 +1398,137 @@
   "pointDetailsSectionTitle": "Point Details",
   "@pointDetailsSectionTitle": {
     "description": "Section title for the point details (coordinates, altitude, note) in the point editor."
+  },
+  "no_license_to_clear": "No license installed to clear.",
+  "@no_license_to_clear": {
+    "description": "Message shown when trying to clear a license but none is installed."
+  },
+  "enhanced_licence_test_results": "Enhanced Licence Test Results",
+  "@enhanced_licence_test_results": {
+    "description": "Title for enhanced licence test results dialog."
+  },
+  "email_label": "Email:",
+  "@email_label": {
+    "description": "Label for email field."
+  },
+  "valid_until_label": "Valid Until:",
+  "@valid_until_label": {
+    "description": "Label for valid until field."
+  },
+  "features_label": "Features:",
+  "@features_label": {
+    "description": "Label for features field."
+  },
+  "algorithm_label": "Algorithm:",
+  "@algorithm_label": {
+    "description": "Label for algorithm field."
+  },
+  "has_export_feature_label": "Has Export Feature:",
+  "@has_export_feature_label": {
+    "description": "Label for export feature status."
+  },
+  "is_valid_label": "Is Valid:",
+  "@is_valid_label": {
+    "description": "Label for validity status."
+  },
+  "device_fingerprint_title": "Device Fingerprint",
+  "@device_fingerprint_title": {
+    "description": "Title for device fingerprint dialog."
+  },
+  "fingerprint_label": "Fingerprint:",
+  "@fingerprint_label": {
+    "description": "Label for fingerprint field."
+  },
+  "device_info_label": "Device Info:",
+  "@device_info_label": {
+    "description": "Label for device info section."
+  },
+  "copy_button": "Copy",
+  "@copy_button": {
+    "description": "Label for copy button."
+  },
+  "license_status_label": "License Status",
+  "@license_status_label": {
+    "description": "Label for license status."
+  },
+  "test_enhanced_licence": "Test Enhanced Licence",
+  "@test_enhanced_licence": {
+    "description": "Label for test enhanced licence button."
+  },
+  "generate_device_fingerprint": "Generate Device Fingerprint",
+  "@generate_device_fingerprint": {
+    "description": "Label for generate device fingerprint button."
+  },
+  "test_licence_validation": "Test Licence Validation",
+  "@test_licence_validation": {
+    "description": "Label for test licence validation button."
+  },
+  "error_importing_licence": "Error importing licence: {error}",
+  "@error_importing_licence": {
+    "description": "Error message when importing licence fails.",
+    "placeholders": {
+      "error": { "type": "String", "example": "Invalid format" }
+    }
+  },
+  "error_importing_demo_license": "Error importing demo license: {error}",
+  "@error_importing_demo_license": {
+    "description": "Error message when importing demo license fails.",
+    "placeholders": {
+      "error": { "type": "String", "example": "Invalid format" }
+    }
+  },
+  "error_clearing_license": "Error clearing license: {error}",
+  "@error_clearing_license": {
+    "description": "Error message when clearing license fails.",
+    "placeholders": {
+      "error": { "type": "String", "example": "Permission denied" }
+    }
+  },
+  "failed_to_save_enhanced_licence": "Failed to save enhanced licence",
+  "@failed_to_save_enhanced_licence": {
+    "description": "Error message when saving enhanced licence fails."
+  },
+  "enhanced_licence_test_failed": "Enhanced licence test failed: {error}",
+  "@enhanced_licence_test_failed": {
+    "description": "Error message when enhanced licence test fails.",
+    "placeholders": {
+      "error": { "type": "String", "example": "Network error" }
+    }
+  },
+  "fingerprint_copied_to_clipboard": "Fingerprint copied to clipboard",
+  "@fingerprint_copied_to_clipboard": {
+    "description": "Success message when fingerprint is copied to clipboard."
+  },
+  "failed_to_generate_fingerprint": "Failed to generate fingerprint: {error}",
+  "@failed_to_generate_fingerprint": {
+    "description": "Error message when generating fingerprint fails.",
+    "placeholders": {
+      "error": { "type": "String", "example": "Device error" }
+    }
+  },
+  "invalid_licence_accepted_error": "Invalid licence was accepted - this is wrong!",
+  "@invalid_licence_accepted_error": {
+    "description": "Error message when invalid licence is incorrectly accepted."
+  },
+  "invalid_licence_correctly_rejected": "Invalid licence correctly rejected: {code}",
+  "@invalid_licence_correctly_rejected": {
+    "description": "Info message when invalid licence is correctly rejected.",
+    "placeholders": {
+      "code": { "type": "String", "example": "INVALID_SIGNATURE" }
+    }
+  },
+  "unexpected_error": "Unexpected error: {error}",
+  "@unexpected_error": {
+    "description": "Generic error message for unexpected errors.",
+    "placeholders": {
+      "error": { "type": "String", "example": "Unknown error" }
+    }
+  },
+  "validation_test_failed": "Validation test failed: {error}",
+  "@validation_test_failed": {
+    "description": "Error message when validation test fails.",
+    "placeholders": {
+      "error": { "type": "String", "example": "Test error" }
+    }
   }
 }

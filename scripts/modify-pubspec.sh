@@ -105,12 +105,13 @@ remove_licensed_package() {
         
         # Skip indented lines after licensed_features_package
         if [ "$skip_next" = true ]; then
-            if [[ "$line" =~ ^[[:space:]]*[a-zA-Z] ]]; then
-                # Found a non-indented line, stop skipping
-                skip_next=false
-            else
+            # Check if this line is indented (starts with spaces)
+            if [[ "$line" =~ ^[[:space:]]+ ]]; then
                 # Still indented, continue skipping
                 continue
+            else
+                # Found a non-indented line, stop skipping
+                skip_next=false
             fi
         fi
         
