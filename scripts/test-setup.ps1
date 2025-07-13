@@ -144,6 +144,11 @@ if (Test-Path "licensed_features_package") {
 } else {
     Write-Host "  ⚠️ Full setup: Not available (requires access to licensed repository)"
 }
+if (Test-Path "license_server") {
+    Write-Host "  ✅ License server: Available"
+} else {
+    Write-Host "  ⚠️ License server: Missing (setup may have failed)"
+}
 Write-Host "  ✅ Flutter analysis: Working"
 Write-Host ""
 Write-Host "You can now:"

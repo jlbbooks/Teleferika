@@ -92,10 +92,16 @@ if [ "$CLEAN" = "true" ]; then
         print_status "Removed existing licensed features loader"
     fi
     
-    # Optionally remove the licensed package directory
+    # Remove the licensed package directory
     if [ -d "licensed_features_package" ]; then
         print_status "Removing licensed package directory..."
-    rm -rf licensed_features_package
+        rm -rf licensed_features_package
+    fi
+    
+    # Remove the license server directory
+    if [ -d "license_server" ]; then
+        print_status "Removing license server directory..."
+        rm -rf license_server
     fi
 fi
 
@@ -126,6 +132,8 @@ case $FLAVOR in
         FLAVOR="full"
         LICENSED_REPO_URL="git@github.com:jlbbooks/teleferika_licenced_packages.git"
         LICENSED_PACKAGE_DIR="licensed_features_package"
+        LICENSE_SERVER_REPO_URL="git@github.com:jlbbooks/teleferika-license-server.git"
+        LICENSE_SERVER_DIR="license_server"
 
         print_status "⭐ Configuring for Full version with licensed features..."
 
@@ -166,6 +174,36 @@ case $FLAVOR in
         verify_file "$LICENSED_PACKAGE_DIR/lib/licensed_features_loader_full.dart" || exit 1
         verify_file "$LICENSED_PACKAGE_DIR/lib/licensed_plugin.dart" || exit 1
 
+        # Clone or update the license server repository
+        if [ -d "$LICENSE_SERVER_DIR/.git" ]; then
+            print_status "License server repository already exists. Attempting to pull latest changes..."
+            cd "$LICENSE_SERVER_DIR" || exit
+            if git pull; then
+                print_success "Pulled latest changes for license server."
+            else
+                print_warning "Failed to pull latest changes for license server. Using existing version."
+            fi
+            cd "$PROJECT_ROOT" || exit
+        elif [ -d "$LICENSE_SERVER_DIR" ]; then
+            print_warning "Directory '$LICENSE_SERVER_DIR' exists but is not a git repository."
+            print_status "Removing existing directory and re-cloning..."
+            rm -rf "$LICENSE_SERVER_DIR"
+            if ! git clone "$LICENSE_SERVER_REPO_URL" "$LICENSE_SERVER_DIR"; then
+                print_error "Failed to clone license server repository from $LICENSE_SERVER_REPO_URL."
+                print_error "Please ensure you have access to the repository and SSH keys are set up if needed."
+                exit 1
+            fi
+        else
+            print_status "Cloning license server from $LICENSE_SERVER_REPO_URL into $LICENSE_SERVER_DIR..."
+            if ! git clone "$LICENSE_SERVER_REPO_URL" "$LICENSE_SERVER_DIR"; then
+                print_error "Failed to clone license server repository from $LICENSE_SERVER_REPO_URL."
+                print_error "Please ensure you have access to the repository and SSH keys are set up if needed."
+                exit 1
+            else
+                print_success "Cloned license server repository successfully."
+            fi
+        fi
+
         # Add licensed package dependency
         if [ -f "scripts/modify-pubspec.sh" ]; then
             ./scripts/modify-pubspec.sh add-licensed
@@ -177,12 +215,8 @@ case $FLAVOR in
         cp "$LICENSED_PACKAGE_DIR/lib/licensed_features_loader_full.dart" "lib/licensing/licensed_features_loader.dart"
         print_success "Copied full loader"
 
-        # Copy the correct lfp_localizations_conditional.dart
-        if [[ "$FLAVOR" == "full" ]]; then
-          cp "$(dirname "$0")/../licensed_features_package/lib/l10n/lfp_localizations_conditional_full.dart" "$(dirname "$0")/../licensed_features_package/lib/l10n/lfp_localizations_conditional.dart"
-        else
-          cp "$(dirname "$0")/../licensed_features_package/lib/l10n/lfp_localizations_conditional_opensource.dart" "$(dirname "$0")/../licensed_features_package/lib/l10n/lfp_localizations_conditional.dart"
-        fi
+        # Copy the correct lfp_localizations_conditional.dart for full version
+        cp "$(dirname "$0")/../licensed_features_package/lib/l10n/lfp_localizations_conditional_full.dart" "$(dirname "$0")/../licensed_features_package/lib/l10n/lfp_localizations_conditional.dart"
 
         print_success "✅ Full version configuration applied"
         ;;
@@ -247,6 +281,11 @@ if [ "$FLAVOR" = "full" ]; then
         echo "  Licensed Package: Available"
     else
         echo "  Licensed Package: Missing (setup may have failed)"
+    fi
+    if [ -d "license_server" ]; then
+        echo "  License Server: Available"
+    else
+        echo "  License Server: Missing (setup may have failed)"
     fi
 else
     echo "  Framework: Opensource version"

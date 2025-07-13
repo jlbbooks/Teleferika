@@ -113,10 +113,17 @@ if ($CLEAN -eq "true") {
         Write-Status "Removed existing licensed features loader"
     }
     
-    # Optionally remove the licensed package directory
+    # Remove the licensed package directory
     if (Test-Path $LICENSED_PACKAGE_DIR_FULL_PATH) {
         Write-Status "Removing licensed package directory..."
         Remove-Item $LICENSED_PACKAGE_DIR_FULL_PATH -Recurse -Force
+    }
+    
+    # Remove the license server directory
+    $licenseServerPath = Join-Path $PROJECT_ROOT "license_server"
+    if (Test-Path $licenseServerPath) {
+        Write-Status "Removing license server directory..."
+        Remove-Item $licenseServerPath -Recurse -Force
     }
 }
 
@@ -146,6 +153,8 @@ switch ($FLAVOR.ToLower()) {
     
     { $_ -in @("full", "premium", "licensed") } {
         $FLAVOR = "full"
+        $LICENSE_SERVER_REPO_URL = "git@github.com:jlbbooks/teleferika-license-server.git"
+        $LICENSE_SERVER_DIR = "license_server"
         Write-Status "⭐ Configuring for Full version with licensed features..."
 
         # Clone or update the licensed features repository
@@ -186,6 +195,40 @@ switch ($FLAVOR.ToLower()) {
         if (-not (Test-File (Join-Path $LICENSED_PACKAGE_DIR_FULL_PATH "lib\licensed_features_loader_full.dart"))) { exit 1 }
         if (-not (Test-File (Join-Path $LICENSED_PACKAGE_DIR_FULL_PATH "lib\licensed_plugin.dart"))) { exit 1 }
 
+        # Clone or update the license server repository
+        $licenseServerPath = Join-Path $PROJECT_ROOT $LICENSE_SERVER_DIR
+        if (Test-Path (Join-Path $licenseServerPath ".git")) {
+            Write-Status "License server repository already exists. Attempting to pull latest changes..."
+            Set-Location $licenseServerPath
+            $gitResult = git pull 2>&1
+            if ($LASTEXITCODE -eq 0) {
+                Write-Success "Pulled latest changes for license server."
+            } else {
+                Write-Warning "Failed to pull latest changes for license server. Using existing version."
+            }
+            Set-Location $PROJECT_ROOT
+        } elseif (Test-Path $licenseServerPath) {
+            Write-Warning "Directory '$LICENSE_SERVER_DIR' exists but is not a git repository."
+            Write-Status "Removing existing directory and re-cloning..."
+            Remove-Item $licenseServerPath -Recurse -Force
+            $gitResult = git clone $LICENSE_SERVER_REPO_URL $LICENSE_SERVER_DIR 2>&1
+            if ($LASTEXITCODE -ne 0) {
+                Write-Error "Failed to clone license server repository from $LICENSE_SERVER_REPO_URL."
+                Write-Error "Please ensure you have access to the repository and SSH keys are set up if needed."
+                exit 1
+            }
+        } else {
+            Write-Status "Cloning license server from $LICENSE_SERVER_REPO_URL into $LICENSE_SERVER_DIR..."
+            $gitResult = git clone $LICENSE_SERVER_REPO_URL $LICENSE_SERVER_DIR 2>&1
+            if ($LASTEXITCODE -ne 0) {
+                Write-Error "Failed to clone license server repository from $LICENSE_SERVER_REPO_URL."
+                Write-Error "Please ensure you have access to the repository and SSH keys are set up if needed."
+                exit 1
+            } else {
+                Write-Success "Cloned license server repository successfully."
+            }
+        }
+
         # Add licensed package dependency
         $modifyScriptPath = Join-Path $SCRIPT_DIR "modify-pubspec.ps1"
         if (Test-Path $modifyScriptPath) {
@@ -197,6 +240,14 @@ switch ($FLAVOR.ToLower()) {
         # Set up full loader
         Copy-Item (Join-Path $LICENSED_PACKAGE_DIR_FULL_PATH "lib\licensed_features_loader_full.dart") "lib\licensing\licensed_features_loader.dart"
         Write-Success "Copied full loader"
+        
+        # Copy the correct lfp_localizations_conditional.dart for full version
+        $sourcePath = Join-Path $LICENSED_PACKAGE_DIR_FULL_PATH "lib\l10n\lfp_localizations_conditional_full.dart"
+        $targetPath = Join-Path $LICENSED_PACKAGE_DIR_FULL_PATH "lib\l10n\lfp_localizations_conditional.dart"
+        if (Test-Path $sourcePath) {
+            Copy-Item $sourcePath $targetPath -Force
+            Write-Success "Copied full localization configuration"
+        }
 
         Write-Success "✅ Full version configuration applied"
     }
@@ -264,6 +315,11 @@ if ($FLAVOR -eq "full") {
         Write-Host "  Licensed Package: Available"
     } else {
         Write-Host "  Licensed Package: Missing (setup may have failed)"
+    }
+    if (Test-Path (Join-Path $PROJECT_ROOT "license_server")) {
+        Write-Host "  License Server: Available"
+    } else {
+        Write-Host "  License Server: Missing (setup may have failed)"
     }
 } else {
     Write-Host "  Framework: Opensource version"
