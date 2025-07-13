@@ -25,6 +25,7 @@ dependencies:
   # LICENSED_PACKAGE_PLACEHOLDER
   licensed_features_package:
     path: ./licensed_features_package
+
   compassx: ^1.0.1
   crypto: ^3.0.6
   csv: ^6.0.0
