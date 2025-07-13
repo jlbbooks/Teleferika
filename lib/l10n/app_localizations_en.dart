@@ -744,6 +744,9 @@ class SEn extends S {
   String get import_licence => 'Import Licence';
 
   @override
+  String get request_new_license => 'Request New License';
+
+  @override
   String get premium_features_title => 'Premium Features';
 
   @override

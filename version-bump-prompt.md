@@ -17,20 +17,20 @@ Please increase the version number for this Flutter project. I want you to:
    - Increment the version in pubspec.yaml (e.g., 0.9.30+71 → 0.9.31+72)
    - Use semantic versioning: patch for docs/bugfixes, minor for features, major for breaking changes
 
-3. **Generate commit with descriptive message:**
-   - Create a commit message that summarizes the actual changes since last tag
-   - Use conventional commit format (feat:, fix:, docs:, etc.)
-   - Include key changes and improvements made
-
-4. **Create git tag:**
-   - Create an annotated tag with the new version number
-   - Include a short summary of the main changes
-
-5. **Update CHANGELOG.md:**
+3. **Update CHANGELOG.md:**
    - Add new version entry at the top with today's date
    - Organize changes into Added, Changed, Fixed, Technical sections
    - Keep previous entries intact
    - Base descriptions on actual git commits and file changes
+
+4. **Generate commit with descriptive message:**
+   - Create a commit message that summarizes the actual changes since last tag
+   - Use conventional commit format (feat:, fix:, docs:, etc.)
+   - Include key changes and improvements made
+
+5. **Create git tag:**
+   - Create an annotated tag with the new version number
+   - Include a short summary of the main changes
 
 6. **Generate Play Store changelog:**
    - Create changelog in format: <en-GB>English text</en-GB><it-IT>Italian text</it-IT>

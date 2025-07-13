@@ -996,6 +996,10 @@
   "@import_licence": {
     "description": "Etichetta per il pulsante importa licenza."
   },
+  "request_new_license": "Richiedi Nuova Licenza",
+  "@request_new_license": {
+    "description": "Etichetta per il pulsante richiedi nuova licenza."
+  },
   "premium_features_title": "Funzionalità Premium",
   "@premium_features_title": {
     "description": "Titolo per la sezione funzionalità premium."

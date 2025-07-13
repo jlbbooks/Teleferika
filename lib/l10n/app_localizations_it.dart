@@ -752,6 +752,9 @@ class SIt extends S {
   String get import_licence => 'Importa licenza';
 
   @override
+  String get request_new_license => 'Richiedi Nuova Licenza';
+
+  @override
   String get premium_features_title => 'Funzionalità Premium';
 
   @override

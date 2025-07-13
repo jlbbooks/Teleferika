@@ -1,11 +1,15 @@
 <en-GB>
-- Conditional localization for premium features
-- Improved map marker and point interactions
-- Enhanced localization support for premium features
+- Enhanced license management with improved request functionality
+- Updated license server integration for better reliability
+- Improved license validation and user feedback
+- Cleaner license information display
+- Better error handling for license operations
 </en-GB>
 
 <it-IT>
-- Localizzazione condizionale per le funzionalità premium
-- Migliorate le interazioni con i marker e i punti sulla mappa
-- Supporto localizzazione avanzato per le funzionalità premium
+- Gestione licenze migliorata con funzionalità di richiesta avanzate
+- Integrazione server licenze aggiornata per maggiore affidabilità
+- Validazione licenze e feedback utente migliorati
+- Visualizzazione informazioni licenza più pulita
+- Gestione errori migliorata per le operazioni di licenza
 </it-IT> 

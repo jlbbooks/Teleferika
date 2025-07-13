@@ -1342,6 +1342,12 @@ abstract class S {
   /// **'Import Licence'**
   String get import_licence;
 
+  /// Label for request new license button.
+  ///
+  /// In en, this message translates to:
+  /// **'Request New License'**
+  String get request_new_license;
+
   /// Title for premium features section.
   ///
   /// In en, this message translates to:

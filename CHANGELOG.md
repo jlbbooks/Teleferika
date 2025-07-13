@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.0+77] - 2025-07-13
+
+### Added
+- **Enhanced License Integration**: Improved license checking and request functionality
+  - Updated license server API endpoints to use unified structure (/admin, /web, public)
+  - Added "Request New License" option in license information dialog
+  - Enhanced license validation with better error handling and user feedback
+  - Improved license status display and management
+
+### Changed
+- **License Server Integration**: Updated to work with enhanced license server v1.1.0
+  - Migrated to new API endpoint structure for better organization
+  - Enhanced cryptographic validation with configurable server URL
+  - Improved license request flow with better user guidance
+  - Updated license information display to remove Customer ID for cleaner UI
+
+### Technical
+- **Dependency Updates**: Enhanced package dependencies and imports
+  - Added asn1lib dependency for cryptographic operations
+  - Resolved import conflicts between asn1lib and pointycastle packages
+  - Updated license request service to use new unified endpoints
+  - Improved error handling and logging throughout license system
+
 ## [0.11.0+76] - 2025-07-11
 ### Added
 - **Database Migration System**: Complete migration from sqflite to Drift database framework

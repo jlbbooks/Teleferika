@@ -1,78 +1,77 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-
+import 'package:asn1lib/asn1lib.dart';
 import 'package:crypto/crypto.dart';
 import 'package:logging/logging.dart';
-import 'package:pointycastle/pointycastle.dart';
+import 'package:pointycastle/pointycastle.dart'
+    hide ASN1Parser, ASN1Sequence, ASN1Integer, ASN1BitString;
 import 'package:pointycastle/digests/sha256.dart';
 import 'package:pointycastle/signers/rsa_signer.dart';
+import 'package:teleferika/core/app_config.dart';
 
-/// Validates cryptographic signatures for licenses
+/// Cryptographic validator for license signatures
 class CryptographicValidator {
   static final Logger _logger = Logger('CryptographicValidator');
 
-  // Cache for the server's public key
+  // Cache for public key to avoid repeated fetches
   static String? _cachedPublicKeyPem;
   static DateTime? _cacheTimestamp;
-  static const Duration _cacheValidity = Duration(minutes: 30);
+  static const Duration _cacheDuration = Duration(hours: 1);
 
-  /// Verifies a signature using RSA-SHA256
+  /// Verify a signature using RSA-SHA256
+  ///
+  /// ## Parameters
+  /// - `data`: The data that was signed
+  /// - `signature`: The signature to verify (base64 encoded)
+  /// - `algorithm`: The signature algorithm (should be 'RSA-SHA256')
+  ///
+  /// ## Returns
+  /// `true` if the signature is valid, `false` otherwise
   static Future<bool> verifySignature({
     required String data,
     required String signature,
     required String algorithm,
   }) async {
     try {
-      _logger.info('Starting signature verification...');
+      _logger.info('Verifying signature with algorithm: $algorithm');
 
       if (algorithm != 'RSA-SHA256') {
         _logger.warning('Unsupported algorithm: $algorithm');
         return false;
       }
 
-      // Get the public key from server or local file
+      // Get the public key
       final publicKeyPem = await _getPublicKeyPem();
       if (publicKeyPem == null) {
-        _logger.severe('Failed to get public key');
+        _logger.severe('Could not get public key for verification');
         return false;
       }
 
       // Parse the public key
       final publicKey = _parsePublicKeyFromPem(publicKeyPem);
       if (publicKey == null) {
-        _logger.severe('Failed to parse public key');
+        _logger.severe('Could not parse public key');
         return false;
       }
 
-      // Create the signer
+      // Hash the data
+      final dataBytes = utf8.encode(data);
+      final hash = sha256.convert(dataBytes);
+
+      // Verify the signature
       final signer = RSASigner(SHA256Digest(), '0609608648016503040201');
       signer.init(false, PublicKeyParameter<RSAPublicKey>(publicKey));
 
-      // Verify the signature
-      final dataBytes = utf8.encode(data);
       final signatureBytes = base64Decode(signature);
-
-      _logger.info('Data length: ${dataBytes.length}');
-      _logger.info('Signature length: ${signatureBytes.length}');
-      _logger.info('Data for signing: $data');
-
-      // Debug: Let's also log the exact bytes being verified
-      _logger.info('Data bytes (first 100): ${dataBytes.take(100).toList()}');
-      _logger.info(
-        'Signature bytes (first 50): ${signatureBytes.take(50).toList()}',
-      );
-
-      // The server signs the SHA256 hash of the data, not the raw data
-      final hash = sha256.convert(dataBytes);
-      _logger.info('SHA256 hash: ${hash.toString()}');
+      final sig = RSASignature(signatureBytes);
 
       final isValid = signer.verifySignature(
         Uint8List.fromList(hash.bytes),
-        RSASignature(signatureBytes),
+        sig,
       );
-      _logger.info('Signature verification result: $isValid');
 
+      _logger.info('Signature verification result: $isValid');
       return isValid;
     } catch (e, stackTrace) {
       _logger.severe('Error verifying signature', e, stackTrace);
@@ -80,12 +79,12 @@ class CryptographicValidator {
     }
   }
 
-  /// Gets the public key PEM from server or local file
+  /// Get the public key PEM from server or local file
   static Future<String?> _getPublicKeyPem() async {
     // Check cache first
     if (_cachedPublicKeyPem != null && _cacheTimestamp != null) {
       final age = DateTime.now().difference(_cacheTimestamp!);
-      if (age < _cacheValidity) {
+      if (age < _cacheDuration) {
         _logger.info('Using cached public key (age: ${age.inMinutes} minutes)');
         return _cachedPublicKeyPem;
       }
@@ -96,7 +95,7 @@ class CryptographicValidator {
       _logger.info('Fetching public key from server...');
       final client = HttpClient();
       final request = await client.getUrl(
-        Uri.parse('http://192.168.0.178:8899/public-key'),
+        Uri.parse('${AppConfig.licenseServerUrl}/public-key'),
       );
       final response = await request.close();
 
@@ -197,19 +196,15 @@ class CryptographicValidator {
       final asn1Parser = ASN1Parser(asn1Bytes);
       final topLevelSeq = asn1Parser.nextObject() as ASN1Sequence;
 
-      if (topLevelSeq.elements == null || topLevelSeq.elements!.length < 2) {
+      if (topLevelSeq.elements.length < 2) {
         return null;
       }
 
       // This should be SubjectPublicKeyInfo format
-      final algorithmIdentifier = topLevelSeq.elements![0] as ASN1Sequence;
-      final publicKeyBitString = topLevelSeq.elements![1] as ASN1BitString;
+      final publicKeyBitString = topLevelSeq.elements[1] as ASN1BitString;
 
       // Parse the BIT STRING content
-      final bitStringBytes = publicKeyBitString.valueBytes;
-      if (bitStringBytes == null) {
-        return null;
-      }
+      final bitStringBytes = publicKeyBitString.valueBytes();
 
       // Skip the first byte if it's a padding indicator (usually 0x00)
       final startIndex = bitStringBytes[0] == 0 ? 1 : 0;
@@ -218,33 +213,36 @@ class CryptographicValidator {
       final publicKeyAsn = ASN1Parser(actualKeyBytes);
       final publicKeySeq = publicKeyAsn.nextObject() as ASN1Sequence;
 
-      if (publicKeySeq.elements == null || publicKeySeq.elements!.length < 2) {
+      if (publicKeySeq.elements.length < 2) {
         return null;
       }
 
       _logger.info(
-        'X.509: Element 0 type: ${publicKeySeq.elements![0].runtimeType}',
+        'X.509: Element 0 type: ${publicKeySeq.elements[0].runtimeType}',
       );
       _logger.info(
-        'X.509: Element 1 type: ${publicKeySeq.elements![1].runtimeType}',
+        'X.509: Element 1 type: ${publicKeySeq.elements[1].runtimeType}',
       );
 
       // Handle nested sequences if present
-      final modulusElement = publicKeySeq.elements![0];
-      final exponentElement = publicKeySeq.elements![1];
+      final modulusElement = publicKeySeq.elements[0];
+      final exponentElement = publicKeySeq.elements[1];
 
       final modulus = modulusElement is ASN1Integer
           ? modulusElement
-          : (modulusElement as ASN1Sequence).elements![0] as ASN1Integer;
+          : (modulusElement as ASN1Sequence).elements[0] as ASN1Integer;
       final exponent = exponentElement is ASN1Integer
           ? exponentElement
-          : (exponentElement as ASN1Sequence).elements![0] as ASN1Integer;
+          : (exponentElement as ASN1Sequence).elements[0] as ASN1Integer;
 
-      _logger.info('Modulus: ${modulus.integer.toString()}');
-      _logger.info('Exponent: ${exponent.integer.toString()}');
+      _logger.info('Modulus: ${modulus.valueAsBigInteger.toString()}');
+      _logger.info('Exponent: ${exponent.valueAsBigInteger.toString()}');
 
       _logger.info('Successfully parsed using X.509 format');
-      return RSAPublicKey(modulus.integer!, exponent.integer!);
+      return RSAPublicKey(
+        modulus.valueAsBigInteger,
+        exponent.valueAsBigInteger,
+      );
     } catch (e) {
       _logger.warning('X.509 parsing failed: $e');
       return null;
@@ -257,30 +255,33 @@ class CryptographicValidator {
       final asn1Parser = ASN1Parser(asn1Bytes);
       final publicKeySeq = asn1Parser.nextObject() as ASN1Sequence;
 
-      if (publicKeySeq.elements == null || publicKeySeq.elements!.length < 2) {
+      if (publicKeySeq.elements.length < 2) {
         return null;
       }
 
       _logger.info(
-        'PKCS#1: Element 0 type: ${publicKeySeq.elements![0].runtimeType}',
+        'PKCS#1: Element 0 type: ${publicKeySeq.elements[0].runtimeType}',
       );
       _logger.info(
-        'PKCS#1: Element 1 type: ${publicKeySeq.elements![1].runtimeType}',
+        'PKCS#1: Element 1 type: ${publicKeySeq.elements[1].runtimeType}',
       );
 
       // Handle nested sequences if present
-      final modulusElement = publicKeySeq.elements![0];
-      final exponentElement = publicKeySeq.elements![1];
+      final modulusElement = publicKeySeq.elements[0];
+      final exponentElement = publicKeySeq.elements[1];
 
       final modulus = modulusElement is ASN1Integer
           ? modulusElement
-          : (modulusElement as ASN1Sequence).elements![0] as ASN1Integer;
+          : (modulusElement as ASN1Sequence).elements[0] as ASN1Integer;
       final exponent = exponentElement is ASN1Integer
           ? exponentElement
-          : (exponentElement as ASN1Sequence).elements![0] as ASN1Integer;
+          : (exponentElement as ASN1Sequence).elements[0] as ASN1Integer;
 
       _logger.info('Successfully parsed using PKCS#1 format');
-      return RSAPublicKey(modulus.integer!, exponent.integer!);
+      return RSAPublicKey(
+        modulus.valueAsBigInteger,
+        exponent.valueAsBigInteger,
+      );
     } catch (e) {
       _logger.warning('PKCS#1 parsing failed: $e');
       return null;

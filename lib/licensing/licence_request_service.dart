@@ -45,8 +45,8 @@ class LicenceRequestService {
         'version': '2.0',
       };
 
-      // Make API call to server
-      final url = '${AppConfig.licenseServerUrl}/license/requestLicence';
+      // Make API call to server using updated endpoint
+      final url = '${AppConfig.licenseServerUrl}/licenses/request';
       _logger.info('Making license request to: $url');
       _logger.info('Request data: ${jsonEncode(requestData)}');
 
@@ -114,8 +114,9 @@ class LicenceRequestService {
 
       _logger.info('Checking license status for ${licence.email}');
 
+      // Use updated endpoint structure
       final url =
-          '${AppConfig.licenseServerUrl}/license/status/${licence.email}';
+          '${AppConfig.licenseServerUrl}/licenses/${licence.email}/status';
       _logger.info('Making status check request to: $url');
 
       final response = await http

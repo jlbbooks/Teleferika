@@ -247,7 +247,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
             ),
           );
         } else if (!_activeLicence!.isValid) {
-          // For invalid licenses, show import option
+          // For invalid licenses, show both import and request options
           actions.insert(
             0,
             TextButton(
@@ -257,6 +257,28 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
               onPressed: () {
                 Navigator.of(context).pop();
                 _handleImportLicence();
+              },
+            ),
+          );
+          actions.insert(
+            1,
+            TextButton(
+              child: Text('Request New License'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _requestLicence();
+              },
+            ),
+          );
+        } else if (_activeLicence!.expiresSoon) {
+          // For licenses expiring soon, show request option
+          actions.insert(
+            1,
+            TextButton(
+              child: Text('Request New License'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _requestLicence();
               },
             ),
           );
@@ -271,6 +293,16 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
             onPressed: () {
               Navigator.of(context).pop();
               _handleImportLicence();
+            },
+          ),
+        );
+        actions.insert(
+          1,
+          TextButton(
+            child: Text('Request New License'),
+            onPressed: () {
+              Navigator.of(context).pop();
+              _requestLicence();
             },
           ),
         );
@@ -398,8 +430,8 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                 const SizedBox(height: 4),
                 Text(
                   isExpired
-                      ? 'This license has expired and needs to be renewed.'
-                      : 'This license will expire soon. Consider renewing.',
+                      ? 'This license has expired and needs to be renewed. You can request a new license or import an existing one.'
+                      : 'This license will expire soon. Consider requesting a new license or importing an existing one.',
                   style: TextStyle(
                     fontSize: 12,
                     color: isExpired
@@ -417,7 +449,6 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         // License details section
         _buildInfoSection('License Details', Icons.info_outline, [
           _buildInfoRow('Email', licence.email),
-          _buildInfoRow('Customer ID', licence.customerId),
           _buildInfoRow('Status', licence.status),
           _buildInfoRow(
             'Issued',
@@ -511,7 +542,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
               ),
               const SizedBox(height: 4),
               Text(
-                'No active license found. Please import a license file to unlock premium features.',
+                'No active license found. You can import an existing license file or request a new license from the server.',
                 style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
               ),
             ],
@@ -988,11 +1019,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       // Install a development license using the new method
       final saved = await _licenceService.installDevelopmentLicense(
         email: 'dev@example.com',
-        features: [
-          'export_basic',
-          'map_download',
-          'export_advanced',
-        ],
+        features: ['export_basic', 'map_download', 'export_advanced'],
         maxDevices: 1,
       );
 

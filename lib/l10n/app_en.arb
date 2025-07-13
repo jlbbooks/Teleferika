@@ -998,6 +998,10 @@
   "@import_licence": {
     "description": "Label for import licence button."
   },
+  "request_new_license": "Request New License",
+  "@request_new_license": {
+    "description": "Label for request new license button."
+  },
   "premium_features_title": "Premium Features",
   "@premium_features_title": {
     "description": "Title for premium features section."
