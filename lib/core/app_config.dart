@@ -226,7 +226,7 @@ class AppConfig {
 
   /// License server hostname or IP address.
   /// Defaults to host machine IP for development with Android emulator.
-  static const String licenseServerHost = '192.168.0.178';
+  static const String licenseServerHost = 'arzon.jlbbooks.it';
 
   /// License server port number.
   /// Defaults to 8899 to match the license server configuration.
