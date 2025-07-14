@@ -1163,4 +1163,140 @@ class SIt extends S {
   String validation_test_failed(String error) {
     return 'Test di validazione fallito: $error';
   }
+
+  @override
+  String get refresh_status => 'Aggiorna stato';
+
+  @override
+  String get request_license => 'Richiedi licenza';
+
+  @override
+  String get cancel_button => 'Annulla';
+
+  @override
+  String get request_button => 'Richiedi';
+
+  @override
+  String get license_requested => 'Licenza richiesta';
+
+  @override
+  String get license_expired => 'Licenza scaduta';
+
+  @override
+  String get license_expiring_soon => 'Licenza in scadenza';
+
+  @override
+  String get license_active => 'Licenza attiva';
+
+  @override
+  String get license_pending_approval_message =>
+      'La tua richiesta di licenza è in attesa di approvazione. Riceverai una notifica quando sarà approvata o negata.';
+
+  @override
+  String get license_expired_message =>
+      'Questa licenza è scaduta e deve essere rinnovata. Puoi richiedere una nuova licenza o importarne una esistente.';
+
+  @override
+  String get license_expiring_soon_message =>
+      'Questa licenza scadrà presto. Considera di richiedere una nuova licenza o importarne una esistente.';
+
+  @override
+  String get license_details => 'Dettagli licenza';
+
+  @override
+  String get issued_label => 'Emessa';
+
+  @override
+  String get max_devices_label => 'Dispositivi massimi';
+
+  @override
+  String get version_label => 'Versione';
+
+  @override
+  String get requested_features => 'Funzionalità richieste';
+
+  @override
+  String get technical_details => 'Dettagli tecnici';
+
+  @override
+  String get data_hash => 'Hash dati';
+
+  @override
+  String get no_license_found => 'Nessuna licenza trovata';
+
+  @override
+  String get no_active_license_message =>
+      'Nessuna licenza attiva trovata. Puoi importare un file di licenza esistente o richiedere una nuova licenza dal server.';
+
+  @override
+  String get project_deleted => 'Progetto eliminato.';
+
+  @override
+  String get status_label => 'Stato';
+
+  @override
+  String get days_remaining_label => 'Giorni rimanenti';
+
+  @override
+  String get features_pending_approval =>
+      'Le funzionalità saranno disponibili una volta che la licenza sarà approvata:';
+
+  @override
+  String get device_fingerprint => 'Impronta digitale dispositivo';
+
+  @override
+  String get app_information => 'Informazioni app';
+
+  @override
+  String get requested_features_label => 'Funzionalità richieste:';
+
+  @override
+  String get basic_export => 'Esportazione base';
+
+  @override
+  String get map_download => 'Scarica mappe';
+
+  @override
+  String get advanced_export => 'Esportazione avanzata';
+
+  @override
+  String get email_required => 'Email richiesta';
+
+  @override
+  String get select_at_least_one_feature => 'Seleziona almeno una funzionalità';
+
+  @override
+  String get your_email_example => 'tua.email@esempio.com';
+
+  @override
+  String get max_devices_hint => '1-5';
+
+  @override
+  String get days_suffix => 'giorni';
+
+  @override
+  String get download_offline_maps_tooltip => 'Scarica mappe offline';
+
+  @override
+  String license_imported_successfully(String email) {
+    return 'Licenza per $email importata con successo!';
+  }
+
+  @override
+  String get license_import_cancelled =>
+      'Importazione licenza annullata o fallita.';
+
+  @override
+  String error_importing_license(String error) {
+    return 'Errore nell\'importazione della licenza: $error';
+  }
+
+  @override
+  String get project_deleted_message => 'Progetto eliminato.';
+
+  @override
+  String get install_development_license => 'Installa Licenza di Sviluppo';
+
+  @override
+  String get development_testing => 'Sviluppo e Test';
 }

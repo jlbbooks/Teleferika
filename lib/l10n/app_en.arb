@@ -1530,5 +1530,185 @@
     "placeholders": {
       "error": { "type": "String", "example": "Test error" }
     }
+  },
+  "refresh_status": "Refresh Status",
+  "@refresh_status": {
+    "description": "Label for refresh status button."
+  },
+  "request_license": "Request License",
+  "@request_license": {
+    "description": "Title for request license dialog."
+  },
+  "cancel_button": "Cancel",
+  "@cancel_button": {
+    "description": "Label for cancel button."
+  },
+  "request_button": "Request",
+  "@request_button": {
+    "description": "Label for request button."
+  },
+  "license_requested": "License Requested",
+  "@license_requested": {
+    "description": "Status label for requested license."
+  },
+  "license_expired": "License Expired",
+  "@license_expired": {
+    "description": "Status label for expired license."
+  },
+  "license_expiring_soon": "License Expiring Soon",
+  "@license_expiring_soon": {
+    "description": "Status label for license expiring soon."
+  },
+  "license_active": "License Active",
+  "@license_active": {
+    "description": "Status label for active license."
+  },
+  "license_pending_approval_message": "Your license request is pending approval. You will be notified when it is approved or denied.",
+  "@license_pending_approval_message": {
+    "description": "Message shown when license request is pending approval."
+  },
+  "license_expired_message": "This license has expired and needs to be renewed. You can request a new license or import an existing one.",
+  "@license_expired_message": {
+    "description": "Message shown when license has expired."
+  },
+  "license_expiring_soon_message": "This license will expire soon. Consider requesting a new license or importing an existing one.",
+  "@license_expiring_soon_message": {
+    "description": "Message shown when license is expiring soon."
+  },
+  "license_details": "License Details",
+  "@license_details": {
+    "description": "Section title for license details."
+  },
+  "issued_label": "Issued",
+  "@issued_label": {
+    "description": "Label for issued date."
+  },
+  "max_devices_label": "Max Devices",
+  "@max_devices_label": {
+    "description": "Label for maximum devices."
+  },
+  "version_label": "Version",
+  "@version_label": {
+    "description": "Label for version."
+  },
+  "requested_features": "Requested Features",
+  "@requested_features": {
+    "description": "Label for requested features."
+  },
+  "technical_details": "Technical Details",
+  "@technical_details": {
+    "description": "Section title for technical details."
+  },
+  "data_hash": "Data Hash",
+  "@data_hash": {
+    "description": "Label for data hash."
+  },
+  "no_license_found": "No License Found",
+  "@no_license_found": {
+    "description": "Message when no license is found."
+  },
+  "no_active_license_message": "No active license found. You can import an existing license file or request a new license from the server.",
+  "@no_active_license_message": {
+    "description": "Message when no active license is found."
+  },
+  "project_deleted": "Project deleted.",
+  "@project_deleted": {
+    "description": "Message when project is deleted."
+  },
+  "status_label": "Status",
+  "@status_label": {
+    "description": "Label for status."
+  },
+  "days_remaining_label": "Days Remaining",
+  "@days_remaining_label": {
+    "description": "Label for days remaining."
+  },
+  "features_pending_approval": "Features will be available once your license is approved:",
+  "@features_pending_approval": {
+    "description": "Message about features pending approval."
+  },
+  "device_fingerprint": "Device Fingerprint",
+  "@device_fingerprint": {
+    "description": "Label for device fingerprint."
+  },
+  "app_information": "App Information",
+  "@app_information": {
+    "description": "Section title for app information."
+  },
+  "requested_features_label": "Requested Features:",
+  "@requested_features_label": {
+    "description": "Label for requested features list."
+  },
+  "basic_export": "Basic Export",
+  "@basic_export": {
+    "description": "Label for basic export feature."
+  },
+  "map_download": "Map Download",
+  "@map_download": {
+    "description": "Label for map download feature."
+  },
+  "advanced_export": "Advanced Export",
+  "@advanced_export": {
+    "description": "Label for advanced export feature."
+  },
+  "email_required": "Email is required",
+  "@email_required": {
+    "description": "Validation message when email is required."
+  },
+  "select_at_least_one_feature": "Please select at least one feature",
+  "@select_at_least_one_feature": {
+    "description": "Validation message when at least one feature must be selected."
+  },
+  "your_email_example": "your.email@example.com",
+  "@your_email_example": {
+    "description": "Example email placeholder."
+  },
+  "max_devices_hint": "1-5",
+  "@max_devices_hint": {
+    "description": "Hint text for max devices field."
+  },
+  "days_suffix": "days",
+  "@days_suffix": {
+    "description": "Suffix for days count."
+  },
+  "download_offline_maps_tooltip": "Download Offline Maps",
+  "@download_offline_maps_tooltip": {
+    "description": "Tooltip for download offline maps button."
+  },
+  "license_imported_successfully": "Licence for {email} imported successfully!",
+  "@license_imported_successfully": {
+    "description": "Success message when license is imported.",
+    "placeholders": {
+      "email": {
+        "type": "String",
+        "example": "user@example.com"
+      }
+    }
+  },
+  "license_import_cancelled": "Licence import cancelled or failed.",
+  "@license_import_cancelled": {
+    "description": "Message when license import is cancelled or fails."
+  },
+  "error_importing_license": "Error importing licence: {error}",
+  "@error_importing_license": {
+    "description": "Error message when importing license fails.",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "Invalid format"
+      }
+    }
+  },
+  "project_deleted_message": "Project deleted.",
+  "@project_deleted_message": {
+    "description": "Message when project is deleted."
+  },
+  "install_development_license": "Install Development License",
+  "@install_development_license": {
+    "description": "Label for install development license button."
+  },
+  "development_testing": "Development & Testing",
+  "@development_testing": {
+    "description": "Label for development and testing section."
   }
 }

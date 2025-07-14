@@ -891,7 +891,7 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
               ),
               child: Center(
                 child: Text(
-                  '${angleDeg.toStringAsFixed(1)}°',
+                  '${angleDeg.toStringAsFixed(2)}°',
                   style: TextStyle(
                     color: angleColor(angleDeg),
                     fontSize: fontSize,

@@ -210,7 +210,7 @@ class AppConfig {
     seconds: 7,
   );
 
-  static const double angleToRedThreshold = 30.0;
+  static const double angleToRedThreshold = 2.0;
 
   static const Color angleColorGood = Colors.green;
   static const Color angleColorBad = Colors.red;

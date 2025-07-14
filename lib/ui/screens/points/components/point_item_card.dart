@@ -211,7 +211,7 @@ class PointItemCard extends StatelessWidget {
                   Icon(Icons.rotate_right, size: 18, color: angleColor),
                   const SizedBox(width: 6),
                   Text(
-                    '${S.of(context)?.angleLabel ?? 'Angle:'} ${angle.toStringAsFixed(1)}°',
+                    '${S.of(context)?.angleLabel ?? 'Angle:'} ${angle.toStringAsFixed(2)}°',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: angleColor,
                       fontWeight: FontWeight.bold,

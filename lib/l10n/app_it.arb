@@ -1528,5 +1528,185 @@
     "placeholders": {
       "error": { "type": "String", "example": "Errore test" }
     }
+  },
+  "refresh_status": "Aggiorna stato",
+  "@refresh_status": {
+    "description": "Etichetta per il pulsante aggiorna stato."
+  },
+  "request_license": "Richiedi licenza",
+  "@request_license": {
+    "description": "Titolo per il dialogo richiedi licenza."
+  },
+  "cancel_button": "Annulla",
+  "@cancel_button": {
+    "description": "Etichetta per il pulsante annulla."
+  },
+  "request_button": "Richiedi",
+  "@request_button": {
+    "description": "Etichetta per il pulsante richiedi."
+  },
+  "license_requested": "Licenza richiesta",
+  "@license_requested": {
+    "description": "Etichetta di stato per licenza richiesta."
+  },
+  "license_expired": "Licenza scaduta",
+  "@license_expired": {
+    "description": "Etichetta di stato per licenza scaduta."
+  },
+  "license_expiring_soon": "Licenza in scadenza",
+  "@license_expiring_soon": {
+    "description": "Etichetta di stato per licenza in scadenza."
+  },
+  "license_active": "Licenza attiva",
+  "@license_active": {
+    "description": "Etichetta di stato per licenza attiva."
+  },
+  "license_pending_approval_message": "La tua richiesta di licenza è in attesa di approvazione. Riceverai una notifica quando sarà approvata o negata.",
+  "@license_pending_approval_message": {
+    "description": "Messaggio mostrato quando la richiesta di licenza è in attesa di approvazione."
+  },
+  "license_expired_message": "Questa licenza è scaduta e deve essere rinnovata. Puoi richiedere una nuova licenza o importarne una esistente.",
+  "@license_expired_message": {
+    "description": "Messaggio mostrato quando la licenza è scaduta."
+  },
+  "license_expiring_soon_message": "Questa licenza scadrà presto. Considera di richiedere una nuova licenza o importarne una esistente.",
+  "@license_expiring_soon_message": {
+    "description": "Messaggio mostrato quando la licenza sta per scadere."
+  },
+  "license_details": "Dettagli licenza",
+  "@license_details": {
+    "description": "Titolo della sezione dettagli licenza."
+  },
+  "issued_label": "Emessa",
+  "@issued_label": {
+    "description": "Etichetta per la data di emissione."
+  },
+  "max_devices_label": "Dispositivi massimi",
+  "@max_devices_label": {
+    "description": "Etichetta per dispositivi massimi."
+  },
+  "version_label": "Versione",
+  "@version_label": {
+    "description": "Etichetta per versione."
+  },
+  "requested_features": "Funzionalità richieste",
+  "@requested_features": {
+    "description": "Etichetta per funzionalità richieste."
+  },
+  "technical_details": "Dettagli tecnici",
+  "@technical_details": {
+    "description": "Titolo della sezione dettagli tecnici."
+  },
+  "data_hash": "Hash dati",
+  "@data_hash": {
+    "description": "Etichetta per hash dati."
+  },
+  "no_license_found": "Nessuna licenza trovata",
+  "@no_license_found": {
+    "description": "Messaggio quando non viene trovata alcuna licenza."
+  },
+  "no_active_license_message": "Nessuna licenza attiva trovata. Puoi importare un file di licenza esistente o richiedere una nuova licenza dal server.",
+  "@no_active_license_message": {
+    "description": "Messaggio quando non viene trovata alcuna licenza attiva."
+  },
+  "project_deleted": "Progetto eliminato.",
+  "@project_deleted": {
+    "description": "Messaggio quando il progetto viene eliminato."
+  },
+  "status_label": "Stato",
+  "@status_label": {
+    "description": "Etichetta per stato."
+  },
+  "days_remaining_label": "Giorni rimanenti",
+  "@days_remaining_label": {
+    "description": "Etichetta per giorni rimanenti."
+  },
+  "features_pending_approval": "Le funzionalità saranno disponibili una volta che la licenza sarà approvata:",
+  "@features_pending_approval": {
+    "description": "Messaggio sulle funzionalità in attesa di approvazione."
+  },
+  "device_fingerprint": "Impronta digitale dispositivo",
+  "@device_fingerprint": {
+    "description": "Etichetta per impronta digitale dispositivo."
+  },
+  "app_information": "Informazioni app",
+  "@app_information": {
+    "description": "Titolo della sezione informazioni app."
+  },
+  "requested_features_label": "Funzionalità richieste:",
+  "@requested_features_label": {
+    "description": "Etichetta per la lista funzionalità richieste."
+  },
+  "basic_export": "Esportazione base",
+  "@basic_export": {
+    "description": "Etichetta per funzionalità esportazione base."
+  },
+  "map_download": "Scarica mappe",
+  "@map_download": {
+    "description": "Etichetta per funzionalità scarica mappe."
+  },
+  "advanced_export": "Esportazione avanzata",
+  "@advanced_export": {
+    "description": "Etichetta per funzionalità esportazione avanzata."
+  },
+  "email_required": "Email richiesta",
+  "@email_required": {
+    "description": "Messaggio di validazione quando l'email è richiesta."
+  },
+  "select_at_least_one_feature": "Seleziona almeno una funzionalità",
+  "@select_at_least_one_feature": {
+    "description": "Messaggio di validazione quando deve essere selezionata almeno una funzionalità."
+  },
+  "your_email_example": "tua.email@esempio.com",
+  "@your_email_example": {
+    "description": "Esempio di email segnaposto."
+  },
+  "max_devices_hint": "1-5",
+  "@max_devices_hint": {
+    "description": "Testo di suggerimento per il campo dispositivi massimi."
+  },
+  "days_suffix": "giorni",
+  "@days_suffix": {
+    "description": "Suffisso per il conteggio dei giorni."
+  },
+  "download_offline_maps_tooltip": "Scarica mappe offline",
+  "@download_offline_maps_tooltip": {
+    "description": "Tooltip per il pulsante scarica mappe offline."
+  },
+  "license_imported_successfully": "Licenza per {email} importata con successo!",
+  "@license_imported_successfully": {
+    "description": "Messaggio di successo quando la licenza viene importata.",
+    "placeholders": {
+      "email": {
+        "type": "String",
+        "example": "utente@esempio.com"
+      }
+    }
+  },
+  "license_import_cancelled": "Importazione licenza annullata o fallita.",
+  "@license_import_cancelled": {
+    "description": "Messaggio quando l'importazione della licenza viene annullata o fallisce."
+  },
+  "error_importing_license": "Errore nell'importazione della licenza: {error}",
+  "@error_importing_license": {
+    "description": "Messaggio di errore quando l'importazione della licenza fallisce.",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "Formato non valido"
+      }
+    }
+  },
+  "project_deleted_message": "Progetto eliminato.",
+  "@project_deleted_message": {
+    "description": "Messaggio quando il progetto viene eliminato."
+  },
+  "install_development_license": "Installa Licenza di Sviluppo",
+  "@install_development_license": {
+    "description": "Etichetta per il pulsante installa licenza di sviluppo."
+  },
+  "development_testing": "Sviluppo e Test",
+  "@development_testing": {
+    "description": "Etichetta per la sezione sviluppo e test."
   }
 }

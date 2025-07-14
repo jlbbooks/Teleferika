@@ -1995,6 +1995,258 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Validation test failed: {error}'**
   String validation_test_failed(String error);
+
+  /// Label for refresh status button.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh Status'**
+  String get refresh_status;
+
+  /// Title for request license dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Request License'**
+  String get request_license;
+
+  /// Label for cancel button.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel_button;
+
+  /// Label for request button.
+  ///
+  /// In en, this message translates to:
+  /// **'Request'**
+  String get request_button;
+
+  /// Status label for requested license.
+  ///
+  /// In en, this message translates to:
+  /// **'License Requested'**
+  String get license_requested;
+
+  /// Status label for expired license.
+  ///
+  /// In en, this message translates to:
+  /// **'License Expired'**
+  String get license_expired;
+
+  /// Status label for license expiring soon.
+  ///
+  /// In en, this message translates to:
+  /// **'License Expiring Soon'**
+  String get license_expiring_soon;
+
+  /// Status label for active license.
+  ///
+  /// In en, this message translates to:
+  /// **'License Active'**
+  String get license_active;
+
+  /// Message shown when license request is pending approval.
+  ///
+  /// In en, this message translates to:
+  /// **'Your license request is pending approval. You will be notified when it is approved or denied.'**
+  String get license_pending_approval_message;
+
+  /// Message shown when license has expired.
+  ///
+  /// In en, this message translates to:
+  /// **'This license has expired and needs to be renewed. You can request a new license or import an existing one.'**
+  String get license_expired_message;
+
+  /// Message shown when license is expiring soon.
+  ///
+  /// In en, this message translates to:
+  /// **'This license will expire soon. Consider requesting a new license or importing an existing one.'**
+  String get license_expiring_soon_message;
+
+  /// Section title for license details.
+  ///
+  /// In en, this message translates to:
+  /// **'License Details'**
+  String get license_details;
+
+  /// Label for issued date.
+  ///
+  /// In en, this message translates to:
+  /// **'Issued'**
+  String get issued_label;
+
+  /// Label for maximum devices.
+  ///
+  /// In en, this message translates to:
+  /// **'Max Devices'**
+  String get max_devices_label;
+
+  /// Label for version.
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get version_label;
+
+  /// Label for requested features.
+  ///
+  /// In en, this message translates to:
+  /// **'Requested Features'**
+  String get requested_features;
+
+  /// Section title for technical details.
+  ///
+  /// In en, this message translates to:
+  /// **'Technical Details'**
+  String get technical_details;
+
+  /// Label for data hash.
+  ///
+  /// In en, this message translates to:
+  /// **'Data Hash'**
+  String get data_hash;
+
+  /// Message when no license is found.
+  ///
+  /// In en, this message translates to:
+  /// **'No License Found'**
+  String get no_license_found;
+
+  /// Message when no active license is found.
+  ///
+  /// In en, this message translates to:
+  /// **'No active license found. You can import an existing license file or request a new license from the server.'**
+  String get no_active_license_message;
+
+  /// Message when project is deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Project deleted.'**
+  String get project_deleted;
+
+  /// Label for status.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get status_label;
+
+  /// Label for days remaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Days Remaining'**
+  String get days_remaining_label;
+
+  /// Message about features pending approval.
+  ///
+  /// In en, this message translates to:
+  /// **'Features will be available once your license is approved:'**
+  String get features_pending_approval;
+
+  /// Label for device fingerprint.
+  ///
+  /// In en, this message translates to:
+  /// **'Device Fingerprint'**
+  String get device_fingerprint;
+
+  /// Section title for app information.
+  ///
+  /// In en, this message translates to:
+  /// **'App Information'**
+  String get app_information;
+
+  /// Label for requested features list.
+  ///
+  /// In en, this message translates to:
+  /// **'Requested Features:'**
+  String get requested_features_label;
+
+  /// Label for basic export feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic Export'**
+  String get basic_export;
+
+  /// Label for map download feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Map Download'**
+  String get map_download;
+
+  /// Label for advanced export feature.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced Export'**
+  String get advanced_export;
+
+  /// Validation message when email is required.
+  ///
+  /// In en, this message translates to:
+  /// **'Email is required'**
+  String get email_required;
+
+  /// Validation message when at least one feature must be selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select at least one feature'**
+  String get select_at_least_one_feature;
+
+  /// Example email placeholder.
+  ///
+  /// In en, this message translates to:
+  /// **'your.email@example.com'**
+  String get your_email_example;
+
+  /// Hint text for max devices field.
+  ///
+  /// In en, this message translates to:
+  /// **'1-5'**
+  String get max_devices_hint;
+
+  /// Suffix for days count.
+  ///
+  /// In en, this message translates to:
+  /// **'days'**
+  String get days_suffix;
+
+  /// Tooltip for download offline maps button.
+  ///
+  /// In en, this message translates to:
+  /// **'Download Offline Maps'**
+  String get download_offline_maps_tooltip;
+
+  /// Success message when license is imported.
+  ///
+  /// In en, this message translates to:
+  /// **'Licence for {email} imported successfully!'**
+  String license_imported_successfully(String email);
+
+  /// Message when license import is cancelled or fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Licence import cancelled or failed.'**
+  String get license_import_cancelled;
+
+  /// Error message when importing license fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Error importing licence: {error}'**
+  String error_importing_license(String error);
+
+  /// Message when project is deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Project deleted.'**
+  String get project_deleted_message;
+
+  /// Label for install development license button.
+  ///
+  /// In en, this message translates to:
+  /// **'Install Development License'**
+  String get install_development_license;
+
+  /// Label for development and testing section.
+  ///
+  /// In en, this message translates to:
+  /// **'Development & Testing'**
+  String get development_testing;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

@@ -172,7 +172,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         actions.insert(
           0,
           TextButton(
-            child: Text('Refresh Status'),
+            child: Text(S.of(context)?.refresh_status ?? 'Refresh Status'),
             onPressed: () async {
               // Show loading indicator in dialog
               showInfoStatus('Checking license status with server...');
@@ -239,7 +239,9 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
           actions.insert(
             1,
             TextButton(
-              child: Text('Request New License'),
+              child: Text(
+                S.of(context)?.request_new_license ?? 'Request New License',
+              ),
               onPressed: () {
                 Navigator.of(context).pop();
                 _requestLicence();
@@ -263,7 +265,9 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
           actions.insert(
             1,
             TextButton(
-              child: Text('Request New License'),
+              child: Text(
+                S.of(context)?.request_new_license ?? 'Request New License',
+              ),
               onPressed: () {
                 Navigator.of(context).pop();
                 _requestLicence();
@@ -275,7 +279,9 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
           actions.insert(
             1,
             TextButton(
-              child: Text('Request New License'),
+              child: Text(
+                S.of(context)?.request_new_license ?? 'Request New License',
+              ),
               onPressed: () {
                 Navigator.of(context).pop();
                 _requestLicence();
@@ -299,7 +305,9 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         actions.insert(
           1,
           TextButton(
-            child: Text('Request New License'),
+            child: Text(
+              S.of(context)?.request_new_license ?? 'Request New License',
+            ),
             onPressed: () {
               Navigator.of(context).pop();
               _requestLicence();
@@ -401,12 +409,16 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                   const SizedBox(width: 8),
                   Text(
                     isRequested
-                        ? 'License Requested'
+                        ? S.of(context)?.license_requested ??
+                              'License Requested'
                         : (isExpired
-                              ? 'License Expired'
+                              ? S.of(context)?.license_expired ??
+                                    'License Expired'
                               : (isExpiringSoon
-                                    ? 'License Expiring Soon'
-                                    : 'License Active')),
+                                    ? S.of(context)?.license_expiring_soon ??
+                                          'License Expiring Soon'
+                                    : S.of(context)?.license_active ??
+                                          'License Active')),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: isRequested
@@ -423,15 +435,18 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
               if (isRequested) ...[
                 const SizedBox(height: 4),
                 Text(
-                  'Your license request is pending approval. You will be notified when it is approved or denied.',
+                  S.of(context)?.license_pending_approval_message ??
+                      'Your license request is pending approval. You will be notified when it is approved or denied.',
                   style: TextStyle(fontSize: 12, color: Colors.blue.shade700),
                 ),
               ] else if (isExpired || isExpiringSoon) ...[
                 const SizedBox(height: 4),
                 Text(
                   isExpired
-                      ? 'This license has expired and needs to be renewed. You can request a new license or import an existing one.'
-                      : 'This license will expire soon. Consider requesting a new license or importing an existing one.',
+                      ? S.of(context)?.license_expired_message ??
+                            'This license has expired and needs to be renewed. You can request a new license or import an existing one.'
+                      : S.of(context)?.license_expiring_soon_message ??
+                            'This license will expire soon. Consider requesting a new license or importing an existing one.',
                   style: TextStyle(
                     fontSize: 12,
                     color: isExpired
@@ -447,33 +462,52 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         const SizedBox(height: 16),
 
         // License details section
-        _buildInfoSection('License Details', Icons.info_outline, [
-          _buildInfoRow('Email', licence.email),
-          _buildInfoRow('Status', licence.status),
-          _buildInfoRow(
-            'Issued',
-            DateFormat.yMMMd().add_Hm().format(licence.issuedAt.toLocal()),
-          ),
-          _buildInfoRow(
-            'Valid Until',
-            DateFormat.yMMMd().add_Hm().format(licence.validUntil.toLocal()),
-          ),
-          if (!isRequested)
-            _buildInfoRow('Days Remaining', '${licence.daysRemaining} days'),
-          _buildInfoRow('Max Devices', '${licence.maxDevices}'),
-          _buildInfoRow('Version', licence.version),
-        ]),
+        _buildInfoSection(
+          S.of(context)?.license_details ?? 'License Details',
+          Icons.info_outline,
+          [
+            _buildInfoRow(S.of(context)?.email_label ?? 'Email', licence.email),
+            _buildInfoRow(
+              S.of(context)?.status_label ?? 'Status',
+              licence.status,
+            ),
+            _buildInfoRow(
+              S.of(context)?.issued_label ?? 'Issued',
+              DateFormat.yMMMd().add_Hm().format(licence.issuedAt.toLocal()),
+            ),
+            _buildInfoRow(
+              S.of(context)?.valid_until_label ?? 'Valid Until',
+              DateFormat.yMMMd().add_Hm().format(licence.validUntil.toLocal()),
+            ),
+            if (!isRequested)
+              _buildInfoRow(
+                S.of(context)?.days_remaining_label ?? 'Days Remaining',
+                '${licence.daysRemaining} ${S.of(context)?.days_suffix ?? 'days'}',
+              ),
+            _buildInfoRow(
+              S.of(context)?.max_devices_label ?? 'Max Devices',
+              '${licence.maxDevices}',
+            ),
+            _buildInfoRow(
+              S.of(context)?.version_label ?? 'Version',
+              licence.version,
+            ),
+          ],
+        ),
 
         const SizedBox(height: 16),
 
         // Features section
         _buildInfoSection(
-          isRequested ? 'Requested Features' : 'Available Features',
+          isRequested
+              ? S.of(context)?.requested_features ?? 'Requested Features'
+              : S.of(context)?.available_features ?? 'Available Features',
           Icons.star,
           [
             if (isRequested) ...[
               Text(
-                'Features will be available once your license is approved:',
+                S.of(context)?.features_pending_approval ??
+                    'Features will be available once your license is approved:',
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey.shade600,
@@ -489,23 +523,38 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         const SizedBox(height: 16),
 
         // Technical details section
-        _buildInfoSection('Technical Details', Icons.security, [
-          _buildInfoRow('Algorithm', licence.algorithm),
-          _buildInfoRow(
-            'Device Fingerprint',
-            '${licence.deviceFingerprint.substring(0, 16)}...',
-          ),
-          _buildInfoRow(
-            'Data Hash',
-            '${licence.generateDataHash().substring(0, 16)}...',
-          ),
-        ]),
+        _buildInfoSection(
+          S.of(context)?.technical_details ?? 'Technical Details',
+          Icons.security,
+          [
+            _buildInfoRow(
+              S.of(context)?.algorithm_label ?? 'Algorithm',
+              licence.algorithm,
+            ),
+            _buildInfoRow(
+              S.of(context)?.device_fingerprint ?? 'Device Fingerprint',
+              '${licence.deviceFingerprint.substring(0, 16)}...',
+            ),
+            _buildInfoRow(
+              S.of(context)?.data_hash ?? 'Data Hash',
+              '${licence.generateDataHash().substring(0, 16)}...',
+            ),
+          ],
+        ),
 
         if (versionInfo.isNotEmpty) ...[
           const SizedBox(height: 16),
-          _buildInfoSection('App Information', Icons.app_settings_alt, [
-            _buildInfoRow('App Version', versionInfo),
-          ]),
+          _buildInfoSection(
+            S.of(context)?.app_information ?? 'App Information',
+            Icons.app_settings_alt,
+            [
+              _buildInfoRow(
+                S.of(context)?.app_version_label(versionInfo) ??
+                    'App Version: $versionInfo',
+                versionInfo,
+              ),
+            ],
+          ),
         ],
       ],
     );
@@ -532,7 +581,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                   Icon(Icons.info_outline, color: Colors.grey, size: 20),
                   const SizedBox(width: 8),
                   Text(
-                    'No License Found',
+                    S.of(context)?.no_license_found ?? 'No License Found',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.grey.shade700,
@@ -542,7 +591,8 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
               ),
               const SizedBox(height: 4),
               Text(
-                'No active license found. You can import an existing license file or request a new license from the server.',
+                S.of(context)?.no_active_license_message ??
+                    'No active license found. You can import an existing license file or request a new license from the server.',
                 style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
               ),
             ],
@@ -552,9 +602,17 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         const SizedBox(height: 16),
 
         if (versionInfo.isNotEmpty) ...[
-          _buildInfoSection('App Information', Icons.app_settings_alt, [
-            _buildInfoRow('App Version', versionInfo),
-          ]),
+          _buildInfoSection(
+            S.of(context)?.app_information ?? 'App Information',
+            Icons.app_settings_alt,
+            [
+              _buildInfoRow(
+                S.of(context)?.app_version_label(versionInfo) ??
+                    'App Version: $versionInfo',
+                versionInfo,
+              ),
+            ],
+          ),
         ],
       ],
     );
@@ -835,7 +893,9 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         // Clear global state after deletion
         context.projectState.clearProject();
         showInfoStatus(
-          S.of(context)?.point_deleted_success(id) ?? 'Project deleted.',
+          S.of(context)?.point_deleted_success(id) ??
+              S.of(context)?.project_deleted_message ??
+              'Project deleted.',
         );
       } else if (action == 'navigated_back') {
         // User just came back, potentially from viewing an existing project. Highlight it.
@@ -1188,7 +1248,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                 children: [
                   const Icon(Icons.request_page, color: Colors.blue),
                   const SizedBox(width: 8),
-                  Text('Request License'),
+                  Text(S.of(context)?.request_license ?? 'Request License'),
                 ],
               ),
               content: SingleChildScrollView(
@@ -1200,7 +1260,9 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                       controller: emailController,
                       decoration: InputDecoration(
                         labelText: S.of(context)?.email_label ?? 'Email',
-                        hintText: 'your.email@example.com',
+                        hintText:
+                            S.of(context)?.your_email_example ??
+                            'your.email@example.com',
                         prefixIcon: const Icon(Icons.email),
                       ),
                       keyboardType: TextInputType.emailAddress,
@@ -1209,15 +1271,17 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                     TextField(
                       controller: maxDevicesController,
                       decoration: InputDecoration(
-                        labelText: 'Max Devices',
-                        hintText: '1-5',
+                        labelText:
+                            S.of(context)?.max_devices_label ?? 'Max Devices',
+                        hintText: S.of(context)?.max_devices_hint ?? '1-5',
                         prefixIcon: const Icon(Icons.devices),
                       ),
                       keyboardType: TextInputType.number,
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Requested Features:',
+                      S.of(context)?.requested_features_label ??
+                          'Requested Features:',
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
@@ -1242,7 +1306,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: Text('Cancel'),
+                  child: Text(S.of(context)?.cancel_button ?? 'Cancel'),
                 ),
                 ElevatedButton(
                   onPressed: () {
@@ -1251,12 +1315,17 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                         int.tryParse(maxDevicesController.text) ?? 1;
 
                     if (email.isEmpty) {
-                      showErrorStatus('Email is required');
+                      showErrorStatus(
+                        S.of(context)?.email_required ?? 'Email is required',
+                      );
                       return;
                     }
 
                     if (selectedFeatures.isEmpty) {
-                      showErrorStatus('Please select at least one feature');
+                      showErrorStatus(
+                        S.of(context)?.select_at_least_one_feature ??
+                            'Please select at least one feature',
+                      );
                       return;
                     }
 
@@ -1266,7 +1335,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                       'maxDevices': maxDevices.clamp(1, 5),
                     });
                   },
-                  child: Text('Request'),
+                  child: Text(S.of(context)?.request_button ?? 'Request'),
                 ),
               ],
             );
@@ -1279,11 +1348,11 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
   String _getFeatureDisplayName(String feature) {
     switch (feature) {
       case 'export_basic':
-        return 'Basic Export';
+        return S.of(context)?.basic_export ?? 'Basic Export';
       case 'map_download':
-        return 'Map Download';
+        return S.of(context)?.map_download ?? 'Map Download';
       case 'export_advanced':
-        return 'Advanced Export';
+        return S.of(context)?.advanced_export ?? 'Advanced Export';
       default:
         return feature.replaceAll('_', ' ').toUpperCase();
     }
@@ -1543,7 +1612,9 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                         ),
                       ],
                     ),
-                    tooltip: 'Download Offline Maps',
+                    tooltip:
+                        S.of(context)?.download_offline_maps_tooltip ??
+                        'Download Offline Maps',
                     onPressed: () async {
                       // Check if map download feature is available
                       if (!LicensedFeaturesLoader.hasLicensedFeature(
@@ -1680,7 +1751,8 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                                 SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    'Request License',
+                                    S.of(context)?.request_license ??
+                                        'Request License',
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
@@ -1691,7 +1763,8 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                           PopupMenuItem<String>(
                             enabled: false,
                             child: Text(
-                              'Development & Testing',
+                              S.of(context)?.development_testing ??
+                                  'Development & Testing',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.grey.shade600,
@@ -1707,7 +1780,10 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                                 SizedBox(width: 8),
                                 Expanded(
                                   child: Text(
-                                    'Install Development License',
+                                    S
+                                            .of(context)
+                                            ?.install_development_license ??
+                                        'Install Development License',
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),

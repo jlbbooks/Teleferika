@@ -1152,4 +1152,140 @@ class SEn extends S {
   String validation_test_failed(String error) {
     return 'Validation test failed: $error';
   }
+
+  @override
+  String get refresh_status => 'Refresh Status';
+
+  @override
+  String get request_license => 'Request License';
+
+  @override
+  String get cancel_button => 'Cancel';
+
+  @override
+  String get request_button => 'Request';
+
+  @override
+  String get license_requested => 'License Requested';
+
+  @override
+  String get license_expired => 'License Expired';
+
+  @override
+  String get license_expiring_soon => 'License Expiring Soon';
+
+  @override
+  String get license_active => 'License Active';
+
+  @override
+  String get license_pending_approval_message =>
+      'Your license request is pending approval. You will be notified when it is approved or denied.';
+
+  @override
+  String get license_expired_message =>
+      'This license has expired and needs to be renewed. You can request a new license or import an existing one.';
+
+  @override
+  String get license_expiring_soon_message =>
+      'This license will expire soon. Consider requesting a new license or importing an existing one.';
+
+  @override
+  String get license_details => 'License Details';
+
+  @override
+  String get issued_label => 'Issued';
+
+  @override
+  String get max_devices_label => 'Max Devices';
+
+  @override
+  String get version_label => 'Version';
+
+  @override
+  String get requested_features => 'Requested Features';
+
+  @override
+  String get technical_details => 'Technical Details';
+
+  @override
+  String get data_hash => 'Data Hash';
+
+  @override
+  String get no_license_found => 'No License Found';
+
+  @override
+  String get no_active_license_message =>
+      'No active license found. You can import an existing license file or request a new license from the server.';
+
+  @override
+  String get project_deleted => 'Project deleted.';
+
+  @override
+  String get status_label => 'Status';
+
+  @override
+  String get days_remaining_label => 'Days Remaining';
+
+  @override
+  String get features_pending_approval =>
+      'Features will be available once your license is approved:';
+
+  @override
+  String get device_fingerprint => 'Device Fingerprint';
+
+  @override
+  String get app_information => 'App Information';
+
+  @override
+  String get requested_features_label => 'Requested Features:';
+
+  @override
+  String get basic_export => 'Basic Export';
+
+  @override
+  String get map_download => 'Map Download';
+
+  @override
+  String get advanced_export => 'Advanced Export';
+
+  @override
+  String get email_required => 'Email is required';
+
+  @override
+  String get select_at_least_one_feature =>
+      'Please select at least one feature';
+
+  @override
+  String get your_email_example => 'your.email@example.com';
+
+  @override
+  String get max_devices_hint => '1-5';
+
+  @override
+  String get days_suffix => 'days';
+
+  @override
+  String get download_offline_maps_tooltip => 'Download Offline Maps';
+
+  @override
+  String license_imported_successfully(String email) {
+    return 'Licence for $email imported successfully!';
+  }
+
+  @override
+  String get license_import_cancelled => 'Licence import cancelled or failed.';
+
+  @override
+  String error_importing_license(String error) {
+    return 'Error importing licence: $error';
+  }
+
+  @override
+  String get project_deleted_message => 'Project deleted.';
+
+  @override
+  String get install_development_license => 'Install Development License';
+
+  @override
+  String get development_testing => 'Development & Testing';
 }
