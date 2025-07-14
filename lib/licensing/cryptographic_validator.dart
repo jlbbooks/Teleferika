@@ -90,6 +90,13 @@ class CryptographicValidator {
       }
     }
 
+    // Check if we have a cached key that's still usable (even if expired)
+    // This helps with offline scenarios
+    if (_cachedPublicKeyPem != null) {
+      _logger.info('Using expired cached public key for offline validation');
+      return _cachedPublicKeyPem;
+    }
+
     // Try to fetch from server
     try {
       _logger.info('Fetching public key from server...');
@@ -135,25 +142,35 @@ class CryptographicValidator {
     // Fall back to local server key file
     try {
       _logger.info('Loading public key from local server key file...');
-      final file = File(
+
+      // Try multiple possible locations for the public key
+      final possiblePaths = [
         '/home/michael/StudioProjects/Teleferika/keys/public_key.pem',
-      );
-      if (await file.exists()) {
-        final keyContent = await file.readAsString();
-        _logger.info(
-          'Loaded public key from local file (first 50 chars): ${keyContent.substring(0, 50)}...',
-        );
+        'keys/public_key.pem',
+        'assets/keys/public_key.pem',
+      ];
 
-        // Cache the result
-        _cachedPublicKeyPem = keyContent;
-        _cacheTimestamp = DateTime.now();
+      for (final path in possiblePaths) {
+        final file = File(path);
+        if (await file.exists()) {
+          final keyContent = await file.readAsString();
+          _logger.info(
+            'Loaded public key from local file: $path (first 50 chars): ${keyContent.substring(0, 50)}...',
+          );
 
-        return keyContent;
-      } else {
-        _logger.severe('Local server key file not found');
+          // Cache the result
+          _cachedPublicKeyPem = keyContent;
+          _cacheTimestamp = DateTime.now();
+
+          return keyContent;
+        }
       }
+
+      _logger.warning(
+        'Local server key file not found in any of the expected locations',
+      );
     } catch (e, stackTrace) {
-      _logger.severe('Error reading local server key file', e, stackTrace);
+      _logger.warning('Error reading local server key file', e, stackTrace);
     }
 
     return null;

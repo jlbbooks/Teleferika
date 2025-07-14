@@ -1165,7 +1165,11 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
   Future<Map<String, dynamic>?> _showLicenceRequestDialog() async {
     final emailController = TextEditingController();
     final maxDevicesController = TextEditingController(text: '1');
-    final selectedFeatures = <String>{};
+    final selectedFeatures = <String>{
+      'export_basic',
+      'map_download',
+      'export_advanced',
+    };
 
     // Available features for request
     const availableFeatures = [

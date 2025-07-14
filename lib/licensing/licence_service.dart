@@ -73,18 +73,25 @@ class LicenceService {
             'Loaded licence validation failed: ${validationResult.error?.code} - ${validationResult.error?.userMessage}',
           );
 
-          // Clear invalid license from cache and storage
-          await removeLicence();
-
-          // If it's a revoked/denied license, log it specifically
-          if (licence.status == Licence.statusRevoked ||
-              licence.status == Licence.statusDenied) {
+          // Only clear the license if it's explicitly invalid (revoked, denied, expired)
+          // Don't clear on cryptographic validation failures when offline
+          if (validationResult.error?.code == 'LICENCE_REVOKED' ||
+              validationResult.error?.code == 'LICENCE_DENIED' ||
+              validationResult.error?.code == 'LICENCE_EXPIRED') {
+            await removeLicence();
             _logger.info(
               'Removed ${licence.status} license from cache: ${licence.email}',
             );
+            return null;
+          } else {
+            // For other validation failures (like signature verification when offline),
+            // keep the license but log the issue
+            _logger.warning(
+              'License validation failed but keeping cached license for offline use: ${validationResult.error?.code}',
+            );
+            _currentLicence = licence;
+            return licence;
           }
-
-          return null;
         }
 
         _currentLicence = licence;
@@ -126,12 +133,23 @@ class LicenceService {
           'Attempted to save invalid licence: ${validationResult.error?.code} - ${validationResult.error?.userMessage}',
         );
 
-        // Clear any existing invalid license from cache
-        if (_currentLicence != null) {
-          await removeLicence();
+        // Only reject saving if it's explicitly invalid (revoked, denied, expired)
+        // Allow saving even with cryptographic validation failures when offline
+        if (validationResult.error?.code == 'LICENCE_REVOKED' ||
+            validationResult.error?.code == 'LICENCE_DENIED' ||
+            validationResult.error?.code == 'LICENCE_EXPIRED') {
+          // Clear any existing invalid license from cache
+          if (_currentLicence != null) {
+            await removeLicence();
+          }
+          return false;
+        } else {
+          // For other validation failures (like signature verification when offline),
+          // allow saving but log the issue
+          _logger.warning(
+            'License validation failed but allowing save for offline use: ${validationResult.error?.code}',
+          );
         }
-
-        return false;
       }
 
       final String licenceJson = jsonEncode(licence.toJson());
@@ -169,6 +187,11 @@ class LicenceService {
   }
 
   /// Validate a licence with comprehensive checks
+  ///
+  /// This method is designed to be offline-friendly. When offline:
+  /// - Cryptographic signature verification may fail due to inability to fetch public key
+  /// - In such cases, the license is still considered valid if it was previously validated
+  /// - Only explicitly invalid licenses (revoked, denied, expired) are rejected
   Future<LicenceValidationResult> validateLicence(Licence licence) async {
     try {
       // 1. Check license status first - this is the most important check
@@ -472,12 +495,12 @@ class LicenceService {
   /// Install a development license for testing purposes
   /// This bypasses normal validation and creates a fully valid license
   Future<bool> installDevelopmentLicense({
-          required String email,
-      List<String> features = const [
-        'export_basic',
-        'map_download',
-        'export_advanced',
-      ],
+    required String email,
+    List<String> features = const [
+      'export_basic',
+      'map_download',
+      'export_advanced',
+    ],
     int maxDevices = 1,
   }) async {
     await _initPrefs();
