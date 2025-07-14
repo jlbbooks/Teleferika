@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Livello_1" data-name="Livello 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2426.35 2298.36">
+  <defs>
+    <style>
+      .cls-1 {
+        stroke: #b9ce00;
+        stroke-width: 15px;
+      }
+
+      .cls-1, .cls-2 {
+        fill: none;
+        stroke-miterlimit: 10;
+      }
+
+      .cls-3 {
+        fill: #2c6860;
+      }
+
+      .cls-4 {
+        fill: #e52421;
+      }
+
+      .cls-5 {
+        fill: #ce8a3b;
+      }
+
+      .cls-2 {
+        stroke: #000;
+        stroke-width: 7px;
+      }
+    </style>
+  </defs>
+  <rect class="cls-3" width="2426.35" height="2298.36"/>
+  <g>
+    <line class="cls-1" x1="0" y1="491.94" x2="2426.35" y2="491.94"/>
+    <g>
+      <circle cx="1213.18" cy="720.75" r="56.02"/>
+      <polygon class="cls-4" points="753.78 422.35 940.02 422.35 1074 556.93 1347.75 557.52 1488.22 421.29 1672.45 421.29 1672.57 556.93 1529.97 556.93 1388.56 727.12 1028.59 727.12 890.83 556.46 754.25 556.46 753.78 422.35"/>
+      <line class="cls-2" x1="1213.18" y1="761.21" x2="1213.18" y2="936.47"/>
+      <g>
+        <rect class="cls-5" x="698.95" y="1330.1" width="940.25" height="144.48" transform="translate(-333.08 2440.03) rotate(-84.82)"/>
+        <polygon class="cls-5" points="1268.61 1104.54 1318.5 1071.28 1250.56 1214.82 1253.28 1105.49 1268.61 1104.54"/>
+        <polygon class="cls-5" points="1241.95 1399.4 1291.73 1366.26 1223.79 1509.8 1226.5 1400.35 1241.95 1399.4"/>
+        <polygon class="cls-5" points="1215.18 1694.38 1264.95 1661.12 1197.02 1804.66 1199.73 1695.33 1215.18 1694.38"/>
+        <polygon class="cls-5" points="1102.43 1337.48 1074.83 1227.91 1128.37 1299.98 1102.43 1337.48"/>
+        <polygon class="cls-5" points="1079.66 1588.12 1052.06 1478.55 1105.73 1550.61 1079.66 1588.12"/>
+      </g>
+    </g>
+  </g>
+</svg>
