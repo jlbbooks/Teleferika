@@ -138,3 +138,4 @@ keys/
 *.csv
 !example_*.csv
 !sample_*.csv
+.directory

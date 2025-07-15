@@ -562,18 +562,19 @@ class MapScreenState extends State<MapScreen>
                           slidingPointId: _stateManager.slidingPointId,
                           currentSlidePosition:
                               _stateManager.currentSlidePosition,
+                          // TODO: make this optional depending on preferences
                           // Add other projects layer
-                          additionalLayers: [
-                            ProjectPointsLayer(
-                              excludeProjectId: projectState.currentProject?.id,
-                              markerSize: 6.0,
-                              markerColor: Colors.grey,
-                              markerBorderColor: Colors.white,
-                              markerBorderWidth: 1.0,
-                              lineColor: Colors.grey,
-                              lineWidth: 1.0,
-                            ),
-                          ],
+                          // additionalLayers: [
+                          //   ProjectPointsLayer(
+                          //     excludeProjectId: projectState.currentProject?.id,
+                          //       markerSize: 6.0,
+                          //       markerColor: Colors.grey,
+                          //       markerBorderColor: Colors.white,
+                          //       markerBorderWidth: 1.0,
+                          //       lineColor: Colors.grey,
+                          //       lineWidth: 1.0,
+                          //     ),
+                          //   ],
                         ),
                         MapTypeSelector.build(
                           currentMapType: _stateManager.currentMapType,
