@@ -229,8 +229,8 @@ class AppConfig {
   static const String licenseServerHost = 'arzon.jlbbooks.it';
 
   /// License server port number.
-  /// Defaults to 8899 to match the license server configuration.
-  static const int licenseServerPort = 8899;
+  /// Defaults to 8444 to match the license server configuration.
+  static const int licenseServerPort = 8444;
 
   /// Full license server URL for API endpoints.
   /// Constructed from host and port for convenience.

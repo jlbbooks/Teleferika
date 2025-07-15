@@ -146,6 +146,7 @@ class CryptographicValidator {
       // Try multiple possible locations for the public key
       final possiblePaths = [
         '/home/michael/StudioProjects/Teleferika/keys/public_key.pem',
+        '/opt/teleferika-license-server/keys/public_key.pem',
         'keys/public_key.pem',
         'assets/keys/public_key.pem',
       ];
