@@ -142,6 +142,8 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         }
       }
 
+      if (!mounted) return;
+
       setState(() {
         _activeLicence = licence;
       });
@@ -191,26 +193,31 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                   );
 
                   // Show status message to user
-                  final statusMessage = _licenceRequestService.getStatusMessage(
-                    updatedLicence.status,
-                  );
-                  if (_licenceRequestService.needsAdminAction(
-                    updatedLicence.status,
-                  )) {
-                    showInfoStatus(
-                      '$statusMessage - Please wait for admin approval.',
-                    );
-                  } else if (_licenceRequestService.isPermanentlyInvalid(
-                    updatedLicence.status,
-                  )) {
-                    showErrorStatus('$statusMessage - Please contact support.');
-                  } else if (updatedLicence.status == Licence.statusActive) {
-                    showSuccessStatus(statusMessage);
+                  if (mounted) {
+                    final statusMessage = _licenceRequestService
+                        .getStatusMessage(updatedLicence.status);
+                    if (_licenceRequestService.needsAdminAction(
+                      updatedLicence.status,
+                    )) {
+                      showInfoStatus(
+                        '$statusMessage - Please wait for admin approval.',
+                      );
+                    } else if (_licenceRequestService.isPermanentlyInvalid(
+                      updatedLicence.status,
+                    )) {
+                      showErrorStatus(
+                        '$statusMessage - Please contact support.',
+                      );
+                    } else if (updatedLicence.status == Licence.statusActive) {
+                      showSuccessStatus(statusMessage);
+                    }
                   }
                 } else {
-                  showInfoStatus(
-                    'License status unchanged: ${updatedLicence.status}',
-                  );
+                  if (mounted) {
+                    showInfoStatus(
+                      'License status unchanged: ${updatedLicence.status}',
+                    );
+                  }
                 }
 
                 // Update the dialog content
@@ -221,10 +228,10 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
               } catch (e) {
                 // Continue with local license if server check fails
                 logger.warning('Server check failed, using local license: $e');
-                showErrorStatus('Failed to check with server: $e');
-
-                // Still update the dialog to show current local status
                 if (mounted) {
+                  showErrorStatus('Failed to check with server: $e');
+
+                  // Still update the dialog to show current local status
                   Navigator.of(context).pop();
                   _showLicenceInfoDialog();
                 }
@@ -951,8 +958,6 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       //   _highlightedProjectId = null;
       // });
     }
-    // Note: Your original _onItemTap had a FIXME to always refresh.
-    // This new structure provides more granular control.
   }
 
   void _navigateToAddProjectPage() async {
@@ -1083,16 +1088,20 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         maxDevices: 1,
       );
 
-      if (saved && mounted) {
+      if (!mounted) return; // Check if widget is still mounted
+
+      if (saved) {
         // Reload the license to update the UI
         final license = await _licenceService.currentLicence;
-        setState(() {
-          _activeLicence = license;
-        });
-        showSuccessStatus(
-          S.of(context)?.demo_license_imported_successfully ??
-              'Development license installed successfully!',
-        );
+        if (mounted) {
+          setState(() {
+            _activeLicence = license;
+          });
+          showSuccessStatus(
+            S.of(context)?.demo_license_imported_successfully ??
+                'Development license installed successfully!',
+          );
+        }
       } else {
         showErrorStatus(
           S.of(context)?.error_importing_demo_license('Failed to save') ??
@@ -1101,10 +1110,12 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       }
     } catch (e, stackTrace) {
       logger.severe('Error installing development license', e, stackTrace);
-      showErrorStatus(
-        S.of(context)?.error_importing_demo_license(e.toString()) ??
-            'Error installing development license: $e',
-      );
+      if (mounted) {
+        showErrorStatus(
+          S.of(context)?.error_importing_demo_license(e.toString()) ??
+              'Error installing development license: $e',
+        );
+      }
     }
   }
 
@@ -1171,10 +1182,12 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       }
     } catch (e, stackTrace) {
       logger.severe('Error clearing license', e, stackTrace);
-      showErrorStatus(
-        S.of(context)?.error_clearing_license(e.toString()) ??
-            'Error clearing license: $e',
-      );
+      if (mounted) {
+        showErrorStatus(
+          S.of(context)?.error_clearing_license(e.toString()) ??
+              'Error clearing license: $e',
+        );
+      }
     }
   }
 
@@ -1214,10 +1227,12 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         _showLicenceInfoDialog();
       }
     } catch (e) {
-      if (e is lm.LicenceError) {
-        showErrorStatus(e.userMessage);
-      } else {
-        showErrorStatus('Error requesting license: $e');
+      if (mounted) {
+        if (e is lm.LicenceError) {
+          showErrorStatus(e.userMessage);
+        } else {
+          showErrorStatus('Error requesting license: $e');
+        }
       }
     }
   }
@@ -1389,29 +1404,35 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       // Try to import invalid licence
       try {
         await LicenceService.instance.importLicenceFromFile();
-        showErrorStatus(
-          S.of(context)?.invalid_licence_accepted_error ??
-              'Invalid licence was accepted - this is wrong!',
-        );
-      } catch (e) {
-        if (e is lm.LicenceError) {
-          showInfoStatus(
-            S.of(context)?.invalid_licence_correctly_rejected(e.code) ??
-                'Invalid licence correctly rejected: ${e.code}',
-          );
-        } else {
+        if (mounted) {
           showErrorStatus(
-            S.of(context)?.unexpected_error(e.toString()) ??
-                'Unexpected error: $e',
+            S.of(context)?.invalid_licence_accepted_error ??
+                'Invalid licence was accepted - this is wrong!',
           );
+        }
+      } catch (e) {
+        if (mounted) {
+          if (e is lm.LicenceError) {
+            showInfoStatus(
+              S.of(context)?.invalid_licence_correctly_rejected(e.code) ??
+                  'Invalid licence correctly rejected: ${e.code}',
+            );
+          } else {
+            showErrorStatus(
+              S.of(context)?.unexpected_error(e.toString()) ??
+                  'Unexpected error: $e',
+            );
+          }
         }
       }
     } catch (e, stackTrace) {
       logger.severe('Error testing licence validation', e, stackTrace);
-      showErrorStatus(
-        S.of(context)?.validation_test_failed(e.toString()) ??
-            'Validation test failed: $e',
-      );
+      if (mounted) {
+        showErrorStatus(
+          S.of(context)?.validation_test_failed(e.toString()) ??
+              'Validation test failed: $e',
+        );
+      }
     }
   }
 
