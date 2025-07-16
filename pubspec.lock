@@ -553,10 +553,10 @@ packages:
     dependency: "direct main"
     description:
       name: http
-      sha256: "559ab0d950643c9a04512f4c4bd1c435dcb5af1aa9c848f3bf5867347044328a"
+      sha256: "85ab0074f9bf2b24625906d8382bbec84d3d6919d285ba9c106b07b65791fb99"
       url: "https://pub.dev"
     source: hosted
-    version: "1.5.0-beta"
+    version: "1.5.0-beta.2"
   http_multi_server:
     dependency: transitive
     description:

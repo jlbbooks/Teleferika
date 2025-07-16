@@ -17,7 +17,6 @@ import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/screens/points/point_editor_screen.dart';
 import 'package:teleferika/ui/widgets/compass_calibration_panel.dart';
 import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
-import 'package:teleferika/ui/widgets/project_points_layer.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 
 import '../../../map/debug/debug_panel.dart';
