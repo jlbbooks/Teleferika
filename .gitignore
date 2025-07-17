@@ -139,3 +139,4 @@ keys/
 !example_*.csv
 !sample_*.csv
 .directory
+/missingTranslations.json
