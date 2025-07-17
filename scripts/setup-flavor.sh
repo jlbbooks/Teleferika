@@ -218,6 +218,17 @@ case $FLAVOR in
         # Copy the correct lfp_localizations_conditional.dart for full version
         cp "$(dirname "$0")/../licensed_features_package/lib/l10n/lfp_localizations_conditional_full.dart" "$(dirname "$0")/../licensed_features_package/lib/l10n/lfp_localizations_conditional.dart"
 
+        # Get dependencies for the licensed package first
+        print_status "Getting dependencies for licensed features package..."
+        cd "$LICENSED_PACKAGE_DIR" || exit
+        if flutter pub get; then
+            print_success "✅ Licensed package dependencies installed successfully"
+        else
+            print_error "Failed to get licensed package dependencies"
+            exit 1
+        fi
+        cd "$PROJECT_ROOT" || exit
+
         print_success "✅ Full version configuration applied"
         ;;
 

@@ -42,7 +42,7 @@ show_usage() {
     echo "Options:"
 
     echo "  --mode MODE          Build mode (debug, release, profile)"
-    echo "  --type TYPE          Build type (apk, appbundle, ios)"
+    echo "  --type TYPE          Build type (apk, appbundle, ios, ipa)"
     echo ""
     echo "Examples:"
     echo "  $0 setup opensource"
@@ -195,6 +195,15 @@ if [ "$COMMAND" = "build" ]; then
                 print_success "✅ iOS build completed"
             else
                 print_error "❌ iOS build failed"
+                exit 1
+            fi
+            ;;
+        ipa)
+            if flutter build ipa --flavor "$FLAVOR" --"$MODE"; then
+                print_success "✅ IPA built successfully"
+                print_status "IPA location: build/ios/ipa/"
+            else
+                print_error "❌ IPA build failed"
                 exit 1
             fi
             ;;
