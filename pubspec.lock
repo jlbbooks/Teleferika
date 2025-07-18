@@ -707,7 +707,7 @@ packages:
       path: licensed_features_package
       relative: true
     source: path
-    version: "0.7.0+22"
+    version: "0.7.1+23"
   lints:
     dependency: transitive
     description:
