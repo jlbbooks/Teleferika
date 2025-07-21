@@ -1213,10 +1213,10 @@ packages:
     dependency: "direct main"
     description:
       name: sqlite3_flutter_libs
-      sha256: "60464aa06f3f6f6fba9abd7564e315526c1fee6d6a77d6ee52a1f7f48a9107f6"
+      sha256: "8b4bd239bedd20ee628aed587b4c5b387328e85945c9ecbae19a93bdcd171524"
       url: "https://pub.dev"
     source: hosted
-    version: "0.5.37"
+    version: "0.5.36"
   sqlparser:
     dependency: transitive
     description:
