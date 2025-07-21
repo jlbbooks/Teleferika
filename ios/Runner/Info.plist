@@ -44,6 +44,12 @@
     <string>This app needs access to your photo library so you can select images to attach to points of interest.</string>
     <!-- Customize this message based on your app's actual use case -->
 
+    <!-- File sharing permissions for export functionality -->
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+    <true/>
+    <key>UIFileSharingEnabled</key>
+    <true/>
+
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
