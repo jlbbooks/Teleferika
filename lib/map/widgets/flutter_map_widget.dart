@@ -14,7 +14,6 @@ import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/db/models/point_model.dart';
 
 import 'package:teleferika/map/markers/map_markers.dart';
-import 'package:teleferika/map/markers/azimuth_arrow.dart';
 import 'package:teleferika/map/markers/location_markers.dart';
 import 'package:teleferika/map/markers/moving_timber_marker.dart';
 import 'package:teleferika/map/services/geometry_service.dart';
@@ -101,6 +100,7 @@ class FlutterMapWidget extends StatefulWidget {
 
 class _FlutterMapWidgetState extends State<FlutterMapWidget> {
   double _currentZoom = 14.0; // Default zoom level
+  double _currentRotation = 0.0; // Track current map rotation
 
   // Get the appropriate tile provider based on the current map type
   TileProvider? _getTileProvider(MapType mapType) {
@@ -184,6 +184,17 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
     }
   }
 
+  // Get map rotation safely, handling the case when camera is not yet available
+  double? _getMapRotation() {
+    try {
+      // Use the tracked rotation value instead of accessing camera directly
+      return _currentRotation;
+    } catch (e) {
+      // Camera not yet available, return null
+      return null;
+    }
+  }
+
   @override
   void dispose() {
     // Clean up any listeners if needed
@@ -206,7 +217,7 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
               minZoom: widget.currentMapType.minZoom.toDouble(),
               maxZoom: widget.currentMapType.maxZoom.toDouble(),
               onMapEvent: (MapEvent event) {
-                // Handle all map events that might change zoom
+                // Handle all map events that might change zoom or rotation
                 if (event is MapEventMove ||
                     event is MapEventRotate ||
                     event is MapEventFlingAnimation ||
@@ -214,12 +225,28 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
                     event is MapEventScrollWheelZoom ||
                     event is MapEventNonRotatedSizeChange) {
                   final newZoom = event.camera.zoom;
+                  final newRotation = event.camera.rotation;
+
+                  bool needsUpdate = false;
+
                   if (_currentZoom != newZoom) {
                     logger.info(
                       'FlutterMapWidget: Zoom changed from $_currentZoom to $newZoom (event: ${event.runtimeType})',
                     );
+                    needsUpdate = true;
+                  }
+
+                  if (_currentRotation != newRotation) {
+                    logger.info(
+                      'FlutterMapWidget: Rotation changed from $_currentRotation to $newRotation (event: ${event.runtimeType})',
+                    );
+                    needsUpdate = true;
+                  }
+
+                  if (needsUpdate) {
                     setState(() {
                       _currentZoom = newZoom;
+                      _currentRotation = newRotation;
                     });
                   }
                 }
@@ -281,28 +308,20 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
                 alignment: AttributionAlignment.bottomLeft,
               ),
               const MapCompass.cupertino(hideIfRotatedNorth: true),
-              // Add azimuth arrow marker on top of current location (drawn first, so it's below the location marker)
-              if (Provider.of<ProjectStateManager>(
-                    context,
-                    listen: false,
-                  ).currentProject?.azimuth !=
-                  null)
-                AzimuthArrowMarker(
-                  positionStream: widget.locationStreamController.stream,
-                  azimuth: Provider.of<ProjectStateManager>(
-                    context,
-                    listen: false,
-                  ).currentProject!.azimuth!,
-                ),
 
               CurrentLocationLayer(
                 style: LocationMarkerStyle(
-                  marker: CurrentLocationAccuracyMarker(
+                  marker: CurrentLocationWithAzimuthMarker(
                     accuracy: widget.currentPosition?.accuracy,
                     zoomLevel: _currentZoom,
+                    azimuth: Provider.of<ProjectStateManager>(
+                      context,
+                      listen: false,
+                    ).currentProject?.azimuth,
+                    deviceHeading: widget.currentDeviceHeading,
+                    mapRotation: _getMapRotation(),
                   ),
                   markerSize: const Size.square(60),
-                  markerDirection: MarkerDirection.heading,
                   showAccuracyCircle: false,
                   headingSectorRadius: 40,
                 ),

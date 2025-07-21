@@ -1,4 +1,6 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:teleferika/map/markers/azimuth_arrow.dart';
 
 // Custom marker: red transparent accuracy circle with current location icon
 class CurrentLocationAccuracyMarker extends StatelessWidget {
@@ -73,5 +75,55 @@ class AccuracyCirclePainter extends CustomPainter {
           oldDelegate.zoomLevel != zoomLevel;
     }
     return true;
+  }
+}
+
+// Custom marker: current location with azimuth arrow overlay
+class CurrentLocationWithAzimuthMarker extends StatelessWidget {
+  final double? accuracy;
+  final double zoomLevel;
+  final double? azimuth;
+  final double? deviceHeading; // Add device heading to compensate for rotation
+  final double?
+  mapRotation; // Add map rotation to compensate for map orientation
+
+  const CurrentLocationWithAzimuthMarker({
+    super.key,
+    this.accuracy,
+    required this.zoomLevel,
+    this.azimuth,
+    this.deviceHeading,
+    this.mapRotation,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Current location accuracy circle
+        CustomPaint(
+          size: const Size(60, 60),
+          painter: AccuracyCirclePainter(
+            accuracy: accuracy,
+            zoomLevel: zoomLevel,
+          ),
+        ),
+        // Current location icon
+        const Icon(Icons.my_location, color: Colors.black, size: 20),
+        // Azimuth arrow overlay (if azimuth is provided)
+        if (azimuth != null)
+          Positioned(
+            top: 0,
+            child: Transform.rotate(
+              // Compensate for device rotation and map rotation to keep azimuth arrow pointing in true direction
+              angle: mapRotation != null ? mapRotation! * math.pi / 180.0 : 0,
+              child: AzimuthArrow(
+                azimuth: azimuth!,
+              ), // Pass the actual azimuth, let AzimuthArrow handle its own rotation
+            ),
+          ),
+      ],
+    );
   }
 }
