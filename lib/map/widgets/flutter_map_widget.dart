@@ -16,7 +16,7 @@ import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/map/markers/map_markers.dart';
 import 'package:teleferika/map/markers/azimuth_arrow.dart';
 import 'package:teleferika/map/markers/location_markers.dart';
-import 'package:teleferika/map/markers/polyline_arrowhead.dart';
+import 'package:teleferika/map/markers/moving_timber_marker.dart';
 import 'package:teleferika/map/services/geometry_service.dart';
 import 'package:teleferika/map/services/map_cache_manager.dart';
 import 'package:teleferika/map/map_type.dart';
@@ -282,30 +282,17 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
               ),
               const MapCompass.cupertino(hideIfRotatedNorth: true),
               // Add azimuth arrow marker on top of current location (drawn first, so it's below the location marker)
-              if (widget.currentPosition != null &&
-                  Provider.of<ProjectStateManager>(
-                        context,
-                        listen: false,
-                      ).currentProject?.azimuth !=
-                      null)
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      width: 40,
-                      height: 40,
-                      point: LatLng(
-                        widget.currentPosition!.latitude,
-                        widget.currentPosition!.longitude,
-                      ),
-                      child: AzimuthArrow(
-                        azimuth: Provider.of<ProjectStateManager>(
-                          context,
-                          listen: false,
-                        ).currentProject!.azimuth!,
-                      ),
-                      alignment: Alignment.center,
-                    ),
-                  ],
+              if (Provider.of<ProjectStateManager>(
+                    context,
+                    listen: false,
+                  ).currentProject?.azimuth !=
+                  null)
+                AzimuthArrowMarker(
+                  positionStream: widget.locationStreamController.stream,
+                  azimuth: Provider.of<ProjectStateManager>(
+                    context,
+                    listen: false,
+                  ).currentProject!.azimuth!,
                 ),
 
               CurrentLocationLayer(
@@ -512,7 +499,7 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
 
                     return MarkerLayer(
                       markers: [
-                        PolylinePathArrowheadMarker(
+                        MovingTimberMarker(
                           pathPoints: widget.polylinePathPoints,
                           t: widget.arrowheadAnimation!.value,
                           color: markerColor,

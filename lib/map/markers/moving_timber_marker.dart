@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
-class PolylinePathArrowheadMarker extends Marker {
-  PolylinePathArrowheadMarker({
+class MovingTimberMarker extends Marker {
+  MovingTimberMarker({
     required List<LatLng> pathPoints,
     required double t,
     required Color color,

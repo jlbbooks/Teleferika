@@ -200,10 +200,8 @@ class ProjectDetailsSectionState extends State<ProjectDetailsSection>
       return;
     }
 
-    double degreesToRadians(double degrees) =>
-        degrees * 3.141592653589793 / 180.0;
-    double radiansToDegrees(double radians) =>
-        radians * 180.0 / 3.141592653589793;
+    double degreesToRadians(double degrees) => degrees * math.pi / 180.0;
+    double radiansToDegrees(double radians) => radians * 180.0 / math.pi;
     double calculateBearingFromPoints(PointModel start, PointModel end) {
       final double lat1Rad = degreesToRadians(start.latitude);
       final double lon1Rad = degreesToRadians(start.longitude);

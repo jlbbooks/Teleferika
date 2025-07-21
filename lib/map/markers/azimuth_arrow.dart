@@ -2,6 +2,9 @@ import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_location_marker/flutter_map_location_marker.dart';
+import 'package:latlong2/latlong.dart';
 
 // Azimuth arrow widget for project azimuth
 class AzimuthArrow extends StatelessWidget {
@@ -12,11 +15,49 @@ class AzimuthArrow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Transform.rotate(
-      angle: (azimuth - 90) * 3.141592653589793 / 180.0,
+      angle: (azimuth - 90) * math.pi / 180.0,
       child: CustomPaint(
         size: const Size(32, 32),
         painter: StaticArrowPainter(),
       ),
+    );
+  }
+}
+
+// New widget that renders AzimuthArrow at current location with real-time updates
+class AzimuthArrowMarker extends StatelessWidget {
+  final Stream<LocationMarkerPosition> positionStream;
+  final double azimuth;
+
+  const AzimuthArrowMarker({
+    super.key,
+    required this.positionStream,
+    required this.azimuth,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<LocationMarkerPosition>(
+      stream: positionStream,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const SizedBox.shrink();
+        }
+
+        final position = snapshot.data!;
+
+        return MarkerLayer(
+          markers: [
+            Marker(
+              width: 40,
+              height: 40,
+              point: LatLng(position.latitude, position.longitude),
+              child: AzimuthArrow(azimuth: azimuth),
+              alignment: Alignment.center,
+            ),
+          ],
+        );
+      },
     );
   }
 }
