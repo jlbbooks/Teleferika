@@ -284,6 +284,25 @@ class MapStateManager extends ChangeNotifier {
     projectHeadingLine = _controller.recalculateProjectHeadingLine(points);
   }
 
+  /// Recalculate project heading line when azimuth changes
+  void recalculateProjectHeadingLine() {
+    // Get project state from the controller's project state manager
+    final projectState = _controller.projectState;
+    final points = projectState.currentPoints;
+    if (points.isNotEmpty) {
+      final newProjectHeadingLine = _controller.recalculateProjectHeadingLine(
+        points,
+      );
+      if (projectHeadingLine != newProjectHeadingLine) {
+        projectHeadingLine = newProjectHeadingLine;
+        notifyListeners();
+        logger.info(
+          'MapStateManager: Project heading line recalculated due to azimuth change',
+        );
+      }
+    }
+  }
+
   Future<void> handleMovePoint(
     BuildContext context,
     PointModel pointToMove,

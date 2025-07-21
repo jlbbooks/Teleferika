@@ -366,8 +366,7 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
               if (widget.connectingLine != null &&
                   _isValidPolyline(widget.connectingLine!.points))
                 PolylineLayer(polylines: [widget.connectingLine!]),
-              if (widget.projectHeadingLine != null &&
-                  _isValidPolyline(widget.projectHeadingLine!.points))
+              if (widget.projectHeadingLine != null)
                 PolylineLayer(
                   polylines: [
                     Polyline(

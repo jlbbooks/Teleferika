@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.4+87] - 2025-01-27
+
+### Fixed
+- **Project Heading Line Azimuth Update**: Fixed project heading line not updating when azimuth is changed in the form
+  - Modified `recalculateProjectHeadingLine()` to use current project from global state instead of stale reference
+  - Added `recalculateProjectHeadingLine()` method to MapStateManager for immediate updates
+  - Enhanced ProjectDetailsSection to trigger recalculation when azimuth changes
+  - Project heading line now updates in real-time without requiring project reload
+  - Improved azimuth synchronization between form input and map display
+
+### Technical
+- **MapControllerLogic Enhancement**: Updated to use global project state for real-time azimuth changes
+  - Added public `projectState` getter for access to current project state
+  - Modified project heading line calculation to use `_projectState.currentProject` instead of stored reference
+  - Enhanced error handling for cases where MapStateManager might not be available
+
 ## [1.0.2+85] - 2025-07-21
 
 ### Fixed

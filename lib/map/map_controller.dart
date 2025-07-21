@@ -36,6 +36,9 @@ class MapControllerLogic {
     required ProjectStateManager projectState,
   }) : _projectState = projectState;
 
+  /// Get the current project state manager
+  ProjectStateManager get projectState => _projectState;
+
   void dispose() {
     _positionStreamSubscription?.cancel();
     _compassSubscription?.cancel();
@@ -166,7 +169,9 @@ class MapControllerLogic {
   }
 
   Polyline? recalculateProjectHeadingLine(List<PointModel> projectPoints) {
-    if (projectPoints.isEmpty || project.azimuth == null) {
+    // Get the current project from global state instead of using the stored project reference
+    final currentProject = _projectState.currentProject;
+    if (projectPoints.isEmpty || currentProject?.azimuth == null) {
       return null;
     }
 
@@ -175,11 +180,11 @@ class MapControllerLogic {
         projectPoints.first.latitude,
         projectPoints.first.longitude,
       );
-      final projectHeading = project.azimuth!;
+      final projectHeading = currentProject!.azimuth!;
 
-      // Use presumed total length from project, default to 500m if not provided
+      // Use presumed total length from current project, default to 500m if not provided
       final lineLengthKm =
-          (project.presumedTotalLength ?? 500.0) /
+          (currentProject.presumedTotalLength ?? 500.0) /
           1000.0; // Convert meters to kilometers
 
       final endPoint = _calculateDestinationPoint(

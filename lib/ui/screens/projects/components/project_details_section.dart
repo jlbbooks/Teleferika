@@ -9,6 +9,7 @@ import 'package:teleferika/core/project_state_manager.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
+import 'package:teleferika/map/state/map_state_manager.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 
 class ProjectDetailsSection extends StatefulWidget {
@@ -103,6 +104,20 @@ class ProjectDetailsSectionState extends State<ProjectDetailsSection>
     final projectState = context.projectState;
     if (projectState.currentProject != null) {
       projectState.setProjectEditState(_currentProject, _dirty);
+
+      // Trigger project heading line recalculation if azimuth changed
+      if (azimuth != widget.project.azimuth) {
+        try {
+          final mapStateManager = Provider.of<MapStateManager>(
+            context,
+            listen: false,
+          );
+          mapStateManager.recalculateProjectHeadingLine();
+        } catch (e) {
+          // MapStateManager might not be available in this context, ignore error
+          logger.fine('Could not recalculate project heading line: $e');
+        }
+      }
     }
   }
 
