@@ -1,15 +1,13 @@
 <en-GB>
-- Enhanced license management with improved request functionality
-- Updated license server integration for better reliability
-- Improved license validation and user feedback
-- Cleaner license information display
-- Better error handling for license operations
+- Fixed azimuth arrow not responding to map compass clicks
+- Improved map rotation tracking for better arrow synchronization
+- Enhanced real-time response to programmatic map rotations
+- Better rotation compensation for both manual and compass-triggered rotations
 </en-GB>
 
 <it-IT>
-- Gestione licenze migliorata con funzionalità di richiesta avanzate
-- Integrazione server licenze aggiornata per maggiore affidabilità
-- Validazione licenze e feedback utente migliorati
-- Visualizzazione informazioni licenza più pulita
-- Gestione errori migliorata per le operazioni di licenza
+- Risolto problema della freccia di azimuth che non rispondeva ai clic sulla bussola della mappa
+- Migliorato il tracciamento della rotazione della mappa per una migliore sincronizzazione della freccia
+- Migliorata la risposta in tempo reale alle rotazioni programmatiche della mappa
+- Migliore compensazione della rotazione per rotazioni manuali e attivate dalla bussola
 </it-IT> 

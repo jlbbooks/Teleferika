@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.2+85] - 2025-07-21
+
+### Fixed
+- **Azimuth Arrow Synchronization**: Fixed azimuth arrow not responding to map compass clicks
+  - Added real-time rotation tracking in FlutterMapWidget to detect programmatic map rotations
+  - Enhanced map event listener to capture MapEventRotate events from compass interactions
+  - Updated azimuth arrow to respond immediately when map compass is clicked to rotate north
+  - Improved rotation compensation logic to handle both manual and programmatic map rotations
+  - Added comprehensive logging for rotation changes to aid in debugging
+
+### Technical
+- **Map Event Handling**: Enhanced FlutterMapWidget with improved rotation tracking
+  - Added `_currentRotation` state variable to track map rotation in real-time
+  - Updated `onMapEvent` callback to detect and log rotation changes
+  - Modified `_getMapRotation()` method to use tracked rotation value instead of direct camera access
+  - Improved setState() logic to update both zoom and rotation values efficiently
+
 ## [1.0.1+84] - 2025-07-21
 
 ### Added
