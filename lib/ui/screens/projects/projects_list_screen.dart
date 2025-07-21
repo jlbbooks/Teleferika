@@ -1670,179 +1670,181 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                       }
                     },
                   ),
-                  PopupMenuButton<String>(
-                    icon: Icon(
-                      _activeLicence != null && _activeLicence!.isValid
-                          ? Icons.verified_user
-                          : Icons.security,
-                      color: _activeLicence != null && _activeLicence!.isValid
-                          ? Colors.green
-                          : (_activeLicence != null &&
-                                    _activeLicence!.status ==
-                                        lm.Licence.statusRequested
-                                ? Colors.orange
-                                : (_activeLicence != null &&
-                                          !_activeLicence!.isValid
-                                      ? Colors.red
-                                      : Colors.grey)),
-                    ),
-                    tooltip:
-                        "Licence Status / Import\n"
-                        "License: ${_activeLicence?.email ?? 'None'}\n"
-                        "Status: ${_activeLicence?.status ?? 'None'}",
-                    onSelected: (String value) {
-                      switch (value) {
-                        case 'license_info':
-                          _showLicenceInfoDialog();
-                          break;
-                        case 'import_license':
-                          _handleImportLicence();
-                          break;
-                        case 'request_license':
-                          _requestLicence();
-                          break;
-                        case 'test_license':
-                          _testImportExampleLicence();
-                          break;
-                        case 'test_validation':
-                          _testLicenceValidation();
-                          break;
-                        case 'clear_license':
-                          _clearLicense();
-                          break;
-                      }
-                    },
-                    itemBuilder: (BuildContext context) =>
-                        <PopupMenuEntry<String>>[
-                          PopupMenuItem<String>(
-                            value: 'license_info',
-                            child: Row(
-                              children: [
-                                Icon(
-                                  _activeLicence != null &&
-                                          _activeLicence!.isValid
-                                      ? Icons.verified_user
-                                      : Icons.security,
-                                  color:
-                                      _activeLicence != null &&
-                                          _activeLicence!.isValid
-                                      ? Colors.green
-                                      : (_activeLicence != null &&
-                                                _activeLicence!.status ==
-                                                    lm.Licence.statusRequested
-                                            ? Colors.orange
-                                            : (_activeLicence != null &&
-                                                      !_activeLicence!.isValid
-                                                  ? Colors.red
-                                                  : Colors.grey)),
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    S.of(context)?.license_status_label ??
-                                        'License Status',
-                                    overflow: TextOverflow.ellipsis,
+                  // Only show licensing shield if licensing is not disabled
+                  if (!AppConfig.disableLicensing)
+                    PopupMenuButton<String>(
+                      icon: Icon(
+                        _activeLicence != null && _activeLicence!.isValid
+                            ? Icons.verified_user
+                            : Icons.security,
+                        color: _activeLicence != null && _activeLicence!.isValid
+                            ? Colors.green
+                            : (_activeLicence != null &&
+                                      _activeLicence!.status ==
+                                          lm.Licence.statusRequested
+                                  ? Colors.orange
+                                  : (_activeLicence != null &&
+                                            !_activeLicence!.isValid
+                                        ? Colors.red
+                                        : Colors.grey)),
+                      ),
+                      tooltip:
+                          "Licence Status / Import\n"
+                          "License: ${_activeLicence?.email ?? 'None'}\n"
+                          "Status: ${_activeLicence?.status ?? 'None'}",
+                      onSelected: (String value) {
+                        switch (value) {
+                          case 'license_info':
+                            _showLicenceInfoDialog();
+                            break;
+                          case 'import_license':
+                            _handleImportLicence();
+                            break;
+                          case 'request_license':
+                            _requestLicence();
+                            break;
+                          case 'test_license':
+                            _testImportExampleLicence();
+                            break;
+                          case 'test_validation':
+                            _testLicenceValidation();
+                            break;
+                          case 'clear_license':
+                            _clearLicense();
+                            break;
+                        }
+                      },
+                      itemBuilder: (BuildContext context) =>
+                          <PopupMenuEntry<String>>[
+                            PopupMenuItem<String>(
+                              value: 'license_info',
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    _activeLicence != null &&
+                                            _activeLicence!.isValid
+                                        ? Icons.verified_user
+                                        : Icons.security,
+                                    color:
+                                        _activeLicence != null &&
+                                            _activeLicence!.isValid
+                                        ? Colors.green
+                                        : (_activeLicence != null &&
+                                                  _activeLicence!.status ==
+                                                      lm.Licence.statusRequested
+                                              ? Colors.orange
+                                              : (_activeLicence != null &&
+                                                        !_activeLicence!.isValid
+                                                    ? Colors.red
+                                                    : Colors.grey)),
+                                    size: 20,
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          PopupMenuItem<String>(
-                            value: 'import_license',
-                            child: Row(
-                              children: [
-                                Icon(Icons.file_upload, size: 20),
-                                SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    S.of(context)?.import_licence ??
-                                        'Import License',
-                                    overflow: TextOverflow.ellipsis,
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      S.of(context)?.license_status_label ??
+                                          'License Status',
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          PopupMenuItem<String>(
-                            value: 'request_license',
-                            child: Row(
-                              children: [
-                                Icon(Icons.request_page, size: 20),
-                                SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    S.of(context)?.request_license ??
-                                        'Request License',
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const PopupMenuDivider(),
-                          PopupMenuItem<String>(
-                            enabled: false,
-                            child: Text(
-                              S.of(context)?.development_testing ??
-                                  'Development & Testing',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey.shade600,
-                                fontSize: 12,
+                                ],
                               ),
                             ),
-                          ),
-                          PopupMenuItem<String>(
-                            value: 'test_license',
-                            child: Row(
-                              children: [
-                                Icon(Icons.bug_report, size: 20),
-                                SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    S
-                                            .of(context)
-                                            ?.install_development_license ??
-                                        'Install Development License',
-                                    overflow: TextOverflow.ellipsis,
+                            PopupMenuItem<String>(
+                              value: 'import_license',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.file_upload, size: 20),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      S.of(context)?.import_licence ??
+                                          'Import License',
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
+                            PopupMenuItem<String>(
+                              value: 'request_license',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.request_page, size: 20),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      S.of(context)?.request_license ??
+                                          'Request License',
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const PopupMenuDivider(),
+                            PopupMenuItem<String>(
+                              enabled: false,
+                              child: Text(
+                                S.of(context)?.development_testing ??
+                                    'Development & Testing',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey.shade600,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                            PopupMenuItem<String>(
+                              value: 'test_license',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.bug_report, size: 20),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      S
+                                              .of(context)
+                                              ?.install_development_license ??
+                                          'Install Development License',
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
 
-                          PopupMenuItem<String>(
-                            value: 'test_validation',
-                            child: Row(
-                              children: [
-                                Icon(Icons.security, size: 20),
-                                SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    S.of(context)?.test_licence_validation ??
-                                        'Test Licence Validation',
-                                    overflow: TextOverflow.ellipsis,
+                            PopupMenuItem<String>(
+                              value: 'test_validation',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.security, size: 20),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      S.of(context)?.test_licence_validation ??
+                                          'Test Licence Validation',
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                          PopupMenuItem<String>(
-                            value: 'clear_license',
-                            child: Row(
-                              children: [
-                                Icon(Icons.clear, size: 20),
-                                SizedBox(width: 8),
-                                Text(
-                                  S.of(context)?.clear_license ??
-                                      'Clear License',
-                                ),
-                              ],
+                            PopupMenuItem<String>(
+                              value: 'clear_license',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.clear, size: 20),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    S.of(context)?.clear_license ??
+                                        'Clear License',
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ],
-                  ),
+                          ],
+                    ),
                 ],
               ),
               bottom: version != null

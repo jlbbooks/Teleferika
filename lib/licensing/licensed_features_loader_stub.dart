@@ -6,6 +6,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
+import 'package:teleferika/core/app_config.dart';
 
 /// Stub implementation for licensed features loader
 /// This is used in the opensource version when licensed features are not available
@@ -53,11 +54,38 @@ class LicensedFeaturesLoaderStub {
 
   /// Check if a specific licensed feature would be available
   /// Always returns false in the opensource version
-  static bool hasLicensedFeature(String featureName) => false;
+  static bool hasLicensedFeature(String featureName) {
+    // If licensing is disabled, all features are available
+    if (AppConfig.disableLicensing) {
+      final logger = Logger('LicensedFeaturesLoaderStub');
+      logger.info(
+        'Licensing disabled - allowing access to feature: $featureName',
+      );
+      return true;
+    }
+
+    return false;
+  }
 
   /// Get licence status for feature availability
   /// Returns null in the opensource version
-  static Map<String, dynamic>? getLicenceStatus() => null;
+  static Map<String, dynamic>? getLicenceStatus() {
+    // If licensing is disabled, return a valid status
+    if (AppConfig.disableLicensing) {
+      final logger = Logger('LicensedFeaturesLoaderStub');
+      logger.info('Licensing disabled - returning valid status');
+      return {
+        'status': 'valid',
+        'type': 'disabled',
+        'expiry_date': null,
+        'features': ['all'],
+        'email': 'licensing_disabled@teleferika.com',
+        'license_status': 'active',
+      };
+    }
+
+    return null;
+  }
 
   /// Build a licensed widget
   /// Always returns null in the opensource version

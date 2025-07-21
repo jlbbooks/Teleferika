@@ -54,6 +54,9 @@ class AppConfig {
   /// It should not be translated as it's a brand name.
   static const String appName = 'TeleferiKa';
 
+  /// If true, the licensing system will be disabled.
+  static const bool disableLicensing = true;
+
   /// Coordinate display configuration for consistent UI across the app.
   ///
   /// These constants define the icons and colors used to display

@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:teleferika/licensing/device_fingerprint.dart';
 import 'package:teleferika/licensing/licence_model.dart';
 import 'package:teleferika/licensing/cryptographic_validator.dart';
+import 'package:teleferika/core/app_config.dart';
 
 // Import status constants
 
@@ -193,6 +194,14 @@ class LicenceService {
   /// - In such cases, the license is still considered valid if it was previously validated
   /// - Only explicitly invalid licenses (revoked, denied, expired) are rejected
   Future<LicenceValidationResult> validateLicence(Licence licence) async {
+    // If licensing is disabled, always return valid
+    if (AppConfig.disableLicensing) {
+      _logger.info(
+        'Licensing disabled - bypassing validation for: ${licence.email}',
+      );
+      return LicenceValidationResult(isValid: true, error: null);
+    }
+
     try {
       // 1. Check license status first - this is the most important check
       if (licence.status == Licence.statusRevoked) {
@@ -460,6 +469,25 @@ class LicenceService {
 
   /// Get licence status information
   Future<Map<String, dynamic>> getLicenceStatus() async {
+    // If licensing is disabled, return a valid status
+    if (AppConfig.disableLicensing) {
+      _logger.info('Licensing disabled - returning valid status');
+      return {
+        'hasLicence': true,
+        'status': 'valid',
+        'message': 'Licensing disabled',
+        'email': 'licensing_disabled@teleferika.com',
+        'validUntil': DateTime.now()
+            .add(const Duration(days: 365))
+            .toIso8601String(),
+        'daysRemaining': 365,
+        'expiresSoon': false,
+        'features': ['all'],
+        'usageCount': 0,
+        'lastUsed': DateTime.now().toIso8601String(),
+      };
+    }
+
     final licence = await currentLicence;
     if (licence == null) {
       return {
