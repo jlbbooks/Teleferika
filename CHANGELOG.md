@@ -2,6 +2,41 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.1+84] - 2025-07-21
+
+### Added
+- **iOS Export Enhancements**: Enhanced file sharing and export functionality for iOS
+  - Added file sharing permissions in Info.plist for export functionality
+  - Integrated share_plus for enhanced file sharing on iOS
+  - Updated iOS project configuration with code signing identity and application category
+  - Enhanced platform-specific handling for export operations
+
+### Changed
+- **App Icon Improvements**: Updated iOS app icons and project configurations
+  - Added new app icon sizes (60x60@2x, 76x76@2x, 83.5x83.5@2x PNG files) for better device compatibility
+  - Streamlined iOS asset set and improved app icon management
+  - Updated app icon assets with proper iPhone and iPad idioms
+  - Enhanced project configurations for better iOS compatibility
+
+### Technical
+- **Dependency Updates**: Comprehensive dependency updates and modernization
+  - Bumped drift to ^2.28.0 for improved database operations
+  - Updated sqlite3_flutter_libs to ^0.5.36 for better SQLite integration
+  - Bumped drift_dev to ^2.28.0 for enhanced development tools
+  - Updated licensed_features_package to 0.8.0+23 with iOS export improvements
+- **Build System Enhancements**: Enhanced build scripts and dependency management
+  - Enhanced build scripts to support IPA builds
+  - Added dependency management for licensed features package
+  - Updated subproject references for license_server and licensed_features_package
+  - Improved build process consistency and reliability
+
+### Submodules
+- **licensed_features_package**: Updated to 0.8.0+23
+  - iOS export functionality improvements
+  - Platform-specific handling for file sharing
+  - Enhanced export logic in LicensedPlugin
+  - Added export functionality tests
+
 ## [0.12.0+77] - 2025-07-13
 
 ### Added
