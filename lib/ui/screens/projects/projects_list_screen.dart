@@ -17,6 +17,7 @@ import 'package:teleferika/licensing/licence_model.dart' show Licence;
 import 'package:teleferika/licensing/licensed_features_loader.dart';
 import 'package:teleferika/licensing/licence_request_service.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
+import 'package:teleferika/ui/screens/settings/settings_screen.dart';
 
 import 'project_tabbed_screen.dart';
 
@@ -1667,6 +1668,25 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                         await LicensedFeaturesLoader.showMapDownloadPage(
                           context,
                         );
+                      }
+                    },
+                  ),
+                  // Settings icon
+                  IconButton(
+                    icon: const Icon(Icons.settings),
+                    tooltip: S.of(context)?.settings_title ?? 'Settings',
+                    onPressed: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SettingsScreen(),
+                        ),
+                      );
+                      // Refresh the screen if settings were changed
+                      if (result == true) {
+                        setState(() {
+                          // Trigger a rebuild to reflect any settings changes
+                        });
                       }
                     },
                   ),

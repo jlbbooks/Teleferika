@@ -1299,4 +1299,64 @@ class SIt extends S {
 
   @override
   String get development_testing => 'Sviluppo e Test';
+
+  @override
+  String get settings_title => 'Impostazioni';
+
+  @override
+  String get reset_to_defaults => 'Ripristina Predefiniti';
+
+  @override
+  String get ui_behavior_section => 'Comportamento UI';
+
+  @override
+  String get show_save_icon_always_title => 'Mostra Sempre Icona Salva';
+
+  @override
+  String get show_save_icon_always_description =>
+      'Quando abilitato, l\'icona salva è sempre visibile. Quando disabilitato, appare solo quando ci sono modifiche non salvate.';
+
+  @override
+  String get map_compass_section => 'Mappa e Bussola';
+
+  @override
+  String get angle_to_red_threshold_title => 'Soglia Angolo a Rosso';
+
+  @override
+  String get angle_to_red_threshold_description =>
+      'La soglia dell\'angolo (in gradi) alla quale l\'indicatore dell\'angolo della bussola cambia da verde a rosso. Valori più bassi rendono l\'indicatore più sensibile.';
+
+  @override
+  String get threshold_degrees => 'Soglia (gradi)';
+
+  @override
+  String get angle_threshold_legend =>
+      'Verde: Angolo buono | Rosso: Angolo scarso';
+
+  @override
+  String get information_section => 'Informazioni';
+
+  @override
+  String get settings_info_title => 'Informazioni Impostazioni';
+
+  @override
+  String get settings_info_description =>
+      'Queste impostazioni sono memorizzate localmente sul tuo dispositivo e persisteranno tra le sessioni dell\'app. Le modifiche hanno effetto immediato.';
+
+  @override
+  String get settings_saved_successfully => 'Impostazioni salvate con successo';
+
+  @override
+  String error_saving_settings(String error) {
+    return 'Errore nel salvataggio delle impostazioni: $error';
+  }
+
+  @override
+  String get settings_reset_to_defaults =>
+      'Impostazioni ripristinate ai predefiniti';
+
+  @override
+  String error_resetting_settings(String error) {
+    return 'Errore nel ripristino delle impostazioni: $error';
+  }
 }

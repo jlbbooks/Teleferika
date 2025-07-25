@@ -1288,4 +1288,62 @@ class SEn extends S {
 
   @override
   String get development_testing => 'Development & Testing';
+
+  @override
+  String get settings_title => 'Settings';
+
+  @override
+  String get reset_to_defaults => 'Reset to Defaults';
+
+  @override
+  String get ui_behavior_section => 'UI Behavior';
+
+  @override
+  String get show_save_icon_always_title => 'Always Show Save Icon';
+
+  @override
+  String get show_save_icon_always_description =>
+      'When enabled, the save icon is always visible. When disabled, it only appears when there are unsaved changes.';
+
+  @override
+  String get map_compass_section => 'Map & Compass';
+
+  @override
+  String get angle_to_red_threshold_title => 'Angle to Red Threshold';
+
+  @override
+  String get angle_to_red_threshold_description =>
+      'The angle threshold (in degrees) at which the compass angle indicator changes from green to red. Lower values make the indicator more sensitive.';
+
+  @override
+  String get threshold_degrees => 'Threshold (degrees)';
+
+  @override
+  String get angle_threshold_legend => 'Green: Good angle | Red: Poor angle';
+
+  @override
+  String get information_section => 'Information';
+
+  @override
+  String get settings_info_title => 'About Settings';
+
+  @override
+  String get settings_info_description =>
+      'These settings are stored locally on your device and will persist between app sessions. Changes take effect immediately.';
+
+  @override
+  String get settings_saved_successfully => 'Settings saved successfully';
+
+  @override
+  String error_saving_settings(String error) {
+    return 'Error saving settings: $error';
+  }
+
+  @override
+  String get settings_reset_to_defaults => 'Settings reset to defaults';
+
+  @override
+  String error_resetting_settings(String error) {
+    return 'Error resetting settings: $error';
+  }
 }

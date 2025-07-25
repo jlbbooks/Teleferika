@@ -1710,5 +1710,85 @@
   "development_testing": "Development & Testing",
   "@development_testing": {
     "description": "Label for development and testing section."
+  },
+  "settings_title": "Settings",
+  "@settings_title": {
+    "description": "Title for the settings screen."
+  },
+  "reset_to_defaults": "Reset to Defaults",
+  "@reset_to_defaults": {
+    "description": "Button text to reset settings to default values."
+  },
+  "ui_behavior_section": "UI Behavior",
+  "@ui_behavior_section": {
+    "description": "Section title for UI behavior settings."
+  },
+  "show_save_icon_always_title": "Always Show Save Icon",
+  "@show_save_icon_always_title": {
+    "description": "Title for the show save icon always setting."
+  },
+  "show_save_icon_always_description": "When enabled, the save icon is always visible. When disabled, it only appears when there are unsaved changes.",
+  "@show_save_icon_always_description": {
+    "description": "Description for the show save icon always setting."
+  },
+  "map_compass_section": "Map & Compass",
+  "@map_compass_section": {
+    "description": "Section title for map and compass settings."
+  },
+  "angle_to_red_threshold_title": "Angle to Red Threshold",
+  "@angle_to_red_threshold_title": {
+    "description": "Title for the angle to red threshold setting."
+  },
+  "angle_to_red_threshold_description": "The angle threshold (in degrees) at which the compass angle indicator changes from green to red. Lower values make the indicator more sensitive.",
+  "@angle_to_red_threshold_description": {
+    "description": "Description for the angle to red threshold setting."
+  },
+  "threshold_degrees": "Threshold (degrees)",
+  "@threshold_degrees": {
+    "description": "Label for threshold input field in degrees."
+  },
+  "angle_threshold_legend": "Green: Good angle | Red: Poor angle",
+  "@angle_threshold_legend": {
+    "description": "Legend explaining the color coding for angle thresholds."
+  },
+  "information_section": "Information",
+  "@information_section": {
+    "description": "Section title for information section."
+  },
+  "settings_info_title": "About Settings",
+  "@settings_info_title": {
+    "description": "Title for the settings information section."
+  },
+  "settings_info_description": "These settings are stored locally on your device and will persist between app sessions. Changes take effect immediately.",
+  "@settings_info_description": {
+    "description": "Description explaining how settings work."
+  },
+  "settings_saved_successfully": "Settings saved successfully",
+  "@settings_saved_successfully": {
+    "description": "Success message when settings are saved."
+  },
+  "error_saving_settings": "Error saving settings: {error}",
+  "@error_saving_settings": {
+    "description": "Error message when saving settings fails.",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "Network error"
+      }
+    }
+  },
+  "settings_reset_to_defaults": "Settings reset to defaults",
+  "@settings_reset_to_defaults": {
+    "description": "Success message when settings are reset to defaults."
+  },
+  "error_resetting_settings": "Error resetting settings: {error}",
+  "@error_resetting_settings": {
+    "description": "Error message when resetting settings fails.",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "Storage error"
+      }
+    }
   }
 }

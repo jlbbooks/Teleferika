@@ -2247,6 +2247,108 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Development & Testing'**
   String get development_testing;
+
+  /// Title for the settings screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settings_title;
+
+  /// Button text to reset settings to default values.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to Defaults'**
+  String get reset_to_defaults;
+
+  /// Section title for UI behavior settings.
+  ///
+  /// In en, this message translates to:
+  /// **'UI Behavior'**
+  String get ui_behavior_section;
+
+  /// Title for the show save icon always setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Always Show Save Icon'**
+  String get show_save_icon_always_title;
+
+  /// Description for the show save icon always setting.
+  ///
+  /// In en, this message translates to:
+  /// **'When enabled, the save icon is always visible. When disabled, it only appears when there are unsaved changes.'**
+  String get show_save_icon_always_description;
+
+  /// Section title for map and compass settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Map & Compass'**
+  String get map_compass_section;
+
+  /// Title for the angle to red threshold setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Angle to Red Threshold'**
+  String get angle_to_red_threshold_title;
+
+  /// Description for the angle to red threshold setting.
+  ///
+  /// In en, this message translates to:
+  /// **'The angle threshold (in degrees) at which the compass angle indicator changes from green to red. Lower values make the indicator more sensitive.'**
+  String get angle_to_red_threshold_description;
+
+  /// Label for threshold input field in degrees.
+  ///
+  /// In en, this message translates to:
+  /// **'Threshold (degrees)'**
+  String get threshold_degrees;
+
+  /// Legend explaining the color coding for angle thresholds.
+  ///
+  /// In en, this message translates to:
+  /// **'Green: Good angle | Red: Poor angle'**
+  String get angle_threshold_legend;
+
+  /// Section title for information section.
+  ///
+  /// In en, this message translates to:
+  /// **'Information'**
+  String get information_section;
+
+  /// Title for the settings information section.
+  ///
+  /// In en, this message translates to:
+  /// **'About Settings'**
+  String get settings_info_title;
+
+  /// Description explaining how settings work.
+  ///
+  /// In en, this message translates to:
+  /// **'These settings are stored locally on your device and will persist between app sessions. Changes take effect immediately.'**
+  String get settings_info_description;
+
+  /// Success message when settings are saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings saved successfully'**
+  String get settings_saved_successfully;
+
+  /// Error message when saving settings fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Error saving settings: {error}'**
+  String error_saving_settings(String error);
+
+  /// Success message when settings are reset to defaults.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings reset to defaults'**
+  String get settings_reset_to_defaults;
+
+  /// Error message when resetting settings fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Error resetting settings: {error}'**
+  String error_resetting_settings(String error);
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

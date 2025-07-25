@@ -1708,5 +1708,85 @@
   "development_testing": "Sviluppo e Test",
   "@development_testing": {
     "description": "Etichetta per la sezione sviluppo e test."
+  },
+  "settings_title": "Impostazioni",
+  "@settings_title": {
+    "description": "Titolo per la schermata impostazioni."
+  },
+  "reset_to_defaults": "Ripristina Predefiniti",
+  "@reset_to_defaults": {
+    "description": "Testo del pulsante per ripristinare le impostazioni ai valori predefiniti."
+  },
+  "ui_behavior_section": "Comportamento UI",
+  "@ui_behavior_section": {
+    "description": "Titolo della sezione per le impostazioni del comportamento UI."
+  },
+  "show_save_icon_always_title": "Mostra Sempre Icona Salva",
+  "@show_save_icon_always_title": {
+    "description": "Titolo per l'impostazione mostra sempre icona salva."
+  },
+  "show_save_icon_always_description": "Quando abilitato, l'icona salva è sempre visibile. Quando disabilitato, appare solo quando ci sono modifiche non salvate.",
+  "@show_save_icon_always_description": {
+    "description": "Descrizione per l'impostazione mostra sempre icona salva."
+  },
+  "map_compass_section": "Mappa e Bussola",
+  "@map_compass_section": {
+    "description": "Titolo della sezione per le impostazioni mappa e bussola."
+  },
+  "angle_to_red_threshold_title": "Soglia Angolo a Rosso",
+  "@angle_to_red_threshold_title": {
+    "description": "Titolo per l'impostazione soglia angolo a rosso."
+  },
+  "angle_to_red_threshold_description": "La soglia dell'angolo (in gradi) alla quale l'indicatore dell'angolo della bussola cambia da verde a rosso. Valori più bassi rendono l'indicatore più sensibile.",
+  "@angle_to_red_threshold_description": {
+    "description": "Descrizione per l'impostazione soglia angolo a rosso."
+  },
+  "threshold_degrees": "Soglia (gradi)",
+  "@threshold_degrees": {
+    "description": "Etichetta per il campo di input della soglia in gradi."
+  },
+  "angle_threshold_legend": "Verde: Angolo buono | Rosso: Angolo scarso",
+  "@angle_threshold_legend": {
+    "description": "Legenda che spiega la codifica dei colori per le soglie degli angoli."
+  },
+  "information_section": "Informazioni",
+  "@information_section": {
+    "description": "Titolo della sezione informazioni."
+  },
+  "settings_info_title": "Informazioni Impostazioni",
+  "@settings_info_title": {
+    "description": "Titolo per la sezione informazioni impostazioni."
+  },
+  "settings_info_description": "Queste impostazioni sono memorizzate localmente sul tuo dispositivo e persisteranno tra le sessioni dell'app. Le modifiche hanno effetto immediato.",
+  "@settings_info_description": {
+    "description": "Descrizione che spiega come funzionano le impostazioni."
+  },
+  "settings_saved_successfully": "Impostazioni salvate con successo",
+  "@settings_saved_successfully": {
+    "description": "Messaggio di successo quando le impostazioni vengono salvate."
+  },
+  "error_saving_settings": "Errore nel salvataggio delle impostazioni: {error}",
+  "@error_saving_settings": {
+    "description": "Messaggio di errore quando il salvataggio delle impostazioni fallisce.",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "Errore di rete"
+      }
+    }
+  },
+  "settings_reset_to_defaults": "Impostazioni ripristinate ai predefiniti",
+  "@settings_reset_to_defaults": {
+    "description": "Messaggio di successo quando le impostazioni vengono ripristinate ai predefiniti."
+  },
+  "error_resetting_settings": "Errore nel ripristino delle impostazioni: {error}",
+  "@error_resetting_settings": {
+    "description": "Messaggio di errore quando il ripristino delle impostazioni fallisce.",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "Errore di archiviazione"
+      }
+    }
   }
 }
