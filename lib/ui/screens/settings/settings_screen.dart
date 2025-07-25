@@ -25,6 +25,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // Settings state
   bool _showSaveIconAlways = AppConfig.showSaveIconAlways;
   double _angleToRedThreshold = AppConfig.angleToRedThreshold;
+  bool _showAllProjectsOnMap = false;
 
   // Controllers for text fields
   final TextEditingController _angleThresholdController =
@@ -47,15 +48,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       final showSaveIconAlways = await _settingsService.showSaveIconAlways;
       final angleToRedThreshold = await _settingsService.angleToRedThreshold;
+      final showAllProjectsOnMap = await _settingsService.showAllProjectsOnMap;
 
       setState(() {
         _showSaveIconAlways = showSaveIconAlways;
         _angleToRedThreshold = angleToRedThreshold;
+        _showAllProjectsOnMap = showAllProjectsOnMap;
         _angleThresholdController.text = _angleToRedThreshold.toString();
       });
 
       logger.info(
-        'Settings loaded: showSaveIconAlways=$_showSaveIconAlways, angleToRedThreshold=$_angleToRedThreshold',
+        'Settings loaded: showSaveIconAlways=$_showSaveIconAlways, angleToRedThreshold=$_angleToRedThreshold, showAllProjectsOnMap=$_showAllProjectsOnMap',
       );
     } catch (e, stackTrace) {
       logger.severe('Error loading settings', e, stackTrace);
@@ -67,9 +70,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       await _settingsService.setShowSaveIconAlways(_showSaveIconAlways);
       await _settingsService.setAngleToRedThreshold(_angleToRedThreshold);
+      await _settingsService.setShowAllProjectsOnMap(_showAllProjectsOnMap);
 
       logger.info(
-        'Settings saved: showSaveIconAlways=$_showSaveIconAlways, angleToRedThreshold=$_angleToRedThreshold',
+        'Settings saved: showSaveIconAlways=$_showSaveIconAlways, angleToRedThreshold=$_angleToRedThreshold, showAllProjectsOnMap=$_showAllProjectsOnMap',
       );
 
       if (mounted) {
@@ -113,6 +117,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       setState(() {
         _showSaveIconAlways = AppConfig.showSaveIconAlways;
         _angleToRedThreshold = AppConfig.angleToRedThreshold;
+        _showAllProjectsOnMap = false;
         _angleThresholdController.text = _angleToRedThreshold.toString();
       });
 
@@ -313,6 +318,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ],
                 ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Map Display Section
+            _buildSectionHeader(
+              S.of(context)?.map_display_section ?? 'Map Display',
+              Icons.map_outlined,
+            ),
+            const SizedBox(height: 8),
+
+            // Show All Projects on Map
+            Card(
+              child: SwitchListTile(
+                title: Text(
+                  S.of(context)?.show_all_projects_on_map_title ??
+                      'Show All Projects on Map',
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+                subtitle: Text(
+                  S.of(context)?.show_all_projects_on_map_description ??
+                      'When enabled, all projects will be displayed on the map as grey markers and lines. When disabled, only the current project is shown.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+                value: _showAllProjectsOnMap,
+                onChanged: (bool value) {
+                  setState(() {
+                    _showAllProjectsOnMap = value;
+                  });
+                  _saveSettings();
+                },
+                secondary: const Icon(Icons.layers),
               ),
             ),
 

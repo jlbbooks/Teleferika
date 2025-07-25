@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/core/project_state_manager.dart';
 import 'package:teleferika/core/app_config.dart';
+import 'package:teleferika/core/settings_service.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
@@ -27,6 +28,7 @@ import '../../../map/widgets/point_details_panel.dart';
 import '../../../map/widgets/floating_action_buttons.dart';
 import '../../../map/widgets/map_type_selector.dart';
 import '../../../map/services/map_cache_manager.dart';
+import '../../../ui/widgets/project_points_layer.dart';
 
 class MapScreen extends StatefulWidget {
   final ProjectModel project;
@@ -41,9 +43,11 @@ class MapScreen extends StatefulWidget {
 class MapScreenState extends State<MapScreen>
     with StatusMixin, TickerProviderStateMixin {
   final Logger logger = Logger('MapScreen');
+  final SettingsService _settingsService = SettingsService();
 
   // State manager
   late MapStateManager _stateManager;
+  bool _showAllProjectsOnMap = false;
 
   // Helper method for haptic feedback
   void _triggerHapticFeedback(String action) {
@@ -65,6 +69,16 @@ class MapScreenState extends State<MapScreen>
     super.initState();
     _stateManager = MapStateManager();
     _stateManager.selectedPointId = widget.selectedPointId;
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    try {
+      _showAllProjectsOnMap = await _settingsService.showAllProjectsOnMap;
+      setState(() {});
+    } catch (e) {
+      logger.warning('Error loading settings: $e');
+    }
   }
 
   @override
@@ -561,19 +575,21 @@ class MapScreenState extends State<MapScreen>
                           slidingPointId: _stateManager.slidingPointId,
                           currentSlidePosition:
                               _stateManager.currentSlidePosition,
-                          // TODO: make this optional depending on preferences
-                          // Add other projects layer
-                          // additionalLayers: [
-                          //   ProjectPointsLayer(
-                          //     excludeProjectId: projectState.currentProject?.id,
-                          //       markerSize: 6.0,
-                          //       markerColor: Colors.grey,
-                          //       markerBorderColor: Colors.white,
-                          //       markerBorderWidth: 1.0,
-                          //       lineColor: Colors.grey,
-                          //       lineWidth: 1.0,
-                          //     ),
-                          //   ],
+                          // Add other projects layer based on user preference
+                          additionalLayers: _showAllProjectsOnMap
+                              ? [
+                                  ProjectPointsLayer(
+                                    excludeProjectId:
+                                        projectState.currentProject?.id,
+                                    markerSize: 6.0,
+                                    markerColor: Colors.grey,
+                                    markerBorderColor: Colors.white,
+                                    markerBorderWidth: 1.0,
+                                    lineColor: Colors.grey,
+                                    lineWidth: 1.0,
+                                  ),
+                                ]
+                              : null,
                         ),
                         MapTypeSelector.build(
                           currentMapType: _stateManager.currentMapType,

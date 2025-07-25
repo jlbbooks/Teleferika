@@ -1788,5 +1788,17 @@
         "example": "Errore di archiviazione"
       }
     }
+  },
+  "map_display_section": "Visualizzazione Mappa",
+  "@map_display_section": {
+    "description": "Titolo della sezione per le impostazioni di visualizzazione mappa."
+  },
+  "show_all_projects_on_map_title": "Mostra Tutti i Progetti sulla Mappa",
+  "@show_all_projects_on_map_title": {
+    "description": "Titolo per l'impostazione mostra tutti i progetti sulla mappa."
+  },
+  "show_all_projects_on_map_description": "Quando abilitato, tutti i progetti saranno visualizzati sulla mappa come marcatori e linee grigie. Quando disabilitato, viene mostrato solo il progetto corrente.",
+  "@show_all_projects_on_map_description": {
+    "description": "Descrizione per l'impostazione mostra tutti i progetti sulla mappa."
   }
 }

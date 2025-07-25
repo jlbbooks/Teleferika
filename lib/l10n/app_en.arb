@@ -1790,5 +1790,17 @@
         "example": "Storage error"
       }
     }
+  },
+  "map_display_section": "Map Display",
+  "@map_display_section": {
+    "description": "Section title for map display settings."
+  },
+  "show_all_projects_on_map_title": "Show All Projects on Map",
+  "@show_all_projects_on_map_title": {
+    "description": "Title for the show all projects on map setting."
+  },
+  "show_all_projects_on_map_description": "When enabled, all projects will be displayed on the map as grey markers and lines. When disabled, only the current project is shown.",
+  "@show_all_projects_on_map_description": {
+    "description": "Description for the show all projects on map setting."
   }
 }

@@ -1346,4 +1346,14 @@ class SEn extends S {
   String error_resetting_settings(String error) {
     return 'Error resetting settings: $error';
   }
+
+  @override
+  String get map_display_section => 'Map Display';
+
+  @override
+  String get show_all_projects_on_map_title => 'Show All Projects on Map';
+
+  @override
+  String get show_all_projects_on_map_description =>
+      'When enabled, all projects will be displayed on the map as grey markers and lines. When disabled, only the current project is shown.';
 }

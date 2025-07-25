@@ -2349,6 +2349,24 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Error resetting settings: {error}'**
   String error_resetting_settings(String error);
+
+  /// Section title for map display settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Map Display'**
+  String get map_display_section;
+
+  /// Title for the show all projects on map setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Show All Projects on Map'**
+  String get show_all_projects_on_map_title;
+
+  /// Description for the show all projects on map setting.
+  ///
+  /// In en, this message translates to:
+  /// **'When enabled, all projects will be displayed on the map as grey markers and lines. When disabled, only the current project is shown.'**
+  String get show_all_projects_on_map_description;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

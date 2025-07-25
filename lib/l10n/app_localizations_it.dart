@@ -1359,4 +1359,15 @@ class SIt extends S {
   String error_resetting_settings(String error) {
     return 'Errore nel ripristino delle impostazioni: $error';
   }
+
+  @override
+  String get map_display_section => 'Visualizzazione Mappa';
+
+  @override
+  String get show_all_projects_on_map_title =>
+      'Mostra Tutti i Progetti sulla Mappa';
+
+  @override
+  String get show_all_projects_on_map_description =>
+      'Quando abilitato, tutti i progetti saranno visualizzati sulla mappa come marcatori e linee grigie. Quando disabilitato, viene mostrato solo il progetto corrente.';
 }

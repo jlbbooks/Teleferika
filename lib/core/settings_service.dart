@@ -17,6 +17,7 @@ class SettingsService {
   // SharedPreferences keys
   static const String _showSaveIconAlwaysKey = 'show_save_icon_always';
   static const String _angleToRedThresholdKey = 'angle_to_red_threshold';
+  static const String _showAllProjectsOnMapKey = 'show_all_projects_on_map';
 
   /// Get the current value for showSaveIconAlways setting.
   /// Returns the stored value or the default from AppConfig.
@@ -82,9 +83,42 @@ class SettingsService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_showSaveIconAlwaysKey);
       await prefs.remove(_angleToRedThresholdKey);
+      await prefs.remove(_showAllProjectsOnMapKey);
       _logger.info('All settings reset to defaults');
     } catch (e, stackTrace) {
       _logger.severe('Error resetting settings to defaults', e, stackTrace);
+      rethrow;
+    }
+  }
+
+  /// Get the current value for showAllProjectsOnMap setting.
+  /// Returns the stored value or the default (false).
+  Future<bool> get showAllProjectsOnMap async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool(_showAllProjectsOnMapKey) ?? false;
+    } catch (e, stackTrace) {
+      _logger.warning(
+        'Error getting showAllProjectsOnMap setting, using default',
+        e,
+        stackTrace,
+      );
+      return false;
+    }
+  }
+
+  /// Set the showAllProjectsOnMap setting value.
+  Future<void> setShowAllProjectsOnMap(bool value) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_showAllProjectsOnMapKey, value);
+      _logger.info('showAllProjectsOnMap setting saved: $value');
+    } catch (e, stackTrace) {
+      _logger.severe(
+        'Error saving showAllProjectsOnMap setting',
+        e,
+        stackTrace,
+      );
       rethrow;
     }
   }
@@ -95,6 +129,7 @@ class SettingsService {
       return {
         'showSaveIconAlways': await showSaveIconAlways,
         'angleToRedThreshold': await angleToRedThreshold,
+        'showAllProjectsOnMap': await showAllProjectsOnMap,
       };
     } catch (e, stackTrace) {
       _logger.severe('Error getting all settings', e, stackTrace);
