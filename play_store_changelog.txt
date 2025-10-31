@@ -1,13 +1,17 @@
 <en-GB>
-- Fixed azimuth arrow not responding to map compass clicks
-- Improved map rotation tracking for better arrow synchronization
-- Enhanced real-time response to programmatic map rotations
-- Better rotation compensation for both manual and compass-triggered rotations
+- Added new Settings screen with customizable app preferences
+- New option to show all projects on the map for better overview
+- Added toggle for always showing the save icon
+- Configurable angle threshold for compass color indicators
+- Settings are saved locally and persist between app sessions
+- Improved user experience with more control over app behavior
 </en-GB>
 
 <it-IT>
-- Risolto problema della freccia di azimuth che non rispondeva ai clic sulla bussola della mappa
-- Migliorato il tracciamento della rotazione della mappa per una migliore sincronizzazione della freccia
-- Migliorata la risposta in tempo reale alle rotazioni programmatiche della mappa
-- Migliore compensazione della rotazione per rotazioni manuali e attivate dalla bussola
+- Aggiunta nuova schermata Impostazioni con preferenze personalizzabili dell'app
+- Nuova opzione per mostrare tutti i progetti sulla mappa per una migliore panoramica
+- Aggiunto toggle per mostrare sempre l'icona salva
+- Soglia dell'angolo configurabile per gli indicatori di colore della bussola
+- Le impostazioni vengono salvate localmente e persistono tra le sessioni dell'app
+- Migliorata l'esperienza utente con maggiore controllo sul comportamento dell'app
 </it-IT> 

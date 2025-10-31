@@ -25,7 +25,7 @@ val keystoreProperties = loadKeystoreProperties()
 
 android {
     namespace = "com.jlbbooks.teleferika"
-    compileSdk = 35 //flutter.compileSdkVersion
+    compileSdk = flutter.compileSdkVersion
     // https://developer.android.com/ndk/downloads/
     ndkVersion = "27.2.12479018" //flutter.ndkVersion
 
