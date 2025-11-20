@@ -23,6 +23,12 @@ fun loadKeystoreProperties(): Properties {
 
 val keystoreProperties = loadKeystoreProperties()
 
+//kotlin {
+//    compilerOptions {
+//        jvmTarget = JvmTarget.fromTarget("17")
+//    }
+//}
+
 android {
     namespace = "com.jlbbooks.teleferika"
     compileSdk = flutter.compileSdkVersion
