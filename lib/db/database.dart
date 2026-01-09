@@ -128,11 +128,15 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
   Future<int> insertProject(ProjectCompanion project) async {
     _logger.fine('Inserting project: ${project.name.value}');
     try {
-      final id = await into(projects).insert(project);
-      _logger.fine('Project inserted with ID: $id');
-      return id;
-    } catch (e) {
-      _logger.severe('Error inserting project: $e');
+      // For text primary keys, insert returns the number of rows affected (1 if successful)
+      final rowsAffected = await into(projects).insert(project);
+      _logger.fine(
+        'Project inserted successfully. Rows affected: $rowsAffected',
+      );
+      // Return 1 to indicate success (the actual ID is in project.id.value)
+      return rowsAffected > 0 ? 1 : 0;
+    } catch (e, stackTrace) {
+      _logger.severe('Error inserting project: $e', e, stackTrace);
       rethrow;
     }
   }
@@ -412,11 +416,13 @@ LazyDatabase _openConnection() {
       final file = File(p.join(dbFolder.path, 'Teleferika.db'));
       logger.info('Database file path: ${file.path}');
 
-      final database = NativeDatabase.createInBackground(file);
+      // Use NativeDatabase directly instead of createInBackground to ensure
+      // synchronous initialization and avoid potential race conditions
+      final database = NativeDatabase(file);
       logger.info('Database connection created successfully');
       return database;
-    } catch (e) {
-      logger.severe('Error creating database connection: $e');
+    } catch (e, stackTrace) {
+      logger.severe('Error creating database connection: $e', e, stackTrace);
       rethrow;
     }
   });

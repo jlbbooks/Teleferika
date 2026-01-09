@@ -97,13 +97,20 @@ class DriftDatabaseHelper {
     _logger.info('Inserting project: ${project.name}');
     try {
       final db = await database;
+      _logger.fine(
+        'Database instance obtained, preparing project for insertion',
+      );
       final projectToInsert = project.copyWith(lastUpdate: DateTime.now());
+      _logger.fine(
+        'Project prepared with lastUpdate: ${projectToInsert.lastUpdate}',
+      );
       final companion = _projectToDriftCompanion(projectToInsert);
+      _logger.fine('ProjectCompanion created, calling db.insertProject');
       final id = await db.insertProject(companion);
       _logger.info('Project inserted successfully with ID: $id');
       return id;
-    } catch (e) {
-      _logger.severe('Error inserting project: $e');
+    } catch (e, stackTrace) {
+      _logger.severe('Error inserting project: $e', e, stackTrace);
       rethrow;
     }
   }
