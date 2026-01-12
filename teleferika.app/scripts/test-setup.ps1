@@ -139,12 +139,15 @@ Write-Host "🎉 All tests passed! Your development environment is ready." -Fore
 Write-Host ""
 Write-Host "Summary:"
 Write-Host "  ✅ Open source setup: Working"
-if (Test-Path "licensed_features_package") {
+$SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
+$PROJECT_ROOT = Split-Path -Parent $SCRIPT_DIR
+$PARENT_DIR = Split-Path -Parent $PROJECT_ROOT
+if (Test-Path (Join-Path $PARENT_DIR "licensed_features_package")) {
     Write-Host "  ✅ Full setup: Working"
 } else {
     Write-Host "  ⚠️ Full setup: Not available (requires access to licensed repository)"
 }
-if (Test-Path "licence_server") {
+if (Test-Path (Join-Path $PARENT_DIR "licence_server")) {
     Write-Host "  ✅ License server: Available"
 } else {
     Write-Host "  ⚠️ License server: Missing (setup may have failed)"

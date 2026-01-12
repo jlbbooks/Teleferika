@@ -173,15 +173,15 @@ switch ($FLAVOR.ToLower()) {
             Write-Warning "Directory '$LICENSED_PACKAGE_DIR_NAME' exists but is not a git repository."
             Write-Status "Removing existing directory and re-cloning..."
             Remove-Item $LICENSED_PACKAGE_DIR_FULL_PATH -Recurse -Force
-            $gitResult = git clone $LICENSED_REPO_URL $LICENSED_PACKAGE_DIR_NAME 2>&1
+            $gitResult = git clone $LICENSED_REPO_URL $LICENSED_PACKAGE_DIR_FULL_PATH 2>&1
             if ($LASTEXITCODE -ne 0) {
                 Write-Error "Failed to clone licensed features repository from $LICENSED_REPO_URL."
                 Write-Error "Please ensure you have access to the repository and SSH keys are set up if needed."
                 exit 1
             }
         } else {
-            Write-Status "Cloning licensed features from $LICENSED_REPO_URL into $LICENSED_PACKAGE_DIR_NAME..."
-            $gitResult = git clone $LICENSED_REPO_URL $LICENSED_PACKAGE_DIR_NAME 2>&1
+            Write-Status "Cloning licensed features from $LICENSED_REPO_URL into $LICENSED_PACKAGE_DIR_FULL_PATH..."
+            $gitResult = git clone $LICENSED_REPO_URL $LICENSED_PACKAGE_DIR_FULL_PATH 2>&1
             if ($LASTEXITCODE -ne 0) {
                 Write-Error "Failed to clone licensed features repository from $LICENSED_REPO_URL."
                 Write-Error "Please ensure you have access to the repository and SSH keys are set up if needed."

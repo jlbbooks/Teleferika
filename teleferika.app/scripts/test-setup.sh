@@ -129,12 +129,15 @@ echo "🎉 All tests passed! Your development environment is ready."
 echo ""
 echo "Summary:"
 echo "  ✅ Open source setup: Working"
-if [ -d "licensed_features_package" ]; then
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+PARENT_DIR="$(dirname "$PROJECT_ROOT")"
+if [ -d "$PARENT_DIR/licensed_features_package" ]; then
     echo "  ✅ Full setup: Working"
 else
     echo "  ⚠️ Full setup: Not available (requires access to licensed repository)"
 fi
-if [ -d "licence_server" ]; then
+if [ -d "$PARENT_DIR/licence_server" ]; then
     echo "  ✅ License server: Available"
 else
     echo "  ⚠️ License server: Missing (setup may have failed)"
