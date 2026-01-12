@@ -48,7 +48,7 @@ android {
                 // or use the default debug signing config.
                 // For Flutter, the default signingConfig in buildTypes.release
                 // often points to 'debug' initially.
-                println("Warning: Keystore properties not found. Using default signing.")
+                println("Warning: Keystore properties not found. Using default signing. Remember to import the keys folder to the project")
             }
         }
         // You can define other signing configs here if needed, e.g., for different product flavors.
