@@ -24,7 +24,7 @@ dependencies:
   # DO NOT REMOVE THE NEXT LINE!!!
   # LICENSED_PACKAGE_PLACEHOLDER
   licensed_features_package:
-    path: ./licensed_features_package
+    path: ../licensed_features_package
 
 
   compassx: ^1.0.1

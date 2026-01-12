@@ -60,7 +60,7 @@ All notable changes to this project will be documented in this file.
 - **Build System Enhancements**: Enhanced build scripts and dependency management
   - Enhanced build scripts to support IPA builds
   - Added dependency management for licensed features package
-  - Updated subproject references for license_server and licensed_features_package
+  - Updated subproject references for licence_server and licensed_features_package
   - Improved build process consistency and reliability
 
 ### Submodules

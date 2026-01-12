@@ -92,16 +92,16 @@ if [ "$CLEAN" = "true" ]; then
         print_status "Removed existing licensed features loader"
     fi
     
-    # Remove the licensed package directory
-    if [ -d "licensed_features_package" ]; then
+    # Remove the licensed package directory (at parent level)
+    if [ -d "$(dirname "$PROJECT_ROOT")/licensed_features_package" ]; then
         print_status "Removing licensed package directory..."
-        rm -rf licensed_features_package
+        rm -rf "$(dirname "$PROJECT_ROOT")/licensed_features_package"
     fi
     
-    # Remove the license server directory
-    if [ -d "license_server" ]; then
+    # Remove the license server directory (at parent level)
+    if [ -d "$(dirname "$PROJECT_ROOT")/licence_server" ]; then
         print_status "Removing license server directory..."
-        rm -rf license_server
+        rm -rf "$(dirname "$PROJECT_ROOT")/licence_server"
     fi
 fi
 
@@ -131,9 +131,9 @@ case $FLAVOR in
     "full"|"premium"|"licensed")
         FLAVOR="full"
         LICENSED_REPO_URL="git@github.com:jlbbooks/teleferika_licenced_packages.git"
-        LICENSED_PACKAGE_DIR="licensed_features_package"
+        LICENSED_PACKAGE_DIR="$(dirname "$PROJECT_ROOT")/licensed_features_package"
         LICENSE_SERVER_REPO_URL="git@github.com:jlbbooks/teleferika-license-server.git"
-        LICENSE_SERVER_DIR="license_server"
+        LICENSE_SERVER_DIR="$(dirname "$PROJECT_ROOT")/licence_server"
 
         print_status "⭐ Configuring for Full version with licensed features..."
 
@@ -216,7 +216,7 @@ case $FLAVOR in
         print_success "Copied full loader"
 
         # Copy the correct lfp_localizations_conditional.dart for full version
-        cp "$(dirname "$0")/../licensed_features_package/lib/l10n/lfp_localizations_conditional_full.dart" "$(dirname "$0")/../licensed_features_package/lib/l10n/lfp_localizations_conditional.dart"
+        cp "$LICENSED_PACKAGE_DIR/lib/l10n/lfp_localizations_conditional_full.dart" "$LICENSED_PACKAGE_DIR/lib/l10n/lfp_localizations_conditional.dart"
 
         # Get dependencies for the licensed package first
         print_status "Getting dependencies for licensed features package..."
@@ -288,12 +288,12 @@ echo "  Dependencies: $DEP_COUNT packages (approx)"
 # Show framework status
 if [ "$FLAVOR" = "full" ]; then
     echo "  Framework: Full version with licensed features"
-    if [ -d "licensed_features_package" ]; then
+    if [ -d "$(dirname "$PROJECT_ROOT")/licensed_features_package" ]; then
         echo "  Licensed Package: Available"
     else
         echo "  Licensed Package: Missing (setup may have failed)"
     fi
-    if [ -d "license_server" ]; then
+    if [ -d "$(dirname "$PROJECT_ROOT")/licence_server" ]; then
         echo "  License Server: Available"
     else
         echo "  License Server: Missing (setup may have failed)"

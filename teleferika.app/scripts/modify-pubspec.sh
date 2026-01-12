@@ -64,7 +64,7 @@ add_licensed_package() {
         # If we find the placeholder, replace it with the actual dependency
         if [[ "$line" == *"LICENSED_PACKAGE_PLACEHOLDER"* ]]; then
             echo "  licensed_features_package:" >> "$temp_file"
-            echo "    path: ./licensed_features_package" >> "$temp_file"
+            echo "    path: ../licensed_features_package" >> "$temp_file"
             echo "" >> "$temp_file"
         fi
     done < "$pubspec_file"

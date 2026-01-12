@@ -82,7 +82,7 @@ function Add-LicensedPackage {
         if ($line -match "LICENSED_PACKAGE_PLACEHOLDER") {
             $placeholderFound = $true
             $newContent += "  licensed_features_package:"
-            $newContent += "    path: ./licensed_features_package"
+            $newContent += "    path: ../licensed_features_package"
             $newContent += ""
         }
     }

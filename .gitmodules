@@ -1,6 +1,6 @@
 [submodule "licensed_features_package"]
     path = licensed_features_package
     url = git@github.com:jlbbooks/teleferika_licenced_packages.git
-[submodule "license_server"]
-	path = license_server
+[submodule "licence_server"]
+	path = licence_server
 	url = git@github.com:jlbbooks/teleferika-license-server.git

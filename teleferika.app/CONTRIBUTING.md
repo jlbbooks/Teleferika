@@ -582,7 +582,7 @@ This project uses Git submodules for external dependencies:
 - **Management**: Automatically cloned/updated by setup scripts for full flavor
 - **Opensource**: Not present in opensource flavor (removed during setup)
 
-### `license_server`
+### `licence_server`
 - **Purpose**: License validation and management server
 - **Availability**: Only available in the **full** flavor
 - **Management**: Automatically cloned/updated by setup scripts for full flavor

@@ -93,7 +93,8 @@ $PROJECT_ROOT = Split-Path -Parent $SCRIPT_DIR
 Set-Location $PROJECT_ROOT
 
 Write-Status "Project root: $PROJECT_ROOT"
-$LICENSED_PACKAGE_DIR_FULL_PATH = Join-Path $PROJECT_ROOT $LICENSED_PACKAGE_DIR_NAME
+$PARENT_DIR = Split-Path -Parent $PROJECT_ROOT
+$LICENSED_PACKAGE_DIR_FULL_PATH = Join-Path $PARENT_DIR $LICENSED_PACKAGE_DIR_NAME
 
 # Verify essential directories exist
 if (-not (Test-Directory "lib")) { exit 1 }
@@ -119,8 +120,8 @@ if ($CLEAN -eq "true") {
         Remove-Item $LICENSED_PACKAGE_DIR_FULL_PATH -Recurse -Force
     }
     
-    # Remove the license server directory
-    $licenseServerPath = Join-Path $PROJECT_ROOT "license_server"
+    # Remove the license server directory (at parent level)
+    $licenseServerPath = Join-Path $PARENT_DIR "licence_server"
     if (Test-Path $licenseServerPath) {
         Write-Status "Removing license server directory..."
         Remove-Item $licenseServerPath -Recurse -Force
@@ -154,7 +155,7 @@ switch ($FLAVOR.ToLower()) {
     { $_ -in @("full", "premium", "licensed") } {
         $FLAVOR = "full"
         $LICENSE_SERVER_REPO_URL = "git@github.com:jlbbooks/teleferika-license-server.git"
-        $LICENSE_SERVER_DIR = "license_server"
+        $LICENSE_SERVER_DIR = Join-Path $PARENT_DIR "licence_server"
         Write-Status "⭐ Configuring for Full version with licensed features..."
 
         # Clone or update the licensed features repository
@@ -196,7 +197,7 @@ switch ($FLAVOR.ToLower()) {
         if (-not (Test-File (Join-Path $LICENSED_PACKAGE_DIR_FULL_PATH "lib\licensed_plugin.dart"))) { exit 1 }
 
         # Clone or update the license server repository
-        $licenseServerPath = Join-Path $PROJECT_ROOT $LICENSE_SERVER_DIR
+        $licenseServerPath = $LICENSE_SERVER_DIR
         if (Test-Path (Join-Path $licenseServerPath ".git")) {
             Write-Status "License server repository already exists. Attempting to pull latest changes..."
             Set-Location $licenseServerPath
@@ -316,7 +317,7 @@ if ($FLAVOR -eq "full") {
     } else {
         Write-Host "  Licensed Package: Missing (setup may have failed)"
     }
-    if (Test-Path (Join-Path $PROJECT_ROOT "license_server")) {
+    if (Test-Path (Join-Path $PARENT_DIR "licence_server")) {
         Write-Host "  License Server: Available"
     } else {
         Write-Host "  License Server: Missing (setup may have failed)"

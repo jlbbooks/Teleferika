@@ -152,7 +152,8 @@ if ($FLAVOR -eq "full") {
     Write-Status "Generating documentation for licensed features package..."
     
     # Check if licensed features package exists
-    $licensedPackagePath = Join-Path $PROJECT_ROOT "licensed_features_package"
+    $PARENT_DIR = Split-Path -Parent $PROJECT_ROOT
+    $licensedPackagePath = Join-Path $PARENT_DIR "licensed_features_package"
     if (Test-Path $licensedPackagePath) {
         if (Generate-Docs "licensed features package" $licensedPackagePath "doc\api") {
             Write-Success "✅ Licensed features package documentation completed"

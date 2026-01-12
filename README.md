@@ -1,350 +1,216 @@
-# Teleferika
+# Teleferika Project Structure
 
-A Flutter mobile application for cable crane line planning and forest management.
+This repository contains the Teleferika project with a modular structure consisting of the main Flutter application and two Git submodules.
 
-## 📚 Documentation
+## 📁 Directory Structure
 
-Teleferika includes comprehensive documentation generated with **DartDoc**:
+```
+Teleferika.fresh/
+├── teleferika.app/              # Main Flutter application
+│   ├── lib/                     # Dart source code
+│   │   ├── core/                # Core functionality (config, logging, etc.)
+│   │   ├── db/                  # Database models and helpers
+│   │   ├── licensing/           # License management
+│   │   ├── map/                 # Map-related functionality
+│   │   ├── ui/                  # User interface components
+│   │   └── l10n/                # Localization files
+│   ├── android/                 # Android-specific configuration
+│   ├── ios/                     # iOS-specific configuration
+│   ├── assets/                  # App assets (images, animations)
+│   ├── scripts/                 # Build and setup scripts
+│   ├── pubspec.yaml             # Flutter dependencies
+│   └── README.md                # Main app documentation
+│
+├── licensed_features_package/    # Git submodule - Licensed features
+│   ├── lib/                     # Licensed feature implementations
+│   │   ├── export/              # Export functionality (KML, CSV, GeoJSON, etc.)
+│   │   ├── map_download/        # Map download features
+│   │   └── widgets/             # Licensed UI widgets
+│   ├── pubspec.yaml             # Package dependencies
+│   └── README.md                # Package documentation
+│
+├── licence_server/              # Git submodule - License server
+│   ├── bin/                     # Server executables
+│   ├── lib/                     # Server implementation
+│   ├── web/                     # Web UI assets
+│   ├── pubspec.yaml             # Server dependencies
+│   └── README.md                # Server documentation
+│
+├── .gitmodules                  # Git submodule configuration
+└── README.md                    # This file
+```
 
-### 📖 API Documentation
-- **Generated Documentation**: `doc/api/index.html`
-- **Generate Docs**: `fvm dart doc`
-- **Documentation Guide**: [DOCUMENTATION_GUIDE.md](./DOCUMENTATION_GUIDE.md)
+## 🎯 Project Components
 
-### 🎨 UI Documentation
-- **Widget Documentation**: All reusable UI widgets are fully documented
-- **Usage Examples**: Complete code examples for each widget
-- **Accessibility Info**: Screen reader support and keyboard navigation
-- **Visual Design**: Styling guidelines and design principles
+### 1. teleferika.app/ (Main Application)
 
-### 📋 Documentation Coverage
-- ✅ **Core Classes**: Configuration, logging, state management
-- ✅ **Database Models**: All data models with validation
-- ✅ **UI Widgets**: Complete widget library with examples
-- ✅ **Map Components**: Map-related functionality
-- ✅ **Licensing System**: Feature control and license management
-- ✅ **Localization**: Internationalization support
+The main Flutter mobile application for cable crane line planning and forest management.
 
-### 🔧 Documentation Standards
-- **DartDoc Comments**: Triple-slash (`///`) documentation
-- **Usage Examples**: Practical code examples
-- **Parameter Documentation**: Detailed parameter descriptions
-- **Return Values**: Clear return value documentation
-- **Error Handling**: Exception and error documentation
+**Key Features:**
+- Flutter-based cross-platform mobile app
+- Project and point management
+- Map visualization and interaction
+- License-based feature control
+- Localization support (multiple languages)
+
+**Setup:**
+- Navigate to `teleferika.app/` directory
+- Run `./scripts/setup-flavor.sh [opensource|full]` to configure the project
+- See `teleferika.app/README.md` for detailed documentation
+
+### 2. licensed_features_package/ (Git Submodule)
+
+Premium features package that extends the main application with advanced functionality.
+
+**Features:**
+- Advanced export formats (KML, CSV, GeoJSON, KMZ, Shapefile)
+- Offline map tile caching
+- Map area selection and download
+- Batch operations
+- Additional UI components
+
+**Dependencies:**
+- Depends on `teleferika.app` (path: `../teleferika.app`)
+- Only available in the "full" flavor of the application
+
+**Setup:**
+- Automatically cloned when running `./scripts/setup-flavor.sh full`
+- See `licensed_features_package/README.md` for package details
+
+### 3. licence_server/ (Git Submodule)
+
+Server application for managing licenses and validating licensed features.
+
+**Features:**
+- License generation and validation
+- Web-based admin interface
+- RESTful API for license management
+- Secure license verification
+
+**Setup:**
+- Automatically cloned when running `./scripts/setup-flavor.sh full`
+- See `licence_server/README.md` for server documentation
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### Initial Setup
 
-- **Flutter SDK** (3.0 or higher): [Install Flutter](https://docs.flutter.dev/get-started/install)
-- **FVM** (Flutter Version Manager): [Install FVM](https://fvm.app/) - Recommended
-- **Git**: [Install Git](https://git-scm.com/downloads)
-- **IDE**: Android Studio or VS Code with Flutter extension
-
-### First Time Setup
-
-1. **Clone the repository**
-   
+1. **Clone the repository with submodules:**
    ```bash
-   git clone https://github.com/your-org/teleferika.git
-   cd teleferika
+   git clone --recurse-submodules <repository-url>
    ```
 
-2. **Make scripts executable** (Unix/macOS/Linux only)
-   
+   Or if already cloned:
    ```bash
-   chmod +x scripts/*.sh
+   git submodule update --init --recursive
    ```
 
-3. **Set up the project for your needs**
-   
-   **For Open Source Contributors:**
-   
+2. **Navigate to the main app:**
    ```bash
-   # Linux/macOS
-   ./scripts/setup-flavor.sh opensource
-   
-   # Windows (PowerShell)
-   .\scripts\setup-flavor.ps1 opensource
-   ```
-   
-   **For Team Members (with licensed features access):**
-   
-   ```bash
-   # Linux/macOS
-   ./scripts/setup-flavor.sh full
-   
-   # Windows (PowerShell)
-   .\scripts\setup-flavor.ps1 full
+   cd teleferika.app
    ```
 
-4. **Run the app**
-   
+3. **Choose your flavor:**
    ```bash
-   fvm flutter run --flavor opensource  # or 'full' for licensed version
+   # For open source version
+   ./scripts/setup-opensource.sh
+   
+   # For full version with licensed features
+   ./scripts/setup-full.sh
    ```
 
-## 📱 Project Flavors
+4. **Get dependencies:**
+   ```bash
+   flutter pub get
+   ```
 
-Teleferika supports two flavors:
+5. **Run the app:**
+   ```bash
+   flutter run
+   ```
 
-- **`opensource`**: Open source version without licensed features
-- **`full`**: Full version with licensed features and export functionality
+## 📦 Flavor Configuration
 
-### Switching Between Flavors
+The project supports two flavors:
 
+### OpenSource Flavor
+- Basic functionality only
+- No licensed features
+- No submodule dependencies required
+- Suitable for open-source distribution
+
+### Full Flavor
+- All features including licensed ones
+- Requires `licensed_features_package` submodule
+- Requires `licence_server` submodule (for license management)
+- Requires valid license for premium features
+
+## 🔧 Development
+
+### Working with Submodules
+
+**Update submodules to latest:**
 ```bash
-# Linux/macOS
-# Switch to opensource
-./scripts/setup-flavor.sh opensource
-
-# Switch to full version
-./scripts/setup-flavor.sh full
-
-# Clean setup (removes build artifacts)
-./scripts/setup-flavor.sh full true
-
-# Windows (PowerShell)
-# Switch to opensource
-.\scripts\setup-flavor.ps1 opensource
-
-# Switch to full version
-.\scripts\setup-flavor.ps1 full
-
-# Clean setup (removes build artifacts)
-.\scripts\setup-flavor.ps1 full true
+git submodule update --remote
 ```
 
-## 🛠️ Development Workflow
-
-### Using the Build Script
-
-The `build-app.sh` / `build-app.ps1` script provides a convenient way to manage the project:
-
+**Update specific submodule:**
 ```bash
-# Linux/macOS
-# Setup a flavor
-./scripts/build-app.sh setup opensource
-
-# Build the app
-./scripts/build-app.sh build opensource --mode release --type apk
-
-# Run the app
-./scripts/build-app.sh run full --mode debug
-
-# Clean build artifacts
-./scripts/build-app.sh clean
-
-# Windows (PowerShell)
-# Setup a flavor
-.\scripts\build-app.ps1 setup opensource
-
-# Build the app
-.\scripts\build-app.ps1 build opensource --mode release --type apk
-
-# Run the app
-.\scripts\build-app.ps1 run full --mode debug
-
-# Clean build artifacts
-.\scripts\build-app.ps1 clean
+git submodule update --remote licensed_features_package
+git submodule update --remote licence_server
 ```
 
-### Manual Flutter Commands
-
+**Switch submodule to specific branch/tag:**
 ```bash
-# Run the app (using FVM)
-fvm flutter run --flavor opensource --debug
-fvm flutter run --flavor full --release
-
-# Build APK
-fvm flutter build apk --flavor opensource --release
-fvm flutter build apk --flavor full --debug
-
-# Build App Bundle
-fvm flutter build appbundle --flavor opensource --release
-fvm flutter build appbundle --flavor full --release
+cd licensed_features_package
+git checkout <branch-or-tag>
+cd ..
 ```
 
-### Documentation Generation
+### Project Structure Notes
 
-```bash
-# Generate API documentation
-fvm dart doc
+- **Main app location:** All main application code is in `teleferika.app/`
+- **Submodule locations:** Submodules are at the root level, alongside `teleferika.app/`
+- **Path dependencies:** 
+  - `teleferika.app/pubspec.yaml` references `../licensed_features_package`
+  - `licensed_features_package/pubspec.yaml` references `../teleferika.app`
 
-# Open documentation in browser
-open doc/api/index.html  # macOS
-xdg-open doc/api/index.html  # Linux
-start doc/api/index.html  # Windows
-```
+## 📚 Documentation
 
-## 🧪 Testing Your Setup
+- **Main App:** See `teleferika.app/README.md`
+- **Licensed Features:** See `licensed_features_package/README.md`
+- **License Server:** See `licence_server/README.md`
+- **Contributing:** See `teleferika.app/CONTRIBUTING.md`
+- **Documentation Guide:** See `teleferika.app/DOCUMENTATION_GUIDE.md`
 
-Run the test script to verify your development environment:
+## 🔐 License Management
 
-```bash
-# Linux/macOS
-./scripts/test-setup.sh
+For the full version:
+- License server must be running for license validation
+- See `licence_server/README.md` for server setup
+- See `licence_server/ADMIN_CLIENT_README.md` for admin interface
 
-# Windows (PowerShell)
-.\scripts\test-setup.ps1
-```
+## 🛠️ Scripts
 
-This will test both opensource and full setups and verify the configuration is correct.
+All setup and build scripts are located in `teleferika.app/scripts/`:
 
-## 📁 Project Structure
+- `setup-flavor.sh` / `setup-flavor.ps1` - Main setup script
+- `setup-opensource.sh` / `setup-opensource.ps1` - Quick setup for opensource
+- `setup-full.sh` / `setup-full.ps1` - Quick setup for full version
+- `build-app.sh` / `build-app.ps1` - Build the application
+- `generate-docs.sh` / `generate-docs.ps1` - Generate documentation
 
-```
-teleferika/
-├── lib/                          # Main application code
-│   ├── core/                     # Core utilities and configuration
-│   │   ├── app_config.dart       # App configuration and themes
-│   │   ├── logger.dart           # Logging system
-│   │   ├── project_provider.dart # Global state provider
-│   │   └── utils/                # Utility functions
-│   ├── db/                       # Database models and helpers
-│   │   ├── database_helper.dart  # SQLite database operations
-│   │   └── models/               # Data models
-│   ├── l10n/                     # Localization files
-│   ├── licensing/                # License management
-│   ├── map/                      # Map-related functionality
-│   └── ui/                       # User interface components
-│       ├── screens/              # App screens
-│       └── widgets/              # Reusable UI widgets
-├── scripts/                      # Build and setup scripts
-├── licensed_features_package/    # Licensed features (full version only)
-├── license_server/               # License server (full version only)
-├── android/                      # Android-specific configuration
-├── ios/                          # iOS-specific configuration
-├── assets/                       # App assets (images, etc.)
-├── doc/                          # Generated documentation
-│   └── api/                      # DartDoc API documentation
-├── dartdoc_options.yaml          # DartDoc configuration
-└── DOCUMENTATION_GUIDE.md        # Documentation guidelines
-```
+## 📝 Notes
 
-## 🎯 Key Features
-
-### Core Functionality
-- **GPS-based point collection** for cable crane positioning
-- **Compass integration** for directional measurements
-- **Map visualization** with OpenStreetMap integration
-- **Project management** for organizing multiple operations
-- **Data export** capabilities (full version)
-- **Offline operation** support
-
-### UI Components
-- **Status Indicators**: User feedback and notification widgets
-- **Photo Management**: Camera integration and gallery management
-- **Permission Handling**: Comprehensive permission management
-- **Map Layers**: Customizable map visualization components
-- **Form Elements**: Input fields and validation
-- **Navigation**: App bars, tabs, and navigation components
-
-### Technical Features
-- **Global State Management**: Provider-based state management
-- **Database Integration**: SQLite with automatic migrations
-- **Localization**: Multi-language support (English, Italian)
-- **Theme Support**: Light and dark theme configurations
-- **Error Handling**: Comprehensive error management
-- **Logging**: Structured logging throughout the application
-
-## 🔧 Configuration
-
-### DartDoc Configuration
-The project uses a comprehensive DartDoc setup with:
-- **Output Directory**: `doc/api/`
-- **Source Code Inclusion**: Shows actual Dart source code
-- **External Links**: Links to Flutter API documentation
-- **Categories**: Organized documentation structure
-- **Validation**: Link validation and error checking
-
-### Android Keystore Setup (for Play Store)
-
-1. Create a `keys` directory in the project root
-2. Add your keystore file: `keys/keystore.jks`
-3. Create `keys/keystore.properties`:
-
-```properties
-storePassword=your_keystore_password
-keyAlias=your_key_alias
-keyPassword=your_key_password
-storeFile=../../keys/keystore.jks
-```
+- The project structure was reorganized to separate the main app from submodules
+- All paths have been updated to reflect the new structure
+- Submodules remain at the root level for easy access and management
+- The main application is self-contained in `teleferika.app/`
 
 ## 🤝 Contributing
 
-Please refer to our [Contribution Guidelines](./CONTRIBUTING.md) for detailed information on:
-
-- Development environment setup
-- Code style and conventions
-- Documentation standards
-- Testing procedures
-- Pull request process
-
-### Documentation Guidelines
-- Follow the [DOCUMENTATION_GUIDE.md](./DOCUMENTATION_GUIDE.md)
-- Use DartDoc comments for all public APIs
-- Include usage examples and parameter documentation
-- Maintain consistent documentation style
-- Update documentation when adding new features
+Please see `teleferika.app/CONTRIBUTING.md` for contribution guidelines.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Troubleshooting
-
-### Common Issues
-
-1. **"Script not found"**
-   
-   - Make scripts executable: `chmod +x scripts/*.sh`
-
-2. **"Wrong flavor setup"**
-   
-   - Run setup again: `./scripts/setup-flavor.sh [flavor]`
-
-3. **Dependencies not updating**
-   
-   - Clean and reinstall: `./scripts/setup-flavor.sh [flavor] true`
-
-4. **Build failures**
-   
-   - Check Flutter version: `fvm flutter --version`
-   - Clean build: `fvm flutter clean && fvm flutter pub get`
-
-5. **Documentation generation issues**
-   
-   - Check DartDoc configuration: `dartdoc_options.yaml`
-   - Regenerate docs: `fvm dart doc`
-   - Verify file permissions and paths
-
-### Getting Help
-
-- Check the [Flutter documentation](https://docs.flutter.dev/)
-- Review the [Contribution Guidelines](./CONTRIBUTING.md)
-- Consult the [Documentation Guide](./DOCUMENTATION_GUIDE.md)
-- Open an issue on GitHub for bugs or feature requests
-
-## 📖 Description
-
-Teleferika is a mobile application designed to support cable crane line planning for forest operations. The application helps technicians optimize cable crane positioning to minimize environmental impact and improve operational efficiency.
-
-### Target Users
-
-- **Forest Technicians**: Professionals managing cable crane operations
-- **Surveyors**: Field workers collecting geographic data
-- **Project Managers**: Coordinating multiple forest operations
-- **Environmental Planners**: Assessing and minimizing environmental impact
-
-### Use Cases
-
-- **Cable Crane Planning**: Design optimal cable crane routes
-- **Field Data Collection**: GPS-based point collection and measurements
-- **Project Organization**: Manage multiple forest operations
-- **Data Export**: Export project data for analysis and reporting
-- **Offline Operation**: Work in remote areas without internet connectivity
-
-## 🔄 Version History
-
-See [CHANGELOG.md](./CHANGELOG.md) for a detailed history of changes and updates.
+See individual component README files for license information.

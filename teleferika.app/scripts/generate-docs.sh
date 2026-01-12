@@ -139,13 +139,14 @@ if [ "$FLAVOR" = "full" ]; then
     print_status "Generating documentation for licensed features package..."
     
     # Check if licensed features package exists
-    if [ -d "$PROJECT_ROOT/licensed_features_package" ]; then
-        if generate_docs "licensed features package" "$PROJECT_ROOT/licensed_features_package" "doc/api"; then
+    LICENSED_PACKAGE_DIR="$(dirname "$PROJECT_ROOT")/licensed_features_package"
+    if [ -d "$LICENSED_PACKAGE_DIR" ]; then
+        if generate_docs "licensed features package" "$LICENSED_PACKAGE_DIR" "doc/api"; then
             print_success "✅ Licensed features package documentation completed"
             
             # Fix viewport meta tag accessibility issues for licensed features package
             print_status "🔧 Fixing viewport meta tag accessibility issues for licensed features package..."
-            if "$SCRIPT_DIR/fix-docs-viewport.sh" "$PROJECT_ROOT/licensed_features_package/doc/api"; then
+            if "$SCRIPT_DIR/fix-docs-viewport.sh" "$LICENSED_PACKAGE_DIR/doc/api"; then
                 print_success "✅ Licensed features package viewport meta tag fixes completed"
             else
                 print_warning "⚠️ Licensed features package viewport meta tag fixes failed (continuing...)"

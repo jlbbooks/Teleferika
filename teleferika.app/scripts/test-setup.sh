@@ -134,7 +134,7 @@ if [ -d "licensed_features_package" ]; then
 else
     echo "  ⚠️ Full setup: Not available (requires access to licensed repository)"
 fi
-if [ -d "license_server" ]; then
+if [ -d "licence_server" ]; then
     echo "  ✅ License server: Available"
 else
     echo "  ⚠️ License server: Missing (setup may have failed)"
