@@ -99,7 +99,9 @@ void main() async {
     logger.info('App initialization complete');
   } catch (e, stackTrace) {
     logger.severe('Failed to initialize app', e, stackTrace);
-    rethrow;
+    // Don't rethrow - allow app to continue even if initialization fails
+    // The app UI can handle missing services gracefully (e.g., ProjectsListScreen
+    // will re-initialize LicenceService if needed)
   }
 
   // Load licensed features
