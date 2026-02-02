@@ -100,7 +100,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
                       ),
                     ),
                   Divider(),
-                  if (banner != null) banner,
+                  ?banner,
                 ],
               ),
             ),

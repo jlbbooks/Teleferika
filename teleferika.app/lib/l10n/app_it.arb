@@ -1948,5 +1948,17 @@
   "bluetooth_permission_description": "I permessi Bluetooth e posizione sono necessari per scansionare e connettersi ai dispositivi BLE.",
   "@bluetooth_permission_description": {
     "description": "Descrizione per la richiesta del permesso Bluetooth."
+  },
+  "ble_devices_section": "Dispositivi Bluetooth",
+  "@ble_devices_section": {
+    "description": "Intestazione della sezione per i dispositivi Bluetooth nelle impostazioni."
+  },
+  "ble_devices_title": "Dispositivi Bluetooth",
+  "@ble_devices_title": {
+    "description": "Titolo per la voce dispositivi Bluetooth nelle impostazioni."
+  },
+  "ble_devices_description": "Scansiona e connetti dispositivi Bluetooth Low Energy",
+  "@ble_devices_description": {
+    "description": "Descrizione per la voce dispositivi Bluetooth nelle impostazioni."
   }
 }

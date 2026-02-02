@@ -1950,5 +1950,17 @@
   "bluetooth_permission_description": "Bluetooth and location permissions are needed to scan and connect to BLE devices.",
   "@bluetooth_permission_description": {
     "description": "Description for Bluetooth permission request."
+  },
+  "ble_devices_section": "Bluetooth Devices",
+  "@ble_devices_section": {
+    "description": "Section header for Bluetooth devices in settings."
+  },
+  "ble_devices_title": "Bluetooth Devices",
+  "@ble_devices_title": {
+    "description": "Title for Bluetooth devices entry in settings."
+  },
+  "ble_devices_description": "Scan and connect to Bluetooth Low Energy devices",
+  "@ble_devices_description": {
+    "description": "Description for Bluetooth devices entry in settings."
   }
 }

@@ -1,5 +1,7 @@
 {
-  "dart.flutterRunAdditionalArgs": [],
+  "dart.flutterRunAdditionalArgs": [
+    "--device-timeout=60"
+  ],
   "dart.debugExtensionVersion": "3.50.0",
   "files.watcherExclude": {
     "**/build/**": true,

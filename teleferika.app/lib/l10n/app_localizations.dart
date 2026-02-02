@@ -2571,6 +2571,24 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Bluetooth and location permissions are needed to scan and connect to BLE devices.'**
   String get bluetooth_permission_description;
+
+  /// Section header for Bluetooth devices in settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Bluetooth Devices'**
+  String get ble_devices_section;
+
+  /// Title for Bluetooth devices entry in settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Bluetooth Devices'**
+  String get ble_devices_title;
+
+  /// Description for Bluetooth devices entry in settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan and connect to Bluetooth Low Energy devices'**
+  String get ble_devices_description;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

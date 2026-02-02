@@ -1478,4 +1478,14 @@ class SIt extends S {
   @override
   String get bluetooth_permission_description =>
       'I permessi Bluetooth e posizione sono necessari per scansionare e connettersi ai dispositivi BLE.';
+
+  @override
+  String get ble_devices_section => 'Dispositivi Bluetooth';
+
+  @override
+  String get ble_devices_title => 'Dispositivi Bluetooth';
+
+  @override
+  String get ble_devices_description =>
+      'Scansiona e connetti dispositivi Bluetooth Low Energy';
 }

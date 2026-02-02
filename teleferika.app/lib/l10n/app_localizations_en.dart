@@ -1464,4 +1464,14 @@ class SEn extends S {
   @override
   String get bluetooth_permission_description =>
       'Bluetooth and location permissions are needed to scan and connect to BLE devices.';
+
+  @override
+  String get ble_devices_section => 'Bluetooth Devices';
+
+  @override
+  String get ble_devices_title => 'Bluetooth Devices';
+
+  @override
+  String get ble_devices_description =>
+      'Scan and connect to Bluetooth Low Energy devices';
 }
