@@ -2589,6 +2589,144 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Scan and connect to Bluetooth Low Energy devices'**
   String get ble_devices_description;
+
+  /// Title for the GPS data card in BLE screen.
+  ///
+  /// In en, this message translates to:
+  /// **'GPS Data from RTK Receiver'**
+  String get bleGpsDataTitle;
+
+  /// Label for latitude in GPS data.
+  ///
+  /// In en, this message translates to:
+  /// **'Latitude'**
+  String get bleGpsLatitude;
+
+  /// Label for longitude in GPS data.
+  ///
+  /// In en, this message translates to:
+  /// **'Longitude'**
+  String get bleGpsLongitude;
+
+  /// Label for altitude in GPS data.
+  ///
+  /// In en, this message translates to:
+  /// **'Altitude'**
+  String get bleGpsAltitude;
+
+  /// Label for accuracy in GPS data.
+  ///
+  /// In en, this message translates to:
+  /// **'Accuracy'**
+  String get bleGpsAccuracy;
+
+  /// Label for satellite count in GPS data.
+  ///
+  /// In en, this message translates to:
+  /// **'Satellites'**
+  String get bleGpsSatellites;
+
+  /// Label for HDOP (Horizontal Dilution of Precision) in GPS data.
+  ///
+  /// In en, this message translates to:
+  /// **'HDOP'**
+  String get bleGpsHdop;
+
+  /// Label for fix quality in GPS data.
+  ///
+  /// In en, this message translates to:
+  /// **'Fix Quality'**
+  String get bleGpsFixQuality;
+
+  /// Label for speed in GPS data.
+  ///
+  /// In en, this message translates to:
+  /// **'Speed'**
+  String get bleGpsSpeed;
+
+  /// Label for GPS data update timestamp.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated:'**
+  String get bleGpsUpdated;
+
+  /// Fix quality text for invalid fix.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid'**
+  String get bleGpsFixQualityInvalid;
+
+  /// Fix quality text for GPS fix.
+  ///
+  /// In en, this message translates to:
+  /// **'GPS Fix'**
+  String get bleGpsFixQualityGps;
+
+  /// Fix quality text for DGPS fix.
+  ///
+  /// In en, this message translates to:
+  /// **'DGPS Fix'**
+  String get bleGpsFixQualityDgps;
+
+  /// Fix quality text for PPS fix.
+  ///
+  /// In en, this message translates to:
+  /// **'PPS Fix'**
+  String get bleGpsFixQualityPps;
+
+  /// Fix quality text for RTK fix.
+  ///
+  /// In en, this message translates to:
+  /// **'RTK Fix'**
+  String get bleGpsFixQualityRtk;
+
+  /// Fix quality text for RTK float fix.
+  ///
+  /// In en, this message translates to:
+  /// **'RTK Float'**
+  String get bleGpsFixQualityRtkFloat;
+
+  /// Fix quality text for estimated fix.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated'**
+  String get bleGpsFixQualityEstimated;
+
+  /// Fix quality text for manual fix.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual'**
+  String get bleGpsFixQualityManual;
+
+  /// Fix quality text for simulation fix.
+  ///
+  /// In en, this message translates to:
+  /// **'Simulation'**
+  String get bleGpsFixQualitySimulation;
+
+  /// Fix quality text for unknown fix quality.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown ({quality})'**
+  String bleGpsFixQualityUnknown(int quality);
+
+  /// Title for the fix quality explanation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Fix Quality Explanation'**
+  String get bleGpsFixQualityExplanationTitle;
+
+  /// Explanation text for fix quality values in the dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Fix Quality indicates the type and reliability of GPS positioning:\n\n• 0 - Invalid: No position available\n• 1 - GPS Fix: Standard GPS (3-5m accuracy)\n• 2 - DGPS Fix: Differential GPS (1-3m accuracy)\n• 3 - PPS Fix: Precise Positioning Service\n• 4 - RTK Fix: Real-Time Kinematic with fixed ambiguity (1-5cm accuracy) - BEST\n• 5 - RTK Float: RTK without fixed ambiguity (10-50cm accuracy)\n• 6 - Estimated: Estimated position\n• 7 - Manual: Manually entered\n• 8 - Simulation: Test data'**
+  String get bleGpsFixQualityExplanation;
+
+  /// Text shown in the pulsing indicator when data is being received but no position yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Receiving data...'**
+  String get bleReceivingData;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

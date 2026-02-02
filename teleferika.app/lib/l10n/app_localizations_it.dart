@@ -1488,4 +1488,76 @@ class SIt extends S {
   @override
   String get ble_devices_description =>
       'Scansiona e connetti dispositivi Bluetooth Low Energy';
+
+  @override
+  String get bleGpsDataTitle => 'Dati GPS da Ricevitore RTK';
+
+  @override
+  String get bleGpsLatitude => 'Latitudine';
+
+  @override
+  String get bleGpsLongitude => 'Longitudine';
+
+  @override
+  String get bleGpsAltitude => 'Altitudine';
+
+  @override
+  String get bleGpsAccuracy => 'Precisione';
+
+  @override
+  String get bleGpsSatellites => 'Satelliti';
+
+  @override
+  String get bleGpsHdop => 'HDOP';
+
+  @override
+  String get bleGpsFixQuality => 'Qualità Fix';
+
+  @override
+  String get bleGpsSpeed => 'Velocità';
+
+  @override
+  String get bleGpsUpdated => 'Aggiornato:';
+
+  @override
+  String get bleGpsFixQualityInvalid => 'Non valido';
+
+  @override
+  String get bleGpsFixQualityGps => 'Fix GPS';
+
+  @override
+  String get bleGpsFixQualityDgps => 'Fix DGPS';
+
+  @override
+  String get bleGpsFixQualityPps => 'Fix PPS';
+
+  @override
+  String get bleGpsFixQualityRtk => 'Fix RTK';
+
+  @override
+  String get bleGpsFixQualityRtkFloat => 'RTK Float';
+
+  @override
+  String get bleGpsFixQualityEstimated => 'Stimato';
+
+  @override
+  String get bleGpsFixQualityManual => 'Manuale';
+
+  @override
+  String get bleGpsFixQualitySimulation => 'Simulazione';
+
+  @override
+  String bleGpsFixQualityUnknown(int quality) {
+    return 'Sconosciuto ($quality)';
+  }
+
+  @override
+  String get bleGpsFixQualityExplanationTitle => 'Spiegazione Qualità Fix';
+
+  @override
+  String get bleGpsFixQualityExplanation =>
+      'La Qualità Fix indica il tipo e l\'affidabilità del posizionamento GPS:\n\n• 0 - Non valido: Nessuna posizione disponibile\n• 1 - Fix GPS: GPS standard (precisione 3-5m)\n• 2 - Fix DGPS: GPS differenziale (precisione 1-3m)\n• 3 - Fix PPS: Servizio di posizionamento preciso\n• 4 - Fix RTK: Cinematica in tempo reale con ambiguità risolta (precisione 1-5cm) - MIGLIORE\n• 5 - RTK Float: RTK senza ambiguità risolta (precisione 10-50cm)\n• 6 - Stimato: Posizione stimata\n• 7 - Manuale: Inserito manualmente\n• 8 - Simulazione: Dati di test';
+
+  @override
+  String get bleReceivingData => 'Ricezione dati...';
 }

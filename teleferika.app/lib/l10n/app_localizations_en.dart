@@ -1474,4 +1474,76 @@ class SEn extends S {
   @override
   String get ble_devices_description =>
       'Scan and connect to Bluetooth Low Energy devices';
+
+  @override
+  String get bleGpsDataTitle => 'GPS Data from RTK Receiver';
+
+  @override
+  String get bleGpsLatitude => 'Latitude';
+
+  @override
+  String get bleGpsLongitude => 'Longitude';
+
+  @override
+  String get bleGpsAltitude => 'Altitude';
+
+  @override
+  String get bleGpsAccuracy => 'Accuracy';
+
+  @override
+  String get bleGpsSatellites => 'Satellites';
+
+  @override
+  String get bleGpsHdop => 'HDOP';
+
+  @override
+  String get bleGpsFixQuality => 'Fix Quality';
+
+  @override
+  String get bleGpsSpeed => 'Speed';
+
+  @override
+  String get bleGpsUpdated => 'Updated:';
+
+  @override
+  String get bleGpsFixQualityInvalid => 'Invalid';
+
+  @override
+  String get bleGpsFixQualityGps => 'GPS Fix';
+
+  @override
+  String get bleGpsFixQualityDgps => 'DGPS Fix';
+
+  @override
+  String get bleGpsFixQualityPps => 'PPS Fix';
+
+  @override
+  String get bleGpsFixQualityRtk => 'RTK Fix';
+
+  @override
+  String get bleGpsFixQualityRtkFloat => 'RTK Float';
+
+  @override
+  String get bleGpsFixQualityEstimated => 'Estimated';
+
+  @override
+  String get bleGpsFixQualityManual => 'Manual';
+
+  @override
+  String get bleGpsFixQualitySimulation => 'Simulation';
+
+  @override
+  String bleGpsFixQualityUnknown(int quality) {
+    return 'Unknown ($quality)';
+  }
+
+  @override
+  String get bleGpsFixQualityExplanationTitle => 'Fix Quality Explanation';
+
+  @override
+  String get bleGpsFixQualityExplanation =>
+      'Fix Quality indicates the type and reliability of GPS positioning:\n\n• 0 - Invalid: No position available\n• 1 - GPS Fix: Standard GPS (3-5m accuracy)\n• 2 - DGPS Fix: Differential GPS (1-3m accuracy)\n• 3 - PPS Fix: Precise Positioning Service\n• 4 - RTK Fix: Real-Time Kinematic with fixed ambiguity (1-5cm accuracy) - BEST\n• 5 - RTK Float: RTK without fixed ambiguity (10-50cm accuracy)\n• 6 - Estimated: Estimated position\n• 7 - Manual: Manually entered\n• 8 - Simulation: Test data';
+
+  @override
+  String get bleReceivingData => 'Receiving data...';
 }

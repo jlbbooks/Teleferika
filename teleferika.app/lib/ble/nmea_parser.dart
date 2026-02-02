@@ -1,4 +1,3 @@
-
 /// NMEA sentence parser for RTK GPS receivers.
 ///
 /// Parses NMEA sentences (GPGGA, GPRMC, etc.) from RTK GPS devices
@@ -107,8 +106,12 @@ class NMEAParser {
       final dgpsStationId = fields.length > 14 ? fields[14].split('*')[0] : '';
 
       // Calculate accuracy from HDOP (rough approximation)
-      // HDOP * 3-5 meters is typical for GPS accuracy
-      final accuracy = hdop * 3.0;
+      // Multiplier varies by fix quality:
+      // - Standard GPS (fix 1): ~3-5 meters base error
+      // - DGPS (fix 2): ~1-3 meters base error
+      // - RTK Fix (fix 4): ~0.01-0.05 meters base error (centimeters)
+      // - RTK Float (fix 5): ~0.1-0.5 meters base error
+      final accuracy = _calculateAccuracyFromHdop(hdop, fixQuality);
 
       return NMEAData(
         latitude: latitude,
@@ -136,9 +139,14 @@ class NMEAParser {
     }
 
     try {
-      // Time (field 1)
+      // Time (field 1) - UTC time
       final timeStr = fields[1];
-      final time = _parseTime(timeStr);
+
+      // Date (field 9) - UTC date (ddmmyy)
+      final dateStr = fields[9];
+
+      // Combine date and time into UTC DateTime, then convert to local
+      final time = _parseTimeAndDate(timeStr, dateStr);
 
       // Status (field 2) - A = valid, V = invalid
       final status = fields[2];
@@ -164,8 +172,7 @@ class NMEAParser {
       // Course over ground (field 8) - degrees
       final course = double.tryParse(fields[8]) ?? 0.0;
 
-      // Date (field 9) - ddmmyy
-      final dateStr = fields[9];
+      // Parse date separately for the date field (for compatibility)
       final date = _parseDate(dateStr);
 
       // Magnetic variation (fields 10-11)
@@ -219,6 +226,7 @@ class NMEAParser {
   }
 
   /// Parses time from NMEA format (hhmmss.ss) to DateTime.
+  /// NMEA time is in UTC, so we create a UTC DateTime and convert to local.
   static DateTime? _parseTime(String timeStr) {
     if (timeStr.length < 6) return null;
 
@@ -228,7 +236,52 @@ class NMEAParser {
       final second = int.parse(timeStr.substring(4, 6));
 
       final now = DateTime.now();
-      return DateTime(now.year, now.month, now.day, hour, minute, second);
+      // Create UTC DateTime (NMEA time is always UTC)
+      final utcDateTime = DateTime.utc(
+        now.year,
+        now.month,
+        now.day,
+        hour,
+        minute,
+        second,
+      );
+      // Convert to local time
+      return utcDateTime.toLocal();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Parses time and date from NMEA format and combines them into a UTC DateTime,
+  /// then converts to local time.
+  /// NMEA time and date are always in UTC.
+  static DateTime? _parseTimeAndDate(String timeStr, String dateStr) {
+    if (timeStr.length < 6) return null;
+
+    try {
+      final hour = int.parse(timeStr.substring(0, 2));
+      final minute = int.parse(timeStr.substring(2, 4));
+      final second = int.parse(timeStr.substring(4, 6));
+
+      int year, month, day;
+
+      if (dateStr.isNotEmpty && dateStr.length >= 6) {
+        // Use date from NMEA sentence
+        day = int.parse(dateStr.substring(0, 2));
+        month = int.parse(dateStr.substring(2, 4));
+        year = 2000 + int.parse(dateStr.substring(4, 6));
+      } else {
+        // Fallback to current date if date not available
+        final now = DateTime.now();
+        year = now.year;
+        month = now.month;
+        day = now.day;
+      }
+
+      // Create UTC DateTime (NMEA time/date are always UTC)
+      final utcDateTime = DateTime.utc(year, month, day, hour, minute, second);
+      // Convert to local time
+      return utcDateTime.toLocal();
     } catch (e) {
       return null;
     }
@@ -243,9 +296,46 @@ class NMEAParser {
       final month = int.parse(dateStr.substring(2, 4));
       final year = 2000 + int.parse(dateStr.substring(4, 6));
 
-      return DateTime(year, month, day);
+      // NMEA dates are UTC, create UTC DateTime and convert to local
+      final utcDateTime = DateTime.utc(year, month, day);
+      return utcDateTime.toLocal();
     } catch (e) {
       return null;
+    }
+  }
+
+  /// Calculates accuracy from HDOP based on fix quality.
+  ///
+  /// The multiplier varies significantly by fix type:
+  /// - Standard GPS (fix 1): ~3-5 meters base error
+  /// - DGPS (fix 2): ~1-3 meters base error
+  /// - RTK Fix (fix 4): ~0.01-0.05 meters base error (centimeters)
+  /// - RTK Float (fix 5): ~0.1-0.5 meters base error
+  ///
+  /// Returns accuracy in meters.
+  static double _calculateAccuracyFromHdop(double hdop, int fixQuality) {
+    // Base error multipliers (in meters) for different fix qualities
+    switch (fixQuality) {
+      case 0: // Invalid
+        return hdop * 10.0; // Very poor, assume worst case
+      case 1: // GPS Fix (autonomous)
+        return hdop * 3.0; // Standard GPS: 3-5m base error
+      case 2: // DGPS Fix
+        return hdop * 1.5; // DGPS: 1-3m base error
+      case 3: // PPS Fix
+        return hdop * 2.0; // Precise Positioning Service
+      case 4: // RTK Fix
+        return hdop * 0.05; // RTK: centimeter-level (0.01-0.05m base)
+      case 5: // RTK Float
+        return hdop * 0.2; // RTK Float: decimeter-level (0.1-0.5m base)
+      case 6: // Estimated
+        return hdop * 5.0; // Estimated: worse than standard GPS
+      case 7: // Manual
+        return hdop * 10.0; // Manual: unknown quality
+      case 8: // Simulation
+        return hdop * 1.0; // Simulation: assume good quality
+      default:
+        return hdop * 3.0; // Default to standard GPS
     }
   }
 }

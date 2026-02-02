@@ -1960,5 +1960,103 @@
   "ble_devices_description": "Scansiona e connetti dispositivi Bluetooth Low Energy",
   "@ble_devices_description": {
     "description": "Descrizione per la voce dispositivi Bluetooth nelle impostazioni."
+  },
+  "bleGpsDataTitle": "Dati GPS da Ricevitore RTK",
+  "@bleGpsDataTitle": {
+    "description": "Titolo per la scheda dati GPS nella schermata BLE."
+  },
+  "bleGpsLatitude": "Latitudine",
+  "@bleGpsLatitude": {
+    "description": "Etichetta per la latitudine nei dati GPS."
+  },
+  "bleGpsLongitude": "Longitudine",
+  "@bleGpsLongitude": {
+    "description": "Etichetta per la longitudine nei dati GPS."
+  },
+  "bleGpsAltitude": "Altitudine",
+  "@bleGpsAltitude": {
+    "description": "Etichetta per l'altitudine nei dati GPS."
+  },
+  "bleGpsAccuracy": "Precisione",
+  "@bleGpsAccuracy": {
+    "description": "Etichetta per la precisione nei dati GPS."
+  },
+  "bleGpsSatellites": "Satelliti",
+  "@bleGpsSatellites": {
+    "description": "Etichetta per il conteggio satelliti nei dati GPS."
+  },
+  "bleGpsHdop": "HDOP",
+  "@bleGpsHdop": {
+    "description": "Etichetta per HDOP (Diluizione Orizzontale di Precisione) nei dati GPS."
+  },
+  "bleGpsFixQuality": "Qualità Fix",
+  "@bleGpsFixQuality": {
+    "description": "Etichetta per la qualità del fix nei dati GPS."
+  },
+  "bleGpsSpeed": "Velocità",
+  "@bleGpsSpeed": {
+    "description": "Etichetta per la velocità nei dati GPS."
+  },
+  "bleGpsUpdated": "Aggiornato:",
+  "@bleGpsUpdated": {
+    "description": "Etichetta per il timestamp di aggiornamento dati GPS."
+  },
+  "bleGpsFixQualityInvalid": "Non valido",
+  "@bleGpsFixQualityInvalid": {
+    "description": "Testo qualità fix per fix non valido."
+  },
+  "bleGpsFixQualityGps": "Fix GPS",
+  "@bleGpsFixQualityGps": {
+    "description": "Testo qualità fix per fix GPS."
+  },
+  "bleGpsFixQualityDgps": "Fix DGPS",
+  "@bleGpsFixQualityDgps": {
+    "description": "Testo qualità fix per fix DGPS."
+  },
+  "bleGpsFixQualityPps": "Fix PPS",
+  "@bleGpsFixQualityPps": {
+    "description": "Testo qualità fix per fix PPS."
+  },
+  "bleGpsFixQualityRtk": "Fix RTK",
+  "@bleGpsFixQualityRtk": {
+    "description": "Testo qualità fix per fix RTK."
+  },
+  "bleGpsFixQualityRtkFloat": "RTK Float",
+  "@bleGpsFixQualityRtkFloat": {
+    "description": "Testo qualità fix per fix RTK float."
+  },
+  "bleGpsFixQualityEstimated": "Stimato",
+  "@bleGpsFixQualityEstimated": {
+    "description": "Testo qualità fix per fix stimato."
+  },
+  "bleGpsFixQualityManual": "Manuale",
+  "@bleGpsFixQualityManual": {
+    "description": "Testo qualità fix per fix manuale."
+  },
+  "bleGpsFixQualitySimulation": "Simulazione",
+  "@bleGpsFixQualitySimulation": {
+    "description": "Testo qualità fix per fix simulazione."
+  },
+  "bleGpsFixQualityUnknown": "Sconosciuto ({quality})",
+  "@bleGpsFixQualityUnknown": {
+    "description": "Testo qualità fix per qualità fix sconosciuta.",
+    "placeholders": {
+      "quality": {
+        "type": "int",
+        "example": "9"
+      }
+    }
+  },
+  "bleGpsFixQualityExplanationTitle": "Spiegazione Qualità Fix",
+  "@bleGpsFixQualityExplanationTitle": {
+    "description": "Titolo per il dialogo di spiegazione qualità fix."
+  },
+  "bleGpsFixQualityExplanation": "La Qualità Fix indica il tipo e l'affidabilità del posizionamento GPS:\n\n• 0 - Non valido: Nessuna posizione disponibile\n• 1 - Fix GPS: GPS standard (precisione 3-5m)\n• 2 - Fix DGPS: GPS differenziale (precisione 1-3m)\n• 3 - Fix PPS: Servizio di posizionamento preciso\n• 4 - Fix RTK: Cinematica in tempo reale con ambiguità risolta (precisione 1-5cm) - MIGLIORE\n• 5 - RTK Float: RTK senza ambiguità risolta (precisione 10-50cm)\n• 6 - Stimato: Posizione stimata\n• 7 - Manuale: Inserito manualmente\n• 8 - Simulazione: Dati di test",
+  "@bleGpsFixQualityExplanation": {
+    "description": "Testo di spiegazione per i valori qualità fix nel dialogo."
+  },
+  "bleReceivingData": "Ricezione dati...",
+  "@bleReceivingData": {
+    "description": "Testo mostrato nell'indicatore pulsante quando i dati vengono ricevuti ma non c'è ancora posizione."
   }
 }

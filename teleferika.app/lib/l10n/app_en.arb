@@ -1962,5 +1962,103 @@
   "ble_devices_description": "Scan and connect to Bluetooth Low Energy devices",
   "@ble_devices_description": {
     "description": "Description for Bluetooth devices entry in settings."
+  },
+  "bleGpsDataTitle": "GPS Data from RTK Receiver",
+  "@bleGpsDataTitle": {
+    "description": "Title for the GPS data card in BLE screen."
+  },
+  "bleGpsLatitude": "Latitude",
+  "@bleGpsLatitude": {
+    "description": "Label for latitude in GPS data."
+  },
+  "bleGpsLongitude": "Longitude",
+  "@bleGpsLongitude": {
+    "description": "Label for longitude in GPS data."
+  },
+  "bleGpsAltitude": "Altitude",
+  "@bleGpsAltitude": {
+    "description": "Label for altitude in GPS data."
+  },
+  "bleGpsAccuracy": "Accuracy",
+  "@bleGpsAccuracy": {
+    "description": "Label for accuracy in GPS data."
+  },
+  "bleGpsSatellites": "Satellites",
+  "@bleGpsSatellites": {
+    "description": "Label for satellite count in GPS data."
+  },
+  "bleGpsHdop": "HDOP",
+  "@bleGpsHdop": {
+    "description": "Label for HDOP (Horizontal Dilution of Precision) in GPS data."
+  },
+  "bleGpsFixQuality": "Fix Quality",
+  "@bleGpsFixQuality": {
+    "description": "Label for fix quality in GPS data."
+  },
+  "bleGpsSpeed": "Speed",
+  "@bleGpsSpeed": {
+    "description": "Label for speed in GPS data."
+  },
+  "bleGpsUpdated": "Updated:",
+  "@bleGpsUpdated": {
+    "description": "Label for GPS data update timestamp."
+  },
+  "bleGpsFixQualityInvalid": "Invalid",
+  "@bleGpsFixQualityInvalid": {
+    "description": "Fix quality text for invalid fix."
+  },
+  "bleGpsFixQualityGps": "GPS Fix",
+  "@bleGpsFixQualityGps": {
+    "description": "Fix quality text for GPS fix."
+  },
+  "bleGpsFixQualityDgps": "DGPS Fix",
+  "@bleGpsFixQualityDgps": {
+    "description": "Fix quality text for DGPS fix."
+  },
+  "bleGpsFixQualityPps": "PPS Fix",
+  "@bleGpsFixQualityPps": {
+    "description": "Fix quality text for PPS fix."
+  },
+  "bleGpsFixQualityRtk": "RTK Fix",
+  "@bleGpsFixQualityRtk": {
+    "description": "Fix quality text for RTK fix."
+  },
+  "bleGpsFixQualityRtkFloat": "RTK Float",
+  "@bleGpsFixQualityRtkFloat": {
+    "description": "Fix quality text for RTK float fix."
+  },
+  "bleGpsFixQualityEstimated": "Estimated",
+  "@bleGpsFixQualityEstimated": {
+    "description": "Fix quality text for estimated fix."
+  },
+  "bleGpsFixQualityManual": "Manual",
+  "@bleGpsFixQualityManual": {
+    "description": "Fix quality text for manual fix."
+  },
+  "bleGpsFixQualitySimulation": "Simulation",
+  "@bleGpsFixQualitySimulation": {
+    "description": "Fix quality text for simulation fix."
+  },
+  "bleGpsFixQualityUnknown": "Unknown ({quality})",
+  "@bleGpsFixQualityUnknown": {
+    "description": "Fix quality text for unknown fix quality.",
+    "placeholders": {
+      "quality": {
+        "type": "int",
+        "example": "9"
+      }
+    }
+  },
+  "bleGpsFixQualityExplanationTitle": "Fix Quality Explanation",
+  "@bleGpsFixQualityExplanationTitle": {
+    "description": "Title for the fix quality explanation dialog."
+  },
+  "bleGpsFixQualityExplanation": "Fix Quality indicates the type and reliability of GPS positioning:\n\n• 0 - Invalid: No position available\n• 1 - GPS Fix: Standard GPS (3-5m accuracy)\n• 2 - DGPS Fix: Differential GPS (1-3m accuracy)\n• 3 - PPS Fix: Precise Positioning Service\n• 4 - RTK Fix: Real-Time Kinematic with fixed ambiguity (1-5cm accuracy) - BEST\n• 5 - RTK Float: RTK without fixed ambiguity (10-50cm accuracy)\n• 6 - Estimated: Estimated position\n• 7 - Manual: Manually entered\n• 8 - Simulation: Test data",
+  "@bleGpsFixQualityExplanation": {
+    "description": "Explanation text for fix quality values in the dialog."
+  },
+  "bleReceivingData": "Receiving data...",
+  "@bleReceivingData": {
+    "description": "Text shown in the pulsing indicator when data is being received but no position yet."
   }
 }

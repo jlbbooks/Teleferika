@@ -25,7 +25,8 @@ class BLEScreen extends StatefulWidget {
   State<BLEScreen> createState() => _BLEScreenState();
 }
 
-class _BLEScreenState extends State<BLEScreen> {
+class _BLEScreenState extends State<BLEScreen>
+    with SingleTickerProviderStateMixin {
   final Logger logger = Logger('BLEScreen');
   final BLEService _bleService = BLEService();
 
@@ -40,11 +41,30 @@ class _BLEScreenState extends State<BLEScreen> {
   // GPS data from RTK receiver
   Position? _currentPosition;
   NMEAData? _currentNmeaData;
+  bool _hasReceivedFirstPosition = false;
+  DateTime? _lastDataReceivedTime;
+  late AnimationController _pulseAnimationController;
+  late Animation<double> _pulseAnimation;
 
   @override
   void initState() {
     super.initState();
     _setupSubscriptions();
+    _setupPulseAnimation();
+  }
+
+  void _setupPulseAnimation() {
+    _pulseAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
+    _pulseAnimation = Tween<double>(begin: 0.4, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _pulseAnimationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+    _pulseAnimationController.repeat(reverse: true);
   }
 
   void _setupSubscriptions() {
@@ -59,7 +79,22 @@ class _BLEScreenState extends State<BLEScreen> {
     _connectionStateSubscription = _bleService.connectionState.listen((state) {
       if (mounted) {
         setState(() {
+          final wasConnected = _connectionState == BLEConnectionState.connected;
           _connectionState = state;
+          // Reset position tracking when disconnecting
+          if (state == BLEConnectionState.disconnected) {
+            _hasReceivedFirstPosition = false;
+            _lastDataReceivedTime = null;
+            _currentPosition = null;
+            _currentNmeaData = null;
+          } else if (state == BLEConnectionState.connected && !wasConnected) {
+            // Set initial timestamp when first connected to show indicator immediately
+            _lastDataReceivedTime = DateTime.now();
+            _hasReceivedFirstPosition = false; // Ensure this is false
+            if (const bool.fromEnvironment('dart.vm.product') == false) {
+              logger.info('BLEScreen: Connected - showing receiving indicator');
+            }
+          }
         });
       }
     });
@@ -69,6 +104,8 @@ class _BLEScreenState extends State<BLEScreen> {
       if (mounted) {
         setState(() {
           _currentPosition = position;
+          _hasReceivedFirstPosition =
+              true; // Mark that we've received first position
         });
         // Only log in debug mode to reduce production logging
         if (const bool.fromEnvironment('dart.vm.product') == false) {
@@ -85,6 +122,8 @@ class _BLEScreenState extends State<BLEScreen> {
       if (mounted) {
         setState(() {
           _currentNmeaData = nmeaData;
+          // Update timestamp when we receive data (for pulsing indicator)
+          _lastDataReceivedTime = DateTime.now();
         });
         // Only log in debug mode to reduce production logging
         if (const bool.fromEnvironment('dart.vm.product') == false) {
@@ -100,6 +139,7 @@ class _BLEScreenState extends State<BLEScreen> {
     _connectionStateSubscription?.cancel();
     _gpsDataSubscription?.cancel();
     _nmeaDataSubscription?.cancel();
+    _pulseAnimationController.dispose();
     _bleService.dispose();
     super.dispose();
   }
@@ -177,6 +217,13 @@ class _BLEScreenState extends State<BLEScreen> {
     try {
       await _bleService.disconnectDevice();
       if (mounted) {
+        setState(() {
+          // Reset position tracking state on disconnect
+          _hasReceivedFirstPosition = false;
+          _lastDataReceivedTime = null;
+          _currentPosition = null;
+          _currentNmeaData = null;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -222,11 +269,19 @@ class _BLEScreenState extends State<BLEScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(s?.bleScreenTitle ?? 'Bluetooth Devices')),
       body: SafeArea(
-        child: PermissionHandlerWidget(
-          requiredPermissions: [PermissionType.bluetooth],
-          onPermissionsResult: _handlePermissionsResult,
-          showOverlay: true,
-          child: _buildContent(s),
+        child: Stack(
+          children: [
+            PermissionHandlerWidget(
+              requiredPermissions: [PermissionType.bluetooth],
+              onPermissionsResult: _handlePermissionsResult,
+              showOverlay: true,
+              child: _buildContent(s),
+            ),
+            // Show pulsing indicator when connected but no position received yet
+            if (_connectionState == BLEConnectionState.connected &&
+                !_hasReceivedFirstPosition)
+              _buildDataReceivingIndicator(s),
+          ],
         ),
       ),
     );
@@ -612,12 +667,51 @@ class _BLEScreenState extends State<BLEScreen> {
                   s?.bleGpsHdop ?? 'HDOP',
                   _currentNmeaData!.hdop!.toStringAsFixed(2),
                 ),
-              _buildGpsDataRow(
-                s?.bleGpsFixQuality ?? 'Fix Quality',
-                _getFixQualityText(_currentNmeaData!.fixQuality, s),
-                color: _getFixQualityColor(
-                  _currentNmeaData!.fixQuality,
-                  isDarkMode,
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              s?.bleGpsFixQuality ?? 'Fix Quality',
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(fontWeight: FontWeight.w500),
+                            ),
+                            const SizedBox(width: 4),
+                            GestureDetector(
+                              onTap: () => _showFixQualityExplanation(s),
+                              child: Icon(
+                                Icons.help_outline,
+                                size: 16,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          _getFixQualityText(_currentNmeaData!.fixQuality, s),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: _getFixQualityColor(
+                                  _currentNmeaData!.fixQuality,
+                                  isDarkMode,
+                                ),
+                              ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    _buildFixQualityBars(
+                      _currentNmeaData!.fixQuality,
+                      isDarkMode,
+                    ),
+                  ],
                 ),
               ),
               if (_currentNmeaData!.speed != null)
@@ -704,10 +798,99 @@ class _BLEScreenState extends State<BLEScreen> {
   }
 
   Color _getFixQualityColor(int quality, bool isDarkMode) {
-    if (quality > 0) {
+    // Only RTK Fix (quality 4) gets green, others get appropriate colors
+    if (quality == 4) {
       return isDarkMode ? Colors.green.shade300 : Colors.green;
+    } else if (quality == 5) {
+      // RTK Float - light green/yellow-green
+      return isDarkMode
+          ? Colors.lightGreen.shade300
+          : Colors.lightGreen.shade700;
+    } else if (quality > 0) {
+      // Other valid fixes - orange/yellow
+      return isDarkMode ? Colors.orange.shade300 : Colors.orange;
     } else {
+      // Invalid - red
       return isDarkMode ? Colors.red.shade300 : Colors.red;
+    }
+  }
+
+  /// Builds a visual bar indicator for fix quality (0-5).
+  /// Colors progress from red (0) to green (5).
+  /// Note: RTK Fix (quality 4) is mapped to bar 5 (best), RTK Float (quality 5) to bar 4.
+  Widget _buildFixQualityBars(int quality, bool isDarkMode) {
+    // Clamp quality to 0-5 range for display
+    final displayQuality = quality.clamp(0, 5);
+    // Map quality to bar index (swap 4 and 5 so RTK Fix is highest)
+    final barIndex = _qualityToBarIndex(displayQuality);
+
+    return Row(
+      children: List.generate(6, (index) {
+        // Index 0-5 represents bars, with 5 being the best (RTK Fix)
+        final isActive = index <= barIndex;
+        final barColor = _getBarColor(index, isActive, isDarkMode);
+
+        return Expanded(
+          child: Container(
+            margin: EdgeInsets.only(right: index < 5 ? 4.0 : 0),
+            height: 8,
+            decoration: BoxDecoration(
+              color: barColor,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  /// Maps fix quality value to bar index.
+  /// Swaps quality 4 (RTK Fix) and 5 (RTK Float) so RTK Fix appears as highest bar.
+  int _qualityToBarIndex(int quality) {
+    switch (quality) {
+      case 0: // Invalid
+        return 0;
+      case 1: // GPS Fix
+        return 1;
+      case 2: // DGPS Fix
+        return 2;
+      case 3: // PPS Fix
+        return 3;
+      case 4: // RTK Fix - map to bar 5 (best)
+        return 5;
+      case 5: // RTK Float - map to bar 4
+        return 4;
+      default:
+        return quality.clamp(0, 5);
+    }
+  }
+
+  /// Gets the color for a specific bar based on its index and active state.
+  Color _getBarColor(int index, bool isActive, bool isDarkMode) {
+    if (!isActive) {
+      // Inactive bars - gray
+      return isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300;
+    }
+
+    // Active bars - progressive colors from red to green
+    // Bar 5 is RTK Fix (best), Bar 4 is RTK Float
+    switch (index) {
+      case 0: // Invalid
+        return isDarkMode ? Colors.red.shade700 : Colors.red;
+      case 1: // GPS Fix
+        return isDarkMode ? Colors.orange.shade700 : Colors.orange;
+      case 2: // DGPS Fix
+        return isDarkMode ? Colors.orange.shade400 : Colors.deepOrange;
+      case 3: // PPS Fix
+        return isDarkMode ? Colors.yellow.shade700 : Colors.amber;
+      case 4: // RTK Float - light green (quality 5)
+        return isDarkMode
+            ? Colors.lightGreen.shade300
+            : Colors.lightGreen.shade700;
+      case 5: // RTK Fix - green (quality 4, best)
+        return isDarkMode ? Colors.green.shade300 : Colors.green;
+      default:
+        return isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300;
     }
   }
 
@@ -735,5 +918,107 @@ class _BLEScreenState extends State<BLEScreen> {
 
     // Return both absolute and relative time
     return '$timeStr ($relativeStr)';
+  }
+
+  /// Shows an explanation dialog about fix quality values.
+  void _showFixQualityExplanation(S? s) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          s?.bleGpsFixQualityExplanationTitle ?? 'Fix Quality Explanation',
+        ),
+        content: SingleChildScrollView(
+          child: Text(
+            s?.bleGpsFixQualityExplanation ??
+                'Fix Quality indicates the type and reliability of GPS positioning...',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(s?.buttonCancel ?? 'Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Builds a pulsing indicator overlay that shows when data is being received
+  /// but no position has been received yet.
+  Widget _buildDataReceivingIndicator(S? s) {
+    // Always show when connected and no position received yet
+    // The timestamp check is just to keep it "fresh" - if no data for 15+ seconds,
+    // connection might be stale, but we'll still show it initially
+    final timeSinceLastData = _lastDataReceivedTime != null
+        ? DateTime.now().difference(_lastDataReceivedTime!)
+        : const Duration(seconds: 0);
+
+    // Only hide if we've been connected for a while with no data at all
+    // (more than 15 seconds since connection and no NMEA data ever received)
+    if (_lastDataReceivedTime != null &&
+        timeSinceLastData.inSeconds > 15 &&
+        _currentNmeaData == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Positioned(
+      top: 16,
+      right: 16,
+      child: AnimatedBuilder(
+        animation: _pulseAnimation,
+        builder: (context, child) {
+          return IgnorePointer(
+            child: Opacity(
+              opacity: _pulseAnimation.value,
+              child: Material(
+                elevation: 4,
+                color: Colors.transparent,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Theme.of(context).colorScheme.primary
+                            .withOpacity(0.4 * _pulseAnimation.value),
+                        blurRadius: 12 * _pulseAnimation.value,
+                        spreadRadius: 3 * _pulseAnimation.value,
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        s?.bleReceivingData ?? 'Receiving data...',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 }
