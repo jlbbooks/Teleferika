@@ -24,6 +24,9 @@ enum PermissionType {
 
   /// Storage permission for file system access.
   storage,
+
+  /// Bluetooth permission for BLE scanning and connection.
+  bluetooth,
 }
 
 /// Permission handling widget for managing app permissions.
@@ -253,6 +256,9 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
         case PermissionType.storage:
           granted = await _requestStoragePermission();
           break;
+        case PermissionType.bluetooth:
+          granted = await _requestBluetoothPermission();
+          break;
       }
 
       results[permissionType] = granted;
@@ -310,6 +316,50 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
     }
 
     return status.isGranted;
+  }
+
+  Future<bool> _requestBluetoothPermission() async {
+    // On Android 12+, we need BLUETOOTH_SCAN and BLUETOOTH_CONNECT
+    // On older Android, we need location permission for BLE scanning
+    // On iOS, Bluetooth permissions are handled automatically
+
+    // Check location permission first (required for BLE scanning on Android)
+    LocationPermission locationPermission = await Geolocator.checkPermission();
+    if (locationPermission == LocationPermission.denied) {
+      locationPermission = await Geolocator.requestPermission();
+    }
+
+    final locationGranted =
+        locationPermission == LocationPermission.whileInUse ||
+        locationPermission == LocationPermission.always;
+
+    if (!locationGranted) {
+      return false;
+    }
+
+    // Check Bluetooth permissions (Android 12+)
+    try {
+      final bluetoothScanStatus = await Permission.bluetoothScan.status;
+      final bluetoothConnectStatus = await Permission.bluetoothConnect.status;
+
+      if (_isRetrying ||
+          bluetoothScanStatus.isDenied ||
+          bluetoothConnectStatus.isDenied) {
+        await Permission.bluetoothScan.request();
+        await Permission.bluetoothConnect.request();
+
+        // Check again after request
+        final scanGranted = (await Permission.bluetoothScan.status).isGranted;
+        final connectGranted =
+            (await Permission.bluetoothConnect.status).isGranted;
+        return scanGranted && connectGranted;
+      }
+
+      return bluetoothScanStatus.isGranted && bluetoothConnectStatus.isGranted;
+    } catch (e) {
+      // If Bluetooth permissions don't exist (older Android), location is sufficient
+      return locationGranted;
+    }
   }
 
   bool get _allPermissionsGranted {
@@ -479,6 +529,14 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
             s?.storage_permission_description ??
             "Storage permission is needed to save files.";
         color = Colors.teal;
+        break;
+      case PermissionType.bluetooth:
+        icon = Icons.bluetooth_outlined;
+        title = s?.bluetooth_permission_title ?? 'Bluetooth Permission';
+        description =
+            s?.bluetooth_permission_description ??
+            "Bluetooth and location permissions are needed to scan and connect to BLE devices.";
+        color = Colors.blue;
         break;
     }
 

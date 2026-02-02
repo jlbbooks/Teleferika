@@ -7,7 +7,7 @@
   },
   "dart.showDartDeveloperLogs": false,
   "dart.openDevTools": "flutter",
-  "dart.flutterSdkPath": ".fvm/versions/3.38.6",
+  "dart.flutterSdkPath": ".fvm/versions/3.38.9",
   "java.compile.nullAnalysis.mode": "automatic",
   "java.configuration.updateBuildConfiguration": "interactive"
 }

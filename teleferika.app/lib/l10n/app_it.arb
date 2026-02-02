@@ -1800,5 +1800,153 @@
   "show_all_projects_on_map_description": "Quando abilitato, tutti i progetti saranno visualizzati sulla mappa come marcatori e linee grigie. Quando disabilitato, viene mostrato solo il progetto corrente.",
   "@show_all_projects_on_map_description": {
     "description": "Descrizione per l'impostazione mostra tutti i progetti sulla mappa."
+  },
+  "bleScreenTitle": "Dispositivi Bluetooth",
+  "@bleScreenTitle": {
+    "description": "Titolo per la schermata BLE."
+  },
+  "bleButtonStartScan": "Avvia Scansione",
+  "@bleButtonStartScan": {
+    "description": "Etichetta del pulsante per avviare la scansione BLE."
+  },
+  "bleButtonStopScan": "Ferma Scansione",
+  "@bleButtonStopScan": {
+    "description": "Etichetta del pulsante per fermare la scansione BLE."
+  },
+  "bleButtonConnect": "Connetti",
+  "@bleButtonConnect": {
+    "description": "Etichetta del pulsante per connettersi a un dispositivo BLE."
+  },
+  "bleButtonDisconnect": "Disconnetti",
+  "@bleButtonDisconnect": {
+    "description": "Etichetta del pulsante per disconnettersi da un dispositivo BLE."
+  },
+  "bleButtonRequestMtu": "Richiedi MTU",
+  "@bleButtonRequestMtu": {
+    "description": "Etichetta del pulsante per richiedere un MTU più grande."
+  },
+  "bleScanStarted": "Scansione avviata...",
+  "@bleScanStarted": {
+    "description": "Messaggio mostrato quando inizia la scansione BLE."
+  },
+  "bleScanStopped": "Scansione fermata.",
+  "@bleScanStopped": {
+    "description": "Messaggio mostrato quando la scansione BLE si ferma."
+  },
+  "bleScanError": "Errore nell'avvio della scansione",
+  "@bleScanError": {
+    "description": "Messaggio di errore quando la scansione BLE non riesce ad avviarsi."
+  },
+  "bleConnecting": "Connessione a {deviceName}...",
+  "@bleConnecting": {
+    "description": "Messaggio mostrato quando ci si connette a un dispositivo BLE.",
+    "placeholders": {
+      "deviceName": {
+        "type": "String",
+        "example": "Il Mio Dispositivo"
+      }
+    }
+  },
+  "bleConnectionError": "Errore di connessione",
+  "@bleConnectionError": {
+    "description": "Messaggio di errore quando la connessione BLE fallisce."
+  },
+  "bleDisconnected": "Dispositivo disconnesso.",
+  "@bleDisconnected": {
+    "description": "Messaggio mostrato quando il dispositivo BLE si disconnette."
+  },
+  "bleMtuRequested": "MTU richiesto.",
+  "@bleMtuRequested": {
+    "description": "Messaggio mostrato quando viene inviata la richiesta MTU."
+  },
+  "bleConnectionStatus": "Stato Connessione",
+  "@bleConnectionStatus": {
+    "description": "Etichetta per la sezione stato connessione."
+  },
+  "bleStatusConnected": "Connesso",
+  "@bleStatusConnected": {
+    "description": "Testo di stato quando il dispositivo BLE è connesso."
+  },
+  "bleStatusConnecting": "Connessione in corso...",
+  "@bleStatusConnecting": {
+    "description": "Testo di stato quando ci si connette al dispositivo BLE."
+  },
+  "bleStatusError": "Errore di Connessione",
+  "@bleStatusError": {
+    "description": "Testo di stato quando si verifica un errore di connessione BLE."
+  },
+  "bleStatusWaiting": "In attesa...",
+  "@bleStatusWaiting": {
+    "description": "Testo di stato quando l'operazione BLE è in attesa."
+  },
+  "bleStatusDisconnected": "Disconnesso",
+  "@bleStatusDisconnected": {
+    "description": "Testo di stato quando il dispositivo BLE è disconnesso."
+  },
+  "bleConnectedDevice": "Dispositivo: {deviceName}",
+  "@bleConnectedDevice": {
+    "description": "Etichetta che mostra il nome del dispositivo connesso.",
+    "placeholders": {
+      "deviceName": {
+        "type": "String",
+        "example": "Il Mio Dispositivo"
+      }
+    }
+  },
+  "bleNoDevicesFound": "Nessun dispositivo trovato.\nAvvia la scansione per scoprire i dispositivi.",
+  "@bleNoDevicesFound": {
+    "description": "Messaggio mostrato quando non vengono trovati dispositivi BLE."
+  },
+  "bleUnknownDevice": "Dispositivo Sconosciuto",
+  "@bleUnknownDevice": {
+    "description": "Etichetta per dispositivi senza nome."
+  },
+  "bleDeviceDetails": "Dettagli Dispositivo",
+  "@bleDeviceDetails": {
+    "description": "Titolo per il dialogo dei dettagli del dispositivo."
+  },
+  "bleDeviceName": "Nome",
+  "@bleDeviceName": {
+    "description": "Etichetta per il campo nome dispositivo."
+  },
+  "bleDeviceId": "ID Dispositivo",
+  "@bleDeviceId": {
+    "description": "Etichetta per il campo ID dispositivo."
+  },
+  "bleRssi": "RSSI",
+  "@bleRssi": {
+    "description": "Etichetta per il campo RSSI (forza del segnale)."
+  },
+  "bleAdvertisedName": "Nome Pubblicizzato",
+  "@bleAdvertisedName": {
+    "description": "Etichetta per il campo nome pubblicizzato."
+  },
+  "bleConnectable": "Connessibile",
+  "@bleConnectable": {
+    "description": "Etichetta per il campo stato connessibile."
+  },
+  "bleServiceUuids": "UUID Servizi:",
+  "@bleServiceUuids": {
+    "description": "Etichetta per l'elenco degli UUID dei servizi."
+  },
+  "bleNotAvailable": "N/D",
+  "@bleNotAvailable": {
+    "description": "Testo mostrato quando un valore non è disponibile."
+  },
+  "bleYes": "Sì",
+  "@bleYes": {
+    "description": "Testo per valore sì/vero."
+  },
+  "bleNo": "No",
+  "@bleNo": {
+    "description": "Testo per valore no/falso."
+  },
+  "bluetooth_permission_title": "Permesso Bluetooth",
+  "@bluetooth_permission_title": {
+    "description": "Titolo per la richiesta del permesso Bluetooth."
+  },
+  "bluetooth_permission_description": "I permessi Bluetooth e posizione sono necessari per scansionare e connettersi ai dispositivi BLE.",
+  "@bluetooth_permission_description": {
+    "description": "Descrizione per la richiesta del permesso Bluetooth."
   }
 }

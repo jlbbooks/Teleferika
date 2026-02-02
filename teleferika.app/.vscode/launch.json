@@ -8,7 +8,8 @@
       "program": "lib/main.dart",
       "args": [
         "--flavor=full",
-        "--dart-define=FLAVOR_NAME=full"
+        "--dart-define=FLAVOR_NAME=full",
+        "--verbose"
       ],
       "console": "debugConsole"
     },

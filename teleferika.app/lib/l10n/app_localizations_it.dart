@@ -1370,4 +1370,112 @@ class SIt extends S {
   @override
   String get show_all_projects_on_map_description =>
       'Quando abilitato, tutti i progetti saranno visualizzati sulla mappa come marcatori e linee grigie. Quando disabilitato, viene mostrato solo il progetto corrente.';
+
+  @override
+  String get bleScreenTitle => 'Dispositivi Bluetooth';
+
+  @override
+  String get bleButtonStartScan => 'Avvia Scansione';
+
+  @override
+  String get bleButtonStopScan => 'Ferma Scansione';
+
+  @override
+  String get bleButtonConnect => 'Connetti';
+
+  @override
+  String get bleButtonDisconnect => 'Disconnetti';
+
+  @override
+  String get bleButtonRequestMtu => 'Richiedi MTU';
+
+  @override
+  String get bleScanStarted => 'Scansione avviata...';
+
+  @override
+  String get bleScanStopped => 'Scansione fermata.';
+
+  @override
+  String get bleScanError => 'Errore nell\'avvio della scansione';
+
+  @override
+  String bleConnecting(String deviceName) {
+    return 'Connessione a $deviceName...';
+  }
+
+  @override
+  String get bleConnectionError => 'Errore di connessione';
+
+  @override
+  String get bleDisconnected => 'Dispositivo disconnesso.';
+
+  @override
+  String get bleMtuRequested => 'MTU richiesto.';
+
+  @override
+  String get bleConnectionStatus => 'Stato Connessione';
+
+  @override
+  String get bleStatusConnected => 'Connesso';
+
+  @override
+  String get bleStatusConnecting => 'Connessione in corso...';
+
+  @override
+  String get bleStatusError => 'Errore di Connessione';
+
+  @override
+  String get bleStatusWaiting => 'In attesa...';
+
+  @override
+  String get bleStatusDisconnected => 'Disconnesso';
+
+  @override
+  String bleConnectedDevice(String deviceName) {
+    return 'Dispositivo: $deviceName';
+  }
+
+  @override
+  String get bleNoDevicesFound =>
+      'Nessun dispositivo trovato.\nAvvia la scansione per scoprire i dispositivi.';
+
+  @override
+  String get bleUnknownDevice => 'Dispositivo Sconosciuto';
+
+  @override
+  String get bleDeviceDetails => 'Dettagli Dispositivo';
+
+  @override
+  String get bleDeviceName => 'Nome';
+
+  @override
+  String get bleDeviceId => 'ID Dispositivo';
+
+  @override
+  String get bleRssi => 'RSSI';
+
+  @override
+  String get bleAdvertisedName => 'Nome Pubblicizzato';
+
+  @override
+  String get bleConnectable => 'Connessibile';
+
+  @override
+  String get bleServiceUuids => 'UUID Servizi:';
+
+  @override
+  String get bleNotAvailable => 'N/D';
+
+  @override
+  String get bleYes => 'Sì';
+
+  @override
+  String get bleNo => 'No';
+
+  @override
+  String get bluetooth_permission_title => 'Permesso Bluetooth';
+
+  @override
+  String get bluetooth_permission_description =>
+      'I permessi Bluetooth e posizione sono necessari per scansionare e connettersi ai dispositivi BLE.';
 }

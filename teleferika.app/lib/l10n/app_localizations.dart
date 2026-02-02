@@ -2367,6 +2367,210 @@ abstract class S {
   /// In en, this message translates to:
   /// **'When enabled, all projects will be displayed on the map as grey markers and lines. When disabled, only the current project is shown.'**
   String get show_all_projects_on_map_description;
+
+  /// Title for the BLE screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Bluetooth Devices'**
+  String get bleScreenTitle;
+
+  /// Button label to start BLE scanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Scan'**
+  String get bleButtonStartScan;
+
+  /// Button label to stop BLE scanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop Scan'**
+  String get bleButtonStopScan;
+
+  /// Button label to connect to a BLE device.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get bleButtonConnect;
+
+  /// Button label to disconnect from a BLE device.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get bleButtonDisconnect;
+
+  /// Button label to request larger MTU.
+  ///
+  /// In en, this message translates to:
+  /// **'Request MTU'**
+  String get bleButtonRequestMtu;
+
+  /// Message shown when BLE scan starts.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan started...'**
+  String get bleScanStarted;
+
+  /// Message shown when BLE scan stops.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan stopped.'**
+  String get bleScanStopped;
+
+  /// Error message when BLE scan fails to start.
+  ///
+  /// In en, this message translates to:
+  /// **'Error starting scan'**
+  String get bleScanError;
+
+  /// Message shown when connecting to a BLE device.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to {deviceName}...'**
+  String bleConnecting(String deviceName);
+
+  /// Error message when BLE connection fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection error'**
+  String get bleConnectionError;
+
+  /// Message shown when BLE device disconnects.
+  ///
+  /// In en, this message translates to:
+  /// **'Device disconnected.'**
+  String get bleDisconnected;
+
+  /// Message shown when MTU request is sent.
+  ///
+  /// In en, this message translates to:
+  /// **'MTU requested.'**
+  String get bleMtuRequested;
+
+  /// Label for connection status section.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection Status'**
+  String get bleConnectionStatus;
+
+  /// Status text when BLE device is connected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get bleStatusConnected;
+
+  /// Status text when connecting to BLE device.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting...'**
+  String get bleStatusConnecting;
+
+  /// Status text when BLE connection error occurs.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection Error'**
+  String get bleStatusError;
+
+  /// Status text when BLE operation is waiting.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting...'**
+  String get bleStatusWaiting;
+
+  /// Status text when BLE device is disconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnected'**
+  String get bleStatusDisconnected;
+
+  /// Label showing connected device name.
+  ///
+  /// In en, this message translates to:
+  /// **'Device: {deviceName}'**
+  String bleConnectedDevice(String deviceName);
+
+  /// Message shown when no BLE devices are found.
+  ///
+  /// In en, this message translates to:
+  /// **'No devices found.\nStart scanning to discover devices.'**
+  String get bleNoDevicesFound;
+
+  /// Label for devices without a name.
+  ///
+  /// In en, this message translates to:
+  /// **'Unknown Device'**
+  String get bleUnknownDevice;
+
+  /// Title for device details dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Device Details'**
+  String get bleDeviceDetails;
+
+  /// Label for device name field.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get bleDeviceName;
+
+  /// Label for device ID field.
+  ///
+  /// In en, this message translates to:
+  /// **'Device ID'**
+  String get bleDeviceId;
+
+  /// Label for RSSI (signal strength) field.
+  ///
+  /// In en, this message translates to:
+  /// **'RSSI'**
+  String get bleRssi;
+
+  /// Label for advertised name field.
+  ///
+  /// In en, this message translates to:
+  /// **'Advertised Name'**
+  String get bleAdvertisedName;
+
+  /// Label for connectable status field.
+  ///
+  /// In en, this message translates to:
+  /// **'Connectable'**
+  String get bleConnectable;
+
+  /// Label for service UUIDs list.
+  ///
+  /// In en, this message translates to:
+  /// **'Service UUIDs:'**
+  String get bleServiceUuids;
+
+  /// Text shown when a value is not available.
+  ///
+  /// In en, this message translates to:
+  /// **'N/A'**
+  String get bleNotAvailable;
+
+  /// Text for yes/true value.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes'**
+  String get bleYes;
+
+  /// Text for no/false value.
+  ///
+  /// In en, this message translates to:
+  /// **'No'**
+  String get bleNo;
+
+  /// Title for Bluetooth permission request.
+  ///
+  /// In en, this message translates to:
+  /// **'Bluetooth Permission'**
+  String get bluetooth_permission_title;
+
+  /// Description for Bluetooth permission request.
+  ///
+  /// In en, this message translates to:
+  /// **'Bluetooth and location permissions are needed to scan and connect to BLE devices.'**
+  String get bluetooth_permission_description;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

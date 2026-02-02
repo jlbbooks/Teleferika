@@ -1356,4 +1356,112 @@ class SEn extends S {
   @override
   String get show_all_projects_on_map_description =>
       'When enabled, all projects will be displayed on the map as grey markers and lines. When disabled, only the current project is shown.';
+
+  @override
+  String get bleScreenTitle => 'Bluetooth Devices';
+
+  @override
+  String get bleButtonStartScan => 'Start Scan';
+
+  @override
+  String get bleButtonStopScan => 'Stop Scan';
+
+  @override
+  String get bleButtonConnect => 'Connect';
+
+  @override
+  String get bleButtonDisconnect => 'Disconnect';
+
+  @override
+  String get bleButtonRequestMtu => 'Request MTU';
+
+  @override
+  String get bleScanStarted => 'Scan started...';
+
+  @override
+  String get bleScanStopped => 'Scan stopped.';
+
+  @override
+  String get bleScanError => 'Error starting scan';
+
+  @override
+  String bleConnecting(String deviceName) {
+    return 'Connecting to $deviceName...';
+  }
+
+  @override
+  String get bleConnectionError => 'Connection error';
+
+  @override
+  String get bleDisconnected => 'Device disconnected.';
+
+  @override
+  String get bleMtuRequested => 'MTU requested.';
+
+  @override
+  String get bleConnectionStatus => 'Connection Status';
+
+  @override
+  String get bleStatusConnected => 'Connected';
+
+  @override
+  String get bleStatusConnecting => 'Connecting...';
+
+  @override
+  String get bleStatusError => 'Connection Error';
+
+  @override
+  String get bleStatusWaiting => 'Waiting...';
+
+  @override
+  String get bleStatusDisconnected => 'Disconnected';
+
+  @override
+  String bleConnectedDevice(String deviceName) {
+    return 'Device: $deviceName';
+  }
+
+  @override
+  String get bleNoDevicesFound =>
+      'No devices found.\nStart scanning to discover devices.';
+
+  @override
+  String get bleUnknownDevice => 'Unknown Device';
+
+  @override
+  String get bleDeviceDetails => 'Device Details';
+
+  @override
+  String get bleDeviceName => 'Name';
+
+  @override
+  String get bleDeviceId => 'Device ID';
+
+  @override
+  String get bleRssi => 'RSSI';
+
+  @override
+  String get bleAdvertisedName => 'Advertised Name';
+
+  @override
+  String get bleConnectable => 'Connectable';
+
+  @override
+  String get bleServiceUuids => 'Service UUIDs:';
+
+  @override
+  String get bleNotAvailable => 'N/A';
+
+  @override
+  String get bleYes => 'Yes';
+
+  @override
+  String get bleNo => 'No';
+
+  @override
+  String get bluetooth_permission_title => 'Bluetooth Permission';
+
+  @override
+  String get bluetooth_permission_description =>
+      'Bluetooth and location permissions are needed to scan and connect to BLE devices.';
 }

@@ -7,7 +7,7 @@ description: "TeleferiKa app."
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
-version: 1.0.5+90
+version: 1.1.0+91
 
 environment:
   sdk: ">=3.9.0 <4.0.0"
@@ -26,7 +26,6 @@ dependencies:
   licensed_features_package:
     path: ../licensed_features_package
 
-
   compassx: ^1.0.1
   crypto: ^3.0.6
   csv: ^6.0.0
@@ -37,6 +36,7 @@ dependencies:
   file_picker: ^10.2.0
   flutter:
     sdk: flutter
+  flutter_blue_plus: ^1.35.3
   flutter_localizations:
     sdk: flutter
   flutter_map: ^8.2.1

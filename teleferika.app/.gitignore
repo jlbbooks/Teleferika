@@ -13,8 +13,6 @@ coverage/
 *.mocks.dart
 
 # FVM (Flutter Version Management) specific
-.fvm/flutter_sdk
-.fvm/versions/
 # Note: .fvmrc and .fvm/fvm_config.json should be committed
 
 # Android related
@@ -96,3 +94,6 @@ coverage/
 
 # Generated plugin registrant
 lib/generated_plugin_registrant.dart
+
+# FVM Version Cache
+.fvm/

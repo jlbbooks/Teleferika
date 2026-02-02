@@ -1802,5 +1802,153 @@
   "show_all_projects_on_map_description": "When enabled, all projects will be displayed on the map as grey markers and lines. When disabled, only the current project is shown.",
   "@show_all_projects_on_map_description": {
     "description": "Description for the show all projects on map setting."
+  },
+  "bleScreenTitle": "Bluetooth Devices",
+  "@bleScreenTitle": {
+    "description": "Title for the BLE screen."
+  },
+  "bleButtonStartScan": "Start Scan",
+  "@bleButtonStartScan": {
+    "description": "Button label to start BLE scanning."
+  },
+  "bleButtonStopScan": "Stop Scan",
+  "@bleButtonStopScan": {
+    "description": "Button label to stop BLE scanning."
+  },
+  "bleButtonConnect": "Connect",
+  "@bleButtonConnect": {
+    "description": "Button label to connect to a BLE device."
+  },
+  "bleButtonDisconnect": "Disconnect",
+  "@bleButtonDisconnect": {
+    "description": "Button label to disconnect from a BLE device."
+  },
+  "bleButtonRequestMtu": "Request MTU",
+  "@bleButtonRequestMtu": {
+    "description": "Button label to request larger MTU."
+  },
+  "bleScanStarted": "Scan started...",
+  "@bleScanStarted": {
+    "description": "Message shown when BLE scan starts."
+  },
+  "bleScanStopped": "Scan stopped.",
+  "@bleScanStopped": {
+    "description": "Message shown when BLE scan stops."
+  },
+  "bleScanError": "Error starting scan",
+  "@bleScanError": {
+    "description": "Error message when BLE scan fails to start."
+  },
+  "bleConnecting": "Connecting to {deviceName}...",
+  "@bleConnecting": {
+    "description": "Message shown when connecting to a BLE device.",
+    "placeholders": {
+      "deviceName": {
+        "type": "String",
+        "example": "My Device"
+      }
+    }
+  },
+  "bleConnectionError": "Connection error",
+  "@bleConnectionError": {
+    "description": "Error message when BLE connection fails."
+  },
+  "bleDisconnected": "Device disconnected.",
+  "@bleDisconnected": {
+    "description": "Message shown when BLE device disconnects."
+  },
+  "bleMtuRequested": "MTU requested.",
+  "@bleMtuRequested": {
+    "description": "Message shown when MTU request is sent."
+  },
+  "bleConnectionStatus": "Connection Status",
+  "@bleConnectionStatus": {
+    "description": "Label for connection status section."
+  },
+  "bleStatusConnected": "Connected",
+  "@bleStatusConnected": {
+    "description": "Status text when BLE device is connected."
+  },
+  "bleStatusConnecting": "Connecting...",
+  "@bleStatusConnecting": {
+    "description": "Status text when connecting to BLE device."
+  },
+  "bleStatusError": "Connection Error",
+  "@bleStatusError": {
+    "description": "Status text when BLE connection error occurs."
+  },
+  "bleStatusWaiting": "Waiting...",
+  "@bleStatusWaiting": {
+    "description": "Status text when BLE operation is waiting."
+  },
+  "bleStatusDisconnected": "Disconnected",
+  "@bleStatusDisconnected": {
+    "description": "Status text when BLE device is disconnected."
+  },
+  "bleConnectedDevice": "Device: {deviceName}",
+  "@bleConnectedDevice": {
+    "description": "Label showing connected device name.",
+    "placeholders": {
+      "deviceName": {
+        "type": "String",
+        "example": "My Device"
+      }
+    }
+  },
+  "bleNoDevicesFound": "No devices found.\nStart scanning to discover devices.",
+  "@bleNoDevicesFound": {
+    "description": "Message shown when no BLE devices are found."
+  },
+  "bleUnknownDevice": "Unknown Device",
+  "@bleUnknownDevice": {
+    "description": "Label for devices without a name."
+  },
+  "bleDeviceDetails": "Device Details",
+  "@bleDeviceDetails": {
+    "description": "Title for device details dialog."
+  },
+  "bleDeviceName": "Name",
+  "@bleDeviceName": {
+    "description": "Label for device name field."
+  },
+  "bleDeviceId": "Device ID",
+  "@bleDeviceId": {
+    "description": "Label for device ID field."
+  },
+  "bleRssi": "RSSI",
+  "@bleRssi": {
+    "description": "Label for RSSI (signal strength) field."
+  },
+  "bleAdvertisedName": "Advertised Name",
+  "@bleAdvertisedName": {
+    "description": "Label for advertised name field."
+  },
+  "bleConnectable": "Connectable",
+  "@bleConnectable": {
+    "description": "Label for connectable status field."
+  },
+  "bleServiceUuids": "Service UUIDs:",
+  "@bleServiceUuids": {
+    "description": "Label for service UUIDs list."
+  },
+  "bleNotAvailable": "N/A",
+  "@bleNotAvailable": {
+    "description": "Text shown when a value is not available."
+  },
+  "bleYes": "Yes",
+  "@bleYes": {
+    "description": "Text for yes/true value."
+  },
+  "bleNo": "No",
+  "@bleNo": {
+    "description": "Text for no/false value."
+  },
+  "bluetooth_permission_title": "Bluetooth Permission",
+  "@bluetooth_permission_title": {
+    "description": "Title for Bluetooth permission request."
+  },
+  "bluetooth_permission_description": "Bluetooth and location permissions are needed to scan and connect to BLE devices.",
+  "@bluetooth_permission_description": {
+    "description": "Description for Bluetooth permission request."
   }
 }
