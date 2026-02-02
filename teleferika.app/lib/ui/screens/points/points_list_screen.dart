@@ -336,32 +336,34 @@ class PointsListScreenState extends State<PointsListScreen> with StatusMixin {
         final points = projectState.currentPoints;
         final hasUnsavedNewPoint = projectState.hasUnsavedNewPoint;
 
-        return Stack(
-          children: [
-            Column(
-              children: [
-                _buildTopBar(context),
-                Expanded(
-                  child: _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : _buildPointsList(
-                          context,
-                          currentProject,
-                          points,
-                          hasUnsavedNewPoint,
-                        ),
-                ),
-              ],
-            ),
-            Positioned(
-              top: 24,
-              right: 24,
-              child: StatusIndicator(
-                status: currentStatus,
-                onDismiss: hideStatus,
+        return SafeArea(
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  _buildTopBar(context),
+                  Expanded(
+                    child: _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : _buildPointsList(
+                            context,
+                            currentProject,
+                            points,
+                            hasUnsavedNewPoint,
+                          ),
+                  ),
+                ],
               ),
-            ),
-          ],
+              Positioned(
+                top: 24,
+                right: 24,
+                child: StatusIndicator(
+                  status: currentStatus,
+                  onDismiss: hideStatus,
+                ),
+              ),
+            ],
+          ),
         );
       },
     );

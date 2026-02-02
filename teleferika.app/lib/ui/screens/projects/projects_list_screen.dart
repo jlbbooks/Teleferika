@@ -1883,32 +1883,34 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                     )
                   : null,
             ),
-      body: Stack(
-        children: [
-          if (_currentProjects.isEmpty)
-            Center(
-              child: Text(
-                S.of(context)?.no_projects_yet ??
-                    "No projects yet. Tap '+' to add one!",
+      body: SafeArea(
+        child: Stack(
+          children: [
+            if (_currentProjects.isEmpty)
+              Center(
+                child: Text(
+                  S.of(context)?.no_projects_yet ??
+                      "No projects yet. Tap '+' to add one!",
+                ),
+              )
+            else
+              ListView.builder(
+                itemCount: _currentProjects.length,
+                itemBuilder: (context, index) {
+                  final project = _currentProjects[index];
+                  return _buildProjectItem(project);
+                },
               ),
-            )
-          else
-            ListView.builder(
-              itemCount: _currentProjects.length,
-              itemBuilder: (context, index) {
-                final project = _currentProjects[index];
-                return _buildProjectItem(project);
-              },
+            Positioned(
+              top: 24,
+              right: 24,
+              child: StatusIndicator(
+                status: currentStatus,
+                onDismiss: hideStatus,
+              ),
             ),
-          Positioned(
-            top: 24,
-            right: 24,
-            child: StatusIndicator(
-              status: currentStatus,
-              onDismiss: hideStatus,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         heroTag: 'projectPageFAB',

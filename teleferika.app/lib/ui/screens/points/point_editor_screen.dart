@@ -427,67 +427,70 @@ class _PointEditorScreenState extends State<PointEditorScreen>
             ),
           ],
         ),
-        body: Stack(
-          children: [
-            SingleChildScrollView(
-              padding: const EdgeInsets.all(20.0),
-              child: Form(
-                key: _pointFormKey,
-                autovalidateMode:
-                    _hasUnsavedTextChanges // Or _formInteracted
-                    ? AutovalidateMode.onUserInteraction
-                    : AutovalidateMode.disabled,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    // Point Details Section (coordinates, altitude, note)
-                    PointDetailsSection(
-                      latitudeController: _latitudeController,
-                      longitudeController: _longitudeController,
-                      altitudeController: _altitudeController,
-                      noteController: _noteController,
-                      gpsPrecisionController: _gpsPrecisionController,
-                    ),
-                    const SizedBox(height: 20),
+        body: SafeArea(
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                padding: const EdgeInsets.all(20.0),
+                child: Form(
+                  key: _pointFormKey,
+                  autovalidateMode:
+                      _hasUnsavedTextChanges // Or _formInteracted
+                      ? AutovalidateMode.onUserInteraction
+                      : AutovalidateMode.disabled,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      // Point Details Section (coordinates, altitude, note)
+                      PointDetailsSection(
+                        latitudeController: _latitudeController,
+                        longitudeController: _longitudeController,
+                        altitudeController: _altitudeController,
+                        noteController: _noteController,
+                        gpsPrecisionController: _gpsPrecisionController,
+                      ),
+                      const SizedBox(height: 20),
 
-                    // Photos Section
-                    PointPhotosSection(
-                      point: widget.point.copyWith(images: _currentImages),
-                      onImageListChangedForUI: (updatedImageList) {
-                        if (!mounted) return;
-                        setState(() {
-                          _currentImages = updatedImageList.cast<ImageModel>();
-                          // Don't mark _hasUnsavedTextChanges here, only _photosChangedAndSaved
-                        });
-                        logger.info(
-                          "PointEditorScreen: UI updated with new image list. Count: ${updatedImageList.length}",
-                        );
-                      },
-                      onPhotosSavedSuccessfully: () {
-                        // <--- THIS IS THE CRUCIAL PART
-                        if (!mounted) return;
-                        setState(() {
-                          _photosChangedAndSaved =
-                              true; // <--- ENSURE THIS LINE IS PRESENT AND CORRECT
-                        });
-                        logger.info(
-                          "PointEditorScreen: Notified that photos were successfully auto-saved. _photosChangedAndSaved = true",
-                        );
-                      },
-                    ),
-                  ],
+                      // Photos Section
+                      PointPhotosSection(
+                        point: widget.point.copyWith(images: _currentImages),
+                        onImageListChangedForUI: (updatedImageList) {
+                          if (!mounted) return;
+                          setState(() {
+                            _currentImages = updatedImageList
+                                .cast<ImageModel>();
+                            // Don't mark _hasUnsavedTextChanges here, only _photosChangedAndSaved
+                          });
+                          logger.info(
+                            "PointEditorScreen: UI updated with new image list. Count: ${updatedImageList.length}",
+                          );
+                        },
+                        onPhotosSavedSuccessfully: () {
+                          // <--- THIS IS THE CRUCIAL PART
+                          if (!mounted) return;
+                          setState(() {
+                            _photosChangedAndSaved =
+                                true; // <--- ENSURE THIS LINE IS PRESENT AND CORRECT
+                          });
+                          logger.info(
+                            "PointEditorScreen: Notified that photos were successfully auto-saved. _photosChangedAndSaved = true",
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            Positioned(
-              top: 24,
-              right: 24,
-              child: StatusIndicator(
-                status: currentStatus,
-                onDismiss: hideStatus,
+              Positioned(
+                top: 24,
+                right: 24,
+                child: StatusIndicator(
+                  status: currentStatus,
+                  onDismiss: hideStatus,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

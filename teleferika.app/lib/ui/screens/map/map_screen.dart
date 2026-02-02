@@ -523,216 +523,224 @@ class MapScreenState extends State<MapScreen>
               child: Stack(
                 children: [
                   Scaffold(
-                    body: Stack(
-                      children: [
-                        FlutterMapWidget(
-                          polylinePathPoints: polylinePathPoints,
-                          connectingLine: connectingLine,
-                          projectHeadingLine: _stateManager.projectHeadingLine,
-                          initialMapCenter: initialMapCenter,
-                          initialMapZoom: initialMapZoom,
-                          tileLayerUrl:
-                              _stateManager.currentMapType.tileLayerUrl,
-                          tileLayerAttribution:
-                              _stateManager.currentMapType.tileLayerAttribution,
-                          attributionUrl:
-                              _stateManager.currentMapType.attributionUrl,
-                          mapController: _stateManager.mapController,
-                          currentMapType: _stateManager.currentMapType,
-                          isMapReady: _stateManager.isMapReady,
-                          isLoadingPoints: _stateManager.isLoadingPoints,
-                          isMovePointMode: _stateManager.isMovePointMode,
-                          selectedPointId: _stateManager.selectedPointId,
-                          currentPosition: _stateManager.currentPosition,
-                          hasLocationPermission:
-                              _stateManager.hasLocationPermission,
-                          connectingLineFromFirstToLast:
-                              _stateManager.connectingLineFromFirstToLast,
-                          glowAnimationValue: _stateManager.glowAnimationValue,
-                          currentDeviceHeading:
-                              _stateManager.currentDeviceHeading,
-                          locationStreamController:
-                              _stateManager.locationStreamController,
-                          arrowheadAnimation: _stateManager.arrowheadAnimation,
-                          onPointTap: _handlePointTap,
-                          onMovePoint: _handleMovePoint,
-                          onMapReady: () {
-                            setState(() {
-                              _stateManager.isMapReady = true;
-                            });
-                            _stateManager.fitMapToPoints(context);
-                          },
-                          onDeselectPoint: () {
-                            setState(() {
-                              _stateManager.selectedPointId = null;
-                            });
-                          },
-                          // Slide functionality parameters
-                          onLongPressStart: _handleLongPressStart,
-                          onLongPressMoveUpdate: _handleLongPressMoveUpdate,
-                          onLongPressEnd: _handleLongPressEnd,
-                          isSlidingMarker: _stateManager.isSlidingMarker,
-                          slidingPointId: _stateManager.slidingPointId,
-                          currentSlidePosition:
-                              _stateManager.currentSlidePosition,
-                          // Add other projects layer based on user preference
-                          additionalLayers: _showAllProjectsOnMap
-                              ? [
-                                  ProjectPointsLayer(
-                                    excludeProjectId:
-                                        projectState.currentProject?.id,
-                                    markerSize: 6.0,
-                                    markerColor: Colors.grey,
-                                    markerBorderColor: Colors.white,
-                                    markerBorderWidth: 1.0,
-                                    lineColor: Colors.grey,
-                                    lineWidth: 1.0,
-                                  ),
-                                ]
-                              : null,
-                        ),
-                        MapTypeSelector.build(
-                          currentMapType: _stateManager.currentMapType,
-                          onMapTypeChanged: (mapType) {
-                            logger.info(
-                              'Map type changed from ${_stateManager.currentMapType.name} to ${mapType.name}',
-                            );
-                            setState(() {
-                              _stateManager.currentMapType = mapType;
-                            });
-
-                            // Log cache status for debugging
-                            MapCacheManager.logCacheStatus();
-
-                            // Force map to refresh tiles by triggering a small movement
-                            if (_stateManager.isMapReady) {
-                              Future.delayed(
-                                const Duration(milliseconds: 100),
-                                () {
-                                  if (mounted) {
-                                    final currentCenter = _stateManager
-                                        .mapController
-                                        .camera
-                                        .center;
-                                    final currentZoom =
-                                        _stateManager.mapController.camera.zoom;
-                                    // Trigger a tiny zoom change to force tile reload
-                                    _stateManager.mapController.move(
-                                      currentCenter,
-                                      currentZoom + 0.0001,
-                                    );
-                                    // Move back to original position
-                                    Future.delayed(
-                                      const Duration(milliseconds: 50),
-                                      () {
-                                        if (mounted) {
-                                          _stateManager.mapController.move(
-                                            currentCenter,
-                                            currentZoom,
-                                          );
-                                        }
-                                      },
-                                    );
-                                  }
-                                },
-                              );
-                            }
-                          },
-                          context: context,
-                        ),
-                        // Debug button below map type selector (always visible)
-                        Positioned(
-                          top: 60,
-                          left: 16,
-                          child: OutlinedButton.icon(
-                            icon: const Icon(
-                              Icons.bug_report_outlined,
-                              size: 18,
-                              color: Colors.grey,
-                            ),
-                            label: const Text(
-                              'Debug',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(
-                                color: Colors.grey,
-                                width: 1,
-                              ),
-                              backgroundColor: Colors.transparent,
-                              foregroundColor: Colors.grey,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              minimumSize: Size(0, 0),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              visualDensity: VisualDensity.compact,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _stateManager.hasClosedDebugPanel = false;
-                              });
-                            },
-                          ),
-                        ),
-                        _buildPointDetailsPanel(selectedPoint),
-                        Positioned(
-                          bottom: 24,
-                          left: 24,
-                          child: FloatingActionButtons.build(
-                            context: context,
+                    body: SafeArea(
+                      child: Stack(
+                        children: [
+                          FlutterMapWidget(
+                            polylinePathPoints: polylinePathPoints,
+                            connectingLine: connectingLine,
+                            projectHeadingLine:
+                                _stateManager.projectHeadingLine,
+                            initialMapCenter: initialMapCenter,
+                            initialMapZoom: initialMapZoom,
+                            tileLayerUrl:
+                                _stateManager.currentMapType.tileLayerUrl,
+                            tileLayerAttribution: _stateManager
+                                .currentMapType
+                                .tileLayerAttribution,
+                            attributionUrl:
+                                _stateManager.currentMapType.attributionUrl,
+                            mapController: _stateManager.mapController,
+                            currentMapType: _stateManager.currentMapType,
+                            isMapReady: _stateManager.isMapReady,
+                            isLoadingPoints: _stateManager.isLoadingPoints,
+                            isMovePointMode: _stateManager.isMovePointMode,
+                            selectedPointId: _stateManager.selectedPointId,
+                            currentPosition: _stateManager.currentPosition,
                             hasLocationPermission:
                                 _stateManager.hasLocationPermission,
-                            currentPosition: _stateManager.currentPosition,
-                            onCenterOnLocation: _centerOnCurrentLocation,
-                            onAddPoint: _handleAddPointButtonPressed,
-                            onCenterOnPoints: () =>
-                                _stateManager.fitMapToPoints(context),
-                            isAddingNewPoint:
-                                _stateManager.isAddingNewPoint ||
-                                _stateManager.newPoint != null,
+                            connectingLineFromFirstToLast:
+                                _stateManager.connectingLineFromFirstToLast,
+                            glowAnimationValue:
+                                _stateManager.glowAnimationValue,
+                            currentDeviceHeading:
+                                _stateManager.currentDeviceHeading,
+                            locationStreamController:
+                                _stateManager.locationStreamController,
+                            arrowheadAnimation:
+                                _stateManager.arrowheadAnimation,
+                            onPointTap: _handlePointTap,
+                            onMovePoint: _handleMovePoint,
+                            onMapReady: () {
+                              setState(() {
+                                _stateManager.isMapReady = true;
+                              });
+                              _stateManager.fitMapToPoints(context);
+                            },
+                            onDeselectPoint: () {
+                              setState(() {
+                                _stateManager.selectedPointId = null;
+                              });
+                            },
+                            // Slide functionality parameters
+                            onLongPressStart: _handleLongPressStart,
+                            onLongPressMoveUpdate: _handleLongPressMoveUpdate,
+                            onLongPressEnd: _handleLongPressEnd,
+                            isSlidingMarker: _stateManager.isSlidingMarker,
+                            slidingPointId: _stateManager.slidingPointId,
+                            currentSlidePosition:
+                                _stateManager.currentSlidePosition,
+                            // Add other projects layer based on user preference
+                            additionalLayers: _showAllProjectsOnMap
+                                ? [
+                                    ProjectPointsLayer(
+                                      excludeProjectId:
+                                          projectState.currentProject?.id,
+                                      markerSize: 6.0,
+                                      markerColor: Colors.grey,
+                                      markerBorderColor: Colors.white,
+                                      markerBorderWidth: 1.0,
+                                      lineColor: Colors.grey,
+                                      lineWidth: 1.0,
+                                    ),
+                                  ]
+                                : null,
                           ),
-                        ),
-                        // Debug panel only appears if _hasClosedDebugPanel is false
-                        if (!_stateManager.hasClosedDebugPanel)
+                          MapTypeSelector.build(
+                            currentMapType: _stateManager.currentMapType,
+                            onMapTypeChanged: (mapType) {
+                              logger.info(
+                                'Map type changed from ${_stateManager.currentMapType.name} to ${mapType.name}',
+                              );
+                              setState(() {
+                                _stateManager.currentMapType = mapType;
+                              });
+
+                              // Log cache status for debugging
+                              MapCacheManager.logCacheStatus();
+
+                              // Force map to refresh tiles by triggering a small movement
+                              if (_stateManager.isMapReady) {
+                                Future.delayed(
+                                  const Duration(milliseconds: 100),
+                                  () {
+                                    if (mounted) {
+                                      final currentCenter = _stateManager
+                                          .mapController
+                                          .camera
+                                          .center;
+                                      final currentZoom = _stateManager
+                                          .mapController
+                                          .camera
+                                          .zoom;
+                                      // Trigger a tiny zoom change to force tile reload
+                                      _stateManager.mapController.move(
+                                        currentCenter,
+                                        currentZoom + 0.0001,
+                                      );
+                                      // Move back to original position
+                                      Future.delayed(
+                                        const Duration(milliseconds: 50),
+                                        () {
+                                          if (mounted) {
+                                            _stateManager.mapController.move(
+                                              currentCenter,
+                                              currentZoom,
+                                            );
+                                          }
+                                        },
+                                      );
+                                    }
+                                  },
+                                );
+                              }
+                            },
+                            context: context,
+                          ),
+                          // Debug button below map type selector (always visible)
                           Positioned(
-                            top: 16,
+                            top: 60,
                             left: 16,
-                            child: DebugPanel(
-                              currentMapType: _stateManager.currentMapType,
-                              onClose: () {
+                            child: OutlinedButton.icon(
+                              icon: const Icon(
+                                Icons.bug_report_outlined,
+                                size: 18,
+                                color: Colors.grey,
+                              ),
+                              label: const Text(
+                                'Debug',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(
+                                  color: Colors.grey,
+                                  width: 1,
+                                ),
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: Colors.grey,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                minimumSize: Size(0, 0),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                visualDensity: VisualDensity.compact,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              onPressed: () {
                                 setState(() {
-                                  _stateManager.hasClosedDebugPanel = true;
-                                });
-                              },
-                              onTestCalibrationPanel: () {
-                                setState(() {
-                                  _stateManager.forceShowCalibrationPanel =
-                                      true;
+                                  _stateManager.hasClosedDebugPanel = false;
                                 });
                               },
                             ),
                           ),
-                        if (_stateManager.shouldCalibrateCompass == true ||
-                            _stateManager.forceShowCalibrationPanel)
-                          CompassCalibrationPanel(
-                            onClose: _stateManager.forceShowCalibrationPanel
-                                ? () => setState(
-                                    () =>
-                                        _stateManager
-                                                .forceShowCalibrationPanel =
-                                            false,
-                                  )
-                                : null,
+                          _buildPointDetailsPanel(selectedPoint),
+                          Positioned(
+                            bottom: 24,
+                            left: 24,
+                            child: FloatingActionButtons.build(
+                              context: context,
+                              hasLocationPermission:
+                                  _stateManager.hasLocationPermission,
+                              currentPosition: _stateManager.currentPosition,
+                              onCenterOnLocation: _centerOnCurrentLocation,
+                              onAddPoint: _handleAddPointButtonPressed,
+                              onCenterOnPoints: () =>
+                                  _stateManager.fitMapToPoints(context),
+                              isAddingNewPoint:
+                                  _stateManager.isAddingNewPoint ||
+                                  _stateManager.newPoint != null,
+                            ),
                           ),
-                      ],
+                          // Debug panel only appears if _hasClosedDebugPanel is false
+                          if (!_stateManager.hasClosedDebugPanel)
+                            Positioned(
+                              top: 16,
+                              left: 16,
+                              child: DebugPanel(
+                                currentMapType: _stateManager.currentMapType,
+                                onClose: () {
+                                  setState(() {
+                                    _stateManager.hasClosedDebugPanel = true;
+                                  });
+                                },
+                                onTestCalibrationPanel: () {
+                                  setState(() {
+                                    _stateManager.forceShowCalibrationPanel =
+                                        true;
+                                  });
+                                },
+                              ),
+                            ),
+                          if (_stateManager.shouldCalibrateCompass == true ||
+                              _stateManager.forceShowCalibrationPanel)
+                            CompassCalibrationPanel(
+                              onClose: _stateManager.forceShowCalibrationPanel
+                                  ? () => setState(
+                                      () =>
+                                          _stateManager
+                                                  .forceShowCalibrationPanel =
+                                              false,
+                                    )
+                                  : null,
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                   Positioned(

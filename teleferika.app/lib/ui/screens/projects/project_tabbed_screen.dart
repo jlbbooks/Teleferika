@@ -529,22 +529,24 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
             tabs: tabWidgets,
           ),
         ),
-        body: Stack(
-          children: [
-            PopScope(
-              canPop: false,
-              onPopInvokedWithResult: _handleOnPopInvokedWithResult,
-              child: tabBarViewWidget,
-            ),
-            Positioned(
-              top: 24,
-              right: 24,
-              child: StatusIndicator(
-                status: currentStatus,
-                onDismiss: hideStatus,
+        body: SafeArea(
+          child: Stack(
+            children: [
+              PopScope(
+                canPop: false,
+                onPopInvokedWithResult: _handleOnPopInvokedWithResult,
+                child: tabBarViewWidget,
               ),
-            ),
-          ],
+              Positioned(
+                top: 24,
+                right: 24,
+                child: StatusIndicator(
+                  status: currentStatus,
+                  onDismiss: hideStatus,
+                ),
+              ),
+            ],
+          ),
         ),
       );
     } else {
@@ -566,44 +568,47 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
           ),
           actions: tabBarActions,
         ),
-        body: Stack(
-          children: [
-            PopScope(
-              canPop: false,
-              onPopInvokedWithResult: _handleOnPopInvokedWithResult,
-              child: Row(
-                children: <Widget>[
-                  Material(
-                    elevation: 4.0,
-                    child: RotatedBox(
-                      quarterTurns: 3,
-                      child: TabBar(
-                        controller: _tabController,
-                        isScrollable: false,
-                        indicatorWeight: 2.0,
-                        indicatorSize: TabBarIndicatorSize.tab,
-                        labelPadding: EdgeInsets.fromLTRB(0.0, 8, 0, 8),
-                        tabs: tabWidgets
-                            .map(
-                              (tab) => RotatedBox(quarterTurns: 1, child: tab),
-                            )
-                            .toList(),
+        body: SafeArea(
+          child: Stack(
+            children: [
+              PopScope(
+                canPop: false,
+                onPopInvokedWithResult: _handleOnPopInvokedWithResult,
+                child: Row(
+                  children: <Widget>[
+                    Material(
+                      elevation: 4.0,
+                      child: RotatedBox(
+                        quarterTurns: 3,
+                        child: TabBar(
+                          controller: _tabController,
+                          isScrollable: false,
+                          indicatorWeight: 2.0,
+                          indicatorSize: TabBarIndicatorSize.tab,
+                          labelPadding: EdgeInsets.fromLTRB(0.0, 8, 0, 8),
+                          tabs: tabWidgets
+                              .map(
+                                (tab) =>
+                                    RotatedBox(quarterTurns: 1, child: tab),
+                              )
+                              .toList(),
+                        ),
                       ),
                     ),
-                  ),
-                  Expanded(child: tabBarViewWidget),
-                ],
+                    Expanded(child: tabBarViewWidget),
+                  ],
+                ),
               ),
-            ),
-            Positioned(
-              top: 24,
-              right: 24,
-              child: StatusIndicator(
-                status: currentStatus,
-                onDismiss: hideStatus,
+              Positioned(
+                top: 24,
+                right: 24,
+                child: StatusIndicator(
+                  status: currentStatus,
+                  onDismiss: hideStatus,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }

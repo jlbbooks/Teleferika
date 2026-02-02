@@ -3,6 +3,7 @@ import 'package:logging/logging.dart';
 import 'package:teleferika/core/app_config.dart';
 import 'package:teleferika/core/settings_service.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
+import 'package:teleferika/ui/screens/ble/ble_screen.dart';
 
 /// Settings screen for configuring application behavior.
 ///
@@ -177,219 +178,258 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // UI Behavior Section
-            _buildSectionHeader(
-              S.of(context)?.ui_behavior_section ?? 'UI Behavior',
-              Icons.tune,
-            ),
-            const SizedBox(height: 8),
-
-            // Show Save Icon Always
-            Card(
-              child: SwitchListTile(
-                title: Text(
-                  S.of(context)?.show_save_icon_always_title ??
-                      'Always Show Save Icon',
-                  style: const TextStyle(fontWeight: FontWeight.w500),
-                ),
-                subtitle: Text(
-                  S.of(context)?.show_save_icon_always_description ??
-                      'When enabled, the save icon is always visible. When disabled, it only appears when there are unsaved changes.',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                ),
-                value: _showSaveIconAlways,
-                onChanged: (bool value) {
-                  setState(() {
-                    _showSaveIconAlways = value;
-                  });
-                  _saveSettings();
-                },
-                secondary: const Icon(Icons.save),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // UI Behavior Section
+              _buildSectionHeader(
+                S.of(context)?.ui_behavior_section ?? 'UI Behavior',
+                Icons.tune,
               ),
-            ),
+              const SizedBox(height: 8),
 
-            const SizedBox(height: 16),
+              // Show Save Icon Always
+              Card(
+                child: SwitchListTile(
+                  title: Text(
+                    S.of(context)?.show_save_icon_always_title ??
+                        'Always Show Save Icon',
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  subtitle: Text(
+                    S.of(context)?.show_save_icon_always_description ??
+                        'When enabled, the save icon is always visible. When disabled, it only appears when there are unsaved changes.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                  value: _showSaveIconAlways,
+                  onChanged: (bool value) {
+                    setState(() {
+                      _showSaveIconAlways = value;
+                    });
+                    _saveSettings();
+                  },
+                  secondary: const Icon(Icons.save),
+                ),
+              ),
 
-            // Map and Compass Section
-            _buildSectionHeader(
-              S.of(context)?.map_compass_section ?? 'Map & Compass',
-              Icons.map,
-            ),
-            const SizedBox(height: 8),
+              const SizedBox(height: 16),
 
-            // Angle to Red Threshold
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.trending_up, color: Colors.orange),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            S.of(context)?.angle_to_red_threshold_title ??
-                                'Angle to Red Threshold',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w500,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      S.of(context)?.angle_to_red_threshold_description ??
-                          'The angle threshold (in degrees) at which the compass angle indicator changes from green to red. Lower values make the indicator more sensitive.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _angleThresholdController,
-                            decoration: InputDecoration(
-                              labelText:
-                                  S.of(context)?.threshold_degrees ??
-                                  'Threshold (degrees)',
-                              hintText: '2.0',
-                              suffixText: '°',
-                              border: const OutlineInputBorder(),
-                            ),
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            onChanged: (value) {
-                              final doubleValue = double.tryParse(value);
-                              if (doubleValue != null && doubleValue > 0) {
-                                setState(() {
-                                  _angleToRedThreshold = doubleValue;
-                                });
-                                _saveSettings();
-                              }
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Column(
-                          children: [
-                            Container(
-                              width: 20,
-                              height: 20,
-                              decoration: BoxDecoration(
-                                color: AppConfig.angleColorGood,
-                                shape: BoxShape.circle,
+              // Map and Compass Section
+              _buildSectionHeader(
+                S.of(context)?.map_compass_section ?? 'Map & Compass',
+                Icons.map,
+              ),
+              const SizedBox(height: 8),
+
+              // Angle to Red Threshold
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.trending_up, color: Colors.orange),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              S.of(context)?.angle_to_red_threshold_title ??
+                                  'Angle to Red Threshold',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 16,
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Container(
-                              width: 20,
-                              height: 20,
-                              decoration: BoxDecoration(
-                                color: AppConfig.angleColorBad,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        S.of(context)?.angle_to_red_threshold_description ??
+                            'The angle threshold (in degrees) at which the compass angle indicator changes from green to red. Lower values make the indicator more sensitive.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      S.of(context)?.angle_threshold_legend ??
-                          'Green: Good angle | Red: Poor angle',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade500,
-                        fontStyle: FontStyle.italic,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _angleThresholdController,
+                              decoration: InputDecoration(
+                                labelText:
+                                    S.of(context)?.threshold_degrees ??
+                                    'Threshold (degrees)',
+                                hintText: '2.0',
+                                suffixText: '°',
+                                border: const OutlineInputBorder(),
+                              ),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              onChanged: (value) {
+                                final doubleValue = double.tryParse(value);
+                                if (doubleValue != null && doubleValue > 0) {
+                                  setState(() {
+                                    _angleToRedThreshold = doubleValue;
+                                  });
+                                  _saveSettings();
+                                }
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Column(
+                            children: [
+                              Container(
+                                width: 20,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  color: AppConfig.angleColorGood,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Container(
+                                width: 20,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  color: AppConfig.angleColorBad,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        S.of(context)?.angle_threshold_legend ??
+                            'Green: Good angle | Red: Poor angle',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade500,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // Map Display Section
-            _buildSectionHeader(
-              S.of(context)?.map_display_section ?? 'Map Display',
-              Icons.map_outlined,
-            ),
-            const SizedBox(height: 8),
-
-            // Show All Projects on Map
-            Card(
-              child: SwitchListTile(
-                title: Text(
-                  S.of(context)?.show_all_projects_on_map_title ??
-                      'Show All Projects on Map',
-                  style: const TextStyle(fontWeight: FontWeight.w500),
-                ),
-                subtitle: Text(
-                  S.of(context)?.show_all_projects_on_map_description ??
-                      'When enabled, all projects will be displayed on the map as grey markers and lines. When disabled, only the current project is shown.',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                ),
-                value: _showAllProjectsOnMap,
-                onChanged: (bool value) {
-                  setState(() {
-                    _showAllProjectsOnMap = value;
-                  });
-                  _saveSettings();
-                },
-                secondary: const Icon(Icons.layers),
+              // Map Display Section
+              _buildSectionHeader(
+                S.of(context)?.map_display_section ?? 'Map Display',
+                Icons.map_outlined,
               ),
-            ),
+              const SizedBox(height: 8),
 
-            const SizedBox(height: 24),
-
-            // Information Section
-            _buildSectionHeader(
-              S.of(context)?.information_section ?? 'Information',
-              Icons.info_outline,
-            ),
-            const SizedBox(height: 8),
-
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      S.of(context)?.settings_info_title ?? 'About Settings',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      S.of(context)?.settings_info_description ??
-                          'These settings are stored locally on your device and will persist between app sessions. Changes take effect immediately.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
+              // Show All Projects on Map
+              Card(
+                child: SwitchListTile(
+                  title: Text(
+                    S.of(context)?.show_all_projects_on_map_title ??
+                        'Show All Projects on Map',
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  subtitle: Text(
+                    S.of(context)?.show_all_projects_on_map_description ??
+                        'When enabled, all projects will be displayed on the map as grey markers and lines. When disabled, only the current project is shown.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                  value: _showAllProjectsOnMap,
+                  onChanged: (bool value) {
+                    setState(() {
+                      _showAllProjectsOnMap = value;
+                    });
+                    _saveSettings();
+                  },
+                  secondary: const Icon(Icons.layers),
                 ),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 16),
+
+              // Bluetooth / Devices Section
+              _buildSectionHeader(
+                S.of(context)?.ble_devices_section ?? 'Bluetooth Devices',
+                Icons.bluetooth,
+              ),
+              const SizedBox(height: 8),
+
+              Card(
+                child: ListTile(
+                  leading: const Icon(
+                    Icons.bluetooth_searching,
+                    color: Colors.blue,
+                  ),
+                  title: Text(
+                    S.of(context)?.ble_devices_title ?? 'Bluetooth Devices',
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  subtitle: Text(
+                    S.of(context)?.ble_devices_description ??
+                        'Scan and connect to Bluetooth Low Energy devices',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const BLEScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Information Section
+              _buildSectionHeader(
+                S.of(context)?.information_section ?? 'Information',
+                Icons.info_outline,
+              ),
+              const SizedBox(height: 8),
+
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        S.of(context)?.settings_info_title ?? 'About Settings',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        S.of(context)?.settings_info_description ??
+                            'These settings are stored locally on your device and will persist between app sessions. Changes take effect immediately.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
