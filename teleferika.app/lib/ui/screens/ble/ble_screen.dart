@@ -33,6 +33,8 @@ class _BLEScreenState extends State<BLEScreen>
 
   List<ScanResult> _scanResults = [];
   BLEConnectionState _connectionState = BLEConnectionState.disconnected;
+  bool _isScanning = false;
+  Timer? _scanStateCheckTimer;
   StreamSubscription<List<ScanResult>>? _scanResultsSubscription;
   StreamSubscription<BLEConnectionState>? _connectionStateSubscription;
   StreamSubscription<Position>? _gpsDataSubscription;
@@ -73,6 +75,28 @@ class _BLEScreenState extends State<BLEScreen>
     _refreshConnectionState();
     _setupSubscriptions();
     _setupPulseAnimation();
+    _startScanStateCheckTimer();
+  }
+
+  /// Start a timer to periodically check scan state
+  /// This ensures the UI updates when scan completes automatically
+  void _startScanStateCheckTimer() {
+    _scanStateCheckTimer?.cancel();
+    _scanStateCheckTimer = Timer.periodic(const Duration(milliseconds: 500), (
+      timer,
+    ) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      // Check if scan state has changed
+      final currentScanning = _bleService.isScanning;
+      if (currentScanning != _isScanning) {
+        setState(() {
+          _isScanning = currentScanning;
+        });
+      }
+    });
   }
 
   @override
@@ -106,6 +130,8 @@ class _BLEScreenState extends State<BLEScreen>
       } else {
         _connectionState = BLEConnectionState.disconnected;
       }
+      // Also refresh scanning state
+      _isScanning = _bleService.isScanning;
     });
   }
 
@@ -128,6 +154,8 @@ class _BLEScreenState extends State<BLEScreen>
       if (mounted) {
         setState(() {
           _scanResults = results;
+          // Update scanning state based on service state
+          _isScanning = _bleService.isScanning;
         });
       }
     });
@@ -161,6 +189,8 @@ class _BLEScreenState extends State<BLEScreen>
         setState(() {
           final wasConnected = _connectionState == BLEConnectionState.connected;
           _connectionState = state;
+          // Update scan state when connection state changes
+          _isScanning = _bleService.isScanning;
           // Reset position tracking when disconnecting
           if (state == BLEConnectionState.disconnected) {
             _hasReceivedFirstPosition = false;
@@ -215,6 +245,7 @@ class _BLEScreenState extends State<BLEScreen>
 
   @override
   void dispose() {
+    _scanStateCheckTimer?.cancel();
     _scanResultsSubscription?.cancel();
     _connectionStateSubscription?.cancel();
     _gpsDataSubscription?.cancel();
@@ -234,8 +265,15 @@ class _BLEScreenState extends State<BLEScreen>
 
   Future<void> _startScan() async {
     try {
+      setState(() {
+        _isScanning = true;
+      });
       await _bleService.startScan();
+      // Update state after scan starts (it may complete immediately)
       if (mounted) {
+        setState(() {
+          _isScanning = _bleService.isScanning;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(S.of(context)?.bleScanStarted ?? 'Scan started...'),
@@ -246,6 +284,9 @@ class _BLEScreenState extends State<BLEScreen>
     } catch (e) {
       logger.severe('Error starting scan: $e');
       if (mounted) {
+        setState(() {
+          _isScanning = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -260,8 +301,14 @@ class _BLEScreenState extends State<BLEScreen>
 
   Future<void> _stopScan() async {
     try {
+      setState(() {
+        _isScanning = false;
+      });
       await _bleService.stopScan();
       if (mounted) {
+        setState(() {
+          _isScanning = _bleService.isScanning;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(S.of(context)?.bleScanStopped ?? 'Scan stopped.'),
@@ -271,6 +318,11 @@ class _BLEScreenState extends State<BLEScreen>
       }
     } catch (e) {
       logger.severe('Error stopping scan: $e');
+      if (mounted) {
+        setState(() {
+          _isScanning = _bleService.isScanning;
+        });
+      }
     }
   }
 
@@ -402,7 +454,7 @@ class _BLEScreenState extends State<BLEScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       ElevatedButton.icon(
-                        onPressed: _bleService.isScanning ? null : _startScan,
+                        onPressed: _isScanning ? null : _startScan,
                         icon: const Icon(Icons.search),
                         label: Text(s?.bleButtonStartScan ?? 'Start Scan'),
                         style: ElevatedButton.styleFrom(
@@ -411,7 +463,7 @@ class _BLEScreenState extends State<BLEScreen>
                         ),
                       ),
                       ElevatedButton.icon(
-                        onPressed: _bleService.isScanning ? _stopScan : null,
+                        onPressed: _isScanning ? _stopScan : null,
                         icon: const Icon(Icons.stop),
                         label: Text(s?.bleButtonStopScan ?? 'Stop Scan'),
                         style: ElevatedButton.styleFrom(

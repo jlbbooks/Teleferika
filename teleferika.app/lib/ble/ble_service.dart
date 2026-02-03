@@ -163,6 +163,11 @@ class BLEService {
       // Discover services after connection
       await _discoverServices(device);
 
+      // Stop scanning when successfully connected
+      if (isScanning) {
+        await stopScan();
+      }
+
       _connectionStateController.add(BLEConnectionState.connected);
     } catch (e) {
       debugPrint("BLE: Connection error: $e");
