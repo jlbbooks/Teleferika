@@ -279,13 +279,11 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
   }
 
   Future<bool> _requestSensorPermission() async {
-    PermissionStatus status = await Permission.sensors.status;
-
-    if (_isRetrying || status.isDenied || status.isRestricted) {
-      status = await Permission.sensors.request();
-    }
-
-    return status.isGranted;
+    // Compass/motion sensors (magnetometer, accelerometer, gyroscope) do not require
+    // runtime permissions on Android. They are always available to apps.
+    // BODY_SENSORS permission is only for body sensors like heart rate monitors,
+    // which is not what we need for compass functionality.
+    return true;
   }
 
   Future<bool> _requestCameraPermission() async {

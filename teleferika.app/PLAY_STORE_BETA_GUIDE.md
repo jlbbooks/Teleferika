@@ -159,20 +159,63 @@ Update `play_store_changelog.txt` with your beta release notes. The file should 
 - No review process
 - Testers added via email list or Google Groups
 
-### Closed Testing
-- Larger groups
-- Can have multiple test tracks
-- Requires review (usually quick)
-
-### Open Testing
-- Public beta
-- Anyone can join
-- Requires review
-
 **To add testers:**
 1. Go to **Testing** → **Internal testing** → **Testers** tab
 2. Add email addresses or create a Google Group
 3. Share the opt-in link with testers
+
+### Closed Testing
+- Larger groups (unlimited testers)
+- Can have multiple test tracks
+- Requires review (usually quick)
+
+**To add testers:**
+1. Go to **Testing** → **Closed testing** → **Testers** tab
+2. Add email addresses, create a Google Group, or share opt-in link
+3. Users can join via the opt-in link
+
+### Open Testing (Public Beta)
+- **Public beta** - Anyone can join without invitation
+- Unlimited testers
+- Requires Google Play review (can take 1-3 days)
+- App appears in Play Store with "Beta" badge
+- Great for getting broad feedback
+
+**To set up Open Beta:**
+
+1. **Create Open Testing Track:**
+   - Go to **Testing** → **Open testing**
+   - If not created, click **Create track** or **Get started**
+
+2. **Upload Release:**
+   - Click **Create new release**
+   - Upload your AAB file (same as internal/closed testing)
+   - Add release notes from `play_store_changelog.txt`
+   - Click **Save** then **Review release**
+
+3. **Review Requirements:**
+   - Ensure your app meets Play Store policies
+   - Complete all required store listing information
+   - Content rating must be complete
+   - Privacy policy URL required (if app collects data)
+
+4. **Submit for Review:**
+   - Review the release summary
+   - Click **Start rollout to Open testing**
+   - Google will review your app (typically 1-3 days)
+
+5. **Share Opt-In Link:**
+   - Once approved, go to **Open testing** → **Testers** tab
+   - Copy the opt-in link (format: `https://play.google.com/apps/internaltest/[test-id]`)
+   - Share this link publicly (website, social media, etc.)
+   - Users can join by clicking the link and opting in
+
+**Important Notes for Open Beta:**
+- ⚠️ **Review Required**: Open beta requires Google Play review before going live
+- 📱 **Public Visibility**: Your app will be visible in Play Store with "Beta" label
+- 🔄 **Version Code**: Must be higher than any previous production or beta release
+- 📊 **Feedback**: Monitor user feedback and crash reports closely
+- 🚀 **Promotion**: You can promote the beta link to get more testers
 
 ## Step 8: Monitor Beta Release
 

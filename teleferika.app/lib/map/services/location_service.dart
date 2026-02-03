@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:compassx/compassx.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class LocationService {
   // Stream subscriptions
@@ -23,16 +22,15 @@ class LocationService {
     }
 
     // Sensor (Compass) Permission
-    PermissionStatus sensorStatus = await Permission.sensors.status;
-    if (sensorStatus.isDenied) {
-      sensorStatus = await Permission.sensors.request();
-    }
-
+    // Compass/motion sensors (magnetometer, accelerometer, gyroscope) do not require
+    // runtime permissions on Android. They are always available to apps.
+    // BODY_SENSORS permission is only for body sensors like heart rate monitors,
+    // which is not what we need for compass functionality.
     return {
       'location':
           locationPermission == LocationPermission.whileInUse ||
           locationPermission == LocationPermission.always,
-      'sensor': sensorStatus.isGranted,
+      'sensor': true, // Sensors are always available, no permission needed
     };
   }
 
@@ -42,13 +40,13 @@ class LocationService {
     LocationPermission locationPermission = await Geolocator.checkPermission();
 
     // Sensor (Compass) Permission
-    PermissionStatus sensorStatus = await Permission.sensors.status;
-
+    // Compass/motion sensors (magnetometer, accelerometer, gyroscope) do not require
+    // runtime permissions on Android. They are always available to apps.
     return {
       'location':
           locationPermission == LocationPermission.whileInUse ||
           locationPermission == LocationPermission.always,
-      'sensor': sensorStatus.isGranted,
+      'sensor': true, // Sensors are always available, no permission needed
     };
   }
 
