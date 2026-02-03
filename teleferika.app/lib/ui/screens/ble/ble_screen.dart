@@ -1214,7 +1214,7 @@ class _BLEScreenState extends State<BLEScreen>
                 : Colors.grey,
           ),
         ),
-        initiallyExpanded: !isConnected,
+        initiallyExpanded: false, //!isConnected,
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),

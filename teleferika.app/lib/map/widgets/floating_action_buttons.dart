@@ -53,14 +53,16 @@ class FloatingActionButtons {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // BLE Info button (only shown when BLE is connected)
-          if (isBleConnected && onBleInfoPressed != null)
+          // GPS Info button (shown when setting is enabled)
+          if (onBleInfoPressed != null)
             _buildFloatingActionButton(
-              heroTag: 'ble_info',
+              heroTag: 'gps_info',
               icon: Icons.satellite,
-              tooltip: 'RTK Device Info',
+              tooltip: 'GPS Information',
               onPressed: onBleInfoPressed,
-              color: bleButtonColor,
+              color: isBleConnected && bleFixQuality > 0
+                  ? bleButtonColor
+                  : Colors.blue,
             ),
 
           // Add new point button

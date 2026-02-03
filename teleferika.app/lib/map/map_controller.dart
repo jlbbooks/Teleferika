@@ -32,6 +32,9 @@ class MapControllerLogic {
   // Track whether we're using BLE GPS or device GPS
   bool _isUsingBleGps = false;
 
+  /// Get whether BLE GPS is currently being used
+  bool get isUsingBleGps => _isUsingBleGps;
+
   // Animation timer
   Timer? _glowAnimationTimer;
   double _glowAnimationValue = 0.0;

@@ -26,7 +26,7 @@ import '../../../map/widgets/flutter_map_widget.dart';
 import '../../../map/widgets/map_loading_widget.dart';
 import '../../../map/widgets/point_details_panel.dart';
 import '../../../map/widgets/floating_action_buttons.dart';
-import '../../../map/widgets/ble_info_panel.dart';
+import '../../../map/widgets/gps_info_panel.dart';
 import '../../../map/widgets/map_type_selector.dart';
 import '../../../map/services/map_cache_manager.dart';
 import '../../../ui/widgets/project_points_layer.dart';
@@ -236,7 +236,11 @@ class MapScreenState extends State<MapScreen>
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.all(16),
-        child: BLEInfoPanel(bleService: _bleService),
+        child: GPSInfoPanel(
+          bleService: _bleService,
+          currentPosition: _stateManager.currentPosition,
+          isUsingBleGps: _stateManager.controller.isUsingBleGps,
+        ),
       ),
     );
   }
@@ -779,13 +783,13 @@ class MapScreenState extends State<MapScreen>
                               isAddingNewPoint:
                                   _stateManager.isAddingNewPoint ||
                                   _stateManager.newPoint != null,
-                              isBleConnected:
-                                  _isBleConnected && _showBleSatelliteButton,
-                              onBleInfoPressed:
-                                  (_isBleConnected && _showBleSatelliteButton)
+                              isBleConnected: _showBleSatelliteButton,
+                              onBleInfoPressed: _showBleSatelliteButton
                                   ? _showBleInfoPanel
                                   : null,
-                              bleFixQuality: _bleFixQuality ?? 0,
+                              bleFixQuality: _isBleConnected
+                                  ? (_bleFixQuality ?? 0)
+                                  : 0, // Default to 0 (No Fix) for internal GPS
                             ),
                           ),
                           // Debug panel only appears if _hasClosedDebugPanel is false

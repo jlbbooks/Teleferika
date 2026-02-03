@@ -140,6 +140,39 @@ class DebugPanel extends StatelessWidget {
                     Row(
                       children: [
                         Icon(
+                          stateManager.isUsingBleGps
+                              ? Icons.bluetooth
+                              : Icons.phone_android,
+                          size: 14,
+                          color: stateManager.isUsingBleGps
+                              ? Colors.blue
+                              : Colors.green,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'GPS Source: ',
+                          style: TextStyle(
+                            color: stateManager.isUsingBleGps
+                                ? Colors.blue
+                                : Colors.green,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        Text(
+                          stateManager.isUsingBleGps
+                              ? 'RTK Device (BLE)'
+                              : 'Device GPS',
+                          style: TextStyle(
+                            color: stateManager.isUsingBleGps
+                                ? Colors.blue
+                                : Colors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Icon(
                           AppConfig.latitudeIcon,
                           size: 14,
                           color: AppConfig.latitudeColor,

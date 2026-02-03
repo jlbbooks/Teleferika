@@ -61,6 +61,9 @@ class MapStateManager extends ChangeNotifier {
   /// Get the current map type
   MapType get currentMapType => _currentMapType;
 
+  /// Get whether BLE GPS is currently being used as the GPS source
+  bool get isUsingBleGps => _controller.isUsingBleGps;
+
   /// Set the current map type and save to preferences
   set currentMapType(MapType value) {
     if (_currentMapType.id != value.id) {

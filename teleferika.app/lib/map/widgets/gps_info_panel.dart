@@ -1,31 +1,42 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:teleferika/ble/ble_service.dart';
 import 'package:teleferika/ble/nmea_parser.dart';
 
-class BLEInfoPanel extends StatefulWidget {
+class GPSInfoPanel extends StatefulWidget {
   final BLEService bleService;
+  final Position? currentPosition;
+  final bool isUsingBleGps;
 
-  const BLEInfoPanel({super.key, required this.bleService});
+  const GPSInfoPanel({
+    super.key,
+    required this.bleService,
+    required this.currentPosition,
+    required this.isUsingBleGps,
+  });
 
   @override
-  State<BLEInfoPanel> createState() => _BLEInfoPanelState();
+  State<GPSInfoPanel> createState() => _GPSInfoPanelState();
 }
 
-class _BLEInfoPanelState extends State<BLEInfoPanel> {
+class _GPSInfoPanelState extends State<GPSInfoPanel> {
   NMEAData? _latestNmeaData;
   StreamSubscription<NMEAData>? _nmeaSubscription;
 
   @override
   void initState() {
     super.initState();
-    _nmeaSubscription = widget.bleService.nmeaData.listen((data) {
-      if (mounted) {
-        setState(() {
-          _latestNmeaData = data;
-        });
-      }
-    });
+    // Only subscribe to NMEA data if using BLE GPS
+    if (widget.isUsingBleGps) {
+      _nmeaSubscription = widget.bleService.nmeaData.listen((data) {
+        if (mounted) {
+          setState(() {
+            _latestNmeaData = data;
+          });
+        }
+      });
+    }
   }
 
   @override
@@ -71,7 +82,9 @@ class _BLEInfoPanelState extends State<BLEInfoPanel> {
   @override
   Widget build(BuildContext context) {
     final device = widget.bleService.connectedDevice;
-    final isConnected = widget.bleService.isConnected;
+    final isBleConnected = widget.bleService.isConnected;
+    final position = widget.currentPosition;
+    final nmeaData = _latestNmeaData;
 
     return Container(
       width: 320,
@@ -106,7 +119,7 @@ class _BLEInfoPanelState extends State<BLEInfoPanel> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'RTK Device Info',
+                    'GPS Information',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -128,29 +141,8 @@ class _BLEInfoPanelState extends State<BLEInfoPanel> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Connection Status
-                _buildInfoRow(
-                  'Status',
-                  isConnected ? 'Connected' : 'Disconnected',
-                  isConnected ? Colors.green : Colors.red,
-                ),
-                const SizedBox(height: 8),
-
-                // Device Name
-                if (device != null) ...[
-                  _buildInfoRow(
-                    'Device',
-                    device.platformName.isNotEmpty
-                        ? device.platformName
-                        : device.remoteId.toString(),
-                  ),
-                  const SizedBox(height: 8),
-                ],
-
-                // Latest NMEA Data
-                if (_latestNmeaData != null) ...[
-                  const Divider(),
-                  const SizedBox(height: 8),
+                // GPS Information Section (always shown if position available)
+                if (position != null) ...[
                   Text(
                     'GPS Information',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -159,75 +151,82 @@ class _BLEInfoPanelState extends State<BLEInfoPanel> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Fix Quality
+                  // Fix Quality (from NMEA if available, otherwise estimate from accuracy)
+                  if (nmeaData != null) ...[
+                    _buildInfoRow(
+                      'Fix Quality',
+                      _getFixQualityText(nmeaData.fixQuality),
+                      _getFixQualityColor(nmeaData.fixQuality),
+                    ),
+                    const SizedBox(height: 8),
+                  ] else ...[
+                    // Estimate fix quality from accuracy for internal GPS
+                    _buildInfoRow(
+                      'Fix Quality',
+                      _estimateFixQualityFromAccuracy(position.accuracy),
+                      _estimateFixQualityColorFromAccuracy(position.accuracy),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+
+                  // Satellites (only from NMEA)
+                  if (nmeaData?.satellites != null) ...[
+                    _buildInfoRow('Satellites', '${nmeaData!.satellites}'),
+                    const SizedBox(height: 8),
+                  ],
+
+                  // Accuracy
                   _buildInfoRow(
-                    'Fix Quality',
-                    _getFixQualityText(_latestNmeaData!.fixQuality),
-                    _getFixQualityColor(_latestNmeaData!.fixQuality),
+                    'Accuracy',
+                    '${position.accuracy.toStringAsFixed(2)} m',
                   ),
                   const SizedBox(height: 8),
 
-                  // Satellites
-                  if (_latestNmeaData!.satellites != null)
-                    _buildInfoRow(
-                      'Satellites',
-                      '${_latestNmeaData!.satellites}',
-                    ),
-                  const SizedBox(height: 8),
-
-                  // Accuracy
-                  if (_latestNmeaData!.accuracy != null)
-                    _buildInfoRow(
-                      'Accuracy',
-                      '${_latestNmeaData!.accuracy!.toStringAsFixed(2)} m',
-                    ),
-                  const SizedBox(height: 8),
-
-                  // HDOP
-                  if (_latestNmeaData!.hdop != null)
-                    _buildInfoRow(
-                      'HDOP',
-                      _latestNmeaData!.hdop!.toStringAsFixed(2),
-                    ),
-                  const SizedBox(height: 8),
+                  // HDOP (only from NMEA)
+                  if (nmeaData?.hdop != null) ...[
+                    _buildInfoRow('HDOP', nmeaData!.hdop!.toStringAsFixed(2)),
+                    const SizedBox(height: 8),
+                  ],
 
                   // Coordinates
                   _buildInfoRow(
                     'Latitude',
-                    _latestNmeaData!.latitude.toStringAsFixed(8),
+                    position.latitude.toStringAsFixed(8),
                   ),
                   const SizedBox(height: 8),
                   _buildInfoRow(
                     'Longitude',
-                    _latestNmeaData!.longitude.toStringAsFixed(8),
+                    position.longitude.toStringAsFixed(8),
                   ),
                   const SizedBox(height: 8),
 
                   // Altitude
-                  if (_latestNmeaData!.altitude != null)
+                  if (position.altitude != 0.0) ...[
                     _buildInfoRow(
                       'Altitude',
-                      '${_latestNmeaData!.altitude!.toStringAsFixed(2)} m',
+                      '${position.altitude.toStringAsFixed(2)} m',
                     ),
-                  const SizedBox(height: 8),
+                    const SizedBox(height: 8),
+                  ],
 
                   // Speed
-                  if (_latestNmeaData!.speed != null)
+                  if (position.speed > 0) ...[
                     _buildInfoRow(
                       'Speed',
-                      '${_latestNmeaData!.speed!.toStringAsFixed(2)} km/h',
+                      '${(position.speed * 3.6).toStringAsFixed(2)} km/h',
                     ),
-                  const SizedBox(height: 8),
+                    const SizedBox(height: 8),
+                  ],
 
                   // Course
-                  if (_latestNmeaData!.course != null)
+                  if (position.heading > 0) ...[
                     _buildInfoRow(
                       'Course',
-                      '${_latestNmeaData!.course!.toStringAsFixed(1)}°',
+                      '${position.heading.toStringAsFixed(1)}°',
                     ),
-                ] else if (isConnected) ...[
-                  const Divider(),
-                  const SizedBox(height: 8),
+                    const SizedBox(height: 8),
+                  ],
+                ] else ...[
                   Text(
                     'Waiting for GPS data...',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -235,6 +234,38 @@ class _BLEInfoPanelState extends State<BLEInfoPanel> {
                       fontStyle: FontStyle.italic,
                     ),
                   ),
+                ],
+
+                // Device Information Section (at the bottom)
+                if (position != null) ...[
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Device Information',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
+                if (isBleConnected && device != null) ...[
+                  // RTK Device Info
+                  _buildInfoRow('Source', 'RTK Device', Colors.green),
+                  const SizedBox(height: 8),
+                  _buildInfoRow('Status', 'Connected', Colors.green),
+                  const SizedBox(height: 8),
+                  _buildInfoRow(
+                    'Device',
+                    device.platformName.isNotEmpty
+                        ? device.platformName
+                        : device.remoteId.toString(),
+                  ),
+                ] else ...[
+                  // Internal GPS Info
+                  _buildInfoRow('Source', 'Internal GPS', Colors.blue),
+                  const SizedBox(height: 8),
+                  _buildInfoRow('Status', 'Active', Colors.blue),
                 ],
               ],
             ),
@@ -268,5 +299,29 @@ class _BLEInfoPanelState extends State<BLEInfoPanel> {
         ),
       ],
     );
+  }
+
+  String _estimateFixQualityFromAccuracy(double accuracy) {
+    if (accuracy < 1.0) {
+      return 'High Accuracy';
+    } else if (accuracy < 5.0) {
+      return 'Good';
+    } else if (accuracy < 10.0) {
+      return 'Moderate';
+    } else {
+      return 'Low Accuracy';
+    }
+  }
+
+  Color _estimateFixQualityColorFromAccuracy(double accuracy) {
+    if (accuracy < 1.0) {
+      return Colors.green;
+    } else if (accuracy < 5.0) {
+      return Colors.lightGreen;
+    } else if (accuracy < 10.0) {
+      return Colors.yellow;
+    } else {
+      return Colors.orange;
+    }
   }
 }
