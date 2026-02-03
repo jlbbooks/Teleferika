@@ -2060,5 +2060,89 @@
   "bleReceivingData": "Receiving data...",
   "@bleReceivingData": {
     "description": "Text shown in the pulsing indicator when data is being received but no position yet."
+  },
+  "bleNtripTitle": "NTRIP Corrections",
+  "@bleNtripTitle": {
+    "description": "Title for the NTRIP corrections card."
+  },
+  "bleNtripConnected": "Connected",
+  "@bleNtripConnected": {
+    "description": "Status text when NTRIP is connected."
+  },
+  "bleNtripConnecting": "Connecting...",
+  "@bleNtripConnecting": {
+    "description": "Status text when connecting to NTRIP."
+  },
+  "bleNtripError": "Error",
+  "@bleNtripError": {
+    "description": "Status text when NTRIP connection error occurs."
+  },
+  "bleNtripDisconnected": "Disconnected",
+  "@bleNtripDisconnected": {
+    "description": "Status text when NTRIP is disconnected."
+  },
+  "bleNtripHost": "NTRIP Caster Host",
+  "@bleNtripHost": {
+    "description": "Label for NTRIP host input field."
+  },
+  "bleNtripPort": "Port",
+  "@bleNtripPort": {
+    "description": "Label for NTRIP port input field."
+  },
+  "bleNtripMountPoint": "Mount Point",
+  "@bleNtripMountPoint": {
+    "description": "Label for NTRIP mount point input field."
+  },
+  "bleNtripUsername": "Username (Email)",
+  "@bleNtripUsername": {
+    "description": "Label for NTRIP username input field."
+  },
+  "bleNtripPassword": "Password",
+  "@bleNtripPassword": {
+    "description": "Label for NTRIP password input field."
+  },
+  "bleNtripConnect": "Connect to NTRIP",
+  "@bleNtripConnect": {
+    "description": "Button label to connect to NTRIP caster."
+  },
+  "bleNtripDisconnect": "Disconnect",
+  "@bleNtripDisconnect": {
+    "description": "Button label to disconnect from NTRIP caster."
+  },
+  "bleNtripForwarding": "Forwarding RTCM corrections",
+  "@bleNtripForwarding": {
+    "description": "Text shown when RTCM corrections are being forwarded."
+  },
+  "bleNtripErrorHostRequired": "NTRIP host is required",
+  "@bleNtripErrorHostRequired": {
+    "description": "Error message when NTRIP host is missing."
+  },
+  "bleNtripErrorPortRequired": "Port is required",
+  "@bleNtripErrorPortRequired": {
+    "description": "Error message when NTRIP port is missing."
+  },
+  "bleNtripErrorInvalidPort": "Invalid port number",
+  "@bleNtripErrorInvalidPort": {
+    "description": "Error message when NTRIP port is invalid."
+  },
+  "bleNtripErrorMountPointRequired": "Mount point is required",
+  "@bleNtripErrorMountPointRequired": {
+    "description": "Error message when NTRIP mount point is missing."
+  },
+  "bleNtripErrorUsernameRequired": "Username (email) is required",
+  "@bleNtripErrorUsernameRequired": {
+    "description": "Error message when NTRIP username is missing."
+  },
+  "bleNtripConnectedSuccess": "Connected to NTRIP caster",
+  "@bleNtripConnectedSuccess": {
+    "description": "Success message when NTRIP connection is established."
+  },
+  "bleNtripDisconnectedSuccess": "Disconnected from NTRIP caster",
+  "@bleNtripDisconnectedSuccess": {
+    "description": "Success message when NTRIP disconnection is successful."
+  },
+  "bleNtripConnectionFailed": "Failed to connect to NTRIP caster",
+  "@bleNtripConnectionFailed": {
+    "description": "Error message when NTRIP connection fails."
   }
 }

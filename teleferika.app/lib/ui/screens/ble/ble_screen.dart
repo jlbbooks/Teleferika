@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:logging/logging.dart';
 import 'package:teleferika/ble/ble_service.dart';
 import 'package:teleferika/ble/nmea_parser.dart';
+import 'package:teleferika/ble/ntrip_client.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
 
@@ -46,6 +47,25 @@ class _BLEScreenState extends State<BLEScreen>
   late AnimationController _pulseAnimationController;
   late Animation<double> _pulseAnimation;
 
+  // NTRIP configuration
+  final TextEditingController _ntripHostController = TextEditingController(
+    text: 'rtk2go.com',
+  );
+  final TextEditingController _ntripPortController = TextEditingController(
+    text: '2101',
+  );
+  final TextEditingController _ntripMountPointController =
+      TextEditingController(text: 'AUTO');
+  final TextEditingController _ntripUsernameController =
+      TextEditingController();
+  final TextEditingController _ntripPasswordController = TextEditingController(
+    text: 'none',
+  );
+  NTRIPConnectionState _ntripConnectionState =
+      NTRIPConnectionState.disconnected;
+  StreamSubscription<NTRIPConnectionState>? _ntripConnectionStateSubscription;
+  StreamSubscription<String>? _ntripErrorSubscription;
+
   @override
   void initState() {
     super.initState();
@@ -75,6 +95,30 @@ class _BLEScreenState extends State<BLEScreen>
         });
       }
     });
+
+    // NTRIP connection state subscription
+    final ntripClient = _bleService.ntripClient;
+    if (ntripClient != null) {
+      _ntripConnectionStateSubscription = ntripClient.connectionStateStream
+          .listen((state) {
+            if (mounted) {
+              setState(() {
+                _ntripConnectionState = state;
+              });
+            }
+          });
+
+      _ntripErrorSubscription = ntripClient.errors.listen((error) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('NTRIP Error: $error'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      });
+    }
 
     _connectionStateSubscription = _bleService.connectionState.listen((state) {
       if (mounted) {
@@ -139,6 +183,13 @@ class _BLEScreenState extends State<BLEScreen>
     _connectionStateSubscription?.cancel();
     _gpsDataSubscription?.cancel();
     _nmeaDataSubscription?.cancel();
+    _ntripConnectionStateSubscription?.cancel();
+    _ntripErrorSubscription?.cancel();
+    _ntripHostController.dispose();
+    _ntripPortController.dispose();
+    _ntripMountPointController.dispose();
+    _ntripUsernameController.dispose();
+    _ntripPasswordController.dispose();
     _pulseAnimationController.dispose();
     _bleService.dispose();
     super.dispose();
@@ -288,47 +339,67 @@ class _BLEScreenState extends State<BLEScreen>
   }
 
   Widget _buildContent(S? s) {
-    return Column(
-      children: [
-        // Connection Status Card
-        _buildConnectionStatusCard(s),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              children: [
+                // Connection Status Card
+                _buildConnectionStatusCard(s),
 
-        // GPS Data Card (shown when connected and receiving data)
-        if (_connectionState == BLEConnectionState.connected &&
-            (_currentPosition != null || _currentNmeaData != null))
-          _buildGpsDataCard(s),
+                // GPS Data Card (shown when connected and receiving data)
+                if (_connectionState == BLEConnectionState.connected &&
+                    (_currentPosition != null || _currentNmeaData != null))
+                  _buildGpsDataCard(s),
 
-        // Scan Controls
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              ElevatedButton.icon(
-                onPressed: _bleService.isScanning ? null : _startScan,
-                icon: const Icon(Icons.search),
-                label: Text(s?.bleButtonStartScan ?? 'Start Scan'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
+                // NTRIP Configuration Card (shown when BLE is connected)
+                if (_connectionState == BLEConnectionState.connected)
+                  _buildNtripCard(s),
+
+                // Scan Controls
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: _bleService.isScanning ? null : _startScan,
+                        icon: const Icon(Icons.search),
+                        label: Text(s?.bleButtonStartScan ?? 'Start Scan'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: _bleService.isScanning ? _stopScan : null,
+                        icon: const Icon(Icons.stop),
+                        label: Text(s?.bleButtonStopScan ?? 'Stop Scan'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              ElevatedButton.icon(
-                onPressed: _bleService.isScanning ? _stopScan : null,
-                icon: const Icon(Icons.stop),
-                label: Text(s?.bleButtonStopScan ?? 'Stop Scan'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
+
+                // Scan Results - use constrained height to prevent overflow
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: constraints.maxHeight > 0
+                        ? (constraints.maxHeight * 0.5).clamp(200.0, 400.0)
+                        : 300,
+                  ),
+                  child: _buildScanResultsList(s),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-
-        // Scan Results
-        Expanded(child: _buildScanResultsList(s)),
-      ],
+        );
+      },
     );
   }
 
@@ -437,6 +508,8 @@ class _BLEScreenState extends State<BLEScreen>
     }
 
     return ListView.builder(
+      shrinkWrap: true,
+      physics: const ClampingScrollPhysics(),
       itemCount: _scanResults.length,
       itemBuilder: (context, index) {
         final result = _scanResults[index];
@@ -1020,5 +1093,318 @@ class _BLEScreenState extends State<BLEScreen>
         },
       ),
     );
+  }
+
+  Widget _buildNtripCard(S? s) {
+    final isConnected = _ntripConnectionState == NTRIPConnectionState.connected;
+    final isConnecting =
+        _ntripConnectionState == NTRIPConnectionState.connecting;
+    final isError = _ntripConnectionState == NTRIPConnectionState.error;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: ExpansionTile(
+        leading: Icon(
+          isConnected ? Icons.satellite_alt : Icons.satellite,
+          color: isConnected ? Colors.green : Colors.grey,
+        ),
+        title: Text(s?.bleNtripTitle ?? 'NTRIP Corrections'),
+        subtitle: Text(
+          isConnected
+              ? (s?.bleNtripConnected ?? 'Connected')
+              : isConnecting
+              ? (s?.bleNtripConnecting ?? 'Connecting...')
+              : isError
+              ? (s?.bleNtripError ?? 'Error')
+              : (s?.bleNtripDisconnected ?? 'Disconnected'),
+          style: TextStyle(
+            color: isConnected
+                ? Colors.green
+                : isError
+                ? Colors.red
+                : Colors.grey,
+          ),
+        ),
+        initiallyExpanded: !isConnected,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  controller: _ntripHostController,
+                  decoration: InputDecoration(
+                    labelText: s?.bleNtripHost ?? 'NTRIP Caster Host',
+                    hintText: 'rtk2go.com',
+                    border: const OutlineInputBorder(),
+                  ),
+                  enabled: !isConnected && !isConnecting,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _ntripPortController,
+                  decoration: InputDecoration(
+                    labelText: s?.bleNtripPort ?? 'Port',
+                    hintText: '2101',
+                    border: const OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                  enabled: !isConnected && !isConnecting,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _ntripMountPointController,
+                  decoration: InputDecoration(
+                    labelText: s?.bleNtripMountPoint ?? 'Mount Point',
+                    hintText: 'AUTO',
+                    border: const OutlineInputBorder(),
+                  ),
+                  enabled: !isConnected && !isConnecting,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _ntripUsernameController,
+                  decoration: InputDecoration(
+                    labelText: s?.bleNtripUsername ?? 'Username (Email)',
+                    hintText: 'your-email@example.com',
+                    border: const OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.emailAddress,
+                  enabled: !isConnected && !isConnecting,
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _ntripPasswordController,
+                  decoration: InputDecoration(
+                    labelText: s?.bleNtripPassword ?? 'Password',
+                    hintText: 'none',
+                    border: const OutlineInputBorder(),
+                  ),
+                  obscureText: true,
+                  enabled: !isConnected && !isConnecting,
+                ),
+                const SizedBox(height: 16),
+                if (isConnected)
+                  ElevatedButton.icon(
+                    onPressed: _disconnectFromNtrip,
+                    icon: const Icon(Icons.close),
+                    label: Text(s?.bleNtripDisconnect ?? 'Disconnect'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                    ),
+                  )
+                else
+                  ElevatedButton.icon(
+                    onPressed: isConnecting ? null : _connectToNtrip,
+                    icon: isConnecting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                        : const Icon(Icons.link),
+                    label: Text(
+                      isConnecting
+                          ? (s?.bleNtripConnecting ?? 'Connecting...')
+                          : (s?.bleNtripConnect ?? 'Connect to NTRIP'),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                if (_bleService.isForwardingRtcm) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(Icons.check_circle, color: Colors.green, size: 16),
+                      const SizedBox(width: 8),
+                      Text(
+                        s?.bleNtripForwarding ?? 'Forwarding RTCM corrections',
+                        style: TextStyle(color: Colors.green, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _connectToNtrip() async {
+    final s = S.of(context);
+    final host = _ntripHostController.text.trim();
+    final portStr = _ntripPortController.text.trim();
+    final mountPoint = _ntripMountPointController.text.trim();
+    final username = _ntripUsernameController.text.trim();
+    final password = _ntripPasswordController.text.trim();
+
+    if (host.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            s?.bleNtripErrorHostRequired ?? 'NTRIP host is required',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (portStr.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(s?.bleNtripErrorPortRequired ?? 'Port is required'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final port = int.tryParse(portStr);
+    if (port == null || port < 1 || port > 65535) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(s?.bleNtripErrorInvalidPort ?? 'Invalid port number'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (mountPoint.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            s?.bleNtripErrorMountPointRequired ?? 'Mount point is required',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (username.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            s?.bleNtripErrorUsernameRequired ?? 'Username (email) is required',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      setState(() {
+        _ntripConnectionState = NTRIPConnectionState.connecting;
+      });
+
+      final success = await _bleService.connectToNtrip(
+        host: host,
+        port: port,
+        mountPoint: mountPoint,
+        username: username,
+        password: password.isEmpty ? 'none' : password,
+      );
+
+      if (mounted) {
+        if (success) {
+          // Update subscription to new client
+          final ntripClient = _bleService.ntripClient;
+          if (ntripClient != null) {
+            _ntripConnectionStateSubscription?.cancel();
+            _ntripErrorSubscription?.cancel();
+
+            _ntripConnectionStateSubscription = ntripClient
+                .connectionStateStream
+                .listen((state) {
+                  if (mounted) {
+                    setState(() {
+                      _ntripConnectionState = state;
+                    });
+                  }
+                });
+
+            _ntripErrorSubscription = ntripClient.errors.listen((error) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('NTRIP Error: $error'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            });
+          }
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                s?.bleNtripConnectedSuccess ?? 'Connected to NTRIP caster',
+              ),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          setState(() {
+            _ntripConnectionState = NTRIPConnectionState.error;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                _bleService.ntripClient?.errorMessage ??
+                    (s?.bleNtripConnectionFailed ??
+                        'Failed to connect to NTRIP caster'),
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      logger.severe('Error connecting to NTRIP: $e');
+      if (mounted) {
+        setState(() {
+          _ntripConnectionState = NTRIPConnectionState.error;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  Future<void> _disconnectFromNtrip() async {
+    final s = S.of(context);
+    try {
+      await _bleService.disconnectFromNtrip();
+      if (mounted) {
+        setState(() {
+          _ntripConnectionState = NTRIPConnectionState.disconnected;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              s?.bleNtripDisconnectedSuccess ??
+                  'Disconnected from NTRIP caster',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      logger.severe('Error disconnecting from NTRIP: $e');
+    }
   }
 }

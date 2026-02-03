@@ -2727,6 +2727,132 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Receiving data...'**
   String get bleReceivingData;
+
+  /// Title for the NTRIP corrections card.
+  ///
+  /// In en, this message translates to:
+  /// **'NTRIP Corrections'**
+  String get bleNtripTitle;
+
+  /// Status text when NTRIP is connected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get bleNtripConnected;
+
+  /// Status text when connecting to NTRIP.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting...'**
+  String get bleNtripConnecting;
+
+  /// Status text when NTRIP connection error occurs.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get bleNtripError;
+
+  /// Status text when NTRIP is disconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnected'**
+  String get bleNtripDisconnected;
+
+  /// Label for NTRIP host input field.
+  ///
+  /// In en, this message translates to:
+  /// **'NTRIP Caster Host'**
+  String get bleNtripHost;
+
+  /// Label for NTRIP port input field.
+  ///
+  /// In en, this message translates to:
+  /// **'Port'**
+  String get bleNtripPort;
+
+  /// Label for NTRIP mount point input field.
+  ///
+  /// In en, this message translates to:
+  /// **'Mount Point'**
+  String get bleNtripMountPoint;
+
+  /// Label for NTRIP username input field.
+  ///
+  /// In en, this message translates to:
+  /// **'Username (Email)'**
+  String get bleNtripUsername;
+
+  /// Label for NTRIP password input field.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get bleNtripPassword;
+
+  /// Button label to connect to NTRIP caster.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect to NTRIP'**
+  String get bleNtripConnect;
+
+  /// Button label to disconnect from NTRIP caster.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect'**
+  String get bleNtripDisconnect;
+
+  /// Text shown when RTCM corrections are being forwarded.
+  ///
+  /// In en, this message translates to:
+  /// **'Forwarding RTCM corrections'**
+  String get bleNtripForwarding;
+
+  /// Error message when NTRIP host is missing.
+  ///
+  /// In en, this message translates to:
+  /// **'NTRIP host is required'**
+  String get bleNtripErrorHostRequired;
+
+  /// Error message when NTRIP port is missing.
+  ///
+  /// In en, this message translates to:
+  /// **'Port is required'**
+  String get bleNtripErrorPortRequired;
+
+  /// Error message when NTRIP port is invalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid port number'**
+  String get bleNtripErrorInvalidPort;
+
+  /// Error message when NTRIP mount point is missing.
+  ///
+  /// In en, this message translates to:
+  /// **'Mount point is required'**
+  String get bleNtripErrorMountPointRequired;
+
+  /// Error message when NTRIP username is missing.
+  ///
+  /// In en, this message translates to:
+  /// **'Username (email) is required'**
+  String get bleNtripErrorUsernameRequired;
+
+  /// Success message when NTRIP connection is established.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected to NTRIP caster'**
+  String get bleNtripConnectedSuccess;
+
+  /// Success message when NTRIP disconnection is successful.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnected from NTRIP caster'**
+  String get bleNtripDisconnectedSuccess;
+
+  /// Error message when NTRIP connection fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to connect to NTRIP caster'**
+  String get bleNtripConnectionFailed;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

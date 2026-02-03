@@ -1560,4 +1560,68 @@ class SIt extends S {
 
   @override
   String get bleReceivingData => 'Ricezione dati...';
+
+  @override
+  String get bleNtripTitle => 'Correzioni NTRIP';
+
+  @override
+  String get bleNtripConnected => 'Connesso';
+
+  @override
+  String get bleNtripConnecting => 'Connessione...';
+
+  @override
+  String get bleNtripError => 'Errore';
+
+  @override
+  String get bleNtripDisconnected => 'Disconnesso';
+
+  @override
+  String get bleNtripHost => 'Host Caster NTRIP';
+
+  @override
+  String get bleNtripPort => 'Porta';
+
+  @override
+  String get bleNtripMountPoint => 'Mount Point';
+
+  @override
+  String get bleNtripUsername => 'Nome utente (Email)';
+
+  @override
+  String get bleNtripPassword => 'Password';
+
+  @override
+  String get bleNtripConnect => 'Connetti a NTRIP';
+
+  @override
+  String get bleNtripDisconnect => 'Disconnetti';
+
+  @override
+  String get bleNtripForwarding => 'Inoltro correzioni RTCM';
+
+  @override
+  String get bleNtripErrorHostRequired => 'L\'host NTRIP è obbligatorio';
+
+  @override
+  String get bleNtripErrorPortRequired => 'La porta è obbligatoria';
+
+  @override
+  String get bleNtripErrorInvalidPort => 'Numero di porta non valido';
+
+  @override
+  String get bleNtripErrorMountPointRequired => 'Il mount point è obbligatorio';
+
+  @override
+  String get bleNtripErrorUsernameRequired =>
+      'Il nome utente (email) è obbligatorio';
+
+  @override
+  String get bleNtripConnectedSuccess => 'Connesso al caster NTRIP';
+
+  @override
+  String get bleNtripDisconnectedSuccess => 'Disconnesso dal caster NTRIP';
+
+  @override
+  String get bleNtripConnectionFailed => 'Connessione al caster NTRIP fallita';
 }

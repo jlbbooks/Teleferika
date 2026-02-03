@@ -1546,4 +1546,67 @@ class SEn extends S {
 
   @override
   String get bleReceivingData => 'Receiving data...';
+
+  @override
+  String get bleNtripTitle => 'NTRIP Corrections';
+
+  @override
+  String get bleNtripConnected => 'Connected';
+
+  @override
+  String get bleNtripConnecting => 'Connecting...';
+
+  @override
+  String get bleNtripError => 'Error';
+
+  @override
+  String get bleNtripDisconnected => 'Disconnected';
+
+  @override
+  String get bleNtripHost => 'NTRIP Caster Host';
+
+  @override
+  String get bleNtripPort => 'Port';
+
+  @override
+  String get bleNtripMountPoint => 'Mount Point';
+
+  @override
+  String get bleNtripUsername => 'Username (Email)';
+
+  @override
+  String get bleNtripPassword => 'Password';
+
+  @override
+  String get bleNtripConnect => 'Connect to NTRIP';
+
+  @override
+  String get bleNtripDisconnect => 'Disconnect';
+
+  @override
+  String get bleNtripForwarding => 'Forwarding RTCM corrections';
+
+  @override
+  String get bleNtripErrorHostRequired => 'NTRIP host is required';
+
+  @override
+  String get bleNtripErrorPortRequired => 'Port is required';
+
+  @override
+  String get bleNtripErrorInvalidPort => 'Invalid port number';
+
+  @override
+  String get bleNtripErrorMountPointRequired => 'Mount point is required';
+
+  @override
+  String get bleNtripErrorUsernameRequired => 'Username (email) is required';
+
+  @override
+  String get bleNtripConnectedSuccess => 'Connected to NTRIP caster';
+
+  @override
+  String get bleNtripDisconnectedSuccess => 'Disconnected from NTRIP caster';
+
+  @override
+  String get bleNtripConnectionFailed => 'Failed to connect to NTRIP caster';
 }

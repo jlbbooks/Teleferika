@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:geolocator/geolocator.dart';
 import 'nmea_parser.dart';
+import 'ntrip_client.dart';
 
 enum BLEConnectionState { disconnected, connecting, connected, error, waiting }
 
@@ -61,6 +62,17 @@ class BLEService {
   final StreamController<NMEAData> _nmeaDataController =
       StreamController<NMEAData>.broadcast();
   Stream<NMEAData> get nmeaData => _nmeaDataController.stream;
+
+  // NTRIP client for RTCM corrections
+  NTRIPClient? _ntripClient;
+  StreamSubscription<List<int>>? _rtcmSubscription;
+  bool _isForwardingRtcm = false;
+
+  /// Gets the NTRIP client instance (creates if needed).
+  NTRIPClient? get ntripClient => _ntripClient;
+
+  /// Gets whether RTCM corrections are being forwarded.
+  bool get isForwardingRtcm => _isForwardingRtcm;
 
   Future<void> startScan() async {
     if (isScanning) return;
@@ -278,9 +290,7 @@ class BLEService {
         // Also check for RX characteristic (write capability)
         if (characteristic.properties.write ||
             characteristic.properties.writeWithoutResponse) {
-          if (_rxCharacteristic == null) {
-            _rxCharacteristic = characteristic;
-          }
+          _rxCharacteristic ??= characteristic;
         }
 
         // Prefer notify over indicate
@@ -417,8 +427,122 @@ class BLEService {
     await sendData(data);
   }
 
+  /// Forwards RTCM correction data to the RTK device via BLE.
+  /// This method handles splitting large RTCM messages to fit BLE MTU limits.
+  Future<void> forwardRtcmData(List<int> rtcmData) async {
+    if (_rxCharacteristic == null || rtcmData.isEmpty) {
+      return;
+    }
+
+    try {
+      // BLE typically has MTU limits (20-517 bytes depending on device)
+      // Split large RTCM messages into chunks
+      const maxChunkSize = 200; // Conservative chunk size for BLE
+
+      if (rtcmData.length <= maxChunkSize) {
+        // Small enough to send in one chunk
+        await _rxCharacteristic!.write(rtcmData, withoutResponse: true);
+      } else {
+        // Split into chunks
+        for (int i = 0; i < rtcmData.length; i += maxChunkSize) {
+          final end = (i + maxChunkSize < rtcmData.length)
+              ? i + maxChunkSize
+              : rtcmData.length;
+          final chunk = rtcmData.sublist(i, end);
+          await _rxCharacteristic!.write(chunk, withoutResponse: true);
+
+          // Small delay between chunks to avoid overwhelming the device
+          if (end < rtcmData.length) {
+            await Future.delayed(const Duration(milliseconds: 10));
+          }
+        }
+      }
+
+      if (const bool.fromEnvironment('dart.vm.product') == false) {
+        debugPrint('BLE: Forwarded ${rtcmData.length} bytes of RTCM data');
+      }
+    } catch (e) {
+      debugPrint("BLE: Error forwarding RTCM data: $e");
+    }
+  }
+
+  /// Connects to an NTRIP caster and starts forwarding RTCM corrections to the RTK device.
+  ///
+  /// Returns true if connection was successful, false otherwise.
+  Future<bool> connectToNtrip({
+    required String host,
+    required int port,
+    required String mountPoint,
+    required String username,
+    required String password,
+    bool useSsl = false,
+  }) async {
+    // Ensure BLE device is connected
+    if (connectedDevice == null || _rxCharacteristic == null) {
+      debugPrint('BLE: Cannot connect to NTRIP - BLE device not connected');
+      return false;
+    }
+
+    try {
+      // Create or reuse NTRIP client
+      _ntripClient ??= NTRIPClient();
+
+      // Connect to NTRIP caster
+      await _ntripClient!.connect(
+        host: host,
+        port: port,
+        mountPoint: mountPoint,
+        username: username,
+        password: password,
+        useSsl: useSsl,
+      );
+
+      // Wait a moment for connection to establish
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // Check if connection was successful
+      if (_ntripClient!.connectionState == NTRIPConnectionState.connected) {
+        // Subscribe to RTCM data stream
+        _rtcmSubscription?.cancel();
+        _rtcmSubscription = _ntripClient!.rtcmData.listen(
+          (rtcmData) {
+            _isForwardingRtcm = true;
+            forwardRtcmData(rtcmData);
+          },
+          onError: (error) {
+            debugPrint('BLE: NTRIP RTCM stream error: $error');
+            _isForwardingRtcm = false;
+          },
+        );
+
+        debugPrint('BLE: NTRIP connected and forwarding RTCM corrections');
+        return true;
+      } else {
+        debugPrint(
+          'BLE: NTRIP connection failed: ${_ntripClient!.errorMessage}',
+        );
+        return false;
+      }
+    } catch (e) {
+      debugPrint('BLE: Error connecting to NTRIP: $e');
+      return false;
+    }
+  }
+
+  /// Disconnects from NTRIP caster and stops forwarding RTCM corrections.
+  Future<void> disconnectFromNtrip() async {
+    _isForwardingRtcm = false;
+    await _rtcmSubscription?.cancel();
+    _rtcmSubscription = null;
+    await _ntripClient?.disconnect();
+    debugPrint('BLE: Disconnected from NTRIP');
+  }
+
   Future<void> disconnectDevice() async {
     _connectionStateController.add(BLEConnectionState.waiting);
+
+    // Disconnect from NTRIP if connected
+    await disconnectFromNtrip();
 
     // Unsubscribe from data
     await _dataSubscription?.cancel();
@@ -445,6 +569,9 @@ class BLEService {
   }
 
   void dispose() {
+    disconnectFromNtrip();
+    _ntripClient?.dispose();
+    _rtcmSubscription?.cancel();
     _dataSubscription?.cancel();
     _scanResultsController.close();
     _connectionStateController.close();
