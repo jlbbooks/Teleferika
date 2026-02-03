@@ -1616,4 +1616,10 @@ class SEn extends S {
 
   @override
   String get bleNtripConnectionFailed => 'Failed to connect to NTRIP caster';
+
+  @override
+  String get bleNtripUseSsl => 'Use SSL/TLS';
+
+  @override
+  String get bleNtripUseSslHint => 'Enable for secure connections (port 2102)';
 }

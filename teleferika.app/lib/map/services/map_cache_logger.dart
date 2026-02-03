@@ -9,16 +9,12 @@ class MapCacheLogger {
 
   /// Log comprehensive cache statistics for all map types
   static Future<void> logAllCacheStats() async {
-    _logger.info('=== MAP CACHE STATISTICS ===');
-
     try {
       // Log overall cache statistics
       await _logOverallCacheStats();
 
       // Log individual store statistics
       await _logIndividualStoreStats();
-
-      _logger.info('=== END MAP CACHE STATISTICS ===');
     } catch (e, stackTrace) {
       _logger.severe('Error logging cache statistics', e, stackTrace);
     }
@@ -27,15 +23,12 @@ class MapCacheLogger {
   /// Log overall cache statistics from FMTCRoot
   static Future<void> _logOverallCacheStats() async {
     try {
-      final realSize = await FMTCRoot.stats.realSize;
-      _logger.info('Total cache size: ${_formatBytes(realSize)}');
-
+      await FMTCRoot.stats.realSize;
       // Try to get additional stats if available
       try {
-        final size = await FMTCRoot.stats.size;
-        _logger.info('Total cache entries: $size');
+        await FMTCRoot.stats.size;
       } catch (e) {
-        _logger.fine('Size stats not available: $e');
+        // Size stats not available
       }
     } catch (e) {
       _logger.warning('Could not retrieve overall cache stats: $e');
@@ -55,19 +48,12 @@ class MapCacheLogger {
       final storeName = MapStoreUtils.getStoreNameForMapType(mapType);
       final store = FMTCStore(storeName);
 
-      _logger.info('--- ${mapType.name.toUpperCase()} STORE ---');
-      _logger.info('Store name: $storeName');
-
       // Get store size
       try {
-        final size = await store.stats.size;
-        _logger.info('Store entries: $size');
+        await store.stats.size;
       } catch (e) {
-        _logger.fine('Store size not available for $storeName: $e');
+        // Store size not available
       }
-
-      // Store information logging
-      _logger.info('Store ready for ${mapType.name}');
     } catch (e) {
       _logger.warning('Error logging stats for ${mapType.name}: $e');
     }
@@ -79,14 +65,11 @@ class MapCacheLogger {
       final storeName = MapStoreUtils.getStoreNameForMapType(mapType);
       final store = FMTCStore(storeName);
 
-      _logger.info('=== CACHE PERFORMANCE: ${mapType.name.toUpperCase()} ===');
-
       // Log store size
       try {
-        final size = await store.stats.size;
-        _logger.info('Current store size: $size entries');
+        await store.stats.size;
       } catch (e) {
-        _logger.fine('Could not get store size: $e');
+        // Could not get store size
       }
 
       // Log cache hit/miss information if available
@@ -108,23 +91,18 @@ class MapCacheLogger {
     try {
       // This is speculative - the actual API might be different
       // You may need to implement your own hit/miss tracking
-      _logger.info('Cache hit/miss tracking not implemented yet');
-      _logger.info('Consider implementing custom hit/miss counters');
     } catch (e) {
-      _logger.fine('Hit/miss info not available: $e');
+      // Hit/miss info not available
     }
   }
 
   /// Log cache cleanup operations
   static Future<void> logCacheCleanup() async {
-    _logger.info('=== CACHE CLEANUP OPERATION ===');
-
     try {
       // Log before cleanup stats
       await logAllCacheStats();
 
       // Perform cleanup (if needed)
-      _logger.info('Cache cleanup completed');
 
       // Log after cleanup stats
       await logAllCacheStats();
@@ -135,27 +113,27 @@ class MapCacheLogger {
 
   /// Log when a new tile is cached
   static void logTileCached(MapType mapType, String tileKey) {
-    _logger.fine('Tile cached for ${mapType.name}: $tileKey');
+    // Verbose logging removed
   }
 
   /// Log when a tile is retrieved from cache
   static void logTileRetrievedFromCache(MapType mapType, String tileKey) {
-    _logger.fine('Tile retrieved from cache for ${mapType.name}: $tileKey');
+    // Verbose logging removed
   }
 
   /// Log when a tile is fetched from network
   static void logTileFetchedFromNetwork(MapType mapType, String tileKey) {
-    _logger.fine('Tile fetched from network for ${mapType.name}: $tileKey');
+    // Verbose logging removed
   }
 
   /// Log cache store creation
   static void logStoreCreated(String storeName) {
-    _logger.info('Cache store created: $storeName');
+    // Verbose logging removed
   }
 
   /// Log cache store deletion
   static void logStoreDeleted(String storeName) {
-    _logger.info('Cache store deleted: $storeName');
+    // Verbose logging removed
   }
 
   /// Log cache store error

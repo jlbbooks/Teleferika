@@ -2865,6 +2865,18 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Failed to connect to NTRIP caster'**
   String get bleNtripConnectionFailed;
+
+  /// Checkbox label for enabling SSL/TLS connection.
+  ///
+  /// In en, this message translates to:
+  /// **'Use SSL/TLS'**
+  String get bleNtripUseSsl;
+
+  /// Hint text for SSL/TLS checkbox.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable for secure connections (port 2102)'**
+  String get bleNtripUseSslHint;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

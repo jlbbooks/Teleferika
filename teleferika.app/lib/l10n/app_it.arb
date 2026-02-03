@@ -2142,5 +2142,13 @@
   "bleNtripConnectionFailed": "Connessione al caster NTRIP fallita",
   "@bleNtripConnectionFailed": {
     "description": "Messaggio di errore quando la connessione NTRIP fallisce."
+  },
+  "bleNtripUseSsl": "Usa SSL/TLS",
+  "@bleNtripUseSsl": {
+    "description": "Checkbox label for enabling SSL/TLS connection."
+  },
+  "bleNtripUseSslHint": "Abilita per connessioni sicure (porta 2102)",
+  "@bleNtripUseSslHint": {
+    "description": "Hint text for SSL/TLS checkbox."
   }
 }

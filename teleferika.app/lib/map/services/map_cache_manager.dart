@@ -40,7 +40,6 @@ class MapCacheManager {
 
     // If store is validated, use it directly
     if (_validatedStores.contains(storeName)) {
-      _logger.fine('Using validated store: $storeName');
       return FMTCTileProvider(
         stores: {storeName: BrowseStoreStrategy.readUpdateCreate},
         loadingStrategy: BrowseLoadingStrategy.cacheFirst,
@@ -59,7 +58,6 @@ class MapCacheManager {
     try {
       // Mark as validated
       _validatedStores.add(storeName);
-      _logger.info('Successfully validated store: $storeName');
 
       return FMTCTileProvider(
         stores: {storeName: BrowseStoreStrategy.readUpdateCreate},
@@ -79,9 +77,6 @@ class MapCacheManager {
     try {
       _validatedStores.add(_fallbackStoreName);
 
-      _logger.info(
-        'Using fallback tile provider with store: $_fallbackStoreName',
-      );
       return FMTCTileProvider(
         stores: {_fallbackStoreName: BrowseStoreStrategy.readUpdateCreate},
         loadingStrategy: BrowseLoadingStrategy.cacheFirst,
@@ -103,12 +98,10 @@ class MapCacheManager {
 
       // Try to create the store (it will fail if it already exists, which is fine)
       await store.manage.create();
-      _logger.info('Successfully created store: $storeName');
     } catch (e) {
       // If store already exists, that's fine
       if (e.toString().contains('already exists') ||
           e.toString().contains('StoreExists')) {
-        _logger.fine('Store already exists: $storeName');
         return;
       }
       _logger.severe('Failed to ensure store exists: $storeName - $e');
@@ -118,8 +111,6 @@ class MapCacheManager {
 
   /// Validate all stores for all map types
   static Future<void> validateAllStores() async {
-    _logger.info('Validating all cache stores...');
-
     for (final mapType in MapType.all) {
       final storeName =
           MapType.of(mapType.id).cacheStoreName ?? _fallbackStoreName;
@@ -128,7 +119,6 @@ class MapCacheManager {
         await _ensureStoreExists(storeName);
         _validatedStores.add(storeName);
         _failedStores.remove(storeName); // Remove from failed if it was there
-        _logger.info('Validated store: $storeName');
       } catch (e) {
         _logger.warning('Failed to validate store: $storeName - $e');
         _failedStores.add(storeName);
@@ -140,7 +130,6 @@ class MapCacheManager {
     try {
       await _ensureStoreExists(_fallbackStoreName);
       _validatedStores.add(_fallbackStoreName);
-      _logger.info('Validated fallback store: $_fallbackStoreName');
     } catch (e) {
       _logger.severe('Failed to validate fallback store: $e');
     }
@@ -148,8 +137,6 @@ class MapCacheManager {
 
   /// Clear all stores (for testing or reset purposes)
   static Future<void> clearAllStores() async {
-    _logger.info('Clearing all cache stores...');
-
     final allStoreNames = [
       ...MapType.all
           .map((mt) => MapType.of(mt.id).cacheStoreName)
@@ -161,7 +148,6 @@ class MapCacheManager {
       try {
         final store = FMTCStore(storeName);
         await store.manage.delete();
-        _logger.info('Deleted store: $storeName');
       } catch (e) {
         _logger.warning('Failed to delete store: $storeName - $e');
       }
@@ -204,14 +190,12 @@ class MapCacheManager {
   static void resetStoreValidation(String storeName) {
     _validatedStores.remove(storeName);
     _failedStores.remove(storeName);
-    _logger.info('Reset validation state for store: $storeName');
   }
 
   /// Reset validation state for all stores
   static void resetAllStoreValidation() {
     _validatedStores.clear();
     _failedStores.clear();
-    _logger.info('Reset validation state for all stores');
   }
 
   /// Check if a specific store has tiles (for debugging)
@@ -220,7 +204,6 @@ class MapCacheManager {
       final store = FMTCStore(storeName);
       final stats = store.stats;
       final size = await stats.size;
-      _logger.info('Store $storeName has $size entries');
       return size > 0;
     } catch (e) {
       _logger.warning('Failed to check store $storeName: $e');
@@ -230,12 +213,10 @@ class MapCacheManager {
 
   /// Log cache status for debugging
   static Future<void> logCacheStatus() async {
-    _logger.info('=== CACHE STATUS ===');
     for (final mapType in MapType.all) {
       final storeName =
           MapType.of(mapType.id).cacheStoreName ?? _fallbackStoreName;
-      final hasTiles = await hasTilesInStore(storeName);
-      _logger.info('${mapType.name}: $storeName - Has tiles: $hasTiles');
+      await hasTilesInStore(storeName);
     }
   }
 }

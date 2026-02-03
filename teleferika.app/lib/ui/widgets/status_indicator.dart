@@ -397,6 +397,27 @@ class _StatusIndicatorState extends State<StatusIndicator> {
     _hideStatus();
   }
 
+  /// Gets the announcement label for screen readers.
+  ///
+  /// Includes the status type prefix for better context.
+  String _getStatusAnnouncementLabel() {
+    if (widget.status == null) return '';
+
+    final statusType = widget.status!.type;
+    final message = widget.status!.message;
+
+    switch (statusType) {
+      case StatusType.success:
+        return 'Success: $message';
+      case StatusType.error:
+        return 'Error: $message';
+      case StatusType.info:
+        return 'Information: $message';
+      case StatusType.loading:
+        return 'Loading: $message';
+    }
+  }
+
   @override
   void dispose() {
     _hideTimer?.cancel();
@@ -419,75 +440,86 @@ class _StatusIndicatorState extends State<StatusIndicator> {
             curve: Curves.easeOut,
             child: widget.status == null
                 ? const SizedBox.shrink()
-                : Container(
-                    margin: widget.margin,
-                    child: Material(
-                      elevation: 6,
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.transparent,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: widget.status!.color.withValues(alpha: 0.95),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        constraints: BoxConstraints(
-                          maxWidth: widget.maxWidth ?? 320,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (widget.status!.type == StatusType.loading)
-                              const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
+                : Semantics(
+                    // Use liveRegion to announce status changes to screen readers
+                    // This replaces deprecated announceForAccessibility methods
+                    // liveRegion provides polite announcements when the widget updates
+                    liveRegion: true,
+                    label: _getStatusAnnouncementLabel(),
+                    child: Container(
+                      margin: widget.margin,
+                      child: Material(
+                        elevation: 6,
+                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.transparent,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: widget.status!.color.withValues(alpha: 0.95),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          constraints: BoxConstraints(
+                            maxWidth: widget.maxWidth ?? 320,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (widget.status!.type == StatusType.loading)
+                                const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
                                   ),
-                                ),
-                              )
-                            else
-                              Icon(
-                                widget.status!.icon,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                            const SizedBox(width: 10),
-                            Flexible(
-                              child: Tooltip(
-                                message: widget.status!.message,
-                                child: Text(
-                                  widget.status!.message,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ),
-                            if (widget.status!.type != StatusType.loading)
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.close,
+                                )
+                              else
+                                Icon(
+                                  widget.status!.icon,
                                   color: Colors.white,
-                                  size: 16,
+                                  size: 18,
                                 ),
-                                onPressed: _handleDismiss,
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(
-                                  minWidth: 24,
-                                  minHeight: 24,
+                              const SizedBox(width: 10),
+                              Flexible(
+                                child: Tooltip(
+                                  message: widget.status!.message,
+                                  child: Text(
+                                    widget.status!.message,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               ),
-                          ],
+                              if (widget.status!.type != StatusType.loading)
+                                Semantics(
+                                  label: 'Dismiss ${widget.status!.message}',
+                                  button: true,
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                    onPressed: _handleDismiss,
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(
+                                      minWidth: 24,
+                                      minHeight: 24,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ),

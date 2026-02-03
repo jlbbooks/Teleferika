@@ -54,22 +54,24 @@ class _BLEScreenState extends State<BLEScreen>
 
   // NTRIP configuration
   final TextEditingController _ntripHostController = TextEditingController(
-    text: 'rtk2go.com',
+    text: '194.105.50.232',
   );
   final TextEditingController _ntripPortController = TextEditingController(
     text: '2101',
   );
   final TextEditingController _ntripMountPointController =
-      TextEditingController(text: 'AUTO');
-  final TextEditingController _ntripUsernameController =
-      TextEditingController();
+      TextEditingController(text: 'IMAX3');
+  final TextEditingController _ntripUsernameController = TextEditingController(
+    text: 'TeleferiKa_2',
+  );
   final TextEditingController _ntripPasswordController = TextEditingController(
-    text: 'none',
+    text: 'WqDS-n8r5p!r-Db',
   );
   NTRIPConnectionState _ntripConnectionState =
       NTRIPConnectionState.disconnected;
   StreamSubscription<NTRIPConnectionState>? _ntripConnectionStateSubscription;
   StreamSubscription<String>? _ntripErrorSubscription;
+  bool _ntripUseSsl = false;
 
   @override
   void initState() {
@@ -229,13 +231,7 @@ class _BLEScreenState extends State<BLEScreen>
           _hasReceivedFirstPosition =
               true; // Mark that we've received first position
         });
-        // Only log in debug mode to reduce production logging
-        if (const bool.fromEnvironment('dart.vm.product') == false) {
-          logger.info(
-            'GPS Position: ${position.latitude}, ${position.longitude}, '
-            'accuracy: ${position.accuracy}m',
-          );
-        }
+        // GPS position logging removed
       }
     });
 
@@ -1218,6 +1214,27 @@ class _BLEScreenState extends State<BLEScreen>
                   enabled: !isConnected && !isConnecting,
                 ),
                 const SizedBox(height: 12),
+                CheckboxListTile(
+                  title: Text(s?.bleNtripUseSsl ?? 'Use SSL/TLS'),
+                  value: _ntripUseSsl,
+                  onChanged: isConnected || isConnecting
+                      ? null
+                      : (value) {
+                          setState(() {
+                            _ntripUseSsl = value ?? false;
+                            // Auto-update port if SSL is toggled
+                            if (_ntripUseSsl &&
+                                _ntripPortController.text == '2101') {
+                              _ntripPortController.text = '2102';
+                            } else if (!_ntripUseSsl &&
+                                _ntripPortController.text == '2102') {
+                              _ntripPortController.text = '2101';
+                            }
+                          });
+                        },
+                  controlAffinity: ListTileControlAffinity.leading,
+                ),
+                const SizedBox(height: 12),
                 TextField(
                   controller: _ntripMountPointController,
                   decoration: InputDecoration(
@@ -1382,6 +1399,7 @@ class _BLEScreenState extends State<BLEScreen>
         mountPoint: mountPoint,
         username: username,
         password: password.isEmpty ? 'none' : password,
+        useSsl: _ntripUseSsl,
       );
 
       if (mounted) {
@@ -1391,6 +1409,11 @@ class _BLEScreenState extends State<BLEScreen>
           if (ntripClient != null) {
             _ntripConnectionStateSubscription?.cancel();
             _ntripErrorSubscription?.cancel();
+
+            // Explicitly set state to connected immediately
+            setState(() {
+              _ntripConnectionState = ntripClient.connectionState;
+            });
 
             _ntripConnectionStateSubscription = ntripClient
                 .connectionStateStream
@@ -1408,6 +1431,7 @@ class _BLEScreenState extends State<BLEScreen>
                   SnackBar(
                     content: Text('NTRIP Error: $error'),
                     backgroundColor: Colors.red,
+                    duration: const Duration(seconds: 5),
                   ),
                 );
               }
@@ -1454,22 +1478,42 @@ class _BLEScreenState extends State<BLEScreen>
   Future<void> _disconnectFromNtrip() async {
     final s = S.of(context);
     try {
+      // Update state immediately to show feedback
+      setState(() {
+        _ntripConnectionState = NTRIPConnectionState.disconnected;
+      });
+
       await _bleService.disconnectFromNtrip();
+
       if (mounted) {
-        setState(() {
-          _ntripConnectionState = NTRIPConnectionState.disconnected;
-        });
+        // Ensure state is set correctly after disconnect
+        final ntripClient = _bleService.ntripClient;
+        if (ntripClient != null) {
+          setState(() {
+            _ntripConnectionState = ntripClient.connectionState;
+          });
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               s?.bleNtripDisconnectedSuccess ??
                   'Disconnected from NTRIP caster',
             ),
+            backgroundColor: Colors.orange,
           ),
         );
       }
     } catch (e) {
       logger.severe('Error disconnecting from NTRIP: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error disconnecting: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 }

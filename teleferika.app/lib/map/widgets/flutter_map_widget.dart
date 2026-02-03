@@ -104,16 +104,11 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
 
   // Get the appropriate tile provider based on the current map type
   TileProvider? _getTileProvider(MapType mapType) {
-    final logger = Logger('FlutterMapWidget');
-    logger.info(
-      'Getting tile provider for ${mapType.name} with cache store: ${MapType.of(mapType.id).cacheStoreName ?? 'mapStore_${mapType.id}'}',
-    );
-
     try {
       final tileProvider = MapCacheManager.getTileProviderWithFallback(mapType);
-      logger.info('Created cached tile provider for ${mapType.name}');
       return tileProvider;
     } catch (e) {
+      final logger = Logger('FlutterMapWidget');
       logger.warning(
         'Failed to create cached tile provider, using default provider: $e',
       );

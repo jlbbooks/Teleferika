@@ -12,7 +12,7 @@ enum BLEConnectionState { disconnected, connecting, connected, error, waiting }
 /// Ported from AcuME app.
 ///
 /// Supports reading GPS data from RTK receivers via Nordic UART Service (NUS).
-/// 
+///
 /// This is a singleton service that persists across screens to maintain BLE connections
 /// and continue receiving GPS data in the background.
 class BLEService {
@@ -393,13 +393,145 @@ class BLEService {
   /// Handles received data bytes and parses NMEA sentences.
   void _handleReceivedData(List<int> data) {
     try {
-      // Log raw data reception (only in debug mode, but more verbose)
-      if (const bool.fromEnvironment('dart.vm.product') == false) {
-        debugPrint("BLE: Received ${data.length} bytes of raw data");
+      // Raw data reception logging removed
+
+      // Check if data looks like binary RTCM (starts with 0xD3)
+      // RTCM data shouldn't come from the BLE device, so skip it
+      if (data.isNotEmpty && data[0] == 0xD3) {
+        // This is RTCM binary data, not NMEA text - skip it
+        // RTCM data should come from NTRIP, not from the BLE device
+        return;
       }
-      
-      // Convert bytes to string (assuming UTF-8 encoding)
-      final text = utf8.decode(data);
+
+      // Try to decode as UTF-8 text (NMEA sentences)
+      String text;
+      try {
+        text = utf8.decode(data);
+      } catch (e) {
+        // If UTF-8 decode fails, investigate what this data might be
+        if (data.isNotEmpty && data[0] == 0xD3) {
+          // RTCM data - skip it
+          return;
+        }
+
+        // Check if all bytes are printable ASCII (0x20-0x7E) or common control chars
+        bool isPrintableAscii = true;
+        for (final byte in data) {
+          // Allow printable ASCII, newline, carriage return, tab
+          if (!(byte >= 0x20 && byte <= 0x7E) &&
+              byte != 0x0A &&
+              byte != 0x0D &&
+              byte != 0x09) {
+            isPrintableAscii = false;
+            break;
+          }
+        }
+
+        if (isPrintableAscii) {
+          // It's ASCII but UTF-8 decode failed - might be a continuation byte issue
+          // Try decoding as Latin-1 (which maps bytes 0x00-0xFF directly to characters)
+          try {
+            text = String.fromCharCodes(data);
+            // If it looks like it could be part of NMEA (contains $, letters, numbers, commas)
+            if (text.contains(RegExp(r'[\$A-Za-z0-9,]')) ||
+                _nmeaBuffer.isNotEmpty) {
+              // Likely part of an NMEA sentence - add to buffer
+              _nmeaBuffer += text;
+              // Try to process if we have complete sentences
+              final lines = _nmeaBuffer.split('\n');
+              if (lines.length > 1) {
+                _nmeaBuffer = lines.last;
+                for (int i = 0; i < lines.length - 1; i++) {
+                  final line = lines[i].trim();
+                  if (line.isNotEmpty && line.startsWith('\$')) {
+                    _processNMEASentence(line);
+                  }
+                }
+              }
+              return;
+            }
+          } catch (e2) {
+            // Even Latin-1 decode failed - log details
+          }
+        }
+
+        // Try to extract ASCII/printable parts even if UTF-8 decode failed
+        // This handles cases where binary data is mixed with NMEA sentences
+        String? extractedText;
+        try {
+          // Extract printable ASCII characters (0x20-0x7E) and common control chars
+          final printableBytes = <int>[];
+          for (final byte in data) {
+            // Include printable ASCII, newline, carriage return, tab, and $ (for NMEA)
+            if ((byte >= 0x20 && byte <= 0x7E) ||
+                byte == 0x0A ||
+                byte == 0x0D ||
+                byte == 0x09 ||
+                byte == 0x24) {
+              printableBytes.add(byte);
+            }
+          }
+
+          if (printableBytes.isNotEmpty) {
+            extractedText = String.fromCharCodes(printableBytes);
+            // Check if it contains NMEA-like patterns
+            if (extractedText.contains(RegExp(r'\$[A-Z]{2}[A-Z]{3}'))) {
+              // Contains NMEA sentence markers - process it
+              _nmeaBuffer += extractedText;
+              // Process complete sentences
+              final lines = _nmeaBuffer.split('\n');
+              if (lines.length > 1) {
+                _nmeaBuffer = lines.last;
+                for (int i = 0; i < lines.length - 1; i++) {
+                  final line = lines[i].trim();
+                  if (line.isNotEmpty && line.startsWith('\$')) {
+                    _processNMEASentence(line);
+                  }
+                }
+              }
+              return; // Successfully processed
+            }
+          }
+        } catch (e) {
+          // Extraction failed - log and continue to detailed logging
+        }
+
+        // Not ASCII and not RTCM - log detailed info for investigation
+        if (const bool.fromEnvironment('dart.vm.product') == false) {
+          final hexDump = data
+              .sublist(0, data.length > 20 ? 20 : data.length)
+              .map((b) => b.toRadixString(16).padLeft(2, '0'))
+              .join(' ');
+
+          // Try to see if any part is ASCII
+          String? asciiPreview;
+          try {
+            final ascii = String.fromCharCodes(
+              data.where(
+                (b) => (b >= 0x20 && b <= 0x7E) || b == 0x0A || b == 0x0D,
+              ),
+            );
+            if (ascii.isNotEmpty && ascii.length > 10) {
+              asciiPreview = ascii.substring(
+                0,
+                ascii.length > 100 ? 100 : ascii.length,
+              );
+            }
+          } catch (e) {
+            // Ignore
+          }
+
+          debugPrint(
+            "BLE: Received data that couldn't be decoded as UTF-8. "
+            "Length: ${data.length} bytes, "
+            "Hex: $hexDump${data.length > 20 ? '...' : ''}, "
+            "First byte: 0x${data[0].toRadixString(16)} (${data[0] >= 0x20 && data[0] <= 0x7E ? String.fromCharCode(data[0]) : 'non-printable'}), "
+            "${asciiPreview != null ? 'ASCII preview: $asciiPreview, ' : ''}"
+            "Buffer length: ${_nmeaBuffer.length}",
+          );
+        }
+        return;
+      }
 
       // Add to buffer
       _nmeaBuffer += text;
@@ -420,7 +552,10 @@ class BLEService {
         }
       }
     } catch (e) {
-      debugPrint("BLE: Error handling received data: $e");
+      // Only log unexpected errors (not FormatException from UTF-8 decode)
+      if (e is! FormatException) {
+        debugPrint("BLE: Error handling received data: $e");
+      }
     }
   }
 
@@ -438,7 +573,7 @@ class BLEService {
             "Fix: ${nmeaData.fixQuality}",
           );
         }
-        
+
         // Emit NMEA data
         _nmeaDataController.add(nmeaData);
 
@@ -463,7 +598,7 @@ class BLEService {
             "Lon: ${position.longitude}, Accuracy: ${position.accuracy}m",
           );
         }
-        
+
         _gpsDataController.add(position);
       }
       // Note: We don't log "invalid" for non-position sentences (GSV, GSA, etc.)
@@ -492,17 +627,33 @@ class BLEService {
     await sendData(data);
   }
 
+  int _totalRtcmBytesForwarded = 0;
+  int _rtcmMessageCount = 0;
+  DateTime? _lastRtcmForwardTime;
+
   /// Forwards RTCM correction data to the RTK device via BLE.
   /// This method handles splitting large RTCM messages to fit BLE MTU limits.
   Future<void> forwardRtcmData(List<int> rtcmData) async {
-    if (_rxCharacteristic == null || rtcmData.isEmpty) {
+    if (_rxCharacteristic == null) {
+      debugPrint('BLE: Cannot forward RTCM - RX characteristic not available');
+      return;
+    }
+
+    if (rtcmData.isEmpty) {
+      debugPrint('BLE: Received empty RTCM data, skipping');
       return;
     }
 
     try {
+      _totalRtcmBytesForwarded += rtcmData.length;
+      _rtcmMessageCount++;
+      _lastRtcmForwardTime = DateTime.now();
+
       // BLE typically has MTU limits (20-517 bytes depending on device)
       // Split large RTCM messages into chunks
       const maxChunkSize = 200; // Conservative chunk size for BLE
+
+      // Logging removed - RTCM forwarding is working correctly
 
       if (rtcmData.length <= maxChunkSize) {
         // Small enough to send in one chunk
@@ -522,13 +673,22 @@ class BLEService {
           }
         }
       }
-
-      if (const bool.fromEnvironment('dart.vm.product') == false) {
-        debugPrint('BLE: Forwarded ${rtcmData.length} bytes of RTCM data');
-      }
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint("BLE: Error forwarding RTCM data: $e");
+      if (const bool.fromEnvironment('dart.vm.product') == false) {
+        debugPrint("BLE: Stack trace: $stackTrace");
+      }
     }
+  }
+
+  /// Gets RTCM forwarding statistics
+  Map<String, dynamic> getRtcmStats() {
+    return {
+      'totalBytes': _totalRtcmBytesForwarded,
+      'messageCount': _rtcmMessageCount,
+      'lastForwardTime': _lastRtcmForwardTime?.toIso8601String(),
+      'isForwarding': _isForwardingRtcm,
+    };
   }
 
   /// Connects to an NTRIP caster and starts forwarding RTCM corrections to the RTK device.
@@ -544,7 +704,7 @@ class BLEService {
   }) async {
     // Ensure BLE device is connected
     if (connectedDevice == null || _rxCharacteristic == null) {
-      debugPrint('BLE: Cannot connect to NTRIP - BLE device not connected');
+      // Error logging removed - error is returned to caller
       return false;
     }
 
@@ -562,35 +722,122 @@ class BLEService {
         useSsl: useSsl,
       );
 
-      // Wait a moment for connection to establish
-      await Future.delayed(const Duration(milliseconds: 500));
-
       // Check if connection was successful
+      // Note: connect() now waits for HTTP response, so state should be set
       if (_ntripClient!.connectionState == NTRIPConnectionState.connected) {
+        // Set up GGA sentence sending to NTRIP server
+        _setupNtripGgaSending();
+
         // Subscribe to RTCM data stream
         _rtcmSubscription?.cancel();
         _rtcmSubscription = _ntripClient!.rtcmData.listen(
           (rtcmData) {
             _isForwardingRtcm = true;
+            // RTCM reception logging removed - data is validated before reaching here
             forwardRtcmData(rtcmData);
           },
-          onError: (error) {
-            debugPrint('BLE: NTRIP RTCM stream error: $error');
+          onError: (error, stackTrace) {
+            // RTCM stream errors are logged by NTRIP client - only log here if critical
             _isForwardingRtcm = false;
           },
+          onDone: () {
+            // Stream ended - logging removed
+            _isForwardingRtcm = false;
+          },
+          cancelOnError: false,
         );
 
-        debugPrint('BLE: NTRIP connected and forwarding RTCM corrections');
+        // Connection successful - logging removed
         return true;
       } else {
-        debugPrint(
-          'BLE: NTRIP connection failed: ${_ntripClient!.errorMessage}',
-        );
+        // Connection failed - error message is set in NTRIP client
         return false;
       }
     } catch (e) {
-      debugPrint('BLE: Error connecting to NTRIP: $e');
+      // Error logging removed - error is handled by NTRIP client
       return false;
+    }
+  }
+
+  StreamSubscription<Position>? _ntripGgaPositionSubscription;
+  Position? _currentGpsPosition;
+  NMEAData? _lastNmeaData;
+  DateTime? _lastGgaSendTime;
+
+  /// Sets up GPS position subscription to send GGA sentences to NTRIP server
+  /// For i-Max services (like IMAX2), an initial GGA sentence must be sent immediately
+  /// after connection to trigger RTCM data transmission.
+  void _setupNtripGgaSending() {
+    // Cancel existing subscription
+    _ntripGgaPositionSubscription?.cancel();
+
+    // Subscribe to NMEA data to get detailed GPS info (satellites, fix quality)
+    _nmeaDataController.stream.listen((nmeaData) {
+      _lastNmeaData = nmeaData;
+    });
+
+    // For i-Max services, send an initial GGA sentence immediately if we have position
+    if (_currentGpsPosition != null) {
+      _ntripClient?.sendGgaSentence(_currentGpsPosition!, _lastNmeaData);
+      _lastGgaSendTime = DateTime.now();
+      if (const bool.fromEnvironment('dart.vm.product') == false) {
+        debugPrint(
+          'BLE: Sent initial GGA sentence to NTRIP server (i-Max requirement)',
+        );
+      }
+    }
+
+    // Subscribe to GPS position updates and send GGA every 5 seconds
+    Timer? ggaTimer;
+    Position? lastSentPosition;
+
+    _ntripGgaPositionSubscription = gpsData.listen(
+      (position) {
+        _currentGpsPosition = position; // Store for future initial GGA sends
+
+        // Send GGA sentence immediately when position updates (or if first time)
+        final shouldSend =
+            lastSentPosition == null ||
+            (position.latitude - lastSentPosition!.latitude).abs() > 0.0001 ||
+            (position.longitude - lastSentPosition!.longitude).abs() > 0.0001 ||
+            (_lastGgaSendTime == null) ||
+            (DateTime.now().difference(_lastGgaSendTime!).inSeconds >= 5);
+
+        if (shouldSend) {
+          _ntripClient?.sendGgaSentence(position, _lastNmeaData);
+          _lastGgaSendTime = DateTime.now();
+          lastSentPosition = position;
+        }
+
+        // Set up periodic sending (every 5 seconds) if not already set
+        if (ggaTimer == null) {
+          ggaTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+            if (_ntripClient?.connectionState ==
+                NTRIPConnectionState.connected) {
+              final currentPos =
+                  _currentGpsPosition ?? lastSentPosition ?? position;
+              _ntripClient?.sendGgaSentence(currentPos, _lastNmeaData);
+              _lastGgaSendTime = DateTime.now();
+            } else {
+              timer.cancel();
+              ggaTimer = null;
+            }
+          });
+        }
+      },
+      onError: (error) {
+        // GGA subscription error logging removed - non-critical
+        ggaTimer?.cancel();
+      },
+      onDone: () {
+        ggaTimer?.cancel();
+      },
+    );
+
+    if (const bool.fromEnvironment('dart.vm.product') == false) {
+      debugPrint(
+        'BLE: Set up NTRIP GGA sentence sending (every 5 seconds, initial GGA: ${_currentGpsPosition != null})',
+      );
     }
   }
 
@@ -599,14 +846,16 @@ class BLEService {
     _isForwardingRtcm = false;
     await _rtcmSubscription?.cancel();
     _rtcmSubscription = null;
+    await _ntripGgaPositionSubscription?.cancel();
+    _ntripGgaPositionSubscription = null;
     await _ntripClient?.disconnect();
-    debugPrint('BLE: Disconnected from NTRIP');
+    // Disconnect logging removed
   }
 
   /// Handles unexpected disconnection (device went out of range, battery died, etc.)
   Future<void> _handleUnexpectedDisconnection() async {
     debugPrint('BLE: Handling unexpected disconnection');
-    
+
     // Cancel device connection subscription
     await _deviceConnectionSubscription?.cancel();
     _deviceConnectionSubscription = null;
@@ -630,7 +879,9 @@ class BLEService {
           // Only log if it's not the expected "device is not connected" error
           if (!errorMsg.contains('not connected') &&
               !errorMsg.contains('disconnected')) {
-            debugPrint("BLE: Error unsubscribing during unexpected disconnect: $e");
+            debugPrint(
+              "BLE: Error unsubscribing during unexpected disconnect: $e",
+            );
           }
         }
       }

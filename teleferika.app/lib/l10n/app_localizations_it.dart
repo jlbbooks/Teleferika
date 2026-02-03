@@ -1631,4 +1631,11 @@ class SIt extends S {
 
   @override
   String get bleNtripConnectionFailed => 'Connessione al caster NTRIP fallita';
+
+  @override
+  String get bleNtripUseSsl => 'Usa SSL/TLS';
+
+  @override
+  String get bleNtripUseSslHint =>
+      'Abilita per connessioni sicure (porta 2102)';
 }
