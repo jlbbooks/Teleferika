@@ -1803,6 +1803,14 @@
   "@show_all_projects_on_map_description": {
     "description": "Description for the show all projects on map setting."
   },
+  "show_ble_satellite_button_title": "Show RTK Device Button",
+  "@show_ble_satellite_button_title": {
+    "description": "Title for the show BLE satellite button setting."
+  },
+  "show_ble_satellite_button_description": "When enabled, a satellite button appears on the map when connected to an RTK device. Tap it to view device information.",
+  "@show_ble_satellite_button_description": {
+    "description": "Description for the show BLE satellite button setting."
+  },
   "bleScreenTitle": "Bluetooth Devices",
   "@bleScreenTitle": {
     "description": "Title for the BLE screen."

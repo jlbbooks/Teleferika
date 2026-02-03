@@ -52,6 +52,7 @@ class MapScreenState extends State<MapScreen>
   // State manager
   late MapStateManager _stateManager;
   bool _showAllProjectsOnMap = false;
+  bool _showBleSatelliteButton = true;
   bool _isBleConnected = false;
   int? _bleFixQuality;
   StreamSubscription<BLEConnectionState>? _bleConnectionSubscription;
@@ -133,6 +134,7 @@ class MapScreenState extends State<MapScreen>
   Future<void> _loadSettings() async {
     try {
       _showAllProjectsOnMap = await _settingsService.showAllProjectsOnMap;
+      _showBleSatelliteButton = await _settingsService.showBleSatelliteButton;
       setState(() {});
     } catch (e) {
       logger.warning('Error loading settings: $e');
@@ -777,8 +779,10 @@ class MapScreenState extends State<MapScreen>
                               isAddingNewPoint:
                                   _stateManager.isAddingNewPoint ||
                                   _stateManager.newPoint != null,
-                              isBleConnected: _isBleConnected,
-                              onBleInfoPressed: _isBleConnected
+                              isBleConnected:
+                                  _isBleConnected && _showBleSatelliteButton,
+                              onBleInfoPressed:
+                                  (_isBleConnected && _showBleSatelliteButton)
                                   ? _showBleInfoPanel
                                   : null,
                               bleFixQuality: _bleFixQuality ?? 0,

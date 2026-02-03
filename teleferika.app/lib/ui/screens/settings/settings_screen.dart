@@ -27,6 +27,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _showSaveIconAlways = AppConfig.showSaveIconAlways;
   double _angleToRedThreshold = AppConfig.angleToRedThreshold;
   bool _showAllProjectsOnMap = false;
+  bool _showBleSatelliteButton = true;
 
   // Controllers for text fields
   final TextEditingController _angleThresholdController =
@@ -50,11 +51,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final showSaveIconAlways = await _settingsService.showSaveIconAlways;
       final angleToRedThreshold = await _settingsService.angleToRedThreshold;
       final showAllProjectsOnMap = await _settingsService.showAllProjectsOnMap;
+      final showBleSatelliteButton =
+          await _settingsService.showBleSatelliteButton;
 
       setState(() {
         _showSaveIconAlways = showSaveIconAlways;
         _angleToRedThreshold = angleToRedThreshold;
         _showAllProjectsOnMap = showAllProjectsOnMap;
+        _showBleSatelliteButton = showBleSatelliteButton;
         _angleThresholdController.text = _angleToRedThreshold.toString();
       });
 
@@ -72,6 +76,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await _settingsService.setShowSaveIconAlways(_showSaveIconAlways);
       await _settingsService.setAngleToRedThreshold(_angleToRedThreshold);
       await _settingsService.setShowAllProjectsOnMap(_showAllProjectsOnMap);
+      await _settingsService.setShowBleSatelliteButton(_showBleSatelliteButton);
 
       logger.info(
         'Settings saved: showSaveIconAlways=$_showSaveIconAlways, angleToRedThreshold=$_angleToRedThreshold, showAllProjectsOnMap=$_showAllProjectsOnMap',
@@ -119,6 +124,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _showSaveIconAlways = AppConfig.showSaveIconAlways;
         _angleToRedThreshold = AppConfig.angleToRedThreshold;
         _showAllProjectsOnMap = false;
+        _showBleSatelliteButton = true;
         _angleThresholdController.text = _angleToRedThreshold.toString();
       });
 
@@ -354,6 +360,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _saveSettings();
                   },
                   secondary: const Icon(Icons.layers),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Show BLE Satellite Button
+              Card(
+                child: SwitchListTile(
+                  title: Text(
+                    S.of(context)?.show_ble_satellite_button_title ??
+                        'Show RTK Device Button',
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  subtitle: Text(
+                    S.of(context)?.show_ble_satellite_button_description ??
+                        'When enabled, a satellite button appears on the map when connected to an RTK device. Tap it to view device information.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                  value: _showBleSatelliteButton,
+                  onChanged: (bool value) {
+                    setState(() {
+                      _showBleSatelliteButton = value;
+                    });
+                    _saveSettings();
+                  },
+                  secondary: const Icon(Icons.satellite),
                 ),
               ),
 

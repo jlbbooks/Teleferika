@@ -1358,6 +1358,13 @@ class SEn extends S {
       'When enabled, all projects will be displayed on the map as grey markers and lines. When disabled, only the current project is shown.';
 
   @override
+  String get show_ble_satellite_button_title => 'Show RTK Device Button';
+
+  @override
+  String get show_ble_satellite_button_description =>
+      'When enabled, a satellite button appears on the map when connected to an RTK device. Tap it to view device information.';
+
+  @override
   String get bleScreenTitle => 'Bluetooth Devices';
 
   @override

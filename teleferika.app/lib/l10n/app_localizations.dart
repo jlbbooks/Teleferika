@@ -2368,6 +2368,18 @@ abstract class S {
   /// **'When enabled, all projects will be displayed on the map as grey markers and lines. When disabled, only the current project is shown.'**
   String get show_all_projects_on_map_description;
 
+  /// Title for the show BLE satellite button setting.
+  ///
+  /// In en, this message translates to:
+  /// **'Show RTK Device Button'**
+  String get show_ble_satellite_button_title;
+
+  /// Description for the show BLE satellite button setting.
+  ///
+  /// In en, this message translates to:
+  /// **'When enabled, a satellite button appears on the map when connected to an RTK device. Tap it to view device information.'**
+  String get show_ble_satellite_button_description;
+
   /// Title for the BLE screen.
   ///
   /// In en, this message translates to:

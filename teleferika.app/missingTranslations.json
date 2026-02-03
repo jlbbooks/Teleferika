@@ -1,1 +1,6 @@
-{}
+{
+  "it": [
+    "show_ble_satellite_button_title",
+    "show_ble_satellite_button_description"
+  ]
+}

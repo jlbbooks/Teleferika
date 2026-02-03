@@ -18,6 +18,7 @@ class SettingsService {
   static const String _showSaveIconAlwaysKey = 'show_save_icon_always';
   static const String _angleToRedThresholdKey = 'angle_to_red_threshold';
   static const String _showAllProjectsOnMapKey = 'show_all_projects_on_map';
+  static const String _showBleSatelliteButtonKey = 'show_ble_satellite_button';
 
   /// Get the current value for showSaveIconAlways setting.
   /// Returns the stored value or the default from AppConfig.
@@ -84,6 +85,7 @@ class SettingsService {
       await prefs.remove(_showSaveIconAlwaysKey);
       await prefs.remove(_angleToRedThresholdKey);
       await prefs.remove(_showAllProjectsOnMapKey);
+      await prefs.remove(_showBleSatelliteButtonKey);
       _logger.info('All settings reset to defaults');
     } catch (e, stackTrace) {
       _logger.severe('Error resetting settings to defaults', e, stackTrace);
@@ -123,6 +125,38 @@ class SettingsService {
     }
   }
 
+  /// Get the current value for showBleSatelliteButton setting.
+  /// Returns the stored value or the default (true).
+  Future<bool> get showBleSatelliteButton async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool(_showBleSatelliteButtonKey) ?? true;
+    } catch (e, stackTrace) {
+      _logger.warning(
+        'Error getting showBleSatelliteButton setting, using default',
+        e,
+        stackTrace,
+      );
+      return true;
+    }
+  }
+
+  /// Set the showBleSatelliteButton setting value.
+  Future<void> setShowBleSatelliteButton(bool value) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_showBleSatelliteButtonKey, value);
+      _logger.info('showBleSatelliteButton setting saved: $value');
+    } catch (e, stackTrace) {
+      _logger.severe(
+        'Error saving showBleSatelliteButton setting',
+        e,
+        stackTrace,
+      );
+      rethrow;
+    }
+  }
+
   /// Get all current settings as a map for debugging or export purposes.
   Future<Map<String, dynamic>> getAllSettings() async {
     try {
@@ -130,6 +164,7 @@ class SettingsService {
         'showSaveIconAlways': await showSaveIconAlways,
         'angleToRedThreshold': await angleToRedThreshold,
         'showAllProjectsOnMap': await showAllProjectsOnMap,
+        'showBleSatelliteButton': await showBleSatelliteButton,
       };
     } catch (e, stackTrace) {
       _logger.severe('Error getting all settings', e, stackTrace);
