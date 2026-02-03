@@ -93,9 +93,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             duration: const Duration(seconds: 2),
           ),
         );
-
-        // Return true to indicate settings were changed
-        Navigator.of(context).pop(true);
       }
     } catch (e, stackTrace) {
       logger.severe('Error saving settings', e, stackTrace);
