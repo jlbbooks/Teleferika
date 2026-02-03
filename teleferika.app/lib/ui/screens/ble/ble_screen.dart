@@ -243,10 +243,7 @@ class _BLEScreenState extends State<BLEScreen>
           // Update timestamp when we receive data (for pulsing indicator)
           _lastDataReceivedTime = DateTime.now();
         });
-        // Only log in debug mode to reduce production logging
-        if (const bool.fromEnvironment('dart.vm.product') == false) {
-          logger.info('NMEA Data: $nmeaData');
-        }
+        // NMEA data logging removed
       }
     });
   }

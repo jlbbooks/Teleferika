@@ -474,9 +474,16 @@ class BLEService {
 
           if (printableBytes.isNotEmpty) {
             extractedText = String.fromCharCodes(printableBytes);
-            // Check if it contains NMEA-like patterns
-            if (extractedText.contains(RegExp(r'\$[A-Z]{2}[A-Z]{3}'))) {
-              // Contains NMEA sentence markers - process it
+            // Check if it contains NMEA-like patterns (starts with $, or contains comma-separated numbers/letters)
+            final hasNmeaMarker = extractedText.contains(
+              RegExp(r'\$[A-Z]{2}[A-Z]{3}'),
+            );
+            final hasNmeaPattern =
+                extractedText.contains(RegExp(r'[0-9]+,[0-9]+')) ||
+                extractedText.contains(RegExp(r'[A-Z]{2}[A-Z]{3}'));
+
+            if (hasNmeaMarker || (hasNmeaPattern && _nmeaBuffer.isNotEmpty)) {
+              // Contains NMEA sentence markers or patterns - process it
               _nmeaBuffer += extractedText;
               // Process complete sentences
               final lines = _nmeaBuffer.split('\n');
@@ -489,6 +496,13 @@ class BLEService {
                   }
                 }
               }
+              // Log successful extraction for investigation
+              if (const bool.fromEnvironment('dart.vm.product') == false) {
+                debugPrint(
+                  "BLE: Extracted NMEA from binary data: ${extractedText.length} chars, "
+                  "preview: ${extractedText.substring(0, extractedText.length > 50 ? 50 : extractedText.length)}",
+                );
+              }
               return; // Successfully processed
             }
           }
@@ -499,36 +513,78 @@ class BLEService {
         // Not ASCII and not RTCM - log detailed info for investigation
         if (const bool.fromEnvironment('dart.vm.product') == false) {
           final hexDump = data
-              .sublist(0, data.length > 20 ? 20 : data.length)
+              .sublist(0, data.length > 30 ? 30 : data.length)
               .map((b) => b.toRadixString(16).padLeft(2, '0'))
               .join(' ');
 
-          // Try to see if any part is ASCII
+          // Try to extract all ASCII parts for better investigation
           String? asciiPreview;
+          String? asciiFull;
           try {
-            final ascii = String.fromCharCodes(
-              data.where(
-                (b) => (b >= 0x20 && b <= 0x7E) || b == 0x0A || b == 0x0D,
-              ),
-            );
-            if (ascii.isNotEmpty && ascii.length > 10) {
-              asciiPreview = ascii.substring(
-                0,
-                ascii.length > 100 ? 100 : ascii.length,
-              );
+            final asciiBytes = data
+                .where(
+                  (b) =>
+                      (b >= 0x20 && b <= 0x7E) ||
+                      b == 0x0A ||
+                      b == 0x0D ||
+                      b == 0x09 ||
+                      b == 0x24,
+                )
+                .toList();
+            if (asciiBytes.isNotEmpty) {
+              asciiFull = String.fromCharCodes(asciiBytes);
+              asciiPreview = asciiFull.length > 100
+                  ? asciiFull.substring(0, 100) + '...'
+                  : asciiFull;
             }
           } catch (e) {
             // Ignore
           }
 
+          // Count printable vs non-printable bytes
+          int printableCount = 0;
+          int nonPrintableCount = 0;
+          for (final byte in data) {
+            if ((byte >= 0x20 && byte <= 0x7E) ||
+                byte == 0x0A ||
+                byte == 0x0D ||
+                byte == 0x09) {
+              printableCount++;
+            } else {
+              nonPrintableCount++;
+            }
+          }
+
           debugPrint(
             "BLE: Received data that couldn't be decoded as UTF-8. "
-            "Length: ${data.length} bytes, "
-            "Hex: $hexDump${data.length > 20 ? '...' : ''}, "
+            "Length: ${data.length} bytes (${printableCount} printable, ${nonPrintableCount} non-printable), "
+            "Hex (first 30): $hexDump${data.length > 30 ? '...' : ''}, "
             "First byte: 0x${data[0].toRadixString(16)} (${data[0] >= 0x20 && data[0] <= 0x7E ? String.fromCharCode(data[0]) : 'non-printable'}), "
-            "${asciiPreview != null ? 'ASCII preview: $asciiPreview, ' : ''}"
-            "Buffer length: ${_nmeaBuffer.length}",
+            "${asciiPreview != null ? 'ASCII extracted: $asciiPreview, ' : ''}"
+            "Buffer length: ${_nmeaBuffer.length}${_nmeaBuffer.isNotEmpty ? ', buffer ends with: ${_nmeaBuffer.substring(_nmeaBuffer.length > 20 ? _nmeaBuffer.length - 20 : 0)}' : ''}",
           );
+
+          // If we have significant ASCII content, try to process it anyway
+          if (asciiFull != null &&
+              asciiFull.length > 5 &&
+              (asciiFull.contains('\$') ||
+                  asciiFull.contains(RegExp(r'[0-9]+,[0-9]+')))) {
+            debugPrint(
+              "BLE: Attempting to process extracted ASCII as potential NMEA fragment",
+            );
+            _nmeaBuffer += asciiFull;
+            // Try to process complete sentences
+            final lines = _nmeaBuffer.split('\n');
+            if (lines.length > 1) {
+              _nmeaBuffer = lines.last;
+              for (int i = 0; i < lines.length - 1; i++) {
+                final line = lines[i].trim();
+                if (line.isNotEmpty && line.startsWith('\$')) {
+                  _processNMEASentence(line);
+                }
+              }
+            }
+          }
         }
         return;
       }
@@ -565,14 +621,7 @@ class BLEService {
       final nmeaData = NMEAParser.parseSentence(sentence);
 
       if (nmeaData != null && nmeaData.isValid) {
-        // Log processed NMEA data (only in debug mode)
-        if (const bool.fromEnvironment('dart.vm.product') == false) {
-          debugPrint(
-            "BLE: Processed NMEA -> Lat: ${nmeaData.latitude}, "
-            "Lon: ${nmeaData.longitude}, Accuracy: ${nmeaData.accuracy}m, "
-            "Fix: ${nmeaData.fixQuality}",
-          );
-        }
+        // NMEA processing logging removed
 
         // Emit NMEA data
         _nmeaDataController.add(nmeaData);
@@ -591,13 +640,7 @@ class BLEService {
           altitudeAccuracy: 0.0,
         );
 
-        // Log GPS position emission (only in debug mode)
-        if (const bool.fromEnvironment('dart.vm.product') == false) {
-          debugPrint(
-            "BLE: Emitting GPS position -> Lat: ${position.latitude}, "
-            "Lon: ${position.longitude}, Accuracy: ${position.accuracy}m",
-          );
-        }
+        // GPS position emission logging removed
 
         _gpsDataController.add(position);
       }

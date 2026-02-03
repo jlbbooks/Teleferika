@@ -163,7 +163,46 @@ fvm flutter build apk --flavor full --debug
 # Build App Bundle
 fvm flutter build appbundle --flavor opensource --release
 fvm flutter build appbundle --flavor full --release
+
+# Build iOS
+fvm flutter build ios --flavor opensource --release
+fvm flutter build ios --flavor full --release
+
+# Build IPA
+fvm flutter build ipa --flavor opensource --release
+fvm flutter build ipa --flavor full --release
 ```
+
+### iOS Development on macOS
+
+**Important Note**: Because the project folder is named `teleferika.app`, macOS treats it as an application bundle, which prevents Xcode from navigating into subfolders normally.
+
+**To open the iOS project in Xcode:**
+
+```bash
+# Use the helper script (recommended)
+./scripts/open-xcode.sh
+
+# Or manually open the workspace file directly
+open -a Xcode ios/Runner.xcworkspace
+```
+
+**Important**: Always open `Runner.xcworkspace` (not `Runner.xcodeproj`) when using CocoaPods dependencies.
+
+**Alternative methods:**
+
+1. **From Terminal**: Navigate to the project root and run:
+   ```bash
+   cd /path/to/teleferika.app
+   open -a Xcode ios/Runner.xcworkspace
+   ```
+
+2. **From Finder**: Right-click on `ios/Runner.xcworkspace` and select "Open With" → "Xcode"
+
+3. **Using Flutter commands**: You can build iOS without opening Xcode:
+   ```bash
+   fvm flutter build ios --flavor opensource --release
+   ```
 
 ### Documentation Generation
 
@@ -310,6 +349,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
    
    - Check Flutter version: `fvm flutter --version`
    - Clean build: `fvm flutter clean && fvm flutter pub get`
+
+5. **Cannot open iOS folder in Xcode (macOS)**
+   
+   - Use the helper script: `./scripts/open-xcode.sh`
+   - Or open the workspace directly: `open -a Xcode ios/Runner.xcworkspace`
+   - Note: macOS treats folders ending in `.app` as application bundles, so you must open the workspace file directly, not navigate through folders
 
 5. **Documentation generation issues**
    

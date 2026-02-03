@@ -149,6 +149,18 @@ start doc/api/index.html  # Windows
 - `setup-opensource.sh` / `setup-opensource.ps1`: Quick setup for opensource
 - `setup-full.sh` / `setup-full.ps1`: Quick setup for full version
 - `test-setup.sh` / `test-setup.ps1`: Test the setup process
+- `open-xcode.sh`: Open iOS project in Xcode (macOS only)
+
+#### `open-xcode.sh`
+Opens the iOS project in Xcode on macOS. This script handles the issue where macOS treats folders ending in `.app` as application bundles, preventing normal navigation.
+
+**Usage:**
+```bash
+# macOS only
+./scripts/open-xcode.sh
+```
+
+**Note**: Always opens `Runner.xcworkspace` (not `Runner.xcodeproj`) to ensure CocoaPods dependencies work correctly.
 
 ## Workflow
 
@@ -234,6 +246,7 @@ scripts/
 ├── setup-opensource.ps1     # Quick opensource setup (Windows PowerShell)
 ├── setup-full.sh            # Quick full setup (Linux/macOS)
 ├── setup-full.ps1           # Quick full setup (Windows PowerShell)
+├── open-xcode.sh            # Open iOS project in Xcode (macOS only)
 └── README.md                # This file
 ```
 
@@ -275,6 +288,11 @@ The project uses a comprehensive DartDoc setup with:
 5. **PowerShell execution policy issues (Windows)**
    - Run: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
    - Or run scripts with: `powershell -ExecutionPolicy Bypass -File .\scripts\script-name.ps1`
+
+6. **Cannot open iOS folder in Xcode (macOS)**
+   - Use the helper script: `./scripts/open-xcode.sh`
+   - Or manually: `open -a Xcode ios/Runner.xcworkspace`
+   - Note: macOS treats folders ending in `.app` as application bundles, so you must open the workspace file directly
 
 ### Testing
 

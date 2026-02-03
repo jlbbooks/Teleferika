@@ -119,11 +119,7 @@ class MapScreenState extends State<MapScreen>
     // Listen to NMEA data to get fix quality
     _nmeaDataSubscription = _bleService.nmeaData.listen((nmeaData) {
       if (mounted) {
-        if (const bool.fromEnvironment('dart.vm.product') == false) {
-          debugPrint(
-            'MapScreen: Received NMEA data, fix quality: ${nmeaData.fixQuality}',
-          );
-        }
+        // NMEA data logging removed
         setState(() {
           _bleFixQuality = nmeaData.fixQuality;
         });
