@@ -69,8 +69,44 @@ class _BLEScreenState extends State<BLEScreen>
   @override
   void initState() {
     super.initState();
+    // Initialize connection state from current service state before setting up subscriptions
+    _refreshConnectionState();
     _setupSubscriptions();
     _setupPulseAnimation();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh connection state when screen becomes visible (e.g., navigating back)
+    // This ensures the UI reflects the current state even if the widget wasn't recreated
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshConnectionState();
+    });
+  }
+
+  /// Refresh the connection state from the BLE service
+  void _refreshConnectionState() {
+    if (!mounted) return;
+
+    setState(() {
+      // Check current connection state from the service
+      if (_bleService.isConnected) {
+        final wasDisconnected =
+            _connectionState == BLEConnectionState.disconnected;
+        _connectionState = BLEConnectionState.connected;
+        // Also refresh connected device info if available
+        if (_bleService.connectedDevice != null && wasDisconnected) {
+          // Set initial timestamp to show indicator when transitioning from disconnected
+          _lastDataReceivedTime = DateTime.now();
+          if (const bool.fromEnvironment('dart.vm.product') == false) {
+            logger.info('BLEScreen: Refreshed state - device is connected');
+          }
+        }
+      } else {
+        _connectionState = BLEConnectionState.disconnected;
+      }
+    });
   }
 
   void _setupPulseAnimation() {
