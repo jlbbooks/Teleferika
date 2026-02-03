@@ -51,6 +51,7 @@ class BLEService {
   BluetoothCharacteristic? _txCharacteristic;
   BluetoothCharacteristic? _rxCharacteristic;
   StreamSubscription<List<int>>? _dataSubscription;
+  StreamSubscription<BluetoothConnectionState>? _deviceConnectionSubscription;
 
   // Buffer for incomplete NMEA sentences
   String _nmeaBuffer = '';
@@ -135,6 +136,29 @@ class BLEService {
       );
 
       connectedDevice = device;
+
+      // Listen for unexpected disconnections
+      _deviceConnectionSubscription?.cancel();
+      _deviceConnectionSubscription = device.connectionState.listen(
+        (state) {
+          if (state == BluetoothConnectionState.disconnected &&
+              connectedDevice != null) {
+            // Unexpected disconnection detected
+            debugPrint(
+              'BLE: Unexpected disconnection detected from device: '
+              '${device.remoteId}',
+            );
+            _handleUnexpectedDisconnection();
+          }
+        },
+        onError: (error) {
+          debugPrint('BLE: Connection state stream error: $error');
+          // Treat stream errors as disconnection
+          if (connectedDevice != null) {
+            _handleUnexpectedDisconnection();
+          }
+        },
+      );
 
       // Discover services after connection
       await _discoverServices(device);
@@ -574,8 +598,69 @@ class BLEService {
     debugPrint('BLE: Disconnected from NTRIP');
   }
 
+  /// Handles unexpected disconnection (device went out of range, battery died, etc.)
+  Future<void> _handleUnexpectedDisconnection() async {
+    debugPrint('BLE: Handling unexpected disconnection');
+    
+    // Cancel device connection subscription
+    await _deviceConnectionSubscription?.cancel();
+    _deviceConnectionSubscription = null;
+
+    // Disconnect from NTRIP if connected
+    await disconnectFromNtrip();
+
+    // Unsubscribe from data
+    await _dataSubscription?.cancel();
+    _dataSubscription = null;
+
+    // Disable notifications (may fail if device is already disconnected)
+    if (_txCharacteristic != null) {
+      try {
+        await _txCharacteristic!.setNotifyValue(false);
+      } catch (e) {
+        // Ignore errors - device may already be disconnected
+        // This is expected behavior during unexpected disconnections
+        if (const bool.fromEnvironment('dart.vm.product') == false) {
+          final errorMsg = e.toString();
+          // Only log if it's not the expected "device is not connected" error
+          if (!errorMsg.contains('not connected') &&
+              !errorMsg.contains('disconnected')) {
+            debugPrint("BLE: Error unsubscribing during unexpected disconnect: $e");
+          }
+        }
+      }
+    }
+
+    // Clear service references
+    _uartService = null;
+    _txCharacteristic = null;
+    _rxCharacteristic = null;
+    _nmeaBuffer = '';
+
+    // Clear connected device reference
+    final device = connectedDevice;
+    connectedDevice = null;
+
+    // Try to disconnect gracefully (may fail if already disconnected)
+    if (device != null) {
+      try {
+        await device.disconnect();
+      } catch (e) {
+        debugPrint("BLE: Error during disconnect cleanup: $e");
+        // Ignore errors - device may already be disconnected
+      }
+    }
+
+    // Notify listeners of disconnection
+    _connectionStateController.add(BLEConnectionState.disconnected);
+  }
+
   Future<void> disconnectDevice() async {
     _connectionStateController.add(BLEConnectionState.waiting);
+
+    // Cancel device connection subscription
+    await _deviceConnectionSubscription?.cancel();
+    _deviceConnectionSubscription = null;
 
     // Disconnect from NTRIP if connected
     await disconnectFromNtrip();
@@ -589,7 +674,15 @@ class BLEService {
       try {
         await _txCharacteristic!.setNotifyValue(false);
       } catch (e) {
-        debugPrint("BLE: Error unsubscribing: $e");
+        // Ignore errors - device may already be disconnected
+        final errorMsg = e.toString();
+        if (const bool.fromEnvironment('dart.vm.product') == false) {
+          // Only log if it's not the expected "device is not connected" error
+          if (!errorMsg.contains('not connected') &&
+              !errorMsg.contains('disconnected')) {
+            debugPrint("BLE: Error unsubscribing: $e");
+          }
+        }
       }
     }
 
@@ -608,6 +701,7 @@ class BLEService {
   /// the BLE service (e.g., app termination). For normal screen navigation,
   /// the service should remain active to continue receiving GPS data.
   void dispose() {
+    _deviceConnectionSubscription?.cancel();
     disconnectFromNtrip();
     _ntripClient?.dispose();
     _rtcmSubscription?.cancel();

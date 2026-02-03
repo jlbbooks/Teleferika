@@ -18,6 +18,7 @@ import 'package:teleferika/map/services/map_preferences_service.dart';
 import 'package:teleferika/map/services/map_cache_logger.dart';
 import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
 import 'package:teleferika/core/app_config.dart';
+import 'package:teleferika/ble/ble_service.dart';
 
 class MapStateManager extends ChangeNotifier {
   final Logger logger = Logger('MapStateManager');
@@ -402,6 +403,25 @@ class MapStateManager extends ChangeNotifier {
     if (currentPosition == null) {
       // Status will be handled by the parent component
       return;
+    }
+
+    // Verify that we're using BLE GPS when connected
+    // Note: currentPosition is already updated by MapControllerLogic which
+    // automatically switches between BLE GPS and device GPS based on connection state
+    final bleService = BLEService.instance;
+    final position = currentPosition!; // Already checked for null above
+    if (bleService.isConnected) {
+      logger.info(
+        'MapStateManager: Centering on current location (BLE GPS): '
+        '${position.latitude}, ${position.longitude}, '
+        'accuracy: ${position.accuracy}m',
+      );
+    } else {
+      logger.info(
+        'MapStateManager: Centering on current location (Device GPS): '
+        '${position.latitude}, ${position.longitude}, '
+        'accuracy: ${position.accuracy}m',
+      );
     }
 
     try {

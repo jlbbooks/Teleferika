@@ -86,8 +86,12 @@ class MapScreenState extends State<MapScreen>
     _isBleConnected = _bleService.isConnected;
 
     // Listen to connection state changes
+    BLEConnectionState? previousState;
     _bleConnectionSubscription = _bleService.connectionState.listen((state) {
       if (mounted) {
+        final wasConnected = previousState == BLEConnectionState.connected;
+        final isNowDisconnected = state == BLEConnectionState.disconnected;
+
         setState(() {
           _isBleConnected = state == BLEConnectionState.connected;
           // Clear fix quality when disconnected
@@ -95,6 +99,19 @@ class MapScreenState extends State<MapScreen>
             _bleFixQuality = null;
           }
         });
+
+        // Notify user of unexpected disconnection
+        if (wasConnected && isNowDisconnected) {
+          showInfoStatus('RTK device disconnected. Using device GPS.');
+          logger.info(
+            'MapScreen: BLE device disconnected, switched to device GPS',
+          );
+        } else if (state == BLEConnectionState.error) {
+          showErrorStatus('BLE connection error occurred.');
+          logger.warning('MapScreen: BLE connection error');
+        }
+
+        previousState = state;
       }
     });
 
