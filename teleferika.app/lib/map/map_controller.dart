@@ -13,6 +13,7 @@ import 'package:teleferika/core/project_state_manager.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/core/app_config.dart';
+import 'package:teleferika/ble/ble_service.dart';
 
 class MapControllerLogic {
   final ProjectModel project;
@@ -24,7 +25,12 @@ class MapControllerLogic {
 
   // Stream subscriptions
   StreamSubscription<Position>? _positionStreamSubscription;
+  StreamSubscription<Position>? _bleGpsSubscription;
+  StreamSubscription<BLEConnectionState>? _bleConnectionSubscription;
   StreamSubscription<CompassXEvent>? _compassSubscription;
+
+  // Track whether we're using BLE GPS or device GPS
+  bool _isUsingBleGps = false;
 
   // Animation timer
   Timer? _glowAnimationTimer;
@@ -41,6 +47,8 @@ class MapControllerLogic {
 
   void dispose() {
     _positionStreamSubscription?.cancel();
+    _bleGpsSubscription?.cancel();
+    _bleConnectionSubscription?.cancel();
     _compassSubscription?.cancel();
     _glowAnimationTimer?.cancel();
   }
@@ -88,14 +96,109 @@ class MapControllerLogic {
     Function(Position) onPositionUpdate,
     Function(Object, [StackTrace?]) onError,
   ) {
+    final bleService = BLEService.instance;
+
+    // First, check if BLE is connected and listen to BLE GPS
+    _bleConnectionSubscription?.cancel();
+    _bleConnectionSubscription = bleService.connectionState.listen((state) {
+      if (state == BLEConnectionState.connected && !_isUsingBleGps) {
+        // BLE connected - switch to BLE GPS
+        _switchToBleGps(onPositionUpdate, onError);
+      } else if (state == BLEConnectionState.disconnected && _isUsingBleGps) {
+        // BLE disconnected - switch back to device GPS
+        _switchToDeviceGps(onPositionUpdate, onError);
+      }
+    });
+
+    // Check initial connection state
+    if (bleService.connectedDevice != null) {
+      // Already connected - use BLE GPS
+      _switchToBleGps(onPositionUpdate, onError);
+    } else {
+      // Not connected - use device GPS
+      _switchToDeviceGps(onPositionUpdate, onError);
+    }
+  }
+
+  /// Switches to using BLE GPS data
+  void _switchToBleGps(
+    Function(Position) onPositionUpdate,
+    Function(Object, [StackTrace?]) onError,
+  ) {
+    if (_isUsingBleGps && _bleGpsSubscription != null) {
+      return; // Already using BLE GPS
+    }
+
+    logger.info('MapControllerLogic: Switching to BLE GPS');
+    debugPrint(
+      'MapControllerLogic: [GPS SOURCE] Now using BLE GPS from RTK device',
+    );
+
+    // Cancel device GPS subscription
+    _positionStreamSubscription?.cancel();
+    _positionStreamSubscription = null;
+
+    // Subscribe to BLE GPS
+    final bleService = BLEService.instance;
+    _bleGpsSubscription?.cancel();
+    _bleGpsSubscription = bleService.gpsData.listen(
+      (position) {
+        debugPrint(
+          'MapControllerLogic: [GPS SOURCE: BLE] Position update -> '
+          'Lat: ${position.latitude}, Lon: ${position.longitude}, '
+          'Accuracy: ${position.accuracy}m',
+        );
+        onPositionUpdate(position);
+      },
+      onError: (error) {
+        logger.warning('BLE GPS error, falling back to device GPS: $error');
+        debugPrint(
+          'MapControllerLogic: [GPS SOURCE] BLE GPS error, falling back to device GPS',
+        );
+        // Fall back to device GPS on error
+        _switchToDeviceGps(onPositionUpdate, onError);
+      },
+    );
+
+    _isUsingBleGps = true;
+  }
+
+  /// Switches to using device GPS data
+  void _switchToDeviceGps(
+    Function(Position) onPositionUpdate,
+    Function(Object, [StackTrace?]) onError,
+  ) {
+    if (!_isUsingBleGps && _positionStreamSubscription != null) {
+      return; // Already using device GPS
+    }
+
+    logger.info('MapControllerLogic: Switching to device GPS');
+    debugPrint('MapControllerLogic: [GPS SOURCE] Now using device GPS');
+
+    // Cancel BLE GPS subscription
+    _bleGpsSubscription?.cancel();
+    _bleGpsSubscription = null;
+
+    // Subscribe to device GPS
     const LocationSettings locationSettings = LocationSettings(
       accuracy: LocationAccuracy.high,
       distanceFilter: 0,
     );
 
-    _positionStreamSubscription = Geolocator.getPositionStream(
-      locationSettings: locationSettings,
-    ).listen(onPositionUpdate, onError: onError);
+    _positionStreamSubscription =
+        Geolocator.getPositionStream(locationSettings: locationSettings).listen(
+          (position) {
+            debugPrint(
+              'MapControllerLogic: [GPS SOURCE: DEVICE] Position update -> '
+              'Lat: ${position.latitude}, Lon: ${position.longitude}, '
+              'Accuracy: ${position.accuracy}m',
+            );
+            onPositionUpdate(position);
+          },
+          onError: onError,
+        );
+
+    _isUsingBleGps = false;
   }
 
   // Compass listening

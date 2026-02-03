@@ -29,7 +29,7 @@ class BLEScreen extends StatefulWidget {
 class _BLEScreenState extends State<BLEScreen>
     with SingleTickerProviderStateMixin {
   final Logger logger = Logger('BLEScreen');
-  final BLEService _bleService = BLEService();
+  final BLEService _bleService = BLEService.instance;
 
   List<ScanResult> _scanResults = [];
   BLEConnectionState _connectionState = BLEConnectionState.disconnected;
@@ -191,7 +191,8 @@ class _BLEScreenState extends State<BLEScreen>
     _ntripUsernameController.dispose();
     _ntripPasswordController.dispose();
     _pulseAnimationController.dispose();
-    _bleService.dispose();
+    // Don't dispose the BLE service here - it's a singleton that should persist
+    // across screens to continue receiving GPS data in the background
     super.dispose();
   }
 

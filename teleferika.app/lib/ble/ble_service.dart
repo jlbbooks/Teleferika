@@ -12,7 +12,18 @@ enum BLEConnectionState { disconnected, connecting, connected, error, waiting }
 /// Ported from AcuME app.
 ///
 /// Supports reading GPS data from RTK receivers via Nordic UART Service (NUS).
+/// 
+/// This is a singleton service that persists across screens to maintain BLE connections
+/// and continue receiving GPS data in the background.
 class BLEService {
+  // Singleton pattern
+  static final BLEService _instance = BLEService._internal();
+  factory BLEService() => _instance;
+  BLEService._internal();
+
+  /// Get the singleton instance
+  static BLEService get instance => _instance;
+
   BluetoothDevice? connectedDevice;
   bool isScanning = false;
   final Duration scanTimeout = const Duration(seconds: 20);
@@ -118,6 +129,7 @@ class BLEService {
       }
 
       await device.connect(
+        license: License.free,
         timeout: const Duration(seconds: 15),
         autoConnect: false,
       );
@@ -352,6 +364,11 @@ class BLEService {
   /// Handles received data bytes and parses NMEA sentences.
   void _handleReceivedData(List<int> data) {
     try {
+      // Log raw data reception (only in debug mode, but more verbose)
+      if (const bool.fromEnvironment('dart.vm.product') == false) {
+        debugPrint("BLE: Received ${data.length} bytes of raw data");
+      }
+      
       // Convert bytes to string (assuming UTF-8 encoding)
       final text = utf8.decode(data);
 
@@ -384,6 +401,15 @@ class BLEService {
       final nmeaData = NMEAParser.parseSentence(sentence);
 
       if (nmeaData != null && nmeaData.isValid) {
+        // Log processed NMEA data (only in debug mode)
+        if (const bool.fromEnvironment('dart.vm.product') == false) {
+          debugPrint(
+            "BLE: Processed NMEA -> Lat: ${nmeaData.latitude}, "
+            "Lon: ${nmeaData.longitude}, Accuracy: ${nmeaData.accuracy}m, "
+            "Fix: ${nmeaData.fixQuality}",
+          );
+        }
+        
         // Emit NMEA data
         _nmeaDataController.add(nmeaData);
 
@@ -401,8 +427,18 @@ class BLEService {
           altitudeAccuracy: 0.0,
         );
 
+        // Log GPS position emission (only in debug mode)
+        if (const bool.fromEnvironment('dart.vm.product') == false) {
+          debugPrint(
+            "BLE: Emitting GPS position -> Lat: ${position.latitude}, "
+            "Lon: ${position.longitude}, Accuracy: ${position.accuracy}m",
+          );
+        }
+        
         _gpsDataController.add(position);
       }
+      // Note: We don't log "invalid" for non-position sentences (GSV, GSA, etc.)
+      // as they are valid NMEA but don't contain position data
     } catch (e) {
       debugPrint("BLE: Error processing NMEA sentence: $e");
     }
@@ -568,6 +604,9 @@ class BLEService {
     _connectionStateController.add(BLEConnectionState.disconnected);
   }
 
+  /// Disposes the service. Only call this when you want to completely shut down
+  /// the BLE service (e.g., app termination). For normal screen navigation,
+  /// the service should remain active to continue receiving GPS data.
   void dispose() {
     disconnectFromNtrip();
     _ntripClient?.dispose();
@@ -578,6 +617,9 @@ class BLEService {
     _gpsDataController.close();
     _nmeaDataController.close();
   }
+
+  /// Checks if the service is currently connected to a device
+  bool get isConnected => connectedDevice != null;
 
   /// Request a larger MTU for the connection (e.g. for faster data transfer).
   Future<void> requestMtu(BluetoothDevice device, {int size = 256}) async {

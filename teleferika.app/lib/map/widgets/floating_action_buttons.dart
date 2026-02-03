@@ -3,6 +3,23 @@ import 'package:geolocator/geolocator.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 
 class FloatingActionButtons {
+  static Color _getFixQualityColor(int fixQuality) {
+    switch (fixQuality) {
+      case 0:
+        return Colors.red;
+      case 1:
+        return Colors.orange;
+      case 2:
+        return Colors.yellow;
+      case 4:
+        return Colors.green;
+      case 5:
+        return Colors.lightGreen;
+      default:
+        return Colors.grey;
+    }
+  }
+
   static Widget build({
     required BuildContext context,
     required bool hasLocationPermission,
@@ -11,10 +28,16 @@ class FloatingActionButtons {
     required VoidCallback onAddPoint,
     required VoidCallback onCenterOnPoints,
     bool isAddingNewPoint = false,
+    bool isBleConnected = false,
+    VoidCallback? onBleInfoPressed,
+    int bleFixQuality = 0,
   }) {
     final bool isLocationLoading =
         hasLocationPermission && currentPosition == null;
     final s = S.of(context);
+
+    // Determine BLE button color based on fix quality
+    final bleButtonColor = _getFixQualityColor(bleFixQuality);
 
     return Container(
       decoration: BoxDecoration(
@@ -30,6 +53,16 @@ class FloatingActionButtons {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // BLE Info button (only shown when BLE is connected)
+          if (isBleConnected && onBleInfoPressed != null)
+            _buildFloatingActionButton(
+              heroTag: 'ble_info',
+              icon: Icons.satellite,
+              tooltip: 'RTK Device Info',
+              onPressed: onBleInfoPressed,
+              color: bleButtonColor,
+            ),
+
           // Add new point button
           _buildFloatingActionButton(
             heroTag: 'add_new_point',

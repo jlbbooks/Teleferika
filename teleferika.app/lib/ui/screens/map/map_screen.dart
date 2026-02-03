@@ -26,9 +26,12 @@ import '../../../map/widgets/flutter_map_widget.dart';
 import '../../../map/widgets/map_loading_widget.dart';
 import '../../../map/widgets/point_details_panel.dart';
 import '../../../map/widgets/floating_action_buttons.dart';
+import '../../../map/widgets/ble_info_panel.dart';
 import '../../../map/widgets/map_type_selector.dart';
 import '../../../map/services/map_cache_manager.dart';
 import '../../../ui/widgets/project_points_layer.dart';
+import '../../../ble/ble_service.dart';
+import '../../../ble/nmea_parser.dart';
 
 class MapScreen extends StatefulWidget {
   final ProjectModel project;
@@ -44,10 +47,15 @@ class MapScreenState extends State<MapScreen>
     with StatusMixin, TickerProviderStateMixin {
   final Logger logger = Logger('MapScreen');
   final SettingsService _settingsService = SettingsService();
+  final BLEService _bleService = BLEService.instance;
 
   // State manager
   late MapStateManager _stateManager;
   bool _showAllProjectsOnMap = false;
+  bool _isBleConnected = false;
+  int? _bleFixQuality;
+  StreamSubscription<BLEConnectionState>? _bleConnectionSubscription;
+  StreamSubscription<NMEAData>? _nmeaDataSubscription;
 
   // Helper method for haptic feedback
   void _triggerHapticFeedback(String action) {
@@ -70,6 +78,39 @@ class MapScreenState extends State<MapScreen>
     _stateManager = MapStateManager();
     _stateManager.selectedPointId = widget.selectedPointId;
     _loadSettings();
+    _initBleConnectionListener();
+  }
+
+  void _initBleConnectionListener() {
+    // Check initial connection state
+    _isBleConnected = _bleService.isConnected;
+
+    // Listen to connection state changes
+    _bleConnectionSubscription = _bleService.connectionState.listen((state) {
+      if (mounted) {
+        setState(() {
+          _isBleConnected = state == BLEConnectionState.connected;
+          // Clear fix quality when disconnected
+          if (!_isBleConnected) {
+            _bleFixQuality = null;
+          }
+        });
+      }
+    });
+
+    // Listen to NMEA data to get fix quality
+    _nmeaDataSubscription = _bleService.nmeaData.listen((nmeaData) {
+      if (mounted) {
+        if (const bool.fromEnvironment('dart.vm.product') == false) {
+          debugPrint(
+            'MapScreen: Received NMEA data, fix quality: ${nmeaData.fixQuality}',
+          );
+        }
+        setState(() {
+          _bleFixQuality = nmeaData.fixQuality;
+        });
+      }
+    });
   }
 
   Future<void> _loadSettings() async {
@@ -116,6 +157,8 @@ class MapScreenState extends State<MapScreen>
 
   @override
   void dispose() {
+    _bleConnectionSubscription?.cancel();
+    _nmeaDataSubscription?.cancel();
     _stateManager.dispose();
     super.dispose();
   }
@@ -165,6 +208,18 @@ class MapScreenState extends State<MapScreen>
     _triggerHapticFeedback('point movement');
 
     showSuccessStatus('Point ${pointToMove.name} moved (pending save)!');
+  }
+
+  void _showBleInfoPanel() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(16),
+        child: BLEInfoPanel(bleService: _bleService),
+      ),
+    );
   }
 
   void _centerOnCurrentLocation() {
@@ -705,6 +760,11 @@ class MapScreenState extends State<MapScreen>
                               isAddingNewPoint:
                                   _stateManager.isAddingNewPoint ||
                                   _stateManager.newPoint != null,
+                              isBleConnected: _isBleConnected,
+                              onBleInfoPressed: _isBleConnected
+                                  ? _showBleInfoPanel
+                                  : null,
+                              bleFixQuality: _bleFixQuality ?? 0,
                             ),
                           ),
                           // Debug panel only appears if _hasClosedDebugPanel is false

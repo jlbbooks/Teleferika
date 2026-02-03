@@ -7,6 +7,10 @@ class NMEAParser {
   ///
   /// Returns a [NMEAData] object if parsing is successful, null otherwise.
   /// Supports GPGGA (Global Positioning System Fix Data) and GPRMC (Recommended Minimum) sentences.
+  ///
+  /// Returns null for:
+  /// - Invalid NMEA sentences (bad checksum, malformed)
+  /// - Valid NMEA sentences that don't contain position data (e.g., GSV, GSA, etc.)
   static NMEAData? parseSentence(String sentence) {
     if (!_isValidSentence(sentence)) {
       return null;
@@ -22,11 +26,18 @@ class NMEAParser {
     switch (sentenceType) {
       case '\$GPGGA':
       case '\$GNGGA':
+      case '\$GBGGA': // BeiDou GGA
+      case '\$GLGGA': // GLONASS GGA
+      case '\$GAGGA': // Galileo GGA
         return _parseGPGGA(fields);
       case '\$GPRMC':
       case '\$GNRMC':
+      case '\$GBRMC': // BeiDou RMC
+      case '\$GLRMC': // GLONASS RMC
+      case '\$GARMC': // Galileo RMC
         return _parseGPRMC(fields);
       default:
+        // Not a position sentence (e.g., GSV, GSA, etc.) - silently ignore
         return null;
     }
   }
@@ -378,6 +389,8 @@ class NMEAData {
   @override
   String toString() {
     return 'NMEAData(lat: $latitude, lon: $longitude, alt: $altitude, '
-        'accuracy: $accuracy, satellites: $satellites, fix: $fixQuality)';
+        'accuracy: $accuracy, satellites: $satellites, fix: $fixQuality, '
+        'hdop: $hdop, time: $time, geoidHeight: $geoidHeight, '
+        'speed: $speed, course: $course, date: $date, sentenceType: $sentenceType)';
   }
 }
