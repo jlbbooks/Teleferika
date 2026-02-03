@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:teleferika/ble/ble_service.dart';
 import 'package:teleferika/ble/nmea_parser.dart';
+import 'package:teleferika/core/platform_gps_info.dart';
 
 class GPSInfoPanel extends StatefulWidget {
   final BLEService bleService;
@@ -22,13 +23,21 @@ class GPSInfoPanel extends StatefulWidget {
 
 class _GPSInfoPanelState extends State<GPSInfoPanel> {
   NMEAData? _latestNmeaData;
+  Position? _currentPosition;
   StreamSubscription<NMEAData>? _nmeaSubscription;
+  StreamSubscription<Position>? _positionSubscription;
+  int? _platformSatelliteCount;
+  int? _platformFixQuality;
+  Timer? _platformInfoTimer;
 
   @override
   void initState() {
     super.initState();
-    // Only subscribe to NMEA data if using BLE GPS
+    // Initialize with the provided position
+    _currentPosition = widget.currentPosition;
+
     if (widget.isUsingBleGps) {
+      // Subscribe to BLE GPS data streams
       _nmeaSubscription = widget.bleService.nmeaData.listen((data) {
         if (mounted) {
           setState(() {
@@ -36,12 +45,66 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
           });
         }
       });
+
+      _positionSubscription = widget.bleService.gpsData.listen((position) {
+        if (mounted) {
+          setState(() {
+            _currentPosition = position;
+          });
+        }
+      });
+    } else {
+      // For internal GPS, subscribe to Geolocator position stream
+      const LocationSettings locationSettings = LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 0,
+      );
+
+      _positionSubscription =
+          Geolocator.getPositionStream(
+            locationSettings: locationSettings,
+          ).listen((position) {
+            if (mounted) {
+              setState(() {
+                _currentPosition = position;
+              });
+              // Also refresh platform info when position updates
+              _loadPlatformGpsInfo();
+            }
+          });
+
+      // For internal GPS, try to get platform-specific info
+      _loadPlatformGpsInfo();
+      // Refresh platform info periodically
+      _platformInfoTimer = Timer.periodic(
+        const Duration(seconds: 2),
+        (_) => _loadPlatformGpsInfo(),
+      );
+    }
+  }
+
+  Future<void> _loadPlatformGpsInfo() async {
+    if (widget.isUsingBleGps) return; // Only for internal GPS
+
+    try {
+      final satelliteCount = await PlatformGpsInfo.getSatelliteCount();
+      final fixQuality = await PlatformGpsInfo.getFixQuality();
+      if (mounted) {
+        setState(() {
+          _platformSatelliteCount = satelliteCount;
+          _platformFixQuality = fixQuality;
+        });
+      }
+    } catch (e) {
+      // Ignore errors - platform channel may not be implemented
     }
   }
 
   @override
   void dispose() {
     _nmeaSubscription?.cancel();
+    _positionSubscription?.cancel();
+    _platformInfoTimer?.cancel();
     super.dispose();
   }
 
@@ -83,7 +146,7 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
   Widget build(BuildContext context) {
     final device = widget.bleService.connectedDevice;
     final isBleConnected = widget.bleService.isConnected;
-    final position = widget.currentPosition;
+    final position = _currentPosition ?? widget.currentPosition;
     final nmeaData = _latestNmeaData;
 
     return Container(
@@ -151,7 +214,7 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Fix Quality (from NMEA if available, otherwise estimate from accuracy)
+                  // Fix Quality (from NMEA or platform API)
                   if (nmeaData != null) ...[
                     _buildInfoRow(
                       'Fix Quality',
@@ -159,19 +222,21 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
                       _getFixQualityColor(nmeaData.fixQuality),
                     ),
                     const SizedBox(height: 8),
-                  ] else ...[
-                    // Estimate fix quality from accuracy for internal GPS
+                  ] else if (_platformFixQuality != null) ...[
                     _buildInfoRow(
                       'Fix Quality',
-                      _estimateFixQualityFromAccuracy(position.accuracy),
-                      _estimateFixQualityColorFromAccuracy(position.accuracy),
+                      _getFixQualityText(_platformFixQuality!),
+                      _getFixQualityColor(_platformFixQuality!),
                     ),
                     const SizedBox(height: 8),
                   ],
 
-                  // Satellites (only from NMEA)
+                  // Satellites (from NMEA or platform API)
                   if (nmeaData?.satellites != null) ...[
                     _buildInfoRow('Satellites', '${nmeaData!.satellites}'),
+                    const SizedBox(height: 8),
+                  ] else if (_platformSatelliteCount != null) ...[
+                    _buildInfoRow('Satellites', '$_platformSatelliteCount'),
                     const SizedBox(height: 8),
                   ],
 
@@ -299,29 +364,5 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
         ),
       ],
     );
-  }
-
-  String _estimateFixQualityFromAccuracy(double accuracy) {
-    if (accuracy < 1.0) {
-      return 'High Accuracy';
-    } else if (accuracy < 5.0) {
-      return 'Good';
-    } else if (accuracy < 10.0) {
-      return 'Moderate';
-    } else {
-      return 'Low Accuracy';
-    }
-  }
-
-  Color _estimateFixQualityColorFromAccuracy(double accuracy) {
-    if (accuracy < 1.0) {
-      return Colors.green;
-    } else if (accuracy < 5.0) {
-      return Colors.lightGreen;
-    } else if (accuracy < 10.0) {
-      return Colors.yellow;
-    } else {
-      return Colors.orange;
-    }
   }
 }
