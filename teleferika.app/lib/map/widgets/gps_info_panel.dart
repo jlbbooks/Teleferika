@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:teleferika/ble/ble_service.dart';
 import 'package:teleferika/ble/nmea_parser.dart';
+import 'package:teleferika/core/fix_quality_colors.dart';
 import 'package:teleferika/core/platform_gps_info.dart';
+import 'package:teleferika/ui/screens/ble/ble_screen.dart';
 
 class GPSInfoPanel extends StatefulWidget {
   final BLEService bleService;
@@ -125,23 +127,6 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
     }
   }
 
-  Color _getFixQualityColor(int fixQuality) {
-    switch (fixQuality) {
-      case 0:
-        return Colors.red;
-      case 1:
-        return Colors.orange;
-      case 2:
-        return Colors.yellow;
-      case 4:
-        return Colors.green;
-      case 5:
-        return Colors.lightGreen;
-      default:
-        return Colors.grey;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final device = widget.bleService.connectedDevice;
@@ -219,14 +204,14 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
                     _buildInfoRow(
                       'Fix Quality',
                       _getFixQualityText(nmeaData.fixQuality),
-                      _getFixQualityColor(nmeaData.fixQuality),
+                      FixQualityColors.getColor(nmeaData.fixQuality),
                     ),
                     const SizedBox(height: 8),
                   ] else if (_platformFixQuality != null) ...[
                     _buildInfoRow(
                       'Fix Quality',
                       _getFixQualityText(_platformFixQuality!),
-                      _getFixQualityColor(_platformFixQuality!),
+                      FixQualityColors.getColor(_platformFixQuality!),
                     ),
                     const SizedBox(height: 8),
                   ],
@@ -326,11 +311,65 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
                         ? device.platformName
                         : device.remoteId.toString(),
                   ),
+                  const SizedBox(height: 16),
+                  // Button to disconnect from RTK device
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        try {
+                          await widget.bleService.disconnectDevice();
+                          if (mounted) {
+                            Navigator.of(
+                              context,
+                            ).pop(); // Close the GPS info panel
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error disconnecting: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      icon: const Icon(Icons.bluetooth_disabled),
+                      label: const Text('Disconnect'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        side: const BorderSide(color: Colors.red),
+                      ),
+                    ),
+                  ),
                 ] else ...[
                   // Internal GPS Info
                   _buildInfoRow('Source', 'Internal GPS', Colors.blue),
                   const SizedBox(height: 8),
                   _buildInfoRow('Status', 'Active', Colors.blue),
+                  const SizedBox(height: 16),
+                  // Button to connect to RTK device
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).pop(); // Close the GPS info panel
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const BLEScreen(autoStartScan: true),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.bluetooth),
+                      label: const Text('Connect RTK Device'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.blue,
+                        side: const BorderSide(color: Colors.blue),
+                      ),
+                    ),
+                  ),
                 ],
               ],
             ),

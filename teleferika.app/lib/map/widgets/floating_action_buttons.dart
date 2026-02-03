@@ -1,25 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:teleferika/core/fix_quality_colors.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 
 class FloatingActionButtons {
-  static Color _getFixQualityColor(int fixQuality) {
-    switch (fixQuality) {
-      case 0:
-        return Colors.red;
-      case 1:
-        return Colors.orange;
-      case 2:
-        return Colors.yellow;
-      case 4:
-        return Colors.green;
-      case 5:
-        return Colors.lightGreen;
-      default:
-        return Colors.grey;
-    }
-  }
-
   static Widget build({
     required BuildContext context,
     required bool hasLocationPermission,
@@ -37,7 +21,7 @@ class FloatingActionButtons {
     final s = S.of(context);
 
     // Determine BLE button color based on fix quality
-    final bleButtonColor = _getFixQualityColor(bleFixQuality);
+    final bleButtonColor = FixQualityColors.getColor(bleFixQuality);
 
     return Container(
       decoration: BoxDecoration(

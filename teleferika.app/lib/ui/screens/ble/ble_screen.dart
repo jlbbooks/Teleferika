@@ -7,6 +7,7 @@ import 'package:logging/logging.dart';
 import 'package:teleferika/ble/ble_service.dart';
 import 'package:teleferika/ble/nmea_parser.dart';
 import 'package:teleferika/ble/ntrip_client.dart';
+import 'package:teleferika/core/fix_quality_colors.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
 
@@ -20,7 +21,9 @@ import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
 /// - Viewing connection status
 /// - Displaying GPS data from RTK receivers
 class BLEScreen extends StatefulWidget {
-  const BLEScreen({super.key});
+  final bool autoStartScan;
+
+  const BLEScreen({super.key, this.autoStartScan = false});
 
   @override
   State<BLEScreen> createState() => _BLEScreenState();
@@ -76,6 +79,15 @@ class _BLEScreenState extends State<BLEScreen>
     _setupSubscriptions();
     _setupPulseAnimation();
     _startScanStateCheckTimer();
+
+    // Auto-start scan if requested
+    if (widget.autoStartScan) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_isScanning) {
+          _startScan();
+        }
+      });
+    }
   }
 
   /// Start a timer to periodically check scan state
@@ -860,9 +872,9 @@ class _BLEScreenState extends State<BLEScreen>
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: _getFixQualityColor(
+                                color: FixQualityColors.getColor(
                                   _currentNmeaData!.fixQuality,
-                                  isDarkMode,
+                                  isDarkMode: isDarkMode,
                                 ),
                               ),
                         ),
@@ -959,24 +971,6 @@ class _BLEScreenState extends State<BLEScreen>
     }
   }
 
-  Color _getFixQualityColor(int quality, bool isDarkMode) {
-    // Only RTK Fix (quality 4) gets green, others get appropriate colors
-    if (quality == 4) {
-      return isDarkMode ? Colors.green.shade300 : Colors.green;
-    } else if (quality == 5) {
-      // RTK Float - light green/yellow-green
-      return isDarkMode
-          ? Colors.lightGreen.shade300
-          : Colors.lightGreen.shade700;
-    } else if (quality > 0) {
-      // Other valid fixes - orange/yellow
-      return isDarkMode ? Colors.orange.shade300 : Colors.orange;
-    } else {
-      // Invalid - red
-      return isDarkMode ? Colors.red.shade300 : Colors.red;
-    }
-  }
-
   /// Builds a visual bar indicator for fix quality (0-5).
   /// Colors progress from red (0) to green (5).
   /// Note: RTK Fix (quality 4) is mapped to bar 5 (best), RTK Float (quality 5) to bar 4.
@@ -1034,26 +1028,8 @@ class _BLEScreenState extends State<BLEScreen>
       return isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300;
     }
 
-    // Active bars - progressive colors from red to green
-    // Bar 5 is RTK Fix (best), Bar 4 is RTK Float
-    switch (index) {
-      case 0: // Invalid
-        return isDarkMode ? Colors.red.shade700 : Colors.red;
-      case 1: // GPS Fix
-        return isDarkMode ? Colors.orange.shade700 : Colors.orange;
-      case 2: // DGPS Fix
-        return isDarkMode ? Colors.orange.shade400 : Colors.deepOrange;
-      case 3: // PPS Fix
-        return isDarkMode ? Colors.yellow.shade700 : Colors.amber;
-      case 4: // RTK Float - light green (quality 5)
-        return isDarkMode
-            ? Colors.lightGreen.shade300
-            : Colors.lightGreen.shade700;
-      case 5: // RTK Fix - green (quality 4, best)
-        return isDarkMode ? Colors.green.shade300 : Colors.green;
-      default:
-        return isDarkMode ? Colors.grey.shade700 : Colors.grey.shade300;
-    }
+    // Active bars use centralized color utility
+    return FixQualityColors.getBarColor(index, isDarkMode: isDarkMode);
   }
 
   String _formatTimestamp(DateTime timestamp) {

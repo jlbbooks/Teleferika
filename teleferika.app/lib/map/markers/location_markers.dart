@@ -42,22 +42,29 @@ class AccuracyCirclePainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
 
     // Calculate the actual radius in pixels based on GPS accuracy and zoom level
+    // Accuracy is in meters (from Position.accuracy for internal GPS or calculated from HDOP for BLE GPS)
     double accuracyRadius;
 
     if (accuracy != null && accuracy! > 0) {
       // Convert meters to pixels at the current zoom level
       // At zoom level 0, 1 pixel = ~156543 meters (at equator)
       // Each zoom level doubles the resolution
-      final metersPerPixelAtZoom0 = 156543.0; // meters per pixel at zoom 0
+      // Note: This calculation assumes equator; at higher latitudes, meters per pixel is smaller
+      // (by factor of cos(latitude)), but this approximation is acceptable for visualization
+      final metersPerPixelAtZoom0 =
+          156543.0; // meters per pixel at zoom 0 (at equator)
       final metersPerPixel = metersPerPixelAtZoom0 / (1 << zoomLevel.round());
 
-      // Calculate radius in pixels
+      // Calculate radius in pixels from accuracy in meters
+      // The accuracy value represents the radius of uncertainty in meters
       final radiusInPixels = accuracy! / metersPerPixel;
 
-      // Clamp the radius to reasonable bounds (5 to 50 pixels)
+      // Clamp the radius to reasonable bounds (5 to 50 pixels) for visibility
+      // Very small accuracy values (< 5 pixels) would be hard to see
+      // Very large accuracy values (> 50 pixels) would dominate the marker
       accuracyRadius = radiusInPixels.clamp(5.0, 50.0);
     } else {
-      // Default radius if no accuracy data
+      // Default radius if no accuracy data (show full marker size)
       accuracyRadius = size.width / 2;
     }
 
