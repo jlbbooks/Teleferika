@@ -50,6 +50,7 @@ dependencies:
   latlong2: ^0.9.1
   logging: ^1.3.0
   lottie: ^3.3.1
+  objectbox: ^4.3.1
   package_info_plus: any
   path: ^1.9.1
   path_provider: ^2.1.5

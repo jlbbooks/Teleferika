@@ -1,17 +1,29 @@
 <en-GB>
-- Added new Settings screen with customizable app preferences
-- New option to show all projects on the map for better overview
-- Added toggle for always showing the save icon
-- Configurable angle threshold for compass color indicators
-- Settings are saved locally and persist between app sessions
-- Improved user experience with more control over app behavior
+- Added Bluetooth Low Energy (BLE) support for RTK GPS receivers
+- New BLE screen for scanning and connecting to RTK GPS devices
+- Real-time GPS data streaming from RTK receivers via BLE
+- NMEA sentence parsing with support for GPGGA and GPRMC formats
+- RTK fix quality detection (RTK Fix, RTK Float, GPS) with visual indicators
+- GPS information panel showing satellite count, accuracy, and fix quality
+- NTRIP client implementation for RTCM correction data handling (work in progress, untested)
+- Enhanced GPS source visibility and platform-specific GPS information
+- Improved BLE connection state management and device scanning
+- Centralized fix quality color management for consistent GPS status display
+- Added settings for BLE satellite button visibility
+- Enhanced connection handling with automatic reconnection support
 </en-GB>
 
 <it-IT>
-- Aggiunta nuova schermata Impostazioni con preferenze personalizzabili dell'app
-- Nuova opzione per mostrare tutti i progetti sulla mappa per una migliore panoramica
-- Aggiunto toggle per mostrare sempre l'icona salva
-- Soglia dell'angolo configurabile per gli indicatori di colore della bussola
-- Le impostazioni vengono salvate localmente e persistono tra le sessioni dell'app
-- Migliorata l'esperienza utente con maggiore controllo sul comportamento dell'app
+- Aggiunto supporto Bluetooth Low Energy (BLE) per ricevitori RTK GPS
+- Nuova schermata BLE per la scansione e connessione a dispositivi RTK GPS
+- Streaming in tempo reale di dati GPS da ricevitori RTK tramite BLE
+- Parsing di frasi NMEA con supporto per formati GPGGA e GPRMC
+- Rilevamento qualità fix RTK (RTK Fix, RTK Float, GPS) con indicatori visivi
+- Pannello informazioni GPS che mostra conteggio satelliti, accuratezza e qualità fix
+- Implementazione client NTRIP per la gestione di dati di correzione RTCM (lavoro in corso, non testato)
+- Migliorata visibilità della sorgente GPS e informazioni GPS specifiche della piattaforma
+- Migliorata gestione dello stato di connessione BLE e scansione dispositivi
+- Gestione centralizzata dei colori della qualità fix per visualizzazione coerente dello stato GPS
+- Aggiunte impostazioni per la visibilità del pulsante satelliti BLE
+- Migliorata gestione della connessione con supporto riconnessione automatica
 </it-IT> 

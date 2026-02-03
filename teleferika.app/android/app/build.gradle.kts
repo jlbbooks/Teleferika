@@ -31,17 +31,18 @@ val keystoreProperties = loadKeystoreProperties()
 
 android {
     namespace = "com.jlbbooks.teleferika"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36 //flutter.compileSdkVersion
     // https://developer.android.com/ndk/downloads/
-    ndkVersion = "27.2.12479018" //flutter.ndkVersion
+    ndkVersion = "28.2.13676358" //""27.2.12479018" //flutter.ndkVersion
 
     signingConfigs {
         create("release") { // This will be used for your release build if you don't override it
             if (keystoreProperties.isNotEmpty()) {
                 keyAlias = keystoreProperties.getProperty("keyAlias")
                 keyPassword = keystoreProperties.getProperty("keyPassword")
-                storeFile =
-                    file(keystoreProperties.getProperty("storeFile")) // Ensure 'file()' is used for path
+                // Resolve keystore path relative to root project (android/ directory)
+                val keystorePath = keystoreProperties.getProperty("storeFile")
+                storeFile = rootProject.file(keystorePath)
                 storePassword = keystoreProperties.getProperty("storePassword")
             } else {
                 // Fallback or error if properties are not found,

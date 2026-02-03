@@ -11,5 +11,5 @@
   "dart.openDevTools": "flutter",
   "dart.flutterSdkPath": ".fvm/versions/3.38.9",
   "java.compile.nullAnalysis.mode": "automatic",
-  "java.configuration.updateBuildConfiguration": "interactive"
+  "java.configuration.updateBuildConfiguration": "automatic"
 }

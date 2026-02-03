@@ -121,8 +121,7 @@ class MainActivity : FlutterActivity() {
             if (gpsStatus != null) {
                 var count = 0
                 val satellites = gpsStatus.satellites
-                while (satellites.hasNext()) {
-                    val satellite = satellites.next()
+                for (satellite in satellites) {
                     if (satellite.usedInFix()) {
                         count++
                     }
