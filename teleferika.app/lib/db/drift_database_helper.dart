@@ -160,13 +160,15 @@ class DriftDatabaseHelper {
         await db.insertPoint(pointCompanion);
         _logger.fine('Point inserted successfully');
 
-        // Insert associated images
+        // Batch insert associated images (more efficient than individual inserts)
         if (point.images.isNotEmpty) {
-          _logger.fine('Inserting ${point.images.length} images for point');
-          for (final image in point.images) {
-            final imageCompanion = _imageToDriftCompanion(image);
-            await db.insertImage(imageCompanion);
-          }
+          _logger.fine(
+            'Batch inserting ${point.images.length} images for point',
+          );
+          final imageCompanions = point.images
+              .map((image) => _imageToDriftCompanion(image))
+              .toList();
+          await db.insertImages(imageCompanions);
           _logger.fine('All images inserted successfully');
         }
 
@@ -195,22 +197,23 @@ class DriftDatabaseHelper {
       if (success) {
         _logger.fine('Point updated successfully, now updating images');
 
-        // Delete existing images for this point
+        // Batch delete existing images for this point (more efficient)
         final existingImages = await db.getImagesForPoint(point.id);
         _logger.fine(
           'Found ${existingImages.length} existing images to delete',
         );
-        for (final image in existingImages) {
-          await db.deleteImage(image.id);
+        if (existingImages.isNotEmpty) {
+          final imageIds = existingImages.map((img) => img.id).toList();
+          await db.deleteImagesByIds(imageIds);
         }
 
-        // Insert new images
+        // Batch insert new images (more efficient than individual inserts)
         if (point.images.isNotEmpty) {
-          _logger.fine('Inserting ${point.images.length} new images');
-          for (final image in point.images) {
-            final imageCompanion = _imageToDriftCompanion(image);
-            await db.insertImage(imageCompanion);
-          }
+          _logger.fine('Batch inserting ${point.images.length} new images');
+          final imageCompanions = point.images
+              .map((image) => _imageToDriftCompanion(image))
+              .toList();
+          await db.insertImages(imageCompanions);
         }
 
         await _updateProjectTimestamp(point.projectId);
@@ -439,11 +442,12 @@ class DriftDatabaseHelper {
       await db.transaction(() async {
         _logger.fine('Starting transaction for point deletion');
 
-        // Delete images first (cascade should handle this, but explicit for safety)
+        // Batch delete images first (cascade should handle this, but explicit for safety)
         final images = await db.getImagesForPoint(pointId);
         _logger.fine('Found ${images.length} images to delete');
-        for (final image in images) {
-          await db.deleteImage(image.id);
+        if (images.isNotEmpty) {
+          final imageIds = images.map((img) => img.id).toList();
+          await db.deleteImagesByIds(imageIds);
         }
 
         // Delete the point

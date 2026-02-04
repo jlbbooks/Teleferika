@@ -1,4 +1,5 @@
 // This is the database.dart file for Drift
+import 'dart:async';
 import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
@@ -63,6 +64,89 @@ class PointWithImages {
   final List<Image> images;
 
   PointWithImages({required this.point, required this.images});
+}
+
+// Query interceptor for monitoring database operations
+class DatabaseQueryInterceptor extends QueryInterceptor {
+  final Logger _logger = Logger('DatabaseQueryInterceptor');
+
+  Future<T> _run<T>(
+    String description,
+    FutureOr<T> Function() operation,
+  ) async {
+    final stopwatch = Stopwatch()..start();
+    _logger.finest('Running: $description');
+    try {
+      final result = await operation();
+      _logger.finest(' => succeeded after ${stopwatch.elapsedMilliseconds}ms');
+      return result;
+    } catch (e) {
+      _logger.warning(
+        ' => failed after ${stopwatch.elapsedMilliseconds}ms: $e',
+      );
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<Map<String, Object?>>> runSelect(
+    QueryExecutor executor,
+    String statement,
+    List<Object?> args,
+  ) {
+    return _run(
+      'SELECT: $statement (args: $args)',
+      () => executor.runSelect(statement, args),
+    );
+  }
+
+  @override
+  Future<int> runUpdate(
+    QueryExecutor executor,
+    String statement,
+    List<Object?> args,
+  ) {
+    return _run(
+      'UPDATE: $statement (args: $args)',
+      () => executor.runUpdate(statement, args),
+    );
+  }
+
+  @override
+  Future<int> runInsert(
+    QueryExecutor executor,
+    String statement,
+    List<Object?> args,
+  ) {
+    return _run(
+      'INSERT: $statement (args: $args)',
+      () => executor.runInsert(statement, args),
+    );
+  }
+
+  @override
+  Future<int> runDelete(
+    QueryExecutor executor,
+    String statement,
+    List<Object?> args,
+  ) {
+    return _run(
+      'DELETE: $statement (args: $args)',
+      () => executor.runDelete(statement, args),
+    );
+  }
+
+  @override
+  Future<void> runCustom(
+    QueryExecutor executor,
+    String statement,
+    List<Object?> args,
+  ) {
+    return _run(
+      'CUSTOM: $statement (args: $args)',
+      () => executor.runCustom(statement, args),
+    );
+  }
 }
 
 // Database class
@@ -289,6 +373,41 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
     }
   }
 
+  /// Batch insert multiple images atomically (more efficient than individual inserts)
+  Future<void> insertImages(List<ImageCompanion> imageList) async {
+    if (imageList.isEmpty) {
+      _logger.fine('No images to insert');
+      return;
+    }
+    _logger.fine('Batch inserting ${imageList.length} images');
+    try {
+      await batch((batch) {
+        batch.insertAll(images, imageList);
+      });
+      _logger.fine('Successfully batch inserted ${imageList.length} images');
+    } catch (e) {
+      _logger.severe('Error batch inserting images: $e');
+      rethrow;
+    }
+  }
+
+  /// Batch delete multiple images by their IDs
+  Future<int> deleteImagesByIds(List<String> ids) async {
+    if (ids.isEmpty) {
+      _logger.fine('No images to delete');
+      return 0;
+    }
+    _logger.fine('Batch deleting ${ids.length} images');
+    try {
+      final deleted = await (delete(images)..where((i) => i.id.isIn(ids))).go();
+      _logger.fine('Successfully deleted $deleted image(s)');
+      return deleted;
+    } catch (e) {
+      _logger.severe('Error batch deleting images: $e');
+      rethrow;
+    }
+  }
+
   Future<bool> updateImage(ImageCompanion image) async {
     _logger.fine('Updating image: ${image.id.value}');
     try {
@@ -419,8 +538,13 @@ LazyDatabase _openConnection() {
       // Use NativeDatabase directly instead of createInBackground to ensure
       // synchronous initialization and avoid potential race conditions
       final database = NativeDatabase(file);
-      logger.info('Database connection created successfully');
-      return database;
+
+      // Apply query interceptor for monitoring
+      final interceptedDatabase = database.interceptWith(
+        DatabaseQueryInterceptor(),
+      );
+      logger.info('Database connection created successfully with interceptor');
+      return interceptedDatabase;
     } catch (e, stackTrace) {
       logger.severe('Error creating database connection: $e', e, stackTrace);
       rethrow;
