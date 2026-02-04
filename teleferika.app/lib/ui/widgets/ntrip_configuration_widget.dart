@@ -16,9 +16,11 @@ class NtripConfigurationWidget extends StatefulWidget {
   final TextEditingController passwordController;
   final bool useSsl;
   final bool isForwardingRtcm;
-  final VoidCallback onConnect;
+  final ValueChanged<int?> onConnect; // Passes the selected host ID
   final VoidCallback onDisconnect;
   final ValueChanged<bool> onSslChanged;
+  final int
+  hostStatusRefreshTrigger; // Trigger to force refresh when host status changes
 
   const NtripConfigurationWidget({
     super.key,
@@ -33,6 +35,7 @@ class NtripConfigurationWidget extends StatefulWidget {
     required this.onConnect,
     required this.onDisconnect,
     required this.onSslChanged,
+    this.hostStatusRefreshTrigger = 0,
   });
 
   @override
@@ -52,6 +55,8 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
   bool _isEditingHost = false;
   int? _editingHostId;
   String? _selectedCountryInForm;
+  NTRIPConnectionState? _previousConnectionState;
+  int _previousRefreshTrigger = 0;
 
   // Standard list of countries
   static const List<String> _standardCountries = [
@@ -795,8 +800,69 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
   @override
   void initState() {
     super.initState();
+    _previousConnectionState = widget.connectionState;
+    _previousRefreshTrigger = widget.hostStatusRefreshTrigger;
     _loadCountries();
     _initializeCountryDropdown();
+  }
+
+  @override
+  void didUpdateWidget(NtripConfigurationWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Check if refresh trigger changed (indicates host status was updated in DB)
+    if (_previousRefreshTrigger != widget.hostStatusRefreshTrigger) {
+      _refreshCurrentHostStatus();
+      _previousRefreshTrigger = widget.hostStatusRefreshTrigger;
+    }
+
+    // Detect transition from connecting to connected (connection established, but RTCM not validated yet)
+    if (_previousConnectionState == NTRIPConnectionState.connecting &&
+        widget.connectionState == NTRIPConnectionState.connected) {
+      // Connection established - but don't mark as successful yet, wait for RTCM validation
+      // No refresh needed here, will refresh when RTCM is validated or error occurs
+    }
+    // Detect transition from connecting or connected to disconnected/error (failed connection)
+    else if ((_previousConnectionState == NTRIPConnectionState.connecting ||
+            _previousConnectionState == NTRIPConnectionState.connected) &&
+        (widget.connectionState == NTRIPConnectionState.disconnected ||
+            widget.connectionState == NTRIPConnectionState.error)) {
+      // Connection failed - reload hosts to update the status immediately
+      _refreshCurrentHostStatus();
+    }
+
+    _previousConnectionState = widget.connectionState;
+  }
+
+  Future<void> _refreshCurrentHostStatus() async {
+    if (_selectedCountry == null || _selectedState == null) return;
+
+    try {
+      // Small delay to ensure database write has completed
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      // Reload hosts from database to get updated connection status
+      final hosts = await DriftDatabaseHelper.instance
+          .getNtripSettingsByCountryAndState(_selectedCountry!, _selectedState);
+
+      // Update the available hosts list
+      if (mounted) {
+        setState(() {
+          _availableHosts = hosts;
+
+          // Update the selected host if it still exists
+          if (_selectedHost != null) {
+            final updatedHost = hosts.firstWhere(
+              (h) => h.id == _selectedHost!.id,
+              orElse: () => _selectedHost!,
+            );
+            _selectedHost = updatedHost;
+          }
+        });
+      }
+    } catch (e) {
+      // Silently fail - don't show error for background refresh
+    }
   }
 
   Future<void> _initializeCountryDropdown() async {
@@ -1063,6 +1129,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
     try {
       final hosts = await DriftDatabaseHelper.instance
           .getNtripSettingsByCountryAndState(_selectedCountry!, state);
+
       setState(() {
         _availableHosts = hosts;
         // Always select the first host if there's no previously selected one
@@ -1588,11 +1655,38 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
                             border: const OutlineInputBorder(),
                           ),
                           items: _availableHosts.map((host) {
+                            // Debug: log the connection status
+                            final showCheckmark =
+                                host.lastConnectionSuccessful == true;
+                            final showX =
+                                host.lastConnectionSuccessful == false;
                             return DropdownMenuItem(
                               value: host,
-                              child: Text(
-                                host.name,
-                                overflow: TextOverflow.ellipsis,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      host.name,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (showCheckmark) ...[
+                                    const SizedBox(width: 8),
+                                    const Icon(
+                                      Icons.check_circle,
+                                      color: Colors.green,
+                                      size: 18,
+                                    ),
+                                  ] else if (showX) ...[
+                                    const SizedBox(width: 8),
+                                    const Icon(
+                                      Icons.cancel,
+                                      color: Colors.red,
+                                      size: 18,
+                                    ),
+                                  ],
+                                ],
                               ),
                             );
                           }).toList(),
@@ -1724,8 +1818,10 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
                                   // Ensure controllers are synced with selected host before connecting
                                   if (_selectedHost != null) {
                                     _loadHostIntoControllers(_selectedHost!);
+                                    widget.onConnect(_selectedHost!.id);
+                                  } else {
+                                    widget.onConnect(null);
                                   }
-                                  widget.onConnect();
                                 },
                           icon: isConnecting
                               ? const SizedBox(

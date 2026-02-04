@@ -63,6 +63,8 @@ class NtripSettings extends Table {
   TextColumn get username => text()();
   TextColumn get password => text()();
   BoolColumn get useSsl => boolean().withDefault(const Constant(false))();
+  BoolColumn get lastConnectionSuccessful => boolean()
+      .nullable()(); // Whether the last connection attempt was successful
 }
 
 // Data classes for type-safe queries
@@ -173,7 +175,7 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
   }
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration {
@@ -234,6 +236,21 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
           }
 
           _logger.info('ntrip_settings table updated with new fields');
+        }
+
+        if (from < 4) {
+          // Add lastConnectionSuccessful field to NtripSettings table for version 4
+          _logger.info(
+            'Adding lastConnectionSuccessful field to ntrip_settings table',
+          );
+
+          await customStatement(
+            'ALTER TABLE ntrip_settings ADD COLUMN last_connection_successful INTEGER',
+          );
+
+          _logger.info(
+            'ntrip_settings table updated with lastConnectionSuccessful field',
+          );
         }
 
         _logger.info('Database upgrade completed');

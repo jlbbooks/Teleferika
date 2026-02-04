@@ -76,7 +76,12 @@ class _BLEScreenState extends State<BLEScreen>
       NTRIPConnectionState.disconnected;
   StreamSubscription<NTRIPConnectionState>? _ntripConnectionStateSubscription;
   StreamSubscription<String>? _ntripErrorSubscription;
+  StreamSubscription<List<int>>? _rtcmDataSubscription;
   bool _ntripUseSsl = false;
+  int? _connectingHostId; // Track the host ID being connected
+  bool _hasReceivedValidRtcm =
+      false; // Track if we've received valid RTCM packets
+  int _hostStatusRefreshTrigger = 0; // Trigger to force widget refresh
 
   @override
   void initState() {
@@ -250,6 +255,7 @@ class _BLEScreenState extends State<BLEScreen>
     _nmeaDataSubscription?.cancel();
     _ntripConnectionStateSubscription?.cancel();
     _ntripErrorSubscription?.cancel();
+    _rtcmDataSubscription?.cancel();
     _ntripHostController.dispose();
     _ntripPortController.dispose();
     _ntripMountPointController.dispose();
@@ -1123,6 +1129,7 @@ class _BLEScreenState extends State<BLEScreen>
       passwordController: _ntripPasswordController,
       useSsl: _ntripUseSsl,
       isForwardingRtcm: _bleService.isForwardingRtcm,
+      hostStatusRefreshTrigger: _hostStatusRefreshTrigger,
       onConnect: _connectToNtrip,
       onDisconnect: _disconnectFromNtrip,
       onSslChanged: (value) {
@@ -1139,7 +1146,7 @@ class _BLEScreenState extends State<BLEScreen>
     );
   }
 
-  Future<void> _connectToNtrip() async {
+  Future<void> _connectToNtrip(int? hostId) async {
     final s = S.of(context);
     final host = _ntripHostController.text.trim();
     final portStr = _ntripPortController.text.trim();
@@ -1207,6 +1214,7 @@ class _BLEScreenState extends State<BLEScreen>
     try {
       setState(() {
         _ntripConnectionState = NTRIPConnectionState.connecting;
+        _connectingHostId = hostId; // Track which host we're connecting to
       });
 
       final success = await _bleService.connectToNtrip(
@@ -1218,34 +1226,104 @@ class _BLEScreenState extends State<BLEScreen>
         useSsl: _ntripUseSsl,
       );
 
-      // Save settings on successful connection attempt
-      _saveNtripSettings();
+      // Don't mark as successful yet - wait for RTCM validation
+      // Set to null initially, will be updated when RTCM packets are validated
+      await _saveNtripSettings(
+        hostId: hostId,
+        lastConnectionSuccessful: null, // Wait for RTCM validation
+      );
 
       if (mounted) {
         if (success) {
+          // Reset RTCM validation flag
+          _hasReceivedValidRtcm = false;
+
           // Update subscription to new client
           final ntripClient = _bleService.ntripClient;
           if (ntripClient != null) {
             _ntripConnectionStateSubscription?.cancel();
             _ntripErrorSubscription?.cancel();
+            _rtcmDataSubscription?.cancel();
 
             // Explicitly set state to connected immediately
             setState(() {
               _ntripConnectionState = ntripClient.connectionState;
             });
 
-            _ntripConnectionStateSubscription = ntripClient
-                .connectionStateStream
-                .listen((state) {
+            // Listen to RTCM data stream to detect successful packet processing
+            _rtcmDataSubscription = ntripClient.rtcmData.listen((data) {
+              if (mounted &&
+                  !_hasReceivedValidRtcm &&
+                  _connectingHostId != null) {
+                // We've received valid RTCM data - mark connection as successful
+                _hasReceivedValidRtcm = true;
+                _saveNtripSettings(
+                  hostId: _connectingHostId,
+                  lastConnectionSuccessful: true,
+                ).then((_) {
+                  // Trigger a rebuild to refresh the widget UI
                   if (mounted) {
                     setState(() {
-                      _ntripConnectionState = state;
+                      _hostStatusRefreshTrigger++; // Increment to trigger widget refresh
                     });
                   }
                 });
+              }
+            });
+
+            _ntripConnectionStateSubscription = ntripClient.connectionStateStream.listen((
+              state,
+            ) {
+              if (mounted) {
+                final previousState = _ntripConnectionState;
+                setState(() {
+                  _ntripConnectionState = state;
+                });
+
+                // If connection transitions from connecting or connected to error/disconnected, update status
+                if ((previousState == NTRIPConnectionState.connecting ||
+                        previousState == NTRIPConnectionState.connected) &&
+                    (state == NTRIPConnectionState.error ||
+                        state == NTRIPConnectionState.disconnected) &&
+                    _connectingHostId != null) {
+                  // Connection failed - update the host status
+                  _saveNtripSettings(
+                    hostId: _connectingHostId,
+                    lastConnectionSuccessful: false,
+                  ).then((_) {
+                    // Trigger a rebuild to refresh the widget UI immediately
+                    if (mounted) {
+                      setState(() {
+                        _hostStatusRefreshTrigger++; // Increment to trigger widget refresh
+                      });
+                    }
+                  });
+                  _connectingHostId = null; // Clear after updating
+                  _hasReceivedValidRtcm = false; // Reset RTCM validation flag
+                } else if (state == NTRIPConnectionState.connected) {
+                  // Connection succeeded - keep tracking the host ID in case it fails later
+                  // Don't clear _connectingHostId here, only clear it when disconnected/error
+                }
+              }
+            });
 
             _ntripErrorSubscription = ntripClient.errors.listen((error) {
               if (mounted) {
+                // If we get an error and haven't validated RTCM yet, mark as failed
+                if (!_hasReceivedValidRtcm && _connectingHostId != null) {
+                  _saveNtripSettings(
+                    hostId: _connectingHostId,
+                    lastConnectionSuccessful: false,
+                  ).then((_) {
+                    // Trigger a rebuild to refresh the widget UI immediately
+                    if (mounted) {
+                      setState(() {
+                        _hostStatusRefreshTrigger++; // Increment to trigger widget refresh
+                      });
+                    }
+                  });
+                  _hasReceivedValidRtcm = false;
+                }
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('NTRIP Error: $error'),
@@ -1269,6 +1347,8 @@ class _BLEScreenState extends State<BLEScreen>
           setState(() {
             _ntripConnectionState = NTRIPConnectionState.error;
           });
+          // Connection failed immediately - status already saved as false above
+          _connectingHostId = null; // Clear tracking
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -1358,23 +1438,56 @@ class _BLEScreenState extends State<BLEScreen>
     }
   }
 
-  Future<void> _saveNtripSettings() async {
+  Future<void> _saveNtripSettings({
+    int? hostId,
+    bool? lastConnectionSuccessful,
+  }) async {
     try {
-      final port =
-          int.tryParse(_ntripPortController.text.trim()) ??
-          (_ntripUseSsl ? 2102 : 2101);
-
       final host = _ntripHostController.text.trim();
       if (host.isEmpty) {
         return; // Don't save if host is empty
       }
 
-      // Try to find existing host with this host address to update it
+      // If we have a host ID, update that specific host directly
+      if (hostId != null) {
+        final port =
+            int.tryParse(_ntripPortController.text.trim()) ??
+            (_ntripUseSsl ? 2102 : 2101);
+
+        final settings = NtripSettingCompanion(
+          id: drift.Value(hostId),
+          host: drift.Value(host),
+          port: drift.Value(port),
+          mountPoint: drift.Value(_ntripMountPointController.text.trim()),
+          username: drift.Value(_ntripUsernameController.text.trim()),
+          password: drift.Value(_ntripPasswordController.text.trim()),
+          useSsl: drift.Value(_ntripUseSsl),
+          lastConnectionSuccessful: drift.Value(lastConnectionSuccessful),
+        );
+
+        await DriftDatabaseHelper.instance.updateNtripSetting(settings);
+        return;
+      }
+
+      // Fallback: try to find existing host by connection parameters
+      // This handles the case where hostId is not provided (legacy behavior)
+      final fallbackPort =
+          int.tryParse(_ntripPortController.text.trim()) ??
+          (_ntripUseSsl ? 2102 : 2101);
+
       final allSettings = await DriftDatabaseHelper.instance
           .getAllNtripSettings();
+      final mountPoint = _ntripMountPointController.text.trim();
+      final username = _ntripUsernameController.text.trim();
+      final password = _ntripPasswordController.text.trim();
+
       NtripSetting? existingHost;
       for (final setting in allSettings) {
-        if (setting.host == host) {
+        if (setting.host == host &&
+            setting.port == fallbackPort &&
+            setting.mountPoint == mountPoint &&
+            setting.username == username &&
+            setting.password == password) {
           existingHost = setting;
           break;
         }
@@ -1391,11 +1504,12 @@ class _BLEScreenState extends State<BLEScreen>
           existingHost?.state ?? 'Trentino',
         ), // Default to Trentino
         host: drift.Value(host),
-        port: drift.Value(port),
+        port: drift.Value(fallbackPort),
         mountPoint: drift.Value(_ntripMountPointController.text.trim()),
         username: drift.Value(_ntripUsernameController.text.trim()),
         password: drift.Value(_ntripPasswordController.text.trim()),
         useSsl: drift.Value(_ntripUseSsl),
+        lastConnectionSuccessful: drift.Value(lastConnectionSuccessful),
       );
 
       // If we found an existing host, update it; otherwise insert new
