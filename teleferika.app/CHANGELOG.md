@@ -2,6 +2,47 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.2+93] - 2026-02-04
+
+### Added
+- **NTRIP Host Connection Status Tracking**: Added visual indicators for NTRIP host connection success/failure
+  - Green checkmark appears when RTCM packet communication is successfully validated
+  - Red X appears when connection fails or RTCM validation fails
+  - Status indicators update in real-time without requiring page reload
+  - Connection status is persisted in database and restored on app restart
+- **Last Used Host Selection**: Automatically selects the last connected NTRIP host when entering the configuration page
+  - Remembers host selection across app sessions using SharedPreferences
+  - Falls back to first host if last used host is not available
+- **NTRIP Host Management Enhancements**: Improved host management workflow
+  - Newly added or duplicated hosts are automatically selected after saving
+  - Enhanced country and state/region selection with comprehensive localization support
+  - Improved host form validation and error messages
+
+### Changed
+- **SnackBar Duration Improvements**: Optimized snackbar display durations for better user experience
+  - Error messages now display for 3 seconds (increased from 1 second)
+  - Success/info messages remain at 1 second for quick feedback
+- **Connection Status Tracking**: Enhanced NTRIP connection tracking to focus on actual RTCM communication success
+  - Connection status now tracks successful RTCM packet processing, not just server connection
+  - Status clears immediately when starting a new connection attempt
+  - More accurate failure detection including initial connection errors
+
+### Fixed
+- **UI Update Timing**: Fixed connection status indicators not updating immediately
+  - Status indicators now refresh in real-time when connection state changes
+  - Improved state management to ensure UI reflects database changes immediately
+- **Host Selection After Operations**: Fixed newly created hosts not being selected after add/duplicate operations
+
+### Technical
+- **Database Schema Update**: Added `lastConnectionSuccessful` field to NTRIP settings table
+  - Schema version incremented to 4
+  - Migration logic added for existing databases
+  - Field tracks successful RTCM packet validation, not just connection state
+- **RTCM Validation Tracking**: Enhanced NTRIP client to track actual packet processing success
+  - Added RTCM data stream subscription to detect successful packet reception
+  - Improved error handling for connection failures at different stages
+  - Better distinction between connection establishment and successful communication
+
 ## [1.0.4+87] - 2025-01-27
 
 ### Fixed

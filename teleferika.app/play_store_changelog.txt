@@ -1,19 +1,13 @@
 <en-GB>
-- Fixed sensor permission issue on Android 16
-- Added Bluetooth Low Energy (BLE) support for RTK GPS receivers
-- Real-time GPS data streaming from RTK receivers via BLE
-- RTK fix quality detection with visual indicators
-- GPS information panel showing satellite count, accuracy, and fix quality
-- NTRIP client implementation for RTCM corrections (work in progress, untested)
-- Improved BLE connection management with automatic reconnection
+- Added connection status indicators for NTRIP hosts (green checkmark for successful communication, red X for failures)
+- Improved NTRIP host management with automatic selection of last used host
+- Enhanced connection tracking to verify actual RTCM packet communication success
+- Optimized error message display duration for better readability
 </en-GB>
 
 <it-IT>
-- Risolto problema permessi sensori su Android 16
-- Aggiunto supporto Bluetooth Low Energy (BLE) per ricevitori RTK GPS
-- Streaming in tempo reale di dati GPS da ricevitori RTK tramite BLE
-- Rilevamento qualità fix RTK con indicatori visivi
-- Pannello informazioni GPS che mostra conteggio satelliti, accuratezza e qualità fix
-- Implementazione client NTRIP per correzioni RTCM (lavoro in corso, non testato)
-- Migliorata gestione connessione BLE con riconnessione automatica
+- Aggiunti indicatori di stato connessione per host NTRIP (spunta verde per comunicazione riuscita, X rossa per errori)
+- Migliorata gestione host NTRIP con selezione automatica dell'ultimo host utilizzato
+- Migliorato tracciamento connessione per verificare il successo della comunicazione pacchetti RTCM
+- Ottimizzata durata visualizzazione messaggi di errore per migliore leggibilità
 </it-IT> 
