@@ -15,6 +15,7 @@ import 'package:teleferika/db/database.dart';
 import 'package:teleferika/db/drift_database_helper.dart';
 import 'package:teleferika/ui/widgets/ntrip_configuration_widget.dart';
 import 'package:teleferika/ui/widgets/ble_scan_result_tile.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Screen for scanning and connecting to Bluetooth Low Energy devices.
 ///
@@ -1234,6 +1235,17 @@ class _BLEScreenState extends State<BLEScreen>
         hostId: hostId,
         lastConnectionSuccessful: null, // Clear status while connecting
       );
+
+      // Save last used host ID
+      if (hostId != null) {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setInt('lastUsedNtripHostId', hostId);
+        } catch (e) {
+          // Silently fail - not critical
+        }
+      }
+
       // Trigger UI refresh to remove the icon immediately
       if (mounted) {
         setState(() {

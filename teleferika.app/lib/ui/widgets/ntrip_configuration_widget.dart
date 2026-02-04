@@ -1133,25 +1133,29 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
       final hosts = await DriftDatabaseHelper.instance
           .getNtripSettingsByCountryAndState(_selectedCountry!, state);
 
+      // Try to load last used host ID from preferences
+      NtripSetting? hostToSelect;
+      if (hosts.isNotEmpty) {
+        if (_selectedHost == null) {
+          // No previously selected host, try to load last used
+          hostToSelect = await _getLastUsedHost(hosts);
+        } else {
+          // If we have a selected host, make sure it's still in the list
+          if (!hosts.contains(_selectedHost)) {
+            // Selected host not in list, try to load last used
+            hostToSelect = await _getLastUsedHost(hosts);
+          } else {
+            // Host is still in list, keep it selected
+            hostToSelect = _selectedHost;
+          }
+        }
+      }
+
       setState(() {
         _availableHosts = hosts;
-        // Always select the first host if there's no previously selected one
-        if (hosts.isNotEmpty) {
-          if (_selectedHost == null) {
-            _selectedHost = hosts.first;
-            _loadHostIntoControllers(_selectedHost!);
-          } else {
-            // If we have a selected host, make sure it's still in the list
-            // If not, select the first one
-            if (!hosts.contains(_selectedHost)) {
-              _selectedHost = hosts.first;
-              _loadHostIntoControllers(_selectedHost!);
-            } else {
-              // Host is still in list, but ensure controllers are synced
-              // (in case the host was updated, e.g., after editing)
-              _loadHostIntoControllers(_selectedHost!);
-            }
-          }
+        if (hosts.isNotEmpty && hostToSelect != null) {
+          _selectedHost = hostToSelect;
+          _loadHostIntoControllers(_selectedHost!);
         } else {
           _selectedHost = null;
           _clearControllers();
@@ -1180,6 +1184,27 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
     widget.usernameController.text = host.username;
     widget.passwordController.text = host.password;
     widget.onSslChanged(host.useSsl);
+  }
+
+  Future<NtripSetting> _getLastUsedHost(List<NtripSetting> hosts) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final lastUsedHostId = prefs.getInt('lastUsedNtripHostId');
+
+      if (lastUsedHostId != null) {
+        // Try to find the last used host in the current list
+        return hosts.firstWhere(
+          (h) => h.id == lastUsedHostId,
+          orElse: () => hosts.first, // Fallback to first if not found
+        );
+      } else {
+        // No last used host, select first
+        return hosts.first;
+      }
+    } catch (e) {
+      // On error, just select first host
+      return hosts.first;
+    }
   }
 
   void _clearControllers() {
