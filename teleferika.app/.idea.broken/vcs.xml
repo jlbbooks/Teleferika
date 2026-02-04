@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="$PROJECT_DIR$/.." vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../licence_server" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../licensed_features_package" vcs="Git" />
+    <mapping directory="$USER_HOME$/fvm/versions/3.38.9" vcs="Git" />
+  </component>
+</project>
