@@ -639,6 +639,18 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
     }
   }
 
+  Future<int> deleteAllNtripSettings() async {
+    _logger.fine('Deleting all NTRIP settings');
+    try {
+      final deleted = await delete(ntripSettings).go();
+      _logger.fine('Deleted $deleted NTRIP setting(s)');
+      return deleted;
+    } catch (e) {
+      _logger.severe('Error deleting all NTRIP settings: $e');
+      rethrow;
+    }
+  }
+
   // Legacy method for backward compatibility
   Future<void> saveNtripSettings(NtripSettingCompanion settings) async {
     _logger.fine('Saving NTRIP settings (legacy method)');

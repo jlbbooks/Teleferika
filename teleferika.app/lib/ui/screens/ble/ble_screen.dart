@@ -191,7 +191,7 @@ class _BLEScreenState extends State<BLEScreen>
             SnackBar(
               content: Text('NTRIP Error: $error'),
               backgroundColor: Colors.red,
-              duration: const Duration(milliseconds: 1000),
+              duration: const Duration(milliseconds: 3000),
             ),
           );
         }
@@ -299,7 +299,7 @@ class _BLEScreenState extends State<BLEScreen>
               S.of(context)?.bleScanError ?? 'Error starting scan: $e',
             ),
             backgroundColor: Colors.red,
-            duration: const Duration(milliseconds: 1000),
+            duration: const Duration(milliseconds: 3000),
           ),
         );
       }
@@ -357,7 +357,7 @@ class _BLEScreenState extends State<BLEScreen>
               S.of(context)?.bleConnectionError ?? 'Connection error: $e',
             ),
             backgroundColor: Colors.red,
-            duration: const Duration(milliseconds: 1000),
+            duration: const Duration(milliseconds: 3000),
           ),
         );
       }
@@ -1219,6 +1219,7 @@ class _BLEScreenState extends State<BLEScreen>
             s?.bleNtripErrorUsernameRequired ?? 'Username (email) is required',
           ),
           backgroundColor: Colors.red,
+          duration: const Duration(milliseconds: 3000),
         ),
       );
       return;
@@ -1426,7 +1427,7 @@ class _BLEScreenState extends State<BLEScreen>
           SnackBar(
             content: Text('Error: $e'),
             backgroundColor: Colors.red,
-            duration: const Duration(milliseconds: 1000),
+            duration: const Duration(milliseconds: 3000),
           ),
         );
       }
@@ -1470,7 +1471,7 @@ class _BLEScreenState extends State<BLEScreen>
           SnackBar(
             content: Text('Error disconnecting: $e'),
             backgroundColor: Colors.red,
-            duration: const Duration(milliseconds: 1000),
+            duration: const Duration(milliseconds: 3000),
           ),
         );
       }

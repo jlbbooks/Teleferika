@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:teleferika/core/app_config.dart';
 import 'package:teleferika/core/settings_service.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/screens/ble/ble_screen.dart';
+import 'package:teleferika/db/drift_database_helper.dart';
 
 /// Settings screen for configuring application behavior.
 ///
@@ -422,7 +424,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
+
+              // NTRIP Hosts Section (Debug only)
+              if (kDebugMode) ...[
+                _buildSectionHeader('NTRIP Hosts', Icons.satellite),
+                const SizedBox(height: 8),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'NTRIP Hosts Management',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Delete all saved NTRIP hosts from the database. This action cannot be undone.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () => _deleteAllNtripHosts(context),
+                            icon: const Icon(Icons.delete_forever),
+                            label: const Text('DROP hosts'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ] else
+                const SizedBox(height: 24),
 
               // Information Section
               _buildSectionHeader(
@@ -479,5 +528,57 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ],
     );
+  }
+
+  Future<void> _deleteAllNtripHosts(BuildContext context) async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete All NTRIP Hosts'),
+          content: const Text(
+            'Are you sure you want to delete ALL NTRIP hosts? This action cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('DELETE ALL'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        final deleted = await DriftDatabaseHelper.instance
+            .deleteAllNtripSettings();
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Deleted $deleted NTRIP host(s)'),
+            backgroundColor: Colors.green,
+            duration: const Duration(milliseconds: 1000),
+          ),
+        );
+      } catch (e) {
+        logger.severe('Error deleting all NTRIP hosts: $e');
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting hosts: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(milliseconds: 1000),
+          ),
+        );
+      }
+    }
   }
 }

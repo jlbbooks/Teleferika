@@ -998,7 +998,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
           SnackBar(
             content: Text('Error loading countries: $e'),
             backgroundColor: Colors.red,
-            duration: const Duration(milliseconds: 1000),
+            duration: const Duration(milliseconds: 3000),
           ),
         );
       }
@@ -1029,7 +1029,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
           SnackBar(
             content: Text('Error inserting default host: $e'),
             backgroundColor: Colors.red,
-            duration: const Duration(milliseconds: 1000),
+            duration: const Duration(milliseconds: 3000),
           ),
         );
       }
@@ -1109,7 +1109,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
           SnackBar(
             content: Text('Error loading states: $e'),
             backgroundColor: Colors.red,
-            duration: const Duration(milliseconds: 1000),
+            duration: const Duration(milliseconds: 3000),
           ),
         );
       }
@@ -1167,6 +1167,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
           SnackBar(
             content: Text('Error loading hosts: $e'),
             backgroundColor: Colors.red,
+            duration: const Duration(milliseconds: 3000),
           ),
         );
       }
@@ -1273,7 +1274,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
         const SnackBar(
           content: Text('Name is required'),
           backgroundColor: Colors.red,
-          duration: Duration(milliseconds: 1000),
+          duration: Duration(milliseconds: 3000),
         ),
       );
       return;
@@ -1283,7 +1284,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
         const SnackBar(
           content: Text('Country is required'),
           backgroundColor: Colors.red,
-          duration: Duration(milliseconds: 1000),
+          duration: Duration(milliseconds: 3000),
         ),
       );
       return;
@@ -1298,7 +1299,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
         const SnackBar(
           content: Text('State (Regione) is required'),
           backgroundColor: Colors.red,
-          duration: Duration(milliseconds: 1000),
+          duration: Duration(milliseconds: 3000),
         ),
       );
       return;
@@ -1309,7 +1310,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
         const SnackBar(
           content: Text('Host is required'),
           backgroundColor: Colors.red,
-          duration: Duration(milliseconds: 1000),
+          duration: Duration(milliseconds: 3000),
         ),
       );
       return;
@@ -1363,15 +1364,19 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
         useSsl: drift.Value(_newHostUseSsl),
       );
 
+      int? newHostId;
       if (_isEditingHost && _editingHostId != null) {
         // Update existing host
         final updateSetting = newSetting.copyWith(
           id: drift.Value(_editingHostId!),
         );
         await DriftDatabaseHelper.instance.updateNtripSetting(updateSetting);
+        newHostId = _editingHostId;
       } else {
-        // Insert new host
-        await DriftDatabaseHelper.instance.insertNtripSetting(newSetting);
+        // Insert new host and get the ID
+        newHostId = await DriftDatabaseHelper.instance.insertNtripSetting(
+          newSetting,
+        );
       }
 
       // Store editing state before clearing
@@ -1432,11 +1437,40 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
           _loadHostIntoControllers(editedHost);
         }
       } else {
-        // Adding new host - reload current selection
-        if (_selectedCountry != null) {
-          await _loadStates();
-          if (_selectedState != null) {
-            await _loadHosts();
+        // Adding new host - select the newly created host
+        // Update country/state selection to match the new host
+        setState(() {
+          _selectedCountry = country;
+          _selectedState = newState;
+        });
+
+        // Reload states for the new country
+        await _loadStates(newState);
+
+        // Ensure state is set
+        setState(() {
+          _selectedState = newState;
+        });
+
+        // Reload hosts for the new country/state
+        await _loadHostsWithState(newState);
+
+        // Find and select the newly created host by ID
+        if (newHostId != null) {
+          final updatedHosts = await DriftDatabaseHelper.instance
+              .getNtripSettingsByCountryAndState(country, newState);
+
+          if (updatedHosts.isNotEmpty) {
+            final newHost = updatedHosts.firstWhere(
+              (h) => h.id == newHostId,
+              orElse: () =>
+                  updatedHosts.first, // Fallback to first if not found
+            );
+
+            setState(() {
+              _selectedHost = newHost;
+            });
+            _loadHostIntoControllers(newHost);
           }
         }
       }
@@ -1459,7 +1493,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
           SnackBar(
             content: Text('Error adding host: $e'),
             backgroundColor: Colors.red,
-            duration: const Duration(milliseconds: 1000),
+            duration: const Duration(milliseconds: 3000),
           ),
         );
       }

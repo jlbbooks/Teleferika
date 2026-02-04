@@ -606,6 +606,19 @@ class DriftDatabaseHelper {
     }
   }
 
+  Future<int> deleteAllNtripSettings() async {
+    _logger.info('Deleting all NTRIP settings');
+    try {
+      final db = await database;
+      final deleted = await db.deleteAllNtripSettings();
+      _logger.info('Deleted $deleted NTRIP setting(s)');
+      return deleted;
+    } catch (e) {
+      _logger.severe('Error deleting all NTRIP settings: $e');
+      rethrow;
+    }
+  }
+
   // Legacy method for backward compatibility
   Future<void> saveNtripSettings(NtripSettingCompanion settings) async {
     _logger.info('Saving NTRIP settings (legacy method)');
