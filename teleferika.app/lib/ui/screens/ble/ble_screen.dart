@@ -768,7 +768,7 @@ class _BLEScreenState extends State<BLEScreen>
   Widget _buildGpsDataCard(S? s) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final cardColor = isDarkMode
-        ? Colors.green.shade900.withOpacity(0.3)
+        ? Colors.green.shade900.withValues(alpha: 0.3)
         : Colors.green.shade50;
     final iconColor = isDarkMode
         ? Colors.green.shade300
@@ -1116,8 +1116,9 @@ class _BLEScreenState extends State<BLEScreen>
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: Theme.of(context).colorScheme.primary
-                            .withOpacity(0.4 * _pulseAnimation.value),
+                        color: Theme.of(context).colorScheme.primary.withValues(
+                          alpha: 0.4 * _pulseAnimation.value,
+                        ),
                         blurRadius: 12 * _pulseAnimation.value,
                         spreadRadius: 3 * _pulseAnimation.value,
                       ),

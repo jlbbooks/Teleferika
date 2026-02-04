@@ -537,7 +537,7 @@ class BLEService {
             if (asciiBytes.isNotEmpty) {
               asciiFull = String.fromCharCodes(asciiBytes);
               asciiPreview = asciiFull.length > 100
-                  ? asciiFull.substring(0, 100) + '...'
+                  ? '${asciiFull.substring(0, 100)}...'
                   : asciiFull;
             }
           } catch (e) {
@@ -560,7 +560,7 @@ class BLEService {
 
           _logger.finer(
             "Received data that couldn't be decoded as UTF-8. "
-            "Length: ${data.length} bytes (${printableCount} printable, ${nonPrintableCount} non-printable), "
+            "Length: ${data.length} bytes ($printableCount printable, $nonPrintableCount non-printable), "
             "Hex (first 30): $hexDump${data.length > 30 ? '...' : ''}, "
             "First byte: 0x${data[0].toRadixString(16)} (${data[0] >= 0x20 && data[0] <= 0x7E ? String.fromCharCode(data[0]) : 'non-printable'}), "
             "${asciiPreview != null ? 'ASCII extracted: $asciiPreview, ' : ''}"
@@ -853,20 +853,17 @@ class BLEService {
         }
 
         // Set up periodic sending (every 5 seconds) if not already set
-        if (ggaTimer == null) {
-          ggaTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-            if (_ntripClient?.connectionState ==
-                NTRIPConnectionState.connected) {
-              final currentPos =
-                  _currentGpsPosition ?? lastSentPosition ?? position;
-              _ntripClient?.sendGgaSentence(currentPos, _lastNmeaData);
-              _lastGgaSendTime = DateTime.now();
-            } else {
-              timer.cancel();
-              ggaTimer = null;
-            }
-          });
-        }
+        ggaTimer ??= Timer.periodic(const Duration(seconds: 5), (timer) {
+          if (_ntripClient?.connectionState == NTRIPConnectionState.connected) {
+            final currentPos =
+                _currentGpsPosition ?? lastSentPosition ?? position;
+            _ntripClient?.sendGgaSentence(currentPos, _lastNmeaData);
+            _lastGgaSendTime = DateTime.now();
+          } else {
+            timer.cancel();
+            ggaTimer = null;
+          }
+        });
       },
       onError: (error) {
         // GGA subscription error logging removed - non-critical

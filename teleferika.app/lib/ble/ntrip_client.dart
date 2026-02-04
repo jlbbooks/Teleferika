@@ -627,9 +627,7 @@ class NTRIPClient {
       } catch (e) {
         // Error already handled in listeners, but ensure state is set
         if (_connectionState == NTRIPConnectionState.connecting) {
-          if (_errorMessage == null) {
-            _errorMessage = 'NTRIP connection failed: $e';
-          }
+          _errorMessage ??= 'NTRIP connection failed: $e';
           _updateConnectionState(NTRIPConnectionState.error);
           _errorController.add(_errorMessage!);
         }
