@@ -51,6 +51,16 @@ class Images extends Table {
   Set<Column> get primaryKey => {id};
 }
 
+class NtripSettings extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get host => text()();
+  IntColumn get port => integer()();
+  TextColumn get mountPoint => text()();
+  TextColumn get username => text()();
+  TextColumn get password => text()();
+  BoolColumn get useSsl => boolean().withDefault(const Constant(false))();
+}
+
 // Data classes for type-safe queries
 class ProjectWithPoints {
   final Project project;
@@ -150,7 +160,7 @@ class DatabaseQueryInterceptor extends QueryInterceptor {
 }
 
 // Database class
-@DriftDatabase(tables: [Projects, Points, Images])
+@DriftDatabase(tables: [Projects, Points, Images, NtripSettings])
 class TeleferikaDatabase extends _$TeleferikaDatabase {
   static final Logger _logger = Logger('TeleferikaDatabase');
 
@@ -430,6 +440,50 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
       return deleted;
     } catch (e) {
       _logger.severe('Error deleting image $id: $e');
+      rethrow;
+    }
+  }
+
+  // NTRIP Settings operations
+  Future<NtripSetting?> getNtripSettings() async {
+    _logger.fine('Getting NTRIP settings');
+    try {
+      // Always get the first row (ID=1)
+      final settings = await (select(ntripSettings)
+            ..where((t) => t.id.equals(1)))
+          .getSingleOrNull();
+      return settings;
+    } catch (e) {
+      _logger.severe('Error getting NTRIP settings: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> saveNtripSettings(NtripSettingCompanion settings) async {
+    _logger.fine('Saving NTRIP settings');
+    try {
+      // Use a transaction to ensure we update the existing row or insert if not exists
+      await transaction(() async {
+        final existing = await (select(ntripSettings)
+              ..where((t) => t.id.equals(1)))
+            .getSingleOrNull();
+
+        if (existing != null) {
+          // Update existing row
+          // Ensure we target ID 1
+          final updateData = settings.copyWith(id: const Value(1));
+          await (update(ntripSettings)
+                ..where((t) => t.id.equals(1)))
+              .write(updateData);
+        } else {
+          // Insert new row with ID 1
+          final insertData = settings.copyWith(id: const Value(1));
+          await into(ntripSettings).insert(insertData);
+        }
+      });
+      _logger.fine('NTRIP settings saved successfully');
+    } catch (e) {
+      _logger.severe('Error saving NTRIP settings: $e');
       rethrow;
     }
   }

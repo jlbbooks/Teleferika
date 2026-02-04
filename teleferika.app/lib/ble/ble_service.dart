@@ -63,6 +63,9 @@ class BLEService {
       StreamController<List<ScanResult>>.broadcast();
   Stream<List<ScanResult>> get scanResults => _scanResultsController.stream;
 
+  /// Stream of scanning state
+  Stream<bool> get isScanningStream => FlutterBluePlus.isScanning;
+
   final StreamController<BLEConnectionState> _connectionStateController =
       StreamController<BLEConnectionState>.broadcast();
   Stream<BLEConnectionState> get connectionState =>

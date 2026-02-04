@@ -492,6 +492,32 @@ class DriftDatabaseHelper {
     }
   }
 
+  // NTRIP Methods
+  Future<NtripSetting?> getNtripSettings() async {
+    _logger.info('Getting NTRIP settings');
+    try {
+      final db = await database;
+      final settings = await db.getNtripSettings();
+      _logger.info('Retrieved NTRIP settings');
+      return settings;
+    } catch (e) {
+      _logger.severe('Error getting NTRIP settings: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> saveNtripSettings(NtripSettingCompanion settings) async {
+    _logger.info('Saving NTRIP settings');
+    try {
+      final db = await database;
+      await db.saveNtripSettings(settings);
+      _logger.info('Saved NTRIP settings');
+    } catch (e) {
+      _logger.severe('Error saving NTRIP settings: $e');
+      rethrow;
+    }
+  }
+
   // Conversion methods between Drift and Model classes
   ProjectModel _projectFromDrift(Project project, List<PointModel> points) {
     _logger.fine('Converting Drift Project to ProjectModel: ${project.name}');
