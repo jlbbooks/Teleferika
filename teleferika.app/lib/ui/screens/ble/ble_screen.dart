@@ -190,6 +190,7 @@ class _BLEScreenState extends State<BLEScreen>
             SnackBar(
               content: Text('NTRIP Error: $error'),
               backgroundColor: Colors.red,
+              duration: const Duration(milliseconds: 1000),
             ),
           );
         }
@@ -281,7 +282,7 @@ class _BLEScreenState extends State<BLEScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(S.of(context)?.bleScanStarted ?? 'Scan started...'),
-            duration: const Duration(seconds: 2),
+            duration: const Duration(milliseconds: 1000),
           ),
         );
       }
@@ -297,6 +298,7 @@ class _BLEScreenState extends State<BLEScreen>
               S.of(context)?.bleScanError ?? 'Error starting scan: $e',
             ),
             backgroundColor: Colors.red,
+            duration: const Duration(milliseconds: 1000),
           ),
         );
       }
@@ -316,7 +318,7 @@ class _BLEScreenState extends State<BLEScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(S.of(context)?.bleScanStopped ?? 'Scan stopped.'),
-            duration: const Duration(seconds: 2),
+            duration: const Duration(milliseconds: 1000),
           ),
         );
       }
@@ -338,9 +340,12 @@ class _BLEScreenState extends State<BLEScreen>
         final connectingText =
             s?.bleConnecting(device.platformName) ??
             'Connecting to ${device.platformName}...';
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(connectingText)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(connectingText),
+            duration: const Duration(milliseconds: 1000),
+          ),
+        );
       }
     } catch (e) {
       logger.severe('Error connecting to device: $e');
@@ -351,6 +356,7 @@ class _BLEScreenState extends State<BLEScreen>
               S.of(context)?.bleConnectionError ?? 'Connection error: $e',
             ),
             backgroundColor: Colors.red,
+            duration: const Duration(milliseconds: 1000),
           ),
         );
       }
@@ -373,6 +379,7 @@ class _BLEScreenState extends State<BLEScreen>
             content: Text(
               S.of(context)?.bleDisconnected ?? 'Device disconnected.',
             ),
+            duration: const Duration(milliseconds: 1000),
           ),
         );
       }
@@ -388,6 +395,7 @@ class _BLEScreenState extends State<BLEScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(S.of(context)?.bleMtuRequested ?? 'MTU requested.'),
+            duration: const Duration(milliseconds: 1000),
           ),
         );
       }
@@ -1161,6 +1169,7 @@ class _BLEScreenState extends State<BLEScreen>
             s?.bleNtripErrorHostRequired ?? 'NTRIP host is required',
           ),
           backgroundColor: Colors.red,
+          duration: const Duration(milliseconds: 1000),
         ),
       );
       return;
@@ -1171,6 +1180,7 @@ class _BLEScreenState extends State<BLEScreen>
         SnackBar(
           content: Text(s?.bleNtripErrorPortRequired ?? 'Port is required'),
           backgroundColor: Colors.red,
+          duration: const Duration(milliseconds: 1000),
         ),
       );
       return;
@@ -1182,6 +1192,7 @@ class _BLEScreenState extends State<BLEScreen>
         SnackBar(
           content: Text(s?.bleNtripErrorInvalidPort ?? 'Invalid port number'),
           backgroundColor: Colors.red,
+          duration: const Duration(milliseconds: 1000),
         ),
       );
       return;
@@ -1194,6 +1205,7 @@ class _BLEScreenState extends State<BLEScreen>
             s?.bleNtripErrorMountPointRequired ?? 'Mount point is required',
           ),
           backgroundColor: Colors.red,
+          duration: const Duration(milliseconds: 1000),
         ),
       );
       return;
@@ -1217,6 +1229,18 @@ class _BLEScreenState extends State<BLEScreen>
         _connectingHostId = hostId; // Track which host we're connecting to
       });
 
+      // Clear the status immediately when connecting starts (remove checkmark/X)
+      await _saveNtripSettings(
+        hostId: hostId,
+        lastConnectionSuccessful: null, // Clear status while connecting
+      );
+      // Trigger UI refresh to remove the icon immediately
+      if (mounted) {
+        setState(() {
+          _hostStatusRefreshTrigger++;
+        });
+      }
+
       final success = await _bleService.connectToNtrip(
         host: host,
         port: port,
@@ -1224,13 +1248,6 @@ class _BLEScreenState extends State<BLEScreen>
         username: username,
         password: password.isEmpty ? 'none' : password,
         useSsl: _ntripUseSsl,
-      );
-
-      // Don't mark as successful yet - wait for RTCM validation
-      // Set to null initially, will be updated when RTCM packets are validated
-      await _saveNtripSettings(
-        hostId: hostId,
-        lastConnectionSuccessful: null, // Wait for RTCM validation
       );
 
       if (mounted) {
@@ -1328,7 +1345,7 @@ class _BLEScreenState extends State<BLEScreen>
                   SnackBar(
                     content: Text('NTRIP Error: $error'),
                     backgroundColor: Colors.red,
-                    duration: const Duration(seconds: 5),
+                    duration: const Duration(milliseconds: 1000),
                   ),
                 );
               }
@@ -1341,13 +1358,25 @@ class _BLEScreenState extends State<BLEScreen>
                 s?.bleNtripConnectedSuccess ?? 'Connected to NTRIP caster',
               ),
               backgroundColor: Colors.green,
+              duration: const Duration(milliseconds: 1000),
             ),
           );
         } else {
           setState(() {
             _ntripConnectionState = NTRIPConnectionState.error;
           });
-          // Connection failed immediately - status already saved as false above
+          // Connection failed immediately - mark as unsuccessful
+          if (_connectingHostId != null) {
+            await _saveNtripSettings(
+              hostId: _connectingHostId,
+              lastConnectionSuccessful: false,
+            );
+            if (mounted) {
+              setState(() {
+                _hostStatusRefreshTrigger++;
+              });
+            }
+          }
           _connectingHostId = null; // Clear tracking
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -1357,6 +1386,7 @@ class _BLEScreenState extends State<BLEScreen>
                         'Failed to connect to NTRIP caster'),
               ),
               backgroundColor: Colors.red,
+              duration: const Duration(milliseconds: 1000),
             ),
           );
         }
@@ -1367,8 +1397,25 @@ class _BLEScreenState extends State<BLEScreen>
         setState(() {
           _ntripConnectionState = NTRIPConnectionState.error;
         });
+        // Mark as unsuccessful if we were trying to connect
+        if (_connectingHostId != null) {
+          await _saveNtripSettings(
+            hostId: _connectingHostId,
+            lastConnectionSuccessful: false,
+          );
+          if (mounted) {
+            setState(() {
+              _hostStatusRefreshTrigger++;
+            });
+          }
+          _connectingHostId = null;
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(milliseconds: 1000),
+          ),
         );
       }
     }
@@ -1400,6 +1447,7 @@ class _BLEScreenState extends State<BLEScreen>
                   'Disconnected from NTRIP caster',
             ),
             backgroundColor: Colors.orange,
+            duration: const Duration(milliseconds: 1000),
           ),
         );
       }
@@ -1410,6 +1458,7 @@ class _BLEScreenState extends State<BLEScreen>
           SnackBar(
             content: Text('Error disconnecting: $e'),
             backgroundColor: Colors.red,
+            duration: const Duration(milliseconds: 1000),
           ),
         );
       }

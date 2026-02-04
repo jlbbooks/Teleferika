@@ -998,6 +998,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
           SnackBar(
             content: Text('Error loading countries: $e'),
             backgroundColor: Colors.red,
+            duration: const Duration(milliseconds: 1000),
           ),
         );
       }
@@ -1028,6 +1029,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
           SnackBar(
             content: Text('Error inserting default host: $e'),
             backgroundColor: Colors.red,
+            duration: const Duration(milliseconds: 1000),
           ),
         );
       }
@@ -1107,6 +1109,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
           SnackBar(
             content: Text('Error loading states: $e'),
             backgroundColor: Colors.red,
+            duration: const Duration(milliseconds: 1000),
           ),
         );
       }
@@ -1245,6 +1248,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
         const SnackBar(
           content: Text('Name is required'),
           backgroundColor: Colors.red,
+          duration: Duration(milliseconds: 1000),
         ),
       );
       return;
@@ -1254,6 +1258,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
         const SnackBar(
           content: Text('Country is required'),
           backgroundColor: Colors.red,
+          duration: Duration(milliseconds: 1000),
         ),
       );
       return;
@@ -1268,6 +1273,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
         const SnackBar(
           content: Text('State (Regione) is required'),
           backgroundColor: Colors.red,
+          duration: Duration(milliseconds: 1000),
         ),
       );
       return;
@@ -1278,6 +1284,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
         const SnackBar(
           content: Text('Host is required'),
           backgroundColor: Colors.red,
+          duration: Duration(milliseconds: 1000),
         ),
       );
       return;
@@ -1311,6 +1318,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
                 'A host with the name "$name" already exists for $country${state != null ? ", $state" : ""}',
               ),
               backgroundColor: Colors.red,
+              duration: const Duration(milliseconds: 1000),
             ),
           );
         }
@@ -1416,6 +1424,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
           const SnackBar(
             content: Text('Host added successfully'),
             backgroundColor: Colors.green,
+            duration: Duration(milliseconds: 1000),
           ),
         );
       }
@@ -1425,6 +1434,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
           SnackBar(
             content: Text('Error adding host: $e'),
             backgroundColor: Colors.red,
+            duration: const Duration(milliseconds: 1000),
           ),
         );
       }
@@ -1487,6 +1497,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
             const SnackBar(
               content: Text('Host deleted successfully'),
               backgroundColor: Colors.green,
+              duration: Duration(milliseconds: 1000),
             ),
           );
         }
@@ -1496,6 +1507,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
             SnackBar(
               content: Text('Error deleting host: $e'),
               backgroundColor: Colors.red,
+              duration: const Duration(milliseconds: 1000),
             ),
           );
         }
@@ -1663,7 +1675,8 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
                             return DropdownMenuItem(
                               value: host,
                               child: Row(
-                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Flexible(
                                     child: Text(
@@ -1671,21 +1684,18 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                  if (showCheckmark) ...[
-                                    const SizedBox(width: 8),
+                                  if (showCheckmark)
                                     const Icon(
                                       Icons.check_circle,
                                       color: Colors.green,
                                       size: 18,
-                                    ),
-                                  ] else if (showX) ...[
-                                    const SizedBox(width: 8),
+                                    )
+                                  else if (showX)
                                     const Icon(
                                       Icons.cancel,
                                       color: Colors.red,
                                       size: 18,
                                     ),
-                                  ],
                                 ],
                               ),
                             );
