@@ -1364,15 +1364,49 @@ class _BLEScreenState extends State<BLEScreen>
           int.tryParse(_ntripPortController.text.trim()) ??
           (_ntripUseSsl ? 2102 : 2101);
 
+      final host = _ntripHostController.text.trim();
+      if (host.isEmpty) {
+        return; // Don't save if host is empty
+      }
+
+      // Try to find existing host with this host address to update it
+      final allSettings = await DriftDatabaseHelper.instance
+          .getAllNtripSettings();
+      NtripSetting? existingHost;
+      for (final setting in allSettings) {
+        if (setting.host == host) {
+          existingHost = setting;
+          break;
+        }
+      }
+
       final settings = NtripSettingCompanion(
-        host: drift.Value(_ntripHostController.text.trim()),
+        name: drift.Value(
+          existingHost?.name ?? host,
+        ), // Use existing name or host as name
+        country: drift.Value(
+          existingHost?.country ?? 'Italy',
+        ), // Default to Italy
+        state: drift.Value(
+          existingHost?.state ?? 'Trentino',
+        ), // Default to Trentino
+        host: drift.Value(host),
         port: drift.Value(port),
         mountPoint: drift.Value(_ntripMountPointController.text.trim()),
         username: drift.Value(_ntripUsernameController.text.trim()),
         password: drift.Value(_ntripPasswordController.text.trim()),
         useSsl: drift.Value(_ntripUseSsl),
       );
-      await DriftDatabaseHelper.instance.saveNtripSettings(settings);
+
+      // If we found an existing host, update it; otherwise insert new
+      if (existingHost != null) {
+        final updateSettings = settings.copyWith(
+          id: drift.Value(existingHost.id),
+        );
+        await DriftDatabaseHelper.instance.updateNtripSetting(updateSettings);
+      } else {
+        await DriftDatabaseHelper.instance.insertNtripSetting(settings);
+      }
     } catch (e) {
       if (const bool.fromEnvironment('dart.vm.product') == false) {
         logger.warning('Error saving NTRIP settings: $e');

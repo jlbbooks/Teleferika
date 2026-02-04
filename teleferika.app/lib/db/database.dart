@@ -53,6 +53,10 @@ class Images extends Table {
 
 class NtripSettings extends Table {
   IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()(); // Display name for the host
+  TextColumn get country => text()(); // Country name
+  TextColumn get state =>
+      text().nullable()(); // State/Region (optional, "Regione" in Italian)
   TextColumn get host => text()();
   IntColumn get port => integer()();
   TextColumn get mountPoint => text()();
@@ -169,7 +173,7 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
   }
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration {
@@ -187,6 +191,49 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
           _logger.info('Adding ntrip_settings table');
           await m.createTable(ntripSettings);
           _logger.info('ntrip_settings table created');
+        }
+
+        if (from < 3) {
+          // Add new fields to NtripSettings table for version 3
+          _logger.info(
+            'Adding name, country, and state fields to ntrip_settings table',
+          );
+
+          // SQLite requires default values when adding NOT NULL columns to existing tables
+          // We'll add the columns with temporary defaults, then update the data
+          await customStatement(
+            'ALTER TABLE ntrip_settings ADD COLUMN name TEXT NOT NULL DEFAULT \'Default\'',
+          );
+          await customStatement(
+            'ALTER TABLE ntrip_settings ADD COLUMN country TEXT NOT NULL DEFAULT \'Unknown\'',
+          );
+          await customStatement(
+            'ALTER TABLE ntrip_settings ADD COLUMN state TEXT',
+          );
+
+          // Migrate existing data: update with better default values if needed
+          final existingSettings = await (select(
+            ntripSettings,
+          )..where((t) => t.id.equals(1))).getSingleOrNull();
+
+          if (existingSettings != null) {
+            // Update existing row with default values based on host if possible
+            final hostName = existingSettings.host;
+            final defaultName = hostName.isNotEmpty ? hostName : 'Default';
+
+            await (update(ntripSettings)..where((t) => t.id.equals(1))).write(
+              NtripSettingCompanion(
+                name: Value(defaultName),
+                country: const Value('Unknown'),
+                state: const Value(null),
+              ),
+            );
+            _logger.info(
+              'Migrated existing NTRIP settings with default values',
+            );
+          }
+
+          _logger.info('ntrip_settings table updated with new fields');
         }
 
         _logger.info('Database upgrade completed');
@@ -451,42 +498,141 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
   }
 
   // NTRIP Settings operations
-  Future<NtripSetting?> getNtripSettings() async {
-    _logger.fine('Getting NTRIP settings');
+  Future<List<NtripSetting>> getAllNtripSettings() async {
+    _logger.fine('Getting all NTRIP settings');
     try {
-      // Always get the first row (ID=1)
+      final settingsList = await select(ntripSettings).get();
+      _logger.fine('Retrieved ${settingsList.length} NTRIP settings');
+      return settingsList;
+    } catch (e) {
+      _logger.severe('Error getting all NTRIP settings: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<NtripSetting>> getNtripSettingsByCountry(String country) async {
+    _logger.fine('Getting NTRIP settings for country: $country');
+    try {
+      final settingsList = await (select(
+        ntripSettings,
+      )..where((t) => t.country.equals(country))).get();
+      _logger.fine(
+        'Retrieved ${settingsList.length} NTRIP settings for $country',
+      );
+      return settingsList;
+    } catch (e) {
+      _logger.severe('Error getting NTRIP settings by country: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<NtripSetting>> getNtripSettingsByCountryAndState(
+    String country,
+    String? state,
+  ) async {
+    _logger.fine('Getting NTRIP settings for country: $country, state: $state');
+    try {
+      final query = select(ntripSettings)
+        ..where((t) => t.country.equals(country));
+
+      if (state == null || state == 'N/A') {
+        query.where((t) => t.state.isNull());
+      } else {
+        query.where((t) => t.state.equals(state));
+      }
+
+      final settingsList = await query.get();
+      _logger.fine(
+        'Retrieved ${settingsList.length} NTRIP settings for $country, $state',
+      );
+      return settingsList;
+    } catch (e) {
+      _logger.severe('Error getting NTRIP settings by country and state: $e');
+      rethrow;
+    }
+  }
+
+  Future<NtripSetting?> getNtripSettingById(int id) async {
+    _logger.fine('Getting NTRIP setting by ID: $id');
+    try {
       final settings = await (select(
         ntripSettings,
-      )..where((t) => t.id.equals(1))).getSingleOrNull();
+      )..where((t) => t.id.equals(id))).getSingleOrNull();
       return settings;
+    } catch (e) {
+      _logger.severe('Error getting NTRIP setting by ID: $e');
+      rethrow;
+    }
+  }
+
+  // Legacy method for backward compatibility - gets first setting or null
+  Future<NtripSetting?> getNtripSettings() async {
+    _logger.fine('Getting first NTRIP settings (legacy method)');
+    try {
+      final settingsList = await select(ntripSettings).get();
+      return settingsList.isNotEmpty ? settingsList.first : null;
     } catch (e) {
       _logger.severe('Error getting NTRIP settings: $e');
       rethrow;
     }
   }
 
-  Future<void> saveNtripSettings(NtripSettingCompanion settings) async {
-    _logger.fine('Saving NTRIP settings');
+  Future<int> insertNtripSetting(NtripSettingCompanion settings) async {
+    _logger.fine('Inserting NTRIP setting: ${settings.name.value}');
     try {
-      // Use a transaction to ensure we update the existing row or insert if not exists
-      await transaction(() async {
-        final existing = await (select(
-          ntripSettings,
-        )..where((t) => t.id.equals(1))).getSingleOrNull();
+      final id = await into(ntripSettings).insert(settings);
+      _logger.fine('NTRIP setting inserted with ID: $id');
+      return id;
+    } catch (e) {
+      _logger.severe('Error inserting NTRIP setting: $e');
+      rethrow;
+    }
+  }
 
-        if (existing != null) {
-          // Update existing row
-          // Ensure we target ID 1
-          final updateData = settings.copyWith(id: const Value(1));
-          await (update(
-            ntripSettings,
-          )..where((t) => t.id.equals(1))).write(updateData);
-        } else {
-          // Insert new row with ID 1
-          final insertData = settings.copyWith(id: const Value(1));
-          await into(ntripSettings).insert(insertData);
-        }
-      });
+  Future<bool> updateNtripSetting(NtripSettingCompanion settings) async {
+    _logger.fine('Updating NTRIP setting');
+    try {
+      final id = settings.id.value;
+      if (id == null) {
+        throw ArgumentError('ID is required for update');
+      }
+      final rowsAffected = await (update(
+        ntripSettings,
+      )..where((t) => t.id.equals(id))).write(settings);
+      final success = rowsAffected > 0;
+      _logger.fine('NTRIP setting update ${success ? 'succeeded' : 'failed'}');
+      return success;
+    } catch (e) {
+      _logger.severe('Error updating NTRIP setting: $e');
+      rethrow;
+    }
+  }
+
+  Future<int> deleteNtripSetting(int id) async {
+    _logger.fine('Deleting NTRIP setting: $id');
+    try {
+      final deleted = await (delete(
+        ntripSettings,
+      )..where((t) => t.id.equals(id))).go();
+      _logger.fine('Deleted $deleted NTRIP setting(s)');
+      return deleted;
+    } catch (e) {
+      _logger.severe('Error deleting NTRIP setting: $e');
+      rethrow;
+    }
+  }
+
+  // Legacy method for backward compatibility
+  Future<void> saveNtripSettings(NtripSettingCompanion settings) async {
+    _logger.fine('Saving NTRIP settings (legacy method)');
+    try {
+      // If ID is provided, update; otherwise insert
+      final id = settings.id.value;
+      if (id != null) {
+        await updateNtripSetting(settings);
+      } else {
+        await insertNtripSetting(settings);
+      }
       _logger.fine('NTRIP settings saved successfully');
     } catch (e) {
       _logger.severe('Error saving NTRIP settings: $e');

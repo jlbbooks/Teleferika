@@ -493,8 +493,69 @@ class DriftDatabaseHelper {
   }
 
   // NTRIP Methods
+  Future<List<NtripSetting>> getAllNtripSettings() async {
+    _logger.info('Getting all NTRIP settings');
+    try {
+      final db = await database;
+      final settings = await db.getAllNtripSettings();
+      _logger.info('Retrieved ${settings.length} NTRIP settings');
+      return settings;
+    } catch (e) {
+      _logger.severe('Error getting all NTRIP settings: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<NtripSetting>> getNtripSettingsByCountry(String country) async {
+    _logger.info('Getting NTRIP settings for country: $country');
+    try {
+      final db = await database;
+      final settings = await db.getNtripSettingsByCountry(country);
+      _logger.info('Retrieved ${settings.length} NTRIP settings for $country');
+      return settings;
+    } catch (e) {
+      _logger.severe('Error getting NTRIP settings by country: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<NtripSetting>> getNtripSettingsByCountryAndState(
+    String country,
+    String? state,
+  ) async {
+    _logger.info('Getting NTRIP settings for country: $country, state: $state');
+    try {
+      final db = await database;
+      final settings = await db.getNtripSettingsByCountryAndState(
+        country,
+        state,
+      );
+      _logger.info(
+        'Retrieved ${settings.length} NTRIP settings for $country, $state',
+      );
+      return settings;
+    } catch (e) {
+      _logger.severe('Error getting NTRIP settings by country and state: $e');
+      rethrow;
+    }
+  }
+
+  Future<NtripSetting?> getNtripSettingById(int id) async {
+    _logger.info('Getting NTRIP setting by ID: $id');
+    try {
+      final db = await database;
+      final settings = await db.getNtripSettingById(id);
+      _logger.info('Retrieved NTRIP setting');
+      return settings;
+    } catch (e) {
+      _logger.severe('Error getting NTRIP setting by ID: $e');
+      rethrow;
+    }
+  }
+
+  // Legacy method for backward compatibility
   Future<NtripSetting?> getNtripSettings() async {
-    _logger.info('Getting NTRIP settings');
+    _logger.info('Getting first NTRIP settings (legacy method)');
     try {
       final db = await database;
       final settings = await db.getNtripSettings();
@@ -506,8 +567,48 @@ class DriftDatabaseHelper {
     }
   }
 
+  Future<int> insertNtripSetting(NtripSettingCompanion settings) async {
+    _logger.info('Inserting NTRIP setting: ${settings.name.value}');
+    try {
+      final db = await database;
+      final id = await db.insertNtripSetting(settings);
+      _logger.info('Inserted NTRIP setting with ID: $id');
+      return id;
+    } catch (e) {
+      _logger.severe('Error inserting NTRIP setting: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> updateNtripSetting(NtripSettingCompanion settings) async {
+    _logger.info('Updating NTRIP setting: ${settings.id.value}');
+    try {
+      final db = await database;
+      final success = await db.updateNtripSetting(settings);
+      _logger.info('NTRIP setting update ${success ? 'succeeded' : 'failed'}');
+      return success;
+    } catch (e) {
+      _logger.severe('Error updating NTRIP setting: $e');
+      rethrow;
+    }
+  }
+
+  Future<int> deleteNtripSetting(int id) async {
+    _logger.info('Deleting NTRIP setting: $id');
+    try {
+      final db = await database;
+      final deleted = await db.deleteNtripSetting(id);
+      _logger.info('Deleted $deleted NTRIP setting(s)');
+      return deleted;
+    } catch (e) {
+      _logger.severe('Error deleting NTRIP setting: $e');
+      rethrow;
+    }
+  }
+
+  // Legacy method for backward compatibility
   Future<void> saveNtripSettings(NtripSettingCompanion settings) async {
-    _logger.info('Saving NTRIP settings');
+    _logger.info('Saving NTRIP settings (legacy method)');
     try {
       final db = await database;
       await db.saveNtripSettings(settings);
