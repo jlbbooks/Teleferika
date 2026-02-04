@@ -98,8 +98,6 @@ class _BLEScreenState extends State<BLEScreen>
     }
   }
 
-
-
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -1220,7 +1218,7 @@ class _BLEScreenState extends State<BLEScreen>
         useSsl: _ntripUseSsl,
       );
 
-      // Save settings on successful connection attempt (or just save anyway)
+      // Save settings on successful connection attempt
       _saveNtripSettings();
 
       if (mounted) {
@@ -1341,7 +1339,9 @@ class _BLEScreenState extends State<BLEScreen>
   Future<void> _loadNtripSettings() async {
     try {
       final settings = await DriftDatabaseHelper.instance.getNtripSettings();
-      if (settings != null && mounted) {
+      // Only load settings if there's a saved host (non-empty)
+      // Otherwise, keep the default values
+      if (settings != null && settings.host.isNotEmpty && mounted) {
         setState(() {
           _ntripHostController.text = settings.host;
           _ntripPortController.text = settings.port.toString();

@@ -169,7 +169,7 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
   }
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration {
@@ -181,8 +181,14 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
       },
       onUpgrade: (Migrator m, int from, int to) async {
         _logger.info('Upgrading database from version $from to $to');
-        // Handle migrations here if needed
-        // For now, we'll start fresh with version 1
+
+        if (from < 2) {
+          // Add NtripSettings table for version 2
+          _logger.info('Adding ntrip_settings table');
+          await m.createTable(ntripSettings);
+          _logger.info('ntrip_settings table created');
+        }
+
         _logger.info('Database upgrade completed');
       },
     );
@@ -449,9 +455,9 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
     _logger.fine('Getting NTRIP settings');
     try {
       // Always get the first row (ID=1)
-      final settings = await (select(ntripSettings)
-            ..where((t) => t.id.equals(1)))
-          .getSingleOrNull();
+      final settings = await (select(
+        ntripSettings,
+      )..where((t) => t.id.equals(1))).getSingleOrNull();
       return settings;
     } catch (e) {
       _logger.severe('Error getting NTRIP settings: $e');
@@ -464,17 +470,17 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
     try {
       // Use a transaction to ensure we update the existing row or insert if not exists
       await transaction(() async {
-        final existing = await (select(ntripSettings)
-              ..where((t) => t.id.equals(1)))
-            .getSingleOrNull();
+        final existing = await (select(
+          ntripSettings,
+        )..where((t) => t.id.equals(1))).getSingleOrNull();
 
         if (existing != null) {
           // Update existing row
           // Ensure we target ID 1
           final updateData = settings.copyWith(id: const Value(1));
-          await (update(ntripSettings)
-                ..where((t) => t.id.equals(1)))
-              .write(updateData);
+          await (update(
+            ntripSettings,
+          )..where((t) => t.id.equals(1))).write(updateData);
         } else {
           // Insert new row with ID 1
           final insertData = settings.copyWith(id: const Value(1));
