@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:logging/logging.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/core/project_provider.dart';
@@ -47,6 +48,8 @@ class PointDetailsPanel extends StatefulWidget {
 }
 
 class _PointDetailsPanelState extends State<PointDetailsPanel> {
+  static final Logger _logger = Logger('PointDetailsPanel');
+
   // Editing state
   bool _isEditingLatitude = false;
   bool _isEditingLongitude = false;
@@ -880,8 +883,8 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
       longitude: newLongitude,
     );
     // Add logging
-    debugPrint(
-      '[PointDetailsPanel] _updatePointCoordinates: id=${updatedPoint.id}, ordinal=${updatedPoint.ordinalNumber}, name=${updatedPoint.name}, lat=${updatedPoint.latitude}, lon=${updatedPoint.longitude}, note=${updatedPoint.note}',
+    _logger.fine(
+      '_updatePointCoordinates: id=${updatedPoint.id}, ordinal=${updatedPoint.ordinalNumber}, name=${updatedPoint.name}, lat=${updatedPoint.latitude}, lon=${updatedPoint.longitude}, note=${updatedPoint.note}',
     );
     widget.onPointUpdated?.call(updatedPoint);
 
@@ -893,8 +896,8 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
 
     final updatedPoint = widget.selectedPoint!.copyWith(note: newNote);
     // Add logging
-    debugPrint(
-      '[PointDetailsPanel] _updatePointNote: id=${updatedPoint.id}, ordinal=${updatedPoint.ordinalNumber}, name=${updatedPoint.name}, lat=${updatedPoint.latitude}, lon=${updatedPoint.longitude}, note=${updatedPoint.note}',
+    _logger.fine(
+      '_updatePointNote: id=${updatedPoint.id}, ordinal=${updatedPoint.ordinalNumber}, name=${updatedPoint.name}, lat=${updatedPoint.latitude}, lon=${updatedPoint.longitude}, note=${updatedPoint.note}',
     );
     widget.onPointUpdated?.call(updatedPoint);
   }

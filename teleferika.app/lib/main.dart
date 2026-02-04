@@ -32,6 +32,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:logging/logging.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -82,6 +83,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Call the setupLogging function from logger.dart
   setupLogging();
+
+  // Suppress flutter_blue_plus debug logs (set to warning level to suppress debug/info logs)
+  // This reduces noise from BLE characteristic write/read operations
+  FlutterBluePlus.setLogLevel(LogLevel.warning);
 
   final Logger logger = Logger('MainApp');
 

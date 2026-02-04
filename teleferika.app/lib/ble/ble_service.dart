@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:logging/logging.dart';
 import 'nmea_parser.dart';
 import 'ntrip_client.dart';
 
@@ -23,6 +24,8 @@ class BLEService {
 
   /// Get the singleton instance
   static BLEService get instance => _instance;
+
+  final Logger _logger = Logger('BLEService');
 
   BluetoothDevice? connectedDevice;
   bool isScanning = false;
@@ -102,7 +105,7 @@ class BLEService {
         }
       }
     } catch (e) {
-      debugPrint("BLE: Scan error: $e");
+      _logger.warning("Scan error: $e");
       _connectionStateController.add(BLEConnectionState.error);
     } finally {
       isScanning = false;
@@ -144,15 +147,15 @@ class BLEService {
           if (state == BluetoothConnectionState.disconnected &&
               connectedDevice != null) {
             // Unexpected disconnection detected
-            debugPrint(
-              'BLE: Unexpected disconnection detected from device: '
+            _logger.warning(
+              'Unexpected disconnection detected from device: '
               '${device.remoteId}',
             );
             _handleUnexpectedDisconnection();
           }
         },
         onError: (error) {
-          debugPrint('BLE: Connection state stream error: $error');
+          _logger.warning('Connection state stream error: $error');
           // Treat stream errors as disconnection
           if (connectedDevice != null) {
             _handleUnexpectedDisconnection();
@@ -170,7 +173,7 @@ class BLEService {
 
       _connectionStateController.add(BLEConnectionState.connected);
     } catch (e) {
-      debugPrint("BLE: Connection error: $e");
+      _logger.warning("Connection error: $e");
       _connectionStateController.add(BLEConnectionState.error);
     }
   }
@@ -184,12 +187,12 @@ class BLEService {
       // Only log service details in debug mode
       final isDebug = const bool.fromEnvironment('dart.vm.product') == false;
       if (isDebug) {
-        debugPrint("BLE: Found ${services.length} services");
+        _logger.fine("Found ${services.length} services");
         for (final service in services) {
-          debugPrint("BLE: Service UUID: ${service.uuid}");
+          _logger.finer("Service UUID: ${service.uuid}");
           for (final characteristic in service.characteristics) {
             final uuid = characteristic.uuid.toString().toLowerCase();
-            debugPrint("BLE:   Characteristic UUID: $uuid");
+            _logger.finer("  Characteristic UUID: $uuid");
           }
         }
       }
@@ -238,8 +241,8 @@ class BLEService {
       }
 
       if (_uartService == null) {
-        debugPrint(
-          "BLE: Warning - Nordic UART Service not found. "
+        _logger.warning(
+          "Nordic UART Service not found. "
           "Device may use different service UUIDs.",
         );
         // Try to find any service with characteristics that support notifications
@@ -257,11 +260,11 @@ class BLEService {
         try {
           await _tryEnableNmeaOutput();
         } catch (e) {
-          debugPrint("BLE: Could not send NMEA enable command: $e");
+          _logger.fine("Could not send NMEA enable command: $e");
         }
       }
     } catch (e) {
-      debugPrint("BLE: Service discovery error: $e");
+      _logger.warning("Service discovery error: $e");
     }
   }
 
@@ -286,7 +289,7 @@ class BLEService {
       // Try a simple newline to wake up the device
       await sendCommand('\r\n');
     } catch (e) {
-      debugPrint("BLE: Error enabling NMEA output: $e");
+      _logger.fine("Error enabling NMEA output: $e");
     }
   }
 
@@ -370,7 +373,7 @@ class BLEService {
           _handleReceivedData(value);
         },
         onError: (error) {
-          debugPrint("BLE: Data subscription error: $error");
+          _logger.warning("Data subscription error: $error");
         },
         cancelOnError: false,
       );
@@ -385,7 +388,7 @@ class BLEService {
         // Characteristic may not support read - this is fine
       }
     } catch (e) {
-      debugPrint("BLE: Error subscribing to data: $e");
+      _logger.warning("Error subscribing to data: $e");
       rethrow;
     }
   }
@@ -498,8 +501,8 @@ class BLEService {
               }
               // Log successful extraction for investigation
               if (const bool.fromEnvironment('dart.vm.product') == false) {
-                debugPrint(
-                  "BLE: Extracted NMEA from binary data: ${extractedText.length} chars, "
+                _logger.finer(
+                  "Extracted NMEA from binary data: ${extractedText.length} chars, "
                   "preview: ${extractedText.substring(0, extractedText.length > 50 ? 50 : extractedText.length)}",
                 );
               }
@@ -555,8 +558,8 @@ class BLEService {
             }
           }
 
-          debugPrint(
-            "BLE: Received data that couldn't be decoded as UTF-8. "
+          _logger.finer(
+            "Received data that couldn't be decoded as UTF-8. "
             "Length: ${data.length} bytes (${printableCount} printable, ${nonPrintableCount} non-printable), "
             "Hex (first 30): $hexDump${data.length > 30 ? '...' : ''}, "
             "First byte: 0x${data[0].toRadixString(16)} (${data[0] >= 0x20 && data[0] <= 0x7E ? String.fromCharCode(data[0]) : 'non-printable'}), "
@@ -569,8 +572,8 @@ class BLEService {
               asciiFull.length > 5 &&
               (asciiFull.contains('\$') ||
                   asciiFull.contains(RegExp(r'[0-9]+,[0-9]+')))) {
-            debugPrint(
-              "BLE: Attempting to process extracted ASCII as potential NMEA fragment",
+            _logger.finer(
+              "Attempting to process extracted ASCII as potential NMEA fragment",
             );
             _nmeaBuffer += asciiFull;
             // Try to process complete sentences
@@ -610,7 +613,7 @@ class BLEService {
     } catch (e) {
       // Only log unexpected errors (not FormatException from UTF-8 decode)
       if (e is! FormatException) {
-        debugPrint("BLE: Error handling received data: $e");
+        _logger.warning("Error handling received data: $e");
       }
     }
   }
@@ -647,7 +650,7 @@ class BLEService {
       // Note: We don't log "invalid" for non-position sentences (GSV, GSA, etc.)
       // as they are valid NMEA but don't contain position data
     } catch (e) {
-      debugPrint("BLE: Error processing NMEA sentence: $e");
+      _logger.warning("Error processing NMEA sentence: $e");
     }
   }
 
@@ -660,7 +663,7 @@ class BLEService {
     try {
       await _rxCharacteristic!.write(data, withoutResponse: false);
     } catch (e) {
-      debugPrint("BLE: Error sending data: $e");
+      _logger.warning("Error sending data: $e");
     }
   }
 
@@ -678,12 +681,12 @@ class BLEService {
   /// This method handles splitting large RTCM messages to fit BLE MTU limits.
   Future<void> forwardRtcmData(List<int> rtcmData) async {
     if (_rxCharacteristic == null) {
-      debugPrint('BLE: Cannot forward RTCM - RX characteristic not available');
+      _logger.warning('Cannot forward RTCM - RX characteristic not available');
       return;
     }
 
     if (rtcmData.isEmpty) {
-      debugPrint('BLE: Received empty RTCM data, skipping');
+      _logger.fine('Received empty RTCM data, skipping');
       return;
     }
 
@@ -717,10 +720,7 @@ class BLEService {
         }
       }
     } catch (e, stackTrace) {
-      debugPrint("BLE: Error forwarding RTCM data: $e");
-      if (const bool.fromEnvironment('dart.vm.product') == false) {
-        debugPrint("BLE: Stack trace: $stackTrace");
-      }
+      _logger.warning("Error forwarding RTCM data: $e", e, stackTrace);
     }
   }
 
@@ -824,8 +824,8 @@ class BLEService {
       _ntripClient?.sendGgaSentence(_currentGpsPosition!, _lastNmeaData);
       _lastGgaSendTime = DateTime.now();
       if (const bool.fromEnvironment('dart.vm.product') == false) {
-        debugPrint(
-          'BLE: Sent initial GGA sentence to NTRIP server (i-Max requirement)',
+        _logger.fine(
+          'Sent initial GGA sentence to NTRIP server (i-Max requirement)',
         );
       }
     }
@@ -878,8 +878,8 @@ class BLEService {
     );
 
     if (const bool.fromEnvironment('dart.vm.product') == false) {
-      debugPrint(
-        'BLE: Set up NTRIP GGA sentence sending (every 5 seconds, initial GGA: ${_currentGpsPosition != null})',
+      _logger.fine(
+        'Set up NTRIP GGA sentence sending (every 5 seconds, initial GGA: ${_currentGpsPosition != null})',
       );
     }
   }
@@ -893,7 +893,7 @@ class BLEService {
       await _rtcmSubscription?.cancel();
       _rtcmSubscription = null;
     } catch (e) {
-      debugPrint('BLE: Error canceling RTCM subscription: $e');
+      _logger.warning('Error canceling RTCM subscription: $e');
     }
 
     // Cancel GGA position subscription
@@ -901,7 +901,7 @@ class BLEService {
       await _ntripGgaPositionSubscription?.cancel();
       _ntripGgaPositionSubscription = null;
     } catch (e) {
-      debugPrint('BLE: Error canceling GGA position subscription: $e');
+      _logger.warning('Error canceling GGA position subscription: $e');
     }
 
     // Disconnect from NTRIP client if connected
@@ -912,16 +912,16 @@ class BLEService {
           ntripClient.connectionState == NTRIPConnectionState.connecting;
 
       if (wasConnected) {
-        debugPrint('BLE: Disconnecting from NTRIP server (was connected)');
+        _logger.info('Disconnecting from NTRIP server (was connected)');
       }
 
       try {
         await ntripClient.disconnect();
         if (wasConnected) {
-          debugPrint('BLE: Successfully disconnected from NTRIP server');
+          _logger.info('Successfully disconnected from NTRIP server');
         }
       } catch (e) {
-        debugPrint('BLE: Error disconnecting from NTRIP server: $e');
+        _logger.warning('Error disconnecting from NTRIP server: $e');
         // Continue - we've done our best to disconnect
       }
     }
@@ -929,7 +929,7 @@ class BLEService {
 
   /// Handles unexpected disconnection (device went out of range, battery died, etc.)
   Future<void> _handleUnexpectedDisconnection() async {
-    debugPrint('BLE: Handling unexpected disconnection');
+    _logger.warning('Handling unexpected disconnection');
 
     // Cancel device connection subscription
     await _deviceConnectionSubscription?.cancel();
@@ -954,8 +954,8 @@ class BLEService {
           // Only log if it's not the expected "device is not connected" error
           if (!errorMsg.contains('not connected') &&
               !errorMsg.contains('disconnected')) {
-            debugPrint(
-              "BLE: Error unsubscribing during unexpected disconnect: $e",
+            _logger.fine(
+              "Error unsubscribing during unexpected disconnect: $e",
             );
           }
         }
@@ -977,7 +977,7 @@ class BLEService {
       try {
         await device.disconnect();
       } catch (e) {
-        debugPrint("BLE: Error during disconnect cleanup: $e");
+        _logger.fine("Error during disconnect cleanup: $e");
         // Ignore errors - device may already be disconnected
       }
     }
@@ -1011,7 +1011,7 @@ class BLEService {
           // Only log if it's not the expected "device is not connected" error
           if (!errorMsg.contains('not connected') &&
               !errorMsg.contains('disconnected')) {
-            debugPrint("BLE: Error unsubscribing: $e");
+            _logger.fine("Error unsubscribing: $e");
           }
         }
       }
@@ -1051,22 +1051,24 @@ class BLEService {
     try {
       await device.requestMtu(size);
     } catch (e) {
-      debugPrint("BLE: MTU error: $e");
+      _logger.fine("MTU error: $e");
     }
   }
 
   void _printScanResult(ScanResult r) {
-    debugPrint("-------------------- BLE Scan Result --------------------");
-    debugPrint("Device Name: ${r.device.platformName}");
-    debugPrint("Device ID: ${r.device.remoteId}");
-    debugPrint("RSSI: ${r.rssi}");
-    debugPrint("Advertisement Data:");
-    debugPrint("  Local Name: ${r.advertisementData.advName}");
-    debugPrint("  Tx Power Level: ${r.advertisementData.txPowerLevel}");
-    debugPrint("  Connectable: ${r.advertisementData.connectable}");
-    debugPrint("  Manufacturer Data: ${r.advertisementData.manufacturerData}");
-    debugPrint("  Service UUIDs: ${r.advertisementData.serviceUuids}");
-    debugPrint("  Service Data: ${r.advertisementData.serviceData}");
-    debugPrint("----------------------------------------------------------");
+    _logger.finer("-------------------- BLE Scan Result --------------------");
+    _logger.finer("Device Name: ${r.device.platformName}");
+    _logger.finer("Device ID: ${r.device.remoteId}");
+    _logger.finer("RSSI: ${r.rssi}");
+    _logger.finer("Advertisement Data:");
+    _logger.finer("  Local Name: ${r.advertisementData.advName}");
+    _logger.finer("  Tx Power Level: ${r.advertisementData.txPowerLevel}");
+    _logger.finer("  Connectable: ${r.advertisementData.connectable}");
+    _logger.finer(
+      "  Manufacturer Data: ${r.advertisementData.manufacturerData}",
+    );
+    _logger.finer("  Service UUIDs: ${r.advertisementData.serviceUuids}");
+    _logger.finer("  Service Data: ${r.advertisementData.serviceData}");
+    _logger.finer("----------------------------------------------------------");
   }
 }

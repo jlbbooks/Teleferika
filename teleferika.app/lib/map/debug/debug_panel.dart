@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
+import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:teleferika/core/app_config.dart';
 import 'package:teleferika/map/map_type.dart';
@@ -11,6 +12,7 @@ import 'package:teleferika/map/services/map_cache_logger.dart';
 import 'package:teleferika/map/services/map_cache_manager.dart';
 
 class DebugPanel extends StatelessWidget {
+  static final Logger _logger = Logger('DebugPanel');
   final VoidCallback? onClose;
   final VoidCallback? onTestCalibrationPanel;
   final MapType currentMapType;
@@ -97,15 +99,17 @@ class DebugPanel extends StatelessWidget {
                           onPressed: () {
                             try {
                               if (kIsWeb) {
-                                debugPrint(
+                                _logger.info(
                                   'Haptic feedback not available on web',
                                 );
                                 return;
                               }
                               HapticFeedback.mediumImpact();
-                              debugPrint('Haptic feedback test triggered');
+                              _logger.fine('Haptic feedback test triggered');
                             } catch (e) {
-                              debugPrint('Haptic feedback test failed: $e');
+                              _logger.warning(
+                                'Haptic feedback test failed: $e',
+                              );
                             }
                           },
                           style: ElevatedButton.styleFrom(

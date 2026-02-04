@@ -131,7 +131,7 @@ class MapControllerLogic {
     }
 
     logger.info('MapControllerLogic: Switching to BLE GPS');
-    debugPrint(
+    logger.fine(
       'MapControllerLogic: [GPS SOURCE] Now using BLE GPS from RTK device',
     );
 
@@ -144,7 +144,7 @@ class MapControllerLogic {
     _bleGpsSubscription?.cancel();
     _bleGpsSubscription = bleService.gpsData.listen(
       (position) {
-        debugPrint(
+        logger.finer(
           'MapControllerLogic: [GPS SOURCE: BLE] Position update -> '
           'Lat: ${position.latitude}, Lon: ${position.longitude}, '
           'Accuracy: ${position.accuracy}m',
@@ -153,7 +153,7 @@ class MapControllerLogic {
       },
       onError: (error) {
         logger.warning('BLE GPS error, falling back to device GPS: $error');
-        debugPrint(
+        logger.fine(
           'MapControllerLogic: [GPS SOURCE] BLE GPS error, falling back to device GPS',
         );
         // Fall back to device GPS on error
@@ -174,7 +174,7 @@ class MapControllerLogic {
     }
 
     logger.info('MapControllerLogic: Switching to device GPS');
-    debugPrint('MapControllerLogic: [GPS SOURCE] Now using device GPS');
+    logger.fine('MapControllerLogic: [GPS SOURCE] Now using device GPS');
 
     // Cancel BLE GPS subscription
     _bleGpsSubscription?.cancel();
@@ -189,7 +189,7 @@ class MapControllerLogic {
     _positionStreamSubscription =
         Geolocator.getPositionStream(locationSettings: locationSettings).listen(
           (position) {
-            debugPrint(
+            logger.finer(
               'MapControllerLogic: [GPS SOURCE: DEVICE] Position update -> '
               'Lat: ${position.latitude}, Lon: ${position.longitude}, '
               'Accuracy: ${position.accuracy}m',
