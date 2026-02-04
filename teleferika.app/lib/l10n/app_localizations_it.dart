@@ -1566,7 +1566,7 @@ class SIt extends S {
       'La Qualità Fix indica il tipo e l\'affidabilità del posizionamento GPS:\n\n• 0 - Non valido: Nessuna posizione disponibile\n• 1 - Fix GPS: GPS standard (precisione 3-5m)\n• 2 - Fix DGPS: GPS differenziale (precisione 1-3m)\n• 3 - Fix PPS: Servizio di posizionamento preciso\n• 4 - Fix RTK: Cinematica in tempo reale con ambiguità risolta (precisione 1-5cm) - MIGLIORE\n• 5 - RTK Float: RTK senza ambiguità risolta (precisione 10-50cm)\n• 6 - Stimato: Posizione stimata\n• 7 - Manuale: Inserito manualmente\n• 8 - Simulazione: Dati di test';
 
   @override
-  String get bleReceivingData => 'Ricezione dati...';
+  String get bleReceivingData => 'In attesa di posizione iniziale...';
 
   @override
   String get bleNtripTitle => 'Correzioni NTRIP';

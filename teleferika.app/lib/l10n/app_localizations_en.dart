@@ -1552,7 +1552,7 @@ class SEn extends S {
       'Fix Quality indicates the type and reliability of GPS positioning:\n\n• 0 - Invalid: No position available\n• 1 - GPS Fix: Standard GPS (3-5m accuracy)\n• 2 - DGPS Fix: Differential GPS (1-3m accuracy)\n• 3 - PPS Fix: Precise Positioning Service\n• 4 - RTK Fix: Real-Time Kinematic with fixed ambiguity (1-5cm accuracy) - BEST\n• 5 - RTK Float: RTK without fixed ambiguity (10-50cm accuracy)\n• 6 - Estimated: Estimated position\n• 7 - Manual: Manually entered\n• 8 - Simulation: Test data';
 
   @override
-  String get bleReceivingData => 'Receiving data...';
+  String get bleReceivingData => 'Waiting for initial position...';
 
   @override
   String get bleNtripTitle => 'NTRIP Corrections';

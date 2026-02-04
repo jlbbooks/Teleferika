@@ -2055,9 +2055,9 @@
   "@bleGpsFixQualityExplanation": {
     "description": "Testo di spiegazione per i valori qualità fix nel dialogo."
   },
-  "bleReceivingData": "Ricezione dati...",
+  "bleReceivingData": "In attesa di posizione iniziale...",
   "@bleReceivingData": {
-    "description": "Testo mostrato nell'indicatore pulsante quando i dati vengono ricevuti ma non c'è ancora posizione."
+    "description": "Testo mostrato nell'indicatore pulsante quando si attende la posizione iniziale."
   },
   "bleNtripTitle": "Correzioni NTRIP",
   "@bleNtripTitle": {

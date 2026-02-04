@@ -887,12 +887,44 @@ class BLEService {
   /// Disconnects from NTRIP caster and stops forwarding RTCM corrections.
   Future<void> disconnectFromNtrip() async {
     _isForwardingRtcm = false;
-    await _rtcmSubscription?.cancel();
-    _rtcmSubscription = null;
-    await _ntripGgaPositionSubscription?.cancel();
-    _ntripGgaPositionSubscription = null;
-    await _ntripClient?.disconnect();
-    // Disconnect logging removed
+
+    // Cancel RTCM subscription
+    try {
+      await _rtcmSubscription?.cancel();
+      _rtcmSubscription = null;
+    } catch (e) {
+      debugPrint('BLE: Error canceling RTCM subscription: $e');
+    }
+
+    // Cancel GGA position subscription
+    try {
+      await _ntripGgaPositionSubscription?.cancel();
+      _ntripGgaPositionSubscription = null;
+    } catch (e) {
+      debugPrint('BLE: Error canceling GGA position subscription: $e');
+    }
+
+    // Disconnect from NTRIP client if connected
+    final ntripClient = _ntripClient;
+    if (ntripClient != null) {
+      final wasConnected =
+          ntripClient.connectionState == NTRIPConnectionState.connected ||
+          ntripClient.connectionState == NTRIPConnectionState.connecting;
+
+      if (wasConnected) {
+        debugPrint('BLE: Disconnecting from NTRIP server (was connected)');
+      }
+
+      try {
+        await ntripClient.disconnect();
+        if (wasConnected) {
+          debugPrint('BLE: Successfully disconnected from NTRIP server');
+        }
+      } catch (e) {
+        debugPrint('BLE: Error disconnecting from NTRIP server: $e');
+        // Continue - we've done our best to disconnect
+      }
+    }
   }
 
   /// Handles unexpected disconnection (device went out of range, battery died, etc.)

@@ -2065,7 +2065,7 @@
   "@bleGpsFixQualityExplanation": {
     "description": "Explanation text for fix quality values in the dialog."
   },
-  "bleReceivingData": "Receiving data...",
+  "bleReceivingData": "Waiting for initial position...",
   "@bleReceivingData": {
     "description": "Text shown in the pulsing indicator when data is being received but no position yet."
   },

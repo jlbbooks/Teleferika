@@ -2737,7 +2737,7 @@ abstract class S {
   /// Text shown in the pulsing indicator when data is being received but no position yet.
   ///
   /// In en, this message translates to:
-  /// **'Receiving data...'**
+  /// **'Waiting for initial position...'**
   String get bleReceivingData;
 
   /// Title for the NTRIP corrections card.
