@@ -920,8 +920,11 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
         _countries = countries;
       });
       if (countries.isNotEmpty && _selectedCountry == null) {
-        _selectedCountry = countries.first;
-        await _loadStates();
+        // Select the country from the first record in the database
+        final firstRecord = allSettings.first;
+        _selectedCountry = firstRecord.country;
+        // Pass the first record's state to loadStates so it can select it
+        await _loadStates(firstRecord.state);
       }
     } catch (e) {
       if (mounted) {
@@ -965,7 +968,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
     }
   }
 
-  Future<void> _loadStates() async {
+  Future<void> _loadStates([String? preferredState]) async {
     if (_selectedCountry == null) return;
     setState(() => _isLoading = true);
     try {
@@ -984,16 +987,52 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
 
       // Combine standard states with database states, remove duplicates
       final states = <String>{...standardStates, ...dbStates}.toList()..sort();
+
+      // Select first state if none selected (prefer the state from first DB record)
+      String? stateToSelect = _selectedState;
+      if (states.isNotEmpty && stateToSelect == null) {
+        // Use preferred state if provided and it exists in the list
+        if (preferredState != null &&
+            preferredState.isNotEmpty &&
+            states.contains(preferredState)) {
+          stateToSelect = preferredState;
+        } else if (hosts.isNotEmpty) {
+          // Get the first host from the database for this country to get its state
+          final firstHost = hosts.first;
+          if (firstHost.state != null &&
+              firstHost.state!.isNotEmpty &&
+              states.contains(firstHost.state)) {
+            stateToSelect = firstHost.state;
+          } else if (dbStates.isNotEmpty) {
+            // Fallback to first state that has hosts
+            stateToSelect = dbStates.first;
+          } else {
+            // Fallback to first state from standard list
+            stateToSelect = states.first;
+          }
+        } else {
+          // No hosts, use first state from standard list
+          stateToSelect = states.first;
+        }
+      }
+
+      // Update state synchronously
       setState(() {
         _states = states;
+        if (stateToSelect != null) {
+          _selectedState = stateToSelect;
+        } else if (states.isEmpty) {
+          _selectedState = null;
+          _availableHosts = [];
+          _selectedHost = null;
+        }
       });
-      if (states.isNotEmpty && _selectedState == null) {
-        _selectedState = states.first;
-        await _loadHosts();
-      } else if (states.isEmpty) {
-        _selectedState = null;
-        _availableHosts = [];
-        _selectedHost = null;
+
+      if (states.isNotEmpty && stateToSelect != null) {
+        // Always load hosts and select first if no host is selected
+        // Use stateToSelect to ensure we have the correct state value
+        await _loadHostsWithState(stateToSelect);
+      } else {
         _clearControllers();
       }
     } catch (e) {
@@ -1014,16 +1053,36 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
 
   Future<void> _loadHosts() async {
     if (_selectedCountry == null) return;
+    await _loadHostsWithState(_selectedState);
+  }
+
+  Future<void> _loadHostsWithState(String? state) async {
+    if (_selectedCountry == null) return;
+
     setState(() => _isLoading = true);
     try {
       final hosts = await DriftDatabaseHelper.instance
-          .getNtripSettingsByCountryAndState(_selectedCountry!, _selectedState);
+          .getNtripSettingsByCountryAndState(_selectedCountry!, state);
       setState(() {
         _availableHosts = hosts;
-        if (hosts.isNotEmpty && _selectedHost == null) {
-          _selectedHost = hosts.first;
-          _loadHostIntoControllers(_selectedHost!);
-        } else if (hosts.isEmpty) {
+        // Always select the first host if there's no previously selected one
+        if (hosts.isNotEmpty) {
+          if (_selectedHost == null) {
+            _selectedHost = hosts.first;
+            _loadHostIntoControllers(_selectedHost!);
+          } else {
+            // If we have a selected host, make sure it's still in the list
+            // If not, select the first one
+            if (!hosts.contains(_selectedHost)) {
+              _selectedHost = hosts.first;
+              _loadHostIntoControllers(_selectedHost!);
+            } else {
+              // Host is still in list, but ensure controllers are synced
+              // (in case the host was updated, e.g., after editing)
+              _loadHostIntoControllers(_selectedHost!);
+            }
+          }
+        } else {
           _selectedHost = null;
           _clearControllers();
         }
@@ -1158,15 +1217,43 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
     }
 
     try {
-      final port = int.tryParse(_portController.text.trim()) ?? 2101;
+      final country = _countryController.text.trim();
+      final name = _nameController.text.trim();
       // State is mandatory - if country has states, state must be provided
       final state = states.isNotEmpty
           ? _stateController.text.trim()
           : null; // Only null if country has no states
 
+      // Check for duplicate name in the same country and state
+      final existingHosts = await DriftDatabaseHelper.instance
+          .getNtripSettingsByCountryAndState(country, state);
+
+      // Check if a host with the same name already exists (excluding the one being edited)
+      final hasDuplicate = existingHosts.any(
+        (host) =>
+            host.name.toLowerCase() == name.toLowerCase() &&
+            (!_isEditingHost || host.id != _editingHostId),
+      );
+
+      if (hasDuplicate) {
+        // A duplicate was found
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'A host with the name "$name" already exists for $country${state != null ? ", $state" : ""}',
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      final port = int.tryParse(_portController.text.trim()) ?? 2101;
       final newSetting = NtripSettingCompanion(
-        name: drift.Value(_nameController.text.trim()),
-        country: drift.Value(_countryController.text.trim()),
+        name: drift.Value(name),
+        country: drift.Value(country),
         state: drift.Value(state),
         host: drift.Value(_hostController.text.trim()),
         port: drift.Value(port),
@@ -1187,6 +1274,10 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
         await DriftDatabaseHelper.instance.insertNtripSetting(newSetting);
       }
 
+      // Store editing state before clearing
+      final wasEditing = _isEditingHost;
+      final editedHostId = _editingHostId;
+
       // Clear form
       _clearAddHostForm();
 
@@ -1200,16 +1291,53 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
       final newCountry = _countryController.text.trim();
       await _saveCountrySelection(newCountry);
 
-      // Reload data
+      // Reload all data to update dropdowns
       final newState = state;
 
+      // Reload countries first
       await _loadCountries();
 
-      // If we added to the current selection, reload states and hosts
-      if (_selectedCountry == newCountry) {
-        await _loadStates();
-        if (_selectedState == newState) {
-          await _loadHosts();
+      // If editing, preserve the edited host selection
+      if (wasEditing && editedHostId != null) {
+        // Update country/state selection to match the edited host
+        setState(() {
+          _selectedCountry = country;
+          _selectedState = newState;
+        });
+
+        // Reload states for the new country
+        await _loadStates(newState);
+
+        // Ensure state is set (in case loadStates didn't set it)
+        setState(() {
+          _selectedState = newState;
+        });
+
+        // Reload hosts for the new country/state
+        await _loadHostsWithState(newState);
+
+        // Find and select the edited host by ID
+        final updatedHosts = await DriftDatabaseHelper.instance
+            .getNtripSettingsByCountryAndState(country, newState);
+
+        if (updatedHosts.isNotEmpty) {
+          final editedHost = updatedHosts.firstWhere(
+            (h) => h.id == editedHostId,
+            orElse: () => updatedHosts.first, // Fallback to first if not found
+          );
+
+          setState(() {
+            _selectedHost = editedHost;
+          });
+          _loadHostIntoControllers(editedHost);
+        }
+      } else {
+        // Adding new host - reload current selection
+        if (_selectedCountry != null) {
+          await _loadStates();
+          if (_selectedState != null) {
+            await _loadHosts();
+          }
         }
       }
 
@@ -1258,8 +1386,35 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
 
     if (confirmed == true) {
       try {
+        final deletedCountry = host.country;
+        final wasSelectedHost = _selectedHost?.id == host.id;
+
         await DriftDatabaseHelper.instance.deleteNtripSetting(host.id);
-        await _loadHosts();
+
+        // Reload all dropdowns to reflect the deletion
+        await _loadCountries();
+
+        // Reload states for current country (or deleted country if no selection)
+        if (_selectedCountry == null) {
+          setState(() {
+            _selectedCountry = deletedCountry;
+          });
+        }
+        await _loadStates();
+
+        // Reload hosts if we have a state selected
+        if (_selectedState != null) {
+          await _loadHosts();
+        }
+
+        // Clear selection if we deleted the selected host
+        if (wasSelectedHost) {
+          setState(() {
+            _selectedHost = null;
+          });
+          _clearControllers();
+        }
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -1355,6 +1510,10 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
                                     _selectedHost = null;
                                     _availableHosts = [];
                                     _states = [];
+                                    // Cancel editing if dropdown changes
+                                    _isEditingHost = false;
+                                    _showAddHostForm = false;
+                                    _editingHostId = null;
                                   });
                                   await _loadStates();
                                 },
@@ -1400,6 +1559,10 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
                                     setState(() {
                                       _selectedState = value;
                                       _selectedHost = null;
+                                      // Cancel editing if dropdown changes
+                                      _isEditingHost = false;
+                                      _showAddHostForm = false;
+                                      _editingHostId = null;
                                     });
                                     await _loadHosts();
                                   }
@@ -1438,6 +1601,10 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
                               : (value) {
                                   setState(() {
                                     _selectedHost = value;
+                                    // Cancel editing if dropdown changes
+                                    _isEditingHost = false;
+                                    _showAddHostForm = false;
+                                    _editingHostId = null;
                                   });
                                   if (value != null) {
                                     _loadHostIntoControllers(value);
@@ -1548,7 +1715,18 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
                         )
                       else
                         ElevatedButton.icon(
-                          onPressed: isConnecting ? null : widget.onConnect,
+                          onPressed:
+                              (isConnecting ||
+                                  _isEditingHost ||
+                                  _showAddHostForm)
+                              ? null
+                              : () {
+                                  // Ensure controllers are synced with selected host before connecting
+                                  if (_selectedHost != null) {
+                                    _loadHostIntoControllers(_selectedHost!);
+                                  }
+                                  widget.onConnect();
+                                },
                           icon: isConnecting
                               ? const SizedBox(
                                   width: 16,
@@ -1732,21 +1910,43 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
               ),
             ),
             const SizedBox(height: 12),
-            TextField(
-              controller: _portController,
-              decoration: InputDecoration(
-                labelText: s?.bleNtripPort ?? 'Port',
-                border: const OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 12),
-            CheckboxListTile(
-              title: Text(s?.bleNtripUseSsl ?? 'Use SSL/TLS'),
-              value: _newHostUseSsl,
-              onChanged: (value) =>
-                  setState(() => _newHostUseSsl = value ?? false),
-              controlAffinity: ListTileControlAffinity.leading,
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _portController,
+                    decoration: InputDecoration(
+                      labelText: s?.bleNtripPort ?? 'Port',
+                      border: const OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Checkbox(
+                        value: _newHostUseSsl,
+                        onChanged: (value) =>
+                            setState(() => _newHostUseSsl = value ?? false),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      const Text('SSL/TLS'),
+                    ],
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             TextField(
@@ -1754,6 +1954,49 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
               decoration: InputDecoration(
                 labelText: s?.bleNtripMountPoint ?? 'Mount Point',
                 border: const OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: Colors.blue.shade200),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: Colors.blue.shade700,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text.rich(
+                      TextSpan(
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.blue.shade900,
+                        ),
+                        children: const [
+                          TextSpan(text: 'This app only accepts '),
+                          TextSpan(
+                            text: 'RTCM standard',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          TextSpan(text: ' version 3+, not '),
+                          TextSpan(
+                            text: 'RTCM compatible',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          TextSpan(text: ' or versions below 3.'),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 12),

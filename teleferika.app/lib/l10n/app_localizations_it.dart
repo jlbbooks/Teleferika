@@ -1372,11 +1372,12 @@ class SIt extends S {
       'Quando abilitato, tutti i progetti saranno visualizzati sulla mappa come marcatori e linee grigie. Quando disabilitato, viene mostrato solo il progetto corrente.';
 
   @override
-  String get show_ble_satellite_button_title => 'Show RTK Device Button';
+  String get show_ble_satellite_button_title =>
+      'Mostra Pulsante Dispositivo RTK';
 
   @override
   String get show_ble_satellite_button_description =>
-      'When enabled, a satellite button appears on the map when connected to an RTK device. Tap it to view device information.';
+      'Quando abilitato, un pulsante satellite appare sulla mappa quando connesso a un dispositivo RTK. Toccalo per visualizzare le informazioni del dispositivo.';
 
   @override
   String get bleScreenTitle => 'Dispositivi Bluetooth';

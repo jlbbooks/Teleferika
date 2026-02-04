@@ -2150,5 +2150,13 @@
   "bleNtripUseSslHint": "Abilita per connessioni sicure (porta 2102)",
   "@bleNtripUseSslHint": {
     "description": "Hint text for SSL/TLS checkbox."
+  },
+  "show_ble_satellite_button_title": "Mostra Pulsante Dispositivo RTK",
+  "@show_ble_satellite_button_title": {
+    "description": "Title for the show BLE satellite button setting."
+  },
+  "show_ble_satellite_button_description": "Quando abilitato, un pulsante satellite appare sulla mappa quando connesso a un dispositivo RTK. Toccalo per visualizzare le informazioni del dispositivo.",
+  "@show_ble_satellite_button_description": {
+    "description": "Description for the show BLE satellite button setting."
   }
 }
