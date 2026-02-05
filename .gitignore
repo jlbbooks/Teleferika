@@ -5,7 +5,14 @@
 *.iml
 *.ipr
 *.iws
-.idea/
+.idea/*
+!.idea/runConfigurations/
+!.idea/runConfigurations.xml
+# teleferika.app IntelliJ run configurations (tracked)
+!teleferika.app/.idea/
+teleferika.app/.idea/*
+!teleferika.app/.idea/runConfigurations/
+!teleferika.app/.idea/runConfigurations.xml
 modules.xml
 tasks.xml
 shelf/

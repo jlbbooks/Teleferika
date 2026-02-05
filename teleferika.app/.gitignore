@@ -64,7 +64,9 @@ coverage/
 *.iml
 *.ipr
 *.iws
-.idea/
+.idea/*
+!.idea/runConfigurations/
+!.idea/runConfigurations.xml
 
 # VS Code specific
 .vscode/*
