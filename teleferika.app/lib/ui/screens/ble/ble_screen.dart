@@ -464,24 +464,28 @@ class _BLEScreenState extends State<BLEScreen>
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      ElevatedButton.icon(
-                        onPressed: _isScanning ? null : _startScan,
-                        icon: const Icon(Icons.search),
-                        label: Text(s?.bleButtonStartScan ?? 'Start Scan'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          foregroundColor: Colors.white,
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: _isScanning ? null : _startScan,
+                          icon: const Icon(Icons.search),
+                          label: Text(s?.bleButtonStartScan ?? 'Start Scan'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
+                          ),
                         ),
                       ),
-                      ElevatedButton.icon(
-                        onPressed: _isScanning ? _stopScan : null,
-                        icon: const Icon(Icons.stop),
-                        label: Text(s?.bleButtonStopScan ?? 'Stop Scan'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
+                      const SizedBox(width: 8.0),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: _isScanning ? _stopScan : null,
+                          icon: const Icon(Icons.stop),
+                          label: Text(s?.bleButtonStopScan ?? 'Stop Scan'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                          ),
                         ),
                       ),
                     ],
@@ -1138,6 +1142,7 @@ class _BLEScreenState extends State<BLEScreen>
       passwordController: _ntripPasswordController,
       useSsl: _ntripUseSsl,
       isForwardingRtcm: _bleService.isForwardingRtcm,
+      canConnectNtrip: _hasReceivedFirstPosition,
       hostStatusRefreshTrigger: _hostStatusRefreshTrigger,
       onConnect: _connectToNtrip,
       onDisconnect: _disconnectFromNtrip,
@@ -1157,6 +1162,19 @@ class _BLEScreenState extends State<BLEScreen>
 
   Future<void> _connectToNtrip(int? hostId) async {
     final s = S.of(context);
+    if (!_hasReceivedFirstPosition) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            s?.bleNtripWaitForPosition ??
+                'Wait for GPS position from device before connecting to NTRIP.',
+          ),
+          backgroundColor: Colors.orange,
+          duration: const Duration(milliseconds: 3000),
+        ),
+      );
+      return;
+    }
     final host = _ntripHostController.text.trim();
     final portStr = _ntripPortController.text.trim();
     final mountPoint = _ntripMountPointController.text.trim();

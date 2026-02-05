@@ -2877,6 +2877,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Enable for secure connections (port 2102)'**
   String get bleNtripUseSslHint;
+
+  /// Message shown when NTRIP connect is disabled until position data is received from BLE.
+  ///
+  /// In en, this message translates to:
+  /// **'Wait for GPS position from device before connecting to NTRIP.'**
+  String get bleNtripWaitForPosition;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

@@ -1622,4 +1622,8 @@ class SEn extends S {
 
   @override
   String get bleNtripUseSslHint => 'Enable for secure connections (port 2102)';
+
+  @override
+  String get bleNtripWaitForPosition =>
+      'Wait for GPS position from device before connecting to NTRIP.';
 }

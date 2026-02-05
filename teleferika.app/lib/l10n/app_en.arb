@@ -2160,5 +2160,9 @@
   "bleNtripUseSslHint": "Enable for secure connections (port 2102)",
   "@bleNtripUseSslHint": {
     "description": "Hint text for SSL/TLS checkbox."
+  },
+  "bleNtripWaitForPosition": "Wait for GPS position from device before connecting to NTRIP.",
+  "@bleNtripWaitForPosition": {
+    "description": "Message shown when NTRIP connect is disabled until position data is received from BLE."
   }
 }

@@ -16,6 +16,8 @@ class NtripConfigurationWidget extends StatefulWidget {
   final TextEditingController passwordController;
   final bool useSsl;
   final bool isForwardingRtcm;
+  /// When false, connect is disabled until position data is received from BLE (e.g. pulsing indicator gone).
+  final bool canConnectNtrip;
   final ValueChanged<int?> onConnect; // Passes the selected host ID
   final VoidCallback onDisconnect;
   final ValueChanged<bool> onSslChanged;
@@ -32,6 +34,7 @@ class NtripConfigurationWidget extends StatefulWidget {
     required this.passwordController,
     required this.useSsl,
     required this.isForwardingRtcm,
+    this.canConnectNtrip = true,
     required this.onConnect,
     required this.onDisconnect,
     required this.onSslChanged,
@@ -1876,10 +1879,22 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
                             foregroundColor: Colors.white,
                           ),
                         )
-                      else
+                      else ...[
+                        if (!widget.canConnectNtrip)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: Text(
+                              s?.bleNtripWaitForPosition ??
+                                  'Wait for GPS position from device before connecting to NTRIP.',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  ),
+                            ),
+                          ),
                         ElevatedButton.icon(
                           onPressed:
-                              (isConnecting ||
+                              (!widget.canConnectNtrip ||
+                                  isConnecting ||
                                   _isEditingHost ||
                                   _showAddHostForm)
                               ? null
@@ -1914,6 +1929,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
                             foregroundColor: Colors.white,
                           ),
                         ),
+                      ],
                       if (widget.isForwardingRtcm) ...[
                         const SizedBox(height: 12),
                         Row(

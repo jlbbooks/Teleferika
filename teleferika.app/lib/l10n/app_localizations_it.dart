@@ -1639,4 +1639,8 @@ class SIt extends S {
   @override
   String get bleNtripUseSslHint =>
       'Abilita per connessioni sicure (porta 2102)';
+
+  @override
+  String get bleNtripWaitForPosition =>
+      'Attendi la posizione GPS dal dispositivo prima di connetterti a NTRIP.';
 }

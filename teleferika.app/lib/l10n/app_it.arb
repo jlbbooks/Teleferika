@@ -2151,6 +2151,10 @@
   "@bleNtripUseSslHint": {
     "description": "Hint text for SSL/TLS checkbox."
   },
+  "bleNtripWaitForPosition": "Attendi la posizione GPS dal dispositivo prima di connetterti a NTRIP.",
+  "@bleNtripWaitForPosition": {
+    "description": "Message shown when NTRIP connect is disabled until position data is received from BLE."
+  },
   "show_ble_satellite_button_title": "Mostra Pulsante Dispositivo RTK",
   "@show_ble_satellite_button_title": {
     "description": "Title for the show BLE satellite button setting."
