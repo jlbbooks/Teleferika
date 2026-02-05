@@ -1,5 +1,7 @@
 // ignore_for_file: unused_field
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -317,9 +319,21 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
   }
 
   Future<bool> _requestBluetoothPermission() async {
+    // On iOS, Bluetooth permissions don't exist - only location is needed for BLE scanning
+    // The NSBluetoothAlwaysUsageDescription in Info.plist is informational only
+    if (Platform.isIOS) {
+      // On iOS, only location permission is required for BLE scanning
+      LocationPermission locationPermission = await Geolocator.checkPermission();
+      if (locationPermission == LocationPermission.denied) {
+        locationPermission = await Geolocator.requestPermission();
+      }
+
+      return locationPermission == LocationPermission.whileInUse ||
+          locationPermission == LocationPermission.always;
+    }
+
     // On Android 12+, we need BLUETOOTH_SCAN and BLUETOOTH_CONNECT
     // On older Android, we need location permission for BLE scanning
-    // On iOS, Bluetooth permissions are handled automatically
 
     // Check location permission first (required for BLE scanning on Android)
     LocationPermission locationPermission = await Geolocator.checkPermission();
