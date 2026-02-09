@@ -1,13 +1,17 @@
 <en-GB>
-- Added connection status indicators for NTRIP hosts (green checkmark for successful communication, red X for failures)
-- Improved NTRIP host management with automatic selection of last used host
-- Enhanced connection tracking to verify actual RTCM packet communication success
-- Optimized error message display duration for better readability
+- USB RTK support: Connect RTK receivers via USB cable on Android (USB OTG)
+- Unified RTK Devices screen for both Bluetooth and USB connections
+- Improved USB disconnect detection when cable is unplugged
+- Localized BLE and USB related messages
+- Connection status indicators for NTRIP hosts (green checkmark / red X)
+- Automatic selection of last used NTRIP host
 </en-GB>
 
 <it-IT>
-- Aggiunti indicatori di stato connessione per host NTRIP (spunta verde per comunicazione riuscita, X rossa per errori)
-- Migliorata gestione host NTRIP con selezione automatica dell'ultimo host utilizzato
-- Migliorato tracciamento connessione per verificare il successo della comunicazione pacchetti RTCM
-- Ottimizzata durata visualizzazione messaggi di errore per migliore leggibilità
-</it-IT> 
+- Supporto USB RTK: connetti ricevitori RTK via cavo USB su Android (USB OTG)
+- Schermata unificata Dispositivi RTK per connessioni Bluetooth e USB
+- Migliorata rilevazione disconnessione USB quando il cavo viene scollegato
+- Messaggi BLE e USB localizzati
+- Indicatori di stato connessione per host NTRIP (spunta verde / X rossa)
+- Selezione automatica dell'ultimo host NTRIP utilizzato
+</it-IT>
