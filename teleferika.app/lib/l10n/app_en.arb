@@ -2168,5 +2168,75 @@
   "bleNtripWaitForPosition": "Wait for GPS position from device before connecting to NTRIP.",
   "@bleNtripWaitForPosition": {
     "description": "Message shown when NTRIP connect is disabled until position data is received from BLE."
-  }
+  },
+  "usbPermissionRequired": "USB permission required. If Android showed a dialog, tap Allow and try Connect again.",
+  "@usbPermissionRequired": {
+    "description": "Message when USB connection fails due to permission."
+  },
+  "usbConnectionFailedWithMessage": "USB connection failed.{message}",
+  "@usbConnectionFailedWithMessage": {
+    "description": "Message when USB connection fails.",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "ntripError": "NTRIP Error: {error}",
+  "@ntripError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "usbConnectingTo": "Connecting to {deviceName}...",
+  "@usbConnectingTo": {
+    "placeholders": {
+      "deviceName": {
+        "type": "String"
+      }
+    }
+  },
+  "usbConnectionFailed": "USB connection failed",
+  "usbDeviceDisconnected": "USB device disconnected.",
+  "ntripReconnectedOnNewDevice": "NTRIP reconnected on new device",
+  "bleConnectionModeBluetooth": "Bluetooth",
+  "bleConnectionModeUsb": "USB",
+  "usbDisconnectFromDevice": "Disconnect from USB device",
+  "usbLoading": "Loading...",
+  "usbRefreshDevices": "Refresh USB devices",
+  "usbNoDevicesFound": "No USB devices found",
+  "usbNoDevicesHint": "Connect your RTK receiver with a USB cable (USB OTG). The phone must support USB host (OTG). Then tap Refresh.",
+  "usbConnectButton": "Connect",
+  "errorWithMessage": "Error: {error}",
+  "@errorWithMessage": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorDisconnecting": "Error disconnecting: {error}",
+  "@errorDisconnecting": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "gpsInfoTitle": "GPS Information",
+  "gpsWaitingForData": "Waiting for GPS data...",
+  "gpsDeviceInfoSection": "Device Information",
+  "gpsSourceLabel": "Source",
+  "gpsRtkDevice": "RTK Device",
+  "gpsStatusLabel": "Status",
+  "gpsDeviceLabel": "Device",
+  "gpsRtkReceiver": "RTK Receiver",
+  "gpsInternalGps": "Internal GPS",
+  "gpsStatusActive": "Active",
+  "gpsConnectRtkDevice": "Connect RTK Device",
+  "gpsCourseLabel": "Course",
+  "mapRtkDisconnectedUsingDeviceGps": "RTK device disconnected. Using device GPS.",
+  "mapBleConnectionError": "BLE connection error occurred."
 }

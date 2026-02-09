@@ -20,27 +20,27 @@ import 'package:teleferika/ui/widgets/ntrip_configuration_widget.dart';
 import 'package:teleferika/ui/widgets/ble_scan_result_tile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Screen for scanning and connecting to Bluetooth Low Energy devices.
+/// Screen for connecting to RTK devices via Bluetooth or USB.
 ///
 /// This screen provides a user interface for:
-/// - Requesting Bluetooth and location permissions
+/// - Requesting Bluetooth and location permissions (for BLE)
 /// - Scanning for nearby BLE devices
-/// - Viewing scan results with device information
-/// - Connecting to and disconnecting from devices
+/// - Connecting to USB devices (Android)
 /// - Viewing connection status
 /// - Displaying GPS data from RTK receivers
-class BLEScreen extends StatefulWidget {
+/// - Configuring NTRIP correction streams
+class RtkDevicesScreen extends StatefulWidget {
   final bool autoStartScan;
 
-  const BLEScreen({super.key, this.autoStartScan = false});
+  const RtkDevicesScreen({super.key, this.autoStartScan = false});
 
   @override
-  State<BLEScreen> createState() => _BLEScreenState();
+  State<RtkDevicesScreen> createState() => _RtkDevicesScreenState();
 }
 
-class _BLEScreenState extends State<BLEScreen>
+class _RtkDevicesScreenState extends State<RtkDevicesScreen>
     with SingleTickerProviderStateMixin {
-  final Logger logger = Logger('BLEScreen');
+  final Logger logger = Logger('RtkDevicesScreen');
   final RtkDeviceService _rtkService = RtkDeviceService.instance;
 
   List<ScanResult> _scanResults = [];
@@ -222,8 +222,8 @@ class _BLEScreenState extends State<BLEScreen>
             SnackBar(
               content: Text(
                 isPermission
-                    ? 'USB permission required. If Android showed a dialog, tap Allow and try Connect again.'
-                    : 'USB connection failed.${msg.isNotEmpty ? ' $msg' : ''}',
+                    ? (S.of(context)?.usbPermissionRequired ?? 'USB permission required.')
+                    : (S.of(context)?.usbConnectionFailedWithMessage(msg.isNotEmpty ? ' $msg' : '') ?? 'USB connection failed.'),
               ),
               backgroundColor: Colors.orange,
               duration: const Duration(seconds: 5),
@@ -283,7 +283,7 @@ class _BLEScreenState extends State<BLEScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('NTRIP Error: $error'),
+              content: Text(S.of(context)?.ntripError(error) ?? 'NTRIP Error: $error'),
               backgroundColor: Colors.red,
               duration: const Duration(milliseconds: 3000),
             ),
@@ -506,7 +506,7 @@ class _BLEScreenState extends State<BLEScreen>
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Connecting to ${info.displayName}...'),
+          content: Text(S.of(context)?.usbConnectingTo(info.displayName) ?? 'Connecting to ${info.displayName}...'),
           duration: const Duration(milliseconds: 1000),
         ),
       );
@@ -517,8 +517,8 @@ class _BLEScreenState extends State<BLEScreen>
     if (!mounted) return;
     if (!_rtkService.isConnected) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('USB connection failed'),
+        SnackBar(
+          content: Text(S.of(context)?.usbConnectionFailed ?? 'USB connection failed'),
           backgroundColor: Colors.red,
           duration: Duration(milliseconds: 3000),
         ),
@@ -539,8 +539,8 @@ class _BLEScreenState extends State<BLEScreen>
     if (mounted) {
       setState(() => _connectedViaUsb = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('USB device disconnected.'),
+        SnackBar(
+          content: Text(S.of(context)?.usbDeviceDisconnected ?? 'USB device disconnected.'),
           duration: Duration(milliseconds: 1000),
         ),
       );
@@ -580,8 +580,8 @@ class _BLEScreenState extends State<BLEScreen>
       });
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('NTRIP reconnected on new device'),
+          SnackBar(
+            content: Text(S.of(context)?.ntripReconnectedOnNewDevice ?? 'NTRIP reconnected on new device'),
             duration: Duration(milliseconds: 1500),
           ),
         );
@@ -806,12 +806,12 @@ class _BLEScreenState extends State<BLEScreen>
         children: [
           Expanded(
             child: ChoiceChip(
-              label: const Row(
+              label: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.bluetooth, size: 20),
-                  SizedBox(width: 8),
-                  Text('Bluetooth'),
+                  const Icon(Icons.bluetooth, size: 20),
+                  const SizedBox(width: 8),
+                  Text(s?.bleConnectionModeBluetooth ?? 'Bluetooth'),
                 ],
               ),
               selected: _connectionModeIndex == 0,
@@ -825,12 +825,12 @@ class _BLEScreenState extends State<BLEScreen>
           const SizedBox(width: 8),
           Expanded(
             child: ChoiceChip(
-              label: const Row(
+              label: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.usb, size: 20),
-                  SizedBox(width: 8),
-                  Text('USB'),
+                  const Icon(Icons.usb, size: 20),
+                  const SizedBox(width: 8),
+                  Text(s?.bleConnectionModeUsb ?? 'USB'),
                 ],
               ),
               selected: _connectionModeIndex == 1,
@@ -864,7 +864,7 @@ class _BLEScreenState extends State<BLEScreen>
             ElevatedButton.icon(
               onPressed: _disconnectUsbDevice,
               icon: const Icon(Icons.usb_off),
-              label: const Text('Disconnect from USB device'),
+              label: Text(s?.usbDisconnectFromDevice ?? 'Disconnect from USB device'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
                 foregroundColor: Colors.white,
@@ -884,7 +884,7 @@ class _BLEScreenState extends State<BLEScreen>
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.refresh),
-              label: Text(_usbDevicesLoading ? 'Loading...' : 'Refresh USB devices'),
+              label: Text(_usbDevicesLoading ? (s?.usbLoading ?? 'Loading...') : (s?.usbRefreshDevices ?? 'Refresh USB devices')),
             ),
           const SizedBox(height: 12),
           if (!isConnectedViaUsb)
@@ -908,7 +908,7 @@ class _BLEScreenState extends State<BLEScreen>
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              'No USB devices found',
+                              s?.usbNoDevicesFound ?? 'No USB devices found',
                               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                                     color: Colors.grey.shade700,
                                   ),
@@ -916,8 +916,7 @@ class _BLEScreenState extends State<BLEScreen>
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Connect your RTK receiver with a USB cable (USB OTG). '
-                              'The phone must support USB host (OTG). Then tap Refresh.',
+                              s?.usbNoDevicesHint ?? 'Connect your RTK receiver with a USB cable (USB OTG). The phone must support USB host (OTG). Then tap Refresh.',
                               textAlign: TextAlign.center,
                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: Colors.grey.shade600,
@@ -941,7 +940,7 @@ class _BLEScreenState extends State<BLEScreen>
                           ),
                           trailing: ElevatedButton(
                             onPressed: () => _connectToUsbDevice(info),
-                            child: const Text('Connect'),
+                            child: Text(s?.usbConnectButton ?? 'Connect'),
                           ),
                         );
                       },
@@ -1835,7 +1834,7 @@ class _BLEScreenState extends State<BLEScreen>
         }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: $e'),
+            content: Text(S.of(context)?.errorWithMessage(e.toString()) ?? 'Error: $e'),
             backgroundColor: Colors.red,
             duration: const Duration(milliseconds: 3000),
           ),
@@ -1877,7 +1876,7 @@ class _BLEScreenState extends State<BLEScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error disconnecting: $e'),
+            content: Text(S.of(context)?.errorDisconnecting(e.toString()) ?? 'Error disconnecting: $e'),
             backgroundColor: Colors.red,
             duration: const Duration(milliseconds: 3000),
           ),

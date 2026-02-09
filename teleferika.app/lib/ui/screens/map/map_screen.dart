@@ -104,12 +104,12 @@ class MapScreenState extends State<MapScreen>
 
         // Notify user of unexpected disconnection
         if (wasConnected && isNowDisconnected) {
-          showInfoStatus('RTK device disconnected. Using device GPS.');
+          showInfoStatus(S.of(context)?.mapRtkDisconnectedUsingDeviceGps ?? 'RTK device disconnected. Using device GPS.');
           logger.info(
             'MapScreen: BLE device disconnected, switched to device GPS',
           );
         } else if (state == BLEConnectionState.error) {
-          showErrorStatus('BLE connection error occurred.');
+          showErrorStatus(S.of(context)?.mapBleConnectionError ?? 'BLE connection error occurred.');
           logger.warning('MapScreen: BLE connection error');
         }
 

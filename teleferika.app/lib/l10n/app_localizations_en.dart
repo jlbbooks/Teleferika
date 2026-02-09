@@ -1630,4 +1630,110 @@ class SEn extends S {
   @override
   String get bleNtripWaitForPosition =>
       'Wait for GPS position from device before connecting to NTRIP.';
+
+  @override
+  String get usbPermissionRequired =>
+      'USB permission required. If Android showed a dialog, tap Allow and try Connect again.';
+
+  @override
+  String usbConnectionFailedWithMessage(String message) {
+    return 'USB connection failed.$message';
+  }
+
+  @override
+  String ntripError(String error) {
+    return 'NTRIP Error: $error';
+  }
+
+  @override
+  String usbConnectingTo(String deviceName) {
+    return 'Connecting to $deviceName...';
+  }
+
+  @override
+  String get usbConnectionFailed => 'USB connection failed';
+
+  @override
+  String get usbDeviceDisconnected => 'USB device disconnected.';
+
+  @override
+  String get ntripReconnectedOnNewDevice => 'NTRIP reconnected on new device';
+
+  @override
+  String get bleConnectionModeBluetooth => 'Bluetooth';
+
+  @override
+  String get bleConnectionModeUsb => 'USB';
+
+  @override
+  String get usbDisconnectFromDevice => 'Disconnect from USB device';
+
+  @override
+  String get usbLoading => 'Loading...';
+
+  @override
+  String get usbRefreshDevices => 'Refresh USB devices';
+
+  @override
+  String get usbNoDevicesFound => 'No USB devices found';
+
+  @override
+  String get usbNoDevicesHint =>
+      'Connect your RTK receiver with a USB cable (USB OTG). The phone must support USB host (OTG). Then tap Refresh.';
+
+  @override
+  String get usbConnectButton => 'Connect';
+
+  @override
+  String errorWithMessage(String error) {
+    return 'Error: $error';
+  }
+
+  @override
+  String errorDisconnecting(String error) {
+    return 'Error disconnecting: $error';
+  }
+
+  @override
+  String get gpsInfoTitle => 'GPS Information';
+
+  @override
+  String get gpsWaitingForData => 'Waiting for GPS data...';
+
+  @override
+  String get gpsDeviceInfoSection => 'Device Information';
+
+  @override
+  String get gpsSourceLabel => 'Source';
+
+  @override
+  String get gpsRtkDevice => 'RTK Device';
+
+  @override
+  String get gpsStatusLabel => 'Status';
+
+  @override
+  String get gpsDeviceLabel => 'Device';
+
+  @override
+  String get gpsRtkReceiver => 'RTK Receiver';
+
+  @override
+  String get gpsInternalGps => 'Internal GPS';
+
+  @override
+  String get gpsStatusActive => 'Active';
+
+  @override
+  String get gpsConnectRtkDevice => 'Connect RTK Device';
+
+  @override
+  String get gpsCourseLabel => 'Course';
+
+  @override
+  String get mapRtkDisconnectedUsingDeviceGps =>
+      'RTK device disconnected. Using device GPS.';
+
+  @override
+  String get mapBleConnectionError => 'BLE connection error occurred.';
 }

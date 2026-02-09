@@ -4,7 +4,7 @@ import 'package:logging/logging.dart';
 import 'package:teleferika/core/app_config.dart';
 import 'package:teleferika/core/settings_service.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
-import 'package:teleferika/ui/screens/ble/ble_screen.dart';
+import 'package:teleferika/ui/screens/ble/rtk_devices_screen.dart';
 import 'package:teleferika/db/drift_database_helper.dart';
 
 /// Settings screen for configuring application behavior.
@@ -419,7 +419,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const BLEScreen(),
+                            builder: (context) => const RtkDevicesScreen(),
                           ),
                         );
                       },

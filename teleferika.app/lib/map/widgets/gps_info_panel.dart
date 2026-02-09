@@ -2,10 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:teleferika/ble/rtk_device_service.dart';
+import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ble/nmea_parser.dart';
 import 'package:teleferika/core/fix_quality_colors.dart';
 import 'package:teleferika/core/platform_gps_info.dart';
-import 'package:teleferika/ui/screens/ble/ble_screen.dart';
+import 'package:teleferika/ui/screens/ble/rtk_devices_screen.dart';
 
 class GPSInfoPanel extends StatefulWidget {
   final RtkDeviceService rtkService;
@@ -110,20 +111,21 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
     super.dispose();
   }
 
-  String _getFixQualityText(int fixQuality) {
+  String _getFixQualityText(BuildContext context, int fixQuality) {
+    final s = S.of(context);
     switch (fixQuality) {
       case 0:
-        return 'No Fix';
+        return s?.bleGpsFixQualityInvalid ?? 'No Fix';
       case 1:
-        return 'GPS Fix';
+        return s?.bleGpsFixQualityGps ?? 'GPS Fix';
       case 2:
-        return 'DGPS Fix';
+        return s?.bleGpsFixQualityDgps ?? 'DGPS Fix';
       case 4:
-        return 'RTK Fixed';
+        return s?.bleGpsFixQualityRtk ?? 'RTK Fixed';
       case 5:
-        return 'RTK Float';
+        return s?.bleGpsFixQualityRtkFloat ?? 'RTK Float';
       default:
-        return 'Unknown ($fixQuality)';
+        return s?.bleGpsFixQualityUnknown(fixQuality) ?? 'Unknown ($fixQuality)';
     }
   }
 
@@ -167,7 +169,7 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'GPS Information',
+                    S.of(context)?.gpsInfoTitle ?? 'GPS Information',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -192,7 +194,7 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
                 // GPS Information Section (always shown if position available)
                 if (position != null) ...[
                   Text(
-                    'GPS Information',
+                    S.of(context)?.gpsInfoTitle ?? 'GPS Information',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -202,15 +204,15 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
                   // Fix Quality (from NMEA or platform API)
                   if (nmeaData != null) ...[
                     _buildInfoRow(
-                      'Fix Quality',
-                      _getFixQualityText(nmeaData.fixQuality),
+                      S.of(context)?.bleGpsFixQuality ?? 'Fix Quality',
+                      _getFixQualityText(context, nmeaData.fixQuality),
                       FixQualityColors.getColor(nmeaData.fixQuality),
                     ),
                     const SizedBox(height: 8),
                   ] else if (_platformFixQuality != null) ...[
                     _buildInfoRow(
-                      'Fix Quality',
-                      _getFixQualityText(_platformFixQuality!),
+                      S.of(context)?.bleGpsFixQuality ?? 'Fix Quality',
+                      _getFixQualityText(context, _platformFixQuality!),
                       FixQualityColors.getColor(_platformFixQuality!),
                     ),
                     const SizedBox(height: 8),
@@ -218,34 +220,34 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
 
                   // Satellites (from NMEA or platform API)
                   if (nmeaData?.satellites != null) ...[
-                    _buildInfoRow('Satellites', '${nmeaData!.satellites}'),
+                    _buildInfoRow(S.of(context)?.bleGpsSatellites ?? 'Satellites', '${nmeaData!.satellites}'),
                     const SizedBox(height: 8),
                   ] else if (_platformSatelliteCount != null) ...[
-                    _buildInfoRow('Satellites', '$_platformSatelliteCount'),
+                    _buildInfoRow(S.of(context)?.bleGpsSatellites ?? 'Satellites', '$_platformSatelliteCount'),
                     const SizedBox(height: 8),
                   ],
 
                   // Accuracy
                   _buildInfoRow(
-                    'Accuracy',
+                    S.of(context)?.bleGpsAccuracy ?? 'Accuracy',
                     '${position.accuracy.toStringAsFixed(2)} m',
                   ),
                   const SizedBox(height: 8),
 
                   // HDOP (only from NMEA)
                   if (nmeaData?.hdop != null) ...[
-                    _buildInfoRow('HDOP', nmeaData!.hdop!.toStringAsFixed(2)),
+                    _buildInfoRow(S.of(context)?.bleGpsHdop ?? 'HDOP', nmeaData!.hdop!.toStringAsFixed(2)),
                     const SizedBox(height: 8),
                   ],
 
                   // Coordinates
                   _buildInfoRow(
-                    'Latitude',
+                    S.of(context)?.bleGpsLatitude ?? 'Latitude',
                     position.latitude.toStringAsFixed(8),
                   ),
                   const SizedBox(height: 8),
                   _buildInfoRow(
-                    'Longitude',
+                    S.of(context)?.bleGpsLongitude ?? 'Longitude',
                     position.longitude.toStringAsFixed(8),
                   ),
                   const SizedBox(height: 8),
@@ -253,7 +255,7 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
                   // Altitude
                   if (position.altitude != 0.0) ...[
                     _buildInfoRow(
-                      'Altitude',
+                      S.of(context)?.bleGpsAltitude ?? 'Altitude',
                       '${position.altitude.toStringAsFixed(2)} m',
                     ),
                     const SizedBox(height: 8),
@@ -262,7 +264,7 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
                   // Speed
                   if (position.speed > 0) ...[
                     _buildInfoRow(
-                      'Speed',
+                      S.of(context)?.bleGpsSpeed ?? 'Speed',
                       '${(position.speed * 3.6).toStringAsFixed(2)} km/h',
                     ),
                     const SizedBox(height: 8),
@@ -271,14 +273,14 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
                   // Course
                   if (position.heading > 0) ...[
                     _buildInfoRow(
-                      'Course',
+                      S.of(context)?.gpsCourseLabel ?? 'Course',
                       '${position.heading.toStringAsFixed(1)}°',
                     ),
                     const SizedBox(height: 8),
                   ],
                 ] else ...[
                   Text(
-                    'Waiting for GPS data...',
+                    S.of(context)?.gpsWaitingForData ?? 'Waiting for GPS data...',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Colors.grey,
                       fontStyle: FontStyle.italic,
@@ -291,7 +293,7 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
                   const Divider(),
                   const SizedBox(height: 8),
                   Text(
-                    'Device Information',
+                    S.of(context)?.gpsDeviceInfoSection ?? 'Device Information',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -301,15 +303,15 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
 
                 if (isBleConnected) ...[
                   // RTK Device Info
-                  _buildInfoRow('Source', 'RTK Device', Colors.green),
+                  _buildInfoRow(S.of(context)?.gpsSourceLabel ?? 'Source', S.of(context)?.gpsRtkDevice ?? 'RTK Device', Colors.green),
                   const SizedBox(height: 8),
-                  _buildInfoRow('Status', 'Connected', Colors.green),
+                  _buildInfoRow(S.of(context)?.gpsStatusLabel ?? 'Status', S.of(context)?.bleStatusConnected ?? 'Connected', Colors.green),
                   const SizedBox(height: 8),
                   _buildInfoRow(
-                    'Device',
+                    S.of(context)?.gpsDeviceLabel ?? 'Device',
                     deviceName?.isNotEmpty == true
                         ? deviceName!
-                        : 'RTK Receiver',
+                        : (S.of(context)?.gpsRtkReceiver ?? 'RTK Receiver'),
                   ),
                   const SizedBox(height: 16),
                   // Button to disconnect from RTK device
@@ -328,7 +330,7 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Error disconnecting: $e'),
+                                content: Text(S.of(context)?.errorDisconnecting(e.toString()) ?? 'Error disconnecting: $e'),
                                 backgroundColor: Colors.red,
                               ),
                             );
@@ -336,7 +338,7 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
                         }
                       },
                       icon: const Icon(Icons.bluetooth_disabled),
-                      label: const Text('Disconnect'),
+                      label: Text(S.of(context)?.bleButtonDisconnect ?? 'Disconnect'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.red,
                         side: const BorderSide(color: Colors.red),
@@ -345,9 +347,9 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
                   ),
                 ] else ...[
                   // Internal GPS Info
-                  _buildInfoRow('Source', 'Internal GPS', Colors.blue),
+                  _buildInfoRow(S.of(context)?.gpsSourceLabel ?? 'Source', S.of(context)?.gpsInternalGps ?? 'Internal GPS', Colors.blue),
                   const SizedBox(height: 8),
-                  _buildInfoRow('Status', 'Active', Colors.blue),
+                  _buildInfoRow(S.of(context)?.gpsStatusLabel ?? 'Status', S.of(context)?.gpsStatusActive ?? 'Active', Colors.blue),
                   const SizedBox(height: 16),
                   // Button to connect to RTK device
                   SizedBox(
@@ -358,12 +360,12 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (context) =>
-                                const BLEScreen(autoStartScan: true),
+                                const RtkDevicesScreen(autoStartScan: true),
                           ),
                         );
                       },
                       icon: const Icon(Icons.bluetooth),
-                      label: const Text('Connect RTK Device'),
+                      label: Text(S.of(context)?.gpsConnectRtkDevice ?? 'Connect RTK Device'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.blue,
                         side: const BorderSide(color: Colors.blue),

@@ -45,7 +45,9 @@ class UsbSerialService {
   static const int _defaultBaudRate = 115200;
 
   UsbPort? _port;
+  UsbDevice? _connectedDevice; // Store to match detach events
   StreamSubscription<List<int>>? _readSubscription;
+  StreamSubscription<UsbEvent>? _usbEventSubscription;
   String _nmeaBuffer = '';
 
   final StreamController<BLEConnectionState> _connectionStateController =
@@ -147,8 +149,33 @@ class UsbSerialService {
         UsbPort.PARITY_NONE,
       );
       _port = port;
+      _connectedDevice = info.device;
       _connectedDeviceName = info.displayName;
       _lastConnectionError = null;
+
+      // Subscribe to USB plug/unplug events to detect cable disconnect
+      _usbEventSubscription?.cancel();
+      final eventStream = UsbSerial.usbEventStream;
+      if (eventStream != null) {
+        _usbEventSubscription = eventStream.listen((UsbEvent event) {
+          if (event.event == UsbEvent.ACTION_USB_DETACHED && _port != null) {
+            // Match our device if event has device info; otherwise assume it's ours
+            final eventDevice = event.device;
+            final ours = _connectedDevice;
+            final isOurs = eventDevice == null ||
+                (ours != null &&
+                    ours.deviceId == eventDevice.deviceId &&
+                    ours.pid == eventDevice.pid &&
+                    ours.vid == eventDevice.vid);
+            if (isOurs) {
+              _logger.info('USB device detached, cleaning up');
+              _handlePhysicalDisconnect();
+            }
+          }
+        }, cancelOnError: false);
+      } else {
+        _logger.fine('USB event stream not available, cable disconnect may not be detected');
+      }
 
       final stream = port.inputStream;
       if (stream == null) {
@@ -164,7 +191,7 @@ class UsbSerialService {
           _connectionStateController.add(BLEConnectionState.error);
         },
         onDone: () {
-          if (_port != null) _connectionStateController.add(BLEConnectionState.disconnected);
+          if (_port != null) _handlePhysicalDisconnect();
         },
         cancelOnError: false,
       );
@@ -177,8 +204,33 @@ class UsbSerialService {
     }
   }
 
+  /// Handles physical cable disconnect (from usbEventStream or inputStream.onDone).
+  void _handlePhysicalDisconnect() {
+    if (_port == null) return;
+    _usbEventSubscription?.cancel();
+    _usbEventSubscription = null;
+    _readSubscription?.cancel();
+    _readSubscription = null;
+    final port = _port;
+    _port = null;
+    _connectedDevice = null;
+    _connectedDeviceName = null;
+    _lastConnectionError = null;
+    _nmeaBuffer = '';
+    if (port != null) {
+      port.close().catchError((Object e) {
+        _logger.fine('Error closing USB port on physical disconnect: $e');
+        return false;
+      });
+    }
+    _connectionStateController.add(BLEConnectionState.disconnected);
+    disconnectFromNtrip();
+  }
+
   /// Disconnects from the current USB device.
   Future<void> disconnectDevice() async {
+    _usbEventSubscription?.cancel();
+    _usbEventSubscription = null;
     await _readSubscription?.cancel();
     _readSubscription = null;
     if (_port != null) {
@@ -189,6 +241,7 @@ class UsbSerialService {
       }
       _port = null;
     }
+    _connectedDevice = null;
     _connectedDeviceName = null;
     _lastConnectionError = null;
     _nmeaBuffer = '';

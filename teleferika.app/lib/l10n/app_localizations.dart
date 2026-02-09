@@ -2889,6 +2889,192 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Wait for GPS position from device before connecting to NTRIP.'**
   String get bleNtripWaitForPosition;
+
+  /// Message when USB connection fails due to permission.
+  ///
+  /// In en, this message translates to:
+  /// **'USB permission required. If Android showed a dialog, tap Allow and try Connect again.'**
+  String get usbPermissionRequired;
+
+  /// Message when USB connection fails.
+  ///
+  /// In en, this message translates to:
+  /// **'USB connection failed.{message}'**
+  String usbConnectionFailedWithMessage(String message);
+
+  /// No description provided for @ntripError.
+  ///
+  /// In en, this message translates to:
+  /// **'NTRIP Error: {error}'**
+  String ntripError(String error);
+
+  /// No description provided for @usbConnectingTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting to {deviceName}...'**
+  String usbConnectingTo(String deviceName);
+
+  /// No description provided for @usbConnectionFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'USB connection failed'**
+  String get usbConnectionFailed;
+
+  /// No description provided for @usbDeviceDisconnected.
+  ///
+  /// In en, this message translates to:
+  /// **'USB device disconnected.'**
+  String get usbDeviceDisconnected;
+
+  /// No description provided for @ntripReconnectedOnNewDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'NTRIP reconnected on new device'**
+  String get ntripReconnectedOnNewDevice;
+
+  /// No description provided for @bleConnectionModeBluetooth.
+  ///
+  /// In en, this message translates to:
+  /// **'Bluetooth'**
+  String get bleConnectionModeBluetooth;
+
+  /// No description provided for @bleConnectionModeUsb.
+  ///
+  /// In en, this message translates to:
+  /// **'USB'**
+  String get bleConnectionModeUsb;
+
+  /// No description provided for @usbDisconnectFromDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect from USB device'**
+  String get usbDisconnectFromDevice;
+
+  /// No description provided for @usbLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading...'**
+  String get usbLoading;
+
+  /// No description provided for @usbRefreshDevices.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh USB devices'**
+  String get usbRefreshDevices;
+
+  /// No description provided for @usbNoDevicesFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No USB devices found'**
+  String get usbNoDevicesFound;
+
+  /// No description provided for @usbNoDevicesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect your RTK receiver with a USB cable (USB OTG). The phone must support USB host (OTG). Then tap Refresh.'**
+  String get usbNoDevicesHint;
+
+  /// No description provided for @usbConnectButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get usbConnectButton;
+
+  /// No description provided for @errorWithMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {error}'**
+  String errorWithMessage(String error);
+
+  /// No description provided for @errorDisconnecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Error disconnecting: {error}'**
+  String errorDisconnecting(String error);
+
+  /// No description provided for @gpsInfoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'GPS Information'**
+  String get gpsInfoTitle;
+
+  /// No description provided for @gpsWaitingForData.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for GPS data...'**
+  String get gpsWaitingForData;
+
+  /// No description provided for @gpsDeviceInfoSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Device Information'**
+  String get gpsDeviceInfoSection;
+
+  /// No description provided for @gpsSourceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Source'**
+  String get gpsSourceLabel;
+
+  /// No description provided for @gpsRtkDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'RTK Device'**
+  String get gpsRtkDevice;
+
+  /// No description provided for @gpsStatusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get gpsStatusLabel;
+
+  /// No description provided for @gpsDeviceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Device'**
+  String get gpsDeviceLabel;
+
+  /// No description provided for @gpsRtkReceiver.
+  ///
+  /// In en, this message translates to:
+  /// **'RTK Receiver'**
+  String get gpsRtkReceiver;
+
+  /// No description provided for @gpsInternalGps.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal GPS'**
+  String get gpsInternalGps;
+
+  /// No description provided for @gpsStatusActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get gpsStatusActive;
+
+  /// No description provided for @gpsConnectRtkDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect RTK Device'**
+  String get gpsConnectRtkDevice;
+
+  /// No description provided for @gpsCourseLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Course'**
+  String get gpsCourseLabel;
+
+  /// No description provided for @mapRtkDisconnectedUsingDeviceGps.
+  ///
+  /// In en, this message translates to:
+  /// **'RTK device disconnected. Using device GPS.'**
+  String get mapRtkDisconnectedUsingDeviceGps;
+
+  /// No description provided for @mapBleConnectionError.
+  ///
+  /// In en, this message translates to:
+  /// **'BLE connection error occurred.'**
+  String get mapBleConnectionError;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {
