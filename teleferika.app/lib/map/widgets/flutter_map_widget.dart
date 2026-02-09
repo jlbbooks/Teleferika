@@ -16,7 +16,7 @@ import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/map/markers/map_markers.dart';
 import 'package:teleferika/map/markers/location_markers.dart';
 import 'package:teleferika/map/markers/moving_timber_marker.dart';
-import 'package:teleferika/map/services/geometry_service.dart';
+import 'package:teleferika/geometry/geometry_service.dart';
 import 'package:teleferika/map/services/map_cache_manager.dart';
 import 'package:teleferika/map/map_type.dart';
 import 'package:teleferika/map/state/map_state_manager.dart';

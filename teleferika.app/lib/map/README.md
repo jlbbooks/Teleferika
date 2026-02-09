@@ -14,20 +14,22 @@ map/
 │   ├── moving_marker.dart            # Moving marker for project azimuth
 │   └── polyline_arrowhead.dart       # Polyline path arrowhead marker
 ├── services/
-│   ├── geometry_service.dart         # Geometry calculations and map math
 │   ├── location_service.dart         # Location and compass handling
-│   └── point_service.dart            # Point CRUD operations
+│   ├── map_cache_logger.dart         # Map cache logging
+│   ├── map_cache_manager.dart        # Map tile cache management
+│   ├── map_preferences_service.dart # Map preferences persistence
+│   └── map_store_utils.dart          # Map store utilities
 ├── state/
 │   └── map_state_manager.dart        # Map state management logic
 ├── widgets/
 │   ├── point_details/
-│   │   └── coordinates_section.dart  # Editable coordinates component
+│   │   ├── coordinates_section.dart  # Editable coordinates component
+│   │   └── point_details_panel.dart  # Point details panel
 │   ├── flutter_map_widget.dart       # Main FlutterMap widget component
 │   ├── floating_action_buttons.dart  # Map FAB controls
 │   ├── map_loading_widget.dart       # Loading state widget
 │   ├── map_type_selector.dart        # Map type selection control
-│   ├── permission_overlay.dart       # Permission request overlay
-│   └── point_details_panel.dart      # Point details panel (moved from root)
+│   └── permission_overlay.dart       # Permission request overlay
 ├── map_controller.dart               # Business logic controller (legacy)
 ├── map_controls.dart                 # Map control widgets (legacy - being phased out)
 ├── map_tool_view.dart                # Main map view (refactored)
@@ -46,9 +48,11 @@ map/
 - **`polyline_arrowhead.dart`**: Animated arrowhead marker that moves along polyline paths.
 
 ### Service Components (`services/`)
-- **`geometry_service.dart`**: Handles all geometric calculations including bearing calculations, distance measurements, and coordinate transformations.
 - **`location_service.dart`**: Manages location and compass data streams, permission handling, and sensor access.
-- **`point_service.dart`**: Handles point CRUD operations, database interactions, and point lifecycle management.
+- **`map_cache_*.dart`**: Map tile caching and preferences.
+- **`map_store_utils.dart`**: Map store utilities.
+
+Geometry calculations (bearings, distances, angles) live in **`lib/geometry/geometry_service.dart`** and are used by both map and points UI.
 
 ### State Management (`state/`)
 - **`map_state_manager.dart`**: Centralized state management for all map-related state, including location tracking, compass data, point management, and UI state.
@@ -59,9 +63,9 @@ map/
 - **`map_loading_widget.dart`**: Loading state widget displayed while map data is being loaded.
 - **`map_type_selector.dart`**: Map type selection control (extracted from map_controls.dart).
 - **`permission_overlay.dart`**: Permission request overlay (extracted from map_controls.dart).
-- **`point_details_panel.dart`**: Panel for displaying and editing point details (moved from root).
 
 ### Point Details Components (`widgets/point_details/`)
+- **`point_details_panel.dart`**: Panel for displaying and editing point details.
 - **`coordinates_section.dart`**: Editable coordinates component with inline editing capabilities.
 
 ### Core Files

@@ -24,7 +24,7 @@ import '../../../map/debug/debug_panel.dart';
 import '../../../map/state/map_state_manager.dart';
 import '../../../map/widgets/flutter_map_widget.dart';
 import '../../../map/widgets/map_loading_widget.dart';
-import '../../../map/widgets/point_details_panel.dart';
+import '../../../map/widgets/point_details/point_details_panel.dart';
 import '../../../map/widgets/floating_action_buttons.dart';
 import '../../../map/widgets/gps_info_panel.dart';
 import '../../../map/widgets/map_type_selector.dart';
