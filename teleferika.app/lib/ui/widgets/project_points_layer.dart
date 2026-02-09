@@ -53,7 +53,7 @@
 ///
 /// ## Data Sources
 /// The widget automatically determines the best data source:
-/// 1. **Direct Projects**: If [projects] parameter is provided
+/// 1. **Direct Projects**: If [ProjectPointsLayer.projects] parameter is provided
 /// 2. **Provider State**: If available in the widget tree
 /// 3. **Database Fallback**: Loads all projects from database
 ///
@@ -99,7 +99,7 @@ import 'package:teleferika/l10n/app_localizations.dart';
 /// customizable styling options.
 ///
 /// ## Data Loading Strategy
-/// 1. **Direct Projects**: Use provided [projects] list if available
+/// 1. **Direct Projects**: Use provided [ProjectPointsLayer.projects] list if available
 /// 2. **Provider State**: Access projects through global state if available
 /// 3. **Database Fallback**: Load all projects from database as last resort
 class ProjectPointsLayer extends StatefulWidget {

@@ -76,7 +76,7 @@ import 'map/services/map_cache_manager.dart';
 /// ## Dependencies
 /// - [setupLogging]: Configures the logging system
 /// - [LicenceService]: Manages application licensing
-/// - [DatabaseHelper]: Handles database operations
+/// - [DriftDatabaseHelper]: Handles database operations
 /// - [LicensedFeaturesLoader]: Loads licensed features
 /// - [FeatureRegistry]: Manages feature availability
 void main() async {

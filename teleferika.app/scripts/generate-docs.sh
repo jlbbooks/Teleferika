@@ -122,6 +122,14 @@ print_status "Generating documentation for main Teleferika project..."
 if generate_docs "main project" "$PROJECT_ROOT" "doc/api"; then
     print_success "✅ Main project documentation completed"
     
+    # Copy project docs into api output so links from the package index resolve
+    print_status "📄 Copying project docs into doc/api for link resolution..."
+    for f in README.md CONTRIBUTING.md CHANGELOG.md DOCUMENTATION_GUIDE.md LICENSE; do
+        if [ -f "$PROJECT_ROOT/$f" ]; then
+            cp "$PROJECT_ROOT/$f" "$PROJECT_ROOT/doc/api/$f" && print_status "  Copied $f" || print_warning "  Failed to copy $f"
+        fi
+    done
+    
     # Fix viewport meta tag accessibility issues
     print_status "🔧 Fixing viewport meta tag accessibility issues..."
     if "$SCRIPT_DIR/fix-docs-viewport.sh" "doc/api"; then

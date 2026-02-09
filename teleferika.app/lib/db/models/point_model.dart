@@ -56,7 +56,7 @@
 /// - GPS precision (non-negative)
 ///
 /// ## Immutability
-/// The class is designed to be immutable. Use [copyWith] to create
+/// The class is designed to be immutable. Use [PointModel.copyWith] to create
 /// modified versions of points.
 
 import 'package:teleferika/core/utils/uuid_generator.dart';
@@ -142,7 +142,7 @@ class PointModel {
   /// Returns a read-only view of the internal image list.
   /// Images are ordered by their [ImageModel.ordinalNumber].
   ///
-  /// To modify images, create a new [PointModel] using [copyWith].
+  /// To modify images, create a new [PointModel] using [PointModel.copyWith].
   List<ImageModel> get images => List.unmodifiable(_images);
 
   /// The point's note or description.
@@ -172,7 +172,7 @@ class PointModel {
   /// Database table and column name constants.
   ///
   /// These constants define the SQLite table structure for points.
-  /// They are used by [DatabaseHelper] for database operations.
+  /// They are used by [DriftDatabaseHelper] for database operations.
 
   /// Name of the points table in the database.
   static const String tableName = 'points';

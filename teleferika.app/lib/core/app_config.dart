@@ -27,7 +27,7 @@
 ///
 /// ## Customization
 /// To modify app behavior, update the appropriate constants in this class.
-/// For theme customization, modify the [lightTheme] and [darkTheme] properties.
+/// For theme customization, modify the [AppConfig.lightTheme] and [AppConfig.darkTheme] properties.
 ///
 /// ## Constants Categories
 /// - **App Identity**: App name and branding

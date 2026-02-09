@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Same dark teal as app icon background (splash/launch screen) -->
+    <color name="splash_background">#1A535C</color>
+</resources>

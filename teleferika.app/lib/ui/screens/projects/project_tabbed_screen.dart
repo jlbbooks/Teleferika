@@ -391,7 +391,7 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
         context,
         currentProject ?? widget.project,
         currentPoints,
-        onExportComplete: (bool success) {
+        onExportComplete: ({required bool success}) {
           if (success) {
             showSuccessStatus(
               s?.exportSuccess ?? 'Project exported successfully',
