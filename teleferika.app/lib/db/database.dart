@@ -196,22 +196,29 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
         }
 
         if (from < 3) {
-          // Add new fields to NtripSettings table for version 3
+          // Add new fields to NtripSettings table for version 3 (idempotent: skip if already present)
           _logger.info(
             'Adding name, country, and state fields to ntrip_settings table',
           );
 
+          final columns = await _getTableColumnNames('ntrip_settings');
+
           // SQLite requires default values when adding NOT NULL columns to existing tables
-          // We'll add the columns with temporary defaults, then update the data
-          await customStatement(
-            'ALTER TABLE ntrip_settings ADD COLUMN name TEXT NOT NULL DEFAULT \'Default\'',
-          );
-          await customStatement(
-            'ALTER TABLE ntrip_settings ADD COLUMN country TEXT NOT NULL DEFAULT \'Unknown\'',
-          );
-          await customStatement(
-            'ALTER TABLE ntrip_settings ADD COLUMN state TEXT',
-          );
+          if (!columns.contains('name')) {
+            await customStatement(
+              'ALTER TABLE ntrip_settings ADD COLUMN name TEXT NOT NULL DEFAULT \'Default\'',
+            );
+          }
+          if (!columns.contains('country')) {
+            await customStatement(
+              'ALTER TABLE ntrip_settings ADD COLUMN country TEXT NOT NULL DEFAULT \'Unknown\'',
+            );
+          }
+          if (!columns.contains('state')) {
+            await customStatement(
+              'ALTER TABLE ntrip_settings ADD COLUMN state TEXT',
+            );
+          }
 
           // Migrate existing data: update with better default values if needed
           final existingSettings = await (select(
@@ -239,14 +246,17 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
         }
 
         if (from < 4) {
-          // Add lastConnectionSuccessful field to NtripSettings table for version 4
+          // Add lastConnectionSuccessful field to NtripSettings table for version 4 (idempotent)
           _logger.info(
             'Adding lastConnectionSuccessful field to ntrip_settings table',
           );
 
-          await customStatement(
-            'ALTER TABLE ntrip_settings ADD COLUMN last_connection_successful INTEGER',
-          );
+          final columns = await _getTableColumnNames('ntrip_settings');
+          if (!columns.contains('last_connection_successful')) {
+            await customStatement(
+              'ALTER TABLE ntrip_settings ADD COLUMN last_connection_successful INTEGER',
+            );
+          }
 
           _logger.info(
             'ntrip_settings table updated with lastConnectionSuccessful field',
@@ -256,6 +266,13 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
         _logger.info('Database upgrade completed');
       },
     );
+  }
+
+  /// Returns the set of column names for [tableName]. Used to make migrations
+  /// idempotent (skip ADD COLUMN if column already exists).
+  Future<Set<String>> _getTableColumnNames(String tableName) async {
+    final rows = await customSelect('PRAGMA table_info($tableName)').get();
+    return rows.map((r) => r.read<String>('name')).toSet();
   }
 
   // Project operations
