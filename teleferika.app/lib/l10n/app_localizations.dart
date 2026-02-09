@@ -175,6 +175,18 @@ abstract class S {
   /// **'Presumed Total Length (m)'**
   String get formFieldPresumedTotalLengthLabel;
 
+  /// Label for the cable or equipment type form field (project-level preset).
+  ///
+  /// In en, this message translates to:
+  /// **'Cable / equipment type'**
+  String get formFieldCableEquipmentTypeLabel;
+
+  /// Dropdown option when no cable/equipment type is selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get cableEquipmentTypeNotSet;
+
   /// Label for the save button.
   ///
   /// In en, this message translates to:

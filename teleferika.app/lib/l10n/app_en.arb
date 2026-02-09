@@ -58,6 +58,14 @@
   "@formFieldPresumedTotalLengthLabel": {
     "description": "Label for the presumed total length form field."
   },
+  "formFieldCableEquipmentTypeLabel": "Cable / equipment type",
+  "@formFieldCableEquipmentTypeLabel": {
+    "description": "Label for the cable or equipment type form field (project-level preset)."
+  },
+  "cableEquipmentTypeNotSet": "Not set",
+  "@cableEquipmentTypeNotSet": {
+    "description": "Dropdown option when no cable/equipment type is selected."
+  },
   "buttonSave": "Save",
   "@buttonSave": {
     "description": "Label for the save button."

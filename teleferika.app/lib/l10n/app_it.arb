@@ -58,6 +58,14 @@
   "@formFieldPresumedTotalLengthLabel": {
     "description": "Etichetta per il campo lunghezza totale presunta del modulo."
   },
+  "formFieldCableEquipmentTypeLabel": "Tipo cavo / attrezzatura",
+  "@formFieldCableEquipmentTypeLabel": {
+    "description": "Etichetta per il campo tipo cavo o attrezzatura (preset a livello progetto)."
+  },
+  "cableEquipmentTypeNotSet": "Non impostato",
+  "@cableEquipmentTypeNotSet": {
+    "description": "Opzione menu quando nessun tipo cavo/attrezzatura è selezionato."
+  },
   "buttonSave": "Salva",
   "@buttonSave": {
     "description": "Etichetta per il pulsante salva."

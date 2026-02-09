@@ -50,6 +50,12 @@ class SEn extends S {
   String get formFieldPresumedTotalLengthLabel => 'Presumed Total Length (m)';
 
   @override
+  String get formFieldCableEquipmentTypeLabel => 'Cable / equipment type';
+
+  @override
+  String get cableEquipmentTypeNotSet => 'Not set';
+
+  @override
   String get buttonSave => 'Save';
 
   @override

@@ -65,7 +65,18 @@ Questo documento riassume le funzionalità **attuali** dell’app rilevanti per 
 
 ---
 
-## 7. Organizzazione di progetti e linee
+## 7. Tipo cavo / attrezzatura (livello progetto)
+
+- **Selezione del tipo di cavo a livello di progetto** — ogni progetto può essere assegnato a un tipo di cavo/attrezzatura (es. diametro fune, peso, carico di rottura).
+- **Tabella tipi di cavo** — una tabella DB dedicata memorizza i tipi di cavo con UUID; i tipi incorporati (pratica italiana/europea: fune portante, fune traente, skyline, mainline) vengono inseriti al primo avvio.
+- **Dati di seed** — `cable_equipment_presets.dart` definisce i tipi di cavo incorporati con UUID fissi; il seed viene eseguito solo quando la tabella è vuota.
+- **Tipi aggiunti dall’utente** — il DB supporta l’aggiunta di tipi di cavo personalizzati a runtime (UI da implementare); i dettagli del progetto leggono sempre dal DB, non dai preset.
+
+**Caso d’uso:** Ipotesi coerenti per future logiche di freccia, franco o carico; allinea il lessico con gli strumenti desktop (es. SEILAPLAN).
+
+---
+
+## 8. Organizzazione di progetti e linee
 
 - **Progetti** che raggruppano i punti in linee o operazioni distinte.
 - **Elenco e editor dei punti** per ordinare, numerare e modificare i punti (es. sequenza degli ancoraggi lungo la linea).
@@ -74,7 +85,7 @@ Questo documento riassume le funzionalità **attuali** dell’app rilevanti per 
 
 ---
 
-## 8. Rifinitura delle posizioni dei punti (Marker Slide)
+## 9. Rifinitura delle posizioni dei punti (Marker Slide)
 
 - **Marker slide:** pressione lunga e trascinamento di un marcatore sulla mappa per spostarlo; le coordinate vengono aggiornate al rilascio.
 - La posizione originale può essere mostrata durante il trascinamento; la conversione delle coordinate usa la proiezione della mappa per un posizionamento accurato.
@@ -83,7 +94,7 @@ Questo documento riassume le funzionalità **attuali** dell’app rilevanti per 
 
 ---
 
-## 9. Foto ai punti
+## 10. Foto ai punti
 
 - **Immagini collegate ai punti** (allegato fotografico per punto) per documentare ancoraggi, supporti, ostacoli e piazzali.
 
@@ -91,7 +102,7 @@ Questo documento riassume le funzionalità **attuali** dell’app rilevanti per 
 
 ---
 
-## 10. Visualizzazione della linea sulla mappa
+## 11. Visualizzazione della linea sulla mappa
 
 - **Polilinee** che collegano i punti in sequenza lungo la linea.
 - **Frecce sulla polilinea** per indicare il verso della linea.
@@ -101,7 +112,7 @@ Questo documento riassume le funzionalità **attuali** dell’app rilevanti per 
 
 ---
 
-## 11. Esportazione dati
+## 12. Esportazione dati
 
 - **Esportazione dati** (nella versione completa/con licenza) per usare dati di progetti e punti in altri strumenti, report o pratiche.
 
@@ -109,7 +120,7 @@ Questo documento riassume le funzionalità **attuali** dell’app rilevanti per 
 
 ---
 
-## 12. Feedback sull’accuratezza della posizione
+## 13. Feedback sull’accuratezza della posizione
 
 - **Marcatore di posizione con cerchio di accuratezza** per vedere la qualità GPS corrente quando si inseriscono o controllano i punti (es. per RTK o GNSS standard).
 
@@ -119,6 +130,6 @@ Questo documento riassume le funzionalità **attuali** dell’app rilevanti per 
 
 ## Riepilogo
 
-Teleferika supporta oggi il **rilievo in campo delle linee a fune**: raccolta punti GPS con quota, allineamento bussola/azimut, direzione/distanza e lunghezza della fune, più tipi di mappa (inclusi topo e satellite), uso offline, documentazione fotografica per punto e visualizzazione della linea con colorazione legata alla pendenza. È pensata per tecnici forestali, topografi, project manager e pianificatori ambientali che devono tracciare e documentare linee a gru a cavo per il trasporto del legname.
+Teleferika supporta oggi il **rilievo in campo delle linee a fune**: raccolta punti GPS con quota, allineamento bussola/azimut, direzione/distanza e lunghezza della fune, selezione del tipo di cavo/attrezzatura a livello di progetto, più tipi di mappa (inclusi topo e satellite), uso offline, documentazione fotografica per punto e visualizzazione della linea con colorazione legata alla pendenza. È pensata per tecnici forestali, topografi, project manager e pianificatori ambientali che devono tracciare e documentare linee a gru a cavo per il trasporto del legname.
 
 Per possibili funzionalità future che potrebbero aiutare ulteriormente le aziende, vedi **[FUNCTIONS_FOR_COMPANIES_README.md](./FUNCTIONS_FOR_COMPANIES_README.md)**.

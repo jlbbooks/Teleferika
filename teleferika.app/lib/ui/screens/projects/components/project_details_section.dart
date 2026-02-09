@@ -6,6 +6,7 @@ import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/core/project_state_manager.dart';
+import 'package:teleferika/db/database.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
@@ -16,12 +17,15 @@ class ProjectDetailsSection extends StatefulWidget {
   final ProjectModel project;
   final bool isNew;
   final int pointsCount;
+  /// Cable types from DB (project-level presets + user-added). When null, uses static presets.
+  final List<CableType>? cableTypes;
 
   const ProjectDetailsSection({
     super.key,
     required this.project,
     required this.isNew,
     required this.pointsCount,
+    this.cableTypes,
   });
 
   @override
@@ -80,11 +84,13 @@ class ProjectDetailsSectionState extends State<ProjectDetailsSection>
     final note = _noteController.text.trim();
     final presumed = double.tryParse(_presumedTotalLengthController.text);
     final azimuth = double.tryParse(_azimuthController.text);
+    final cableTypeId = _currentProject.cableEquipmentTypeId;
     final dirty =
         name != widget.project.name ||
         note != widget.project.note ||
         presumed != widget.project.presumedTotalLength ||
         azimuth != widget.project.azimuth ||
+        cableTypeId != widget.project.cableEquipmentTypeId ||
         _projectDate != widget.project.date;
 
     setState(() {
@@ -96,6 +102,7 @@ class ProjectDetailsSectionState extends State<ProjectDetailsSection>
             ? null
             : presumed,
         azimuth: _azimuthController.text.trim().isEmpty ? null : azimuth,
+        cableEquipmentTypeId: cableTypeId,
         date: _projectDate,
       );
     });
@@ -368,6 +375,73 @@ class ProjectDetailsSectionState extends State<ProjectDetailsSection>
     );
   }
 
+  Widget _buildCableEquipmentTypeDropdown(
+    BuildContext context,
+    S? s,
+    ProjectModel project,
+  ) {
+    final notSetLabel =
+        s?.cableEquipmentTypeNotSet ?? 'Not set';
+    return DropdownButtonFormField<String?>(
+      value: _currentProject.cableEquipmentTypeId,
+      decoration: InputDecoration(
+        labelText:
+            s?.formFieldCableEquipmentTypeLabel ?? 'Cable / equipment type',
+        prefixIcon: Icon(
+          Icons.cable,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          size: 20,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.0),
+          borderSide: BorderSide(
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.0),
+          borderSide: BorderSide(
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8.0),
+          borderSide: BorderSide(
+            color: Theme.of(context).colorScheme.primary,
+            width: 2.0,
+          ),
+        ),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.surface,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16.0,
+          vertical: 12.0,
+        ),
+      ),
+      items: [
+        DropdownMenuItem<String?>(
+          value: null,
+          child: Text(notSetLabel),
+        ),
+        if (widget.cableTypes != null && widget.cableTypes!.isNotEmpty)
+          ...widget.cableTypes!.map(
+            (t) => DropdownMenuItem<String?>(
+              value: t.id,
+              child: Text(t.name),
+            ),
+          ),
+      ],
+      onChanged: (String? value) {
+        setState(() {
+          _currentProject = _currentProject.copyWith(
+            cableEquipmentTypeId: value,
+          );
+        });
+        _onChanged();
+      },
+    );
+  }
+
   Widget _buildStatCard({
     required IconData icon,
     required String title,
@@ -555,6 +629,8 @@ class ProjectDetailsSectionState extends State<ProjectDetailsSection>
                             azimuth: _azimuthController.text.trim().isEmpty
                                 ? null
                                 : azimuth,
+                            cableEquipmentTypeId:
+                                _currentProject.cableEquipmentTypeId,
                             date: _projectDate,
                           );
 
@@ -829,6 +905,8 @@ class ProjectDetailsSectionState extends State<ProjectDetailsSection>
                             azimuth: _azimuthController.text.trim().isEmpty
                                 ? null
                                 : azimuth,
+                            cableEquipmentTypeId:
+                                _currentProject.cableEquipmentTypeId,
                             date: _projectDate,
                           );
 
@@ -847,6 +925,11 @@ class ProjectDetailsSectionState extends State<ProjectDetailsSection>
                           return null;
                         },
                       ),
+                      const SizedBox(height: 16),
+
+                      // Cable / equipment type
+                      _buildCableEquipmentTypeDropdown(context, s, project),
+
                       const SizedBox(height: 16),
 
                       // Current Rope Length (calculated from points)
@@ -1000,6 +1083,8 @@ class ProjectDetailsSectionState extends State<ProjectDetailsSection>
                                       ? null
                                       : presumed,
                                   azimuth: azimuth,
+                                  cableEquipmentTypeId:
+                                      _currentProject.cableEquipmentTypeId,
                                   date: _projectDate,
                                 );
 
@@ -1080,6 +1165,7 @@ class ProjectDetailsSectionState extends State<ProjectDetailsSection>
           ? null
           : presumed,
       azimuth: _azimuthController.text.trim().isEmpty ? null : azimuth,
+      cableEquipmentTypeId: _currentProject.cableEquipmentTypeId,
       date: _projectDate,
     );
 

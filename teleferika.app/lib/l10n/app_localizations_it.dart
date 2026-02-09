@@ -51,6 +51,12 @@ class SIt extends S {
       'Lunghezza totale presunta (m)';
 
   @override
+  String get formFieldCableEquipmentTypeLabel => 'Tipo cavo / attrezzatura';
+
+  @override
+  String get cableEquipmentTypeNotSet => 'Non impostato';
+
+  @override
   String get buttonSave => 'Salva';
 
   @override

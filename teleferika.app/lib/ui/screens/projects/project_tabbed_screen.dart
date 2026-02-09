@@ -15,6 +15,8 @@ import 'package:teleferika/licensing/licensed_features_loader.dart';
 import 'package:teleferika/ui/screens/map/map_screen.dart';
 import 'package:teleferika/ui/screens/points/components/points_section.dart';
 import '../points/points_list_screen.dart';
+import 'package:teleferika/db/database.dart';
+import 'package:teleferika/db/drift_database_helper.dart';
 import 'package:teleferika/ui/screens/projects/components/project_details_section.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 import 'package:teleferika/core/app_config.dart';
@@ -90,6 +92,8 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
 
   bool _projectWasSuccessfullySaved = false;
 
+  List<CableType>? _cableTypes; // From DB (built-in + user-added), loaded async
+
   final LicenceService _licenceService =
       LicenceService.instance; // Get instance
 
@@ -118,6 +122,7 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
   void initState() {
     super.initState();
     _isEffectivelyNew = widget.isNew;
+    _loadCableTypes();
     _projectDate =
         widget.project.date ?? (widget.isNew ? DateTime.now() : null);
     _lastUpdateTime = widget.project.lastUpdate;
@@ -173,6 +178,18 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
           _loadProjectIntoGlobalState();
         }
       });
+    }
+  }
+
+  Future<void> _loadCableTypes() async {
+    try {
+      final list =
+          await DriftDatabaseHelper.instance.getAllCableTypes();
+      if (mounted) {
+        setState(() => _cableTypes = list);
+      }
+    } catch (e) {
+      logger.warning('Could not load cable types: $e');
     }
   }
 
@@ -440,6 +457,7 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
           project: currentProject ?? widget.project,
           isNew: _isEffectivelyNew,
           pointsCount: currentPoints.length,
+          cableTypes: _cableTypes,
         ),
         PointsSection(
           key: _pointsTabKey,

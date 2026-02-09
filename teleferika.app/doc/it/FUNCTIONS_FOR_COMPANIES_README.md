@@ -44,8 +44,8 @@ Questo documento elenca **funzionalità potenziali** che potrebbero rendere Tele
 
 ### Tipo di gru a cavo / fune
 
-- **Idea:** **“Tipo cavo/attrezzatura” a livello di progetto** (o un piccolo set di preset): es. diametro fune, peso, resistenza o tipo di gru nominato.
-- **Perché aiuta:** Consente ipotesi coerenti per eventuali logiche future su freccia, franco o carico e allinea il lessico con il software da desktop (es. tipo gru a cavo di SEILAPLAN).
+- **Implementato:** **Selezione del tipo di cavo/attrezzatura a livello di progetto** è disponibile. I tipi di cavo sono memorizzati in una tabella DB dedicata con UUID; i tipi incorporati (pratica italiana/europea) vengono inseriti al primo avvio da `cable_equipment_presets.dart`. I dettagli del progetto leggono dal DB; i tipi aggiunti dall'utente sono supportati (UI da implementare).
+- **Futuro:** Tipi di gru nominati, dati estesi del produttore o integrazione con calcoli di freccia/carico.
 
 ---
 
@@ -101,7 +101,7 @@ Questo documento elenca **funzionalità potenziali** che potrebbero rendere Tele
 | Meccanica   | Freccia/franco (semplificato)        | Controllo rapido “franco OK?”; si integra con flussi SEILAPLAN/CHPS |
 | Meccanica   | Carico/campata o suggerimento “campata max” | Supporta lunghezza campate e decisioni sui supporti intermedi   |
 | Terreno     | Profilo altimetrico (vista o export)  | Revisione standard; input per progettazione da desktop              |
-| Modello dati| Tipo cavo/attrezzatura per progetto   | Ipotesi di progetto coerenti; collegamento con strumenti da ufficio |
+| Modello dati| Tipo cavo/attrezzatura per progetto   | ✅ Implementato — tabella DB, dati di seed, selezione progetto |
 | Export      | KML, Shapefile/GeoJSON, CSV profilo  | Si integra con GIS e SEILAPLAN/CHPS; passaggio di consegne migliore |
 | Reporting   | Report linea (PDF/HTML)               | Pratiche, documentazione, passaggio alla progettazione              |
 | Sicurezza   | Controlli pendenza / inclinazione    | Allineato a controlli su sistemi gravitazionali e sicurezza        |
