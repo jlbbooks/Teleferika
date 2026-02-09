@@ -609,10 +609,10 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
   Future<bool> updateNtripSetting(NtripSettingCompanion settings) async {
     _logger.fine('Updating NTRIP setting');
     try {
-      final id = settings.id.value;
-      if (id == null) {
+      if (!settings.id.present) {
         throw ArgumentError('ID is required for update');
       }
+      final id = settings.id.value;
       final rowsAffected = await (update(
         ntripSettings,
       )..where((t) => t.id.equals(id))).write(settings);
@@ -655,9 +655,8 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
   Future<void> saveNtripSettings(NtripSettingCompanion settings) async {
     _logger.fine('Saving NTRIP settings (legacy method)');
     try {
-      // If ID is provided, update; otherwise insert
-      final id = settings.id.value;
-      if (id != null) {
+      // If ID is provided, update; otherwise insert (use .present to distinguish set vs absent)
+      if (settings.id.present) {
         await updateNtripSetting(settings);
       } else {
         await insertNtripSetting(settings);

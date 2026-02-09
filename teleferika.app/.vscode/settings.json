@@ -1,7 +1,5 @@
 {
-  "dart.flutterRunAdditionalArgs": [
-    "--device-timeout=60"
-  ],
+  "dart.flutterRunAdditionalArgs": ["--device-timeout=60"],
   "dart.debugExtensionVersion": "3.50.0",
   "files.watcherExclude": {
     "**/build/**": true,
@@ -11,5 +9,13 @@
   "dart.openDevTools": "flutter",
   "dart.flutterSdkPath": ".fvm/versions/3.38.9",
   "java.compile.nullAnalysis.mode": "automatic",
-  "java.configuration.updateBuildConfiguration": "automatic"
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.jdt.ls.java.home": "/usr/lib/jvm/java-21-openjdk",
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-21",
+      "path": "/usr/lib/jvm/java-21-openjdk",
+      "default": true
+    }
+  ]
 }

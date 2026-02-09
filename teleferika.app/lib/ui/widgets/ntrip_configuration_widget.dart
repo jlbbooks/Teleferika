@@ -1622,7 +1622,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
                       // Country selection
                       if (_countries.isNotEmpty)
                         DropdownButtonFormField<String>(
-                          value: _selectedCountry,
+                          initialValue: _selectedCountry,
                           isExpanded: true,
                           decoration: InputDecoration(
                             labelText: 'Country',
@@ -1672,7 +1672,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
                       // State selection
                       if (_selectedCountry != null && _states.isNotEmpty)
                         DropdownButtonFormField<String>(
-                          value: _selectedState,
+                          initialValue: _selectedState,
                           isExpanded: true,
                           decoration: InputDecoration(
                             labelText: 'State (Regione) *',
@@ -1722,7 +1722,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
                       // Host selection
                       if (_selectedState != null && _availableHosts.isNotEmpty)
                         DropdownButtonFormField<NtripSetting>(
-                          value: _selectedHost,
+                          initialValue: _selectedHost,
                           isExpanded: true,
                           decoration: InputDecoration(
                             labelText: 'Host Name',
@@ -1988,7 +1988,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
                     _selectedCountryInForm ?? countries.first;
 
                 return DropdownButtonFormField<String>(
-                  value: selectedCountry,
+                  initialValue: selectedCountry,
                   isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Country',
@@ -2051,7 +2051,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
                 }
 
                 return DropdownButtonFormField<String>(
-                  value: validState,
+                  initialValue: validState,
                   isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'State (Regione) *',

@@ -1,10 +1,10 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.io.FileInputStream
 import java.util.Properties
 
 plugins {
     id("com.android.application")
-    id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
+    id("org.jetbrains.kotlin.android")
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -23,17 +23,25 @@ fun loadKeystoreProperties(): Properties {
 
 val keystoreProperties = loadKeystoreProperties()
 
-//kotlin {
-//    compilerOptions {
-//        jvmTarget = JvmTarget.fromTarget("17")
-//    }
-//}
+// Load local.properties for Flutter version (written by Flutter tooling)
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) FileInputStream(file).use { load(it) }
+}
+val flutterVersionCode = localProperties.getProperty("flutter.versionCode", "1")
+val flutterVersionName = localProperties.getProperty("flutter.versionName", "1.0.0")
+
+// Configure Kotlin compiler options at the top level
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_21)
+    }
+}
 
 android {
     namespace = "com.jlbbooks.teleferika"
-    compileSdk = 36 //flutter.compileSdkVersion
-    // https://developer.android.com/ndk/downloads/
-    ndkVersion = "28.2.13676358" //""27.2.12479018" //flutter.ndkVersion
+    compileSdkVersion(flutter.compileSdkVersion)
+    ndkVersion = flutter.ndkVersion
 
     signingConfigs {
         create("release") { // This will be used for your release build if you don't override it
@@ -63,25 +71,22 @@ android {
         // }
     }
 
-
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+        isCoreLibraryDesugaringEnabled = true
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+    sourceSets {
+        getByName("main").java.srcDirs("src/main/kotlin")
     }
 
     defaultConfig {
         applicationId = "com.jlbbooks.teleferika"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        versionCode = flutterVersionCode.toInt()
+        versionName = flutterVersionName
     }
 
     buildTypes {
@@ -123,3 +128,9 @@ android {
 flutter {
     source = "../.."
 }
+
+
+dependencies {
+    "coreLibraryDesugaring"("com.android.tools:desugar_jdk_libs:2.1.5")
+}
+
