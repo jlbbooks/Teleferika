@@ -524,8 +524,8 @@ class MapScreenState extends State<MapScreen>
   Widget build(BuildContext context) {
     return ChangeNotifierProvider.value(
       value: _stateManager,
-      child: Consumer<ProjectStateManager>(
-        builder: (context, projectState, child) {
+      child: Consumer2<ProjectStateManager, MapStateManager>(
+        builder: (context, projectState, mapState, child) {
           // Always recalculate lines when state changes
           _stateManager.recalculateAndDrawLines(context);
 

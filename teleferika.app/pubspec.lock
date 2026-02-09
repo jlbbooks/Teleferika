@@ -739,7 +739,7 @@ packages:
       path: "../licensed_features_package"
       relative: true
     source: path
-    version: "0.8.1+24"
+    version: "0.8.2+25"
   lints:
     dependency: transitive
     description:
