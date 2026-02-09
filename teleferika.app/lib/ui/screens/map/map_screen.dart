@@ -32,6 +32,7 @@ import '../../../map/services/map_cache_manager.dart';
 import '../../../ui/widgets/project_points_layer.dart';
 import '../../../ble/ble_service.dart';
 import '../../../ble/nmea_parser.dart';
+import '../../../ble/rtk_device_service.dart';
 
 class MapScreen extends StatefulWidget {
   final ProjectModel project;
@@ -47,7 +48,7 @@ class MapScreenState extends State<MapScreen>
     with StatusMixin, TickerProviderStateMixin {
   final Logger logger = Logger('MapScreen');
   final SettingsService _settingsService = SettingsService();
-  final BLEService _bleService = BLEService.instance;
+  final RtkDeviceService _rtkService = RtkDeviceService.instance;
 
   // State manager
   late MapStateManager _stateManager;
@@ -84,11 +85,11 @@ class MapScreenState extends State<MapScreen>
 
   void _initBleConnectionListener() {
     // Check initial connection state
-    _isBleConnected = _bleService.isConnected;
+    _isBleConnected = _rtkService.isConnected;
 
     // Listen to connection state changes
     BLEConnectionState? previousState;
-    _bleConnectionSubscription = _bleService.connectionState.listen((state) {
+    _bleConnectionSubscription = _rtkService.connectionState.listen((state) {
       if (mounted) {
         final wasConnected = previousState == BLEConnectionState.connected;
         final isNowDisconnected = state == BLEConnectionState.disconnected;
@@ -117,7 +118,7 @@ class MapScreenState extends State<MapScreen>
     });
 
     // Listen to NMEA data to get fix quality
-    _nmeaDataSubscription = _bleService.nmeaData.listen((nmeaData) {
+    _nmeaDataSubscription = _rtkService.nmeaData.listen((nmeaData) {
       if (mounted) {
         // NMEA data logging removed
         setState(() {
@@ -233,7 +234,7 @@ class MapScreenState extends State<MapScreen>
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.all(16),
         child: GPSInfoPanel(
-          bleService: _bleService,
+          rtkService: _rtkService,
           currentPosition: _stateManager.currentPosition,
           isUsingBleGps: _stateManager.controller.isUsingBleGps,
         ),

@@ -1,20 +1,20 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:teleferika/ble/ble_service.dart';
+import 'package:teleferika/ble/rtk_device_service.dart';
 import 'package:teleferika/ble/nmea_parser.dart';
 import 'package:teleferika/core/fix_quality_colors.dart';
 import 'package:teleferika/core/platform_gps_info.dart';
 import 'package:teleferika/ui/screens/ble/ble_screen.dart';
 
 class GPSInfoPanel extends StatefulWidget {
-  final BLEService bleService;
+  final RtkDeviceService rtkService;
   final Position? currentPosition;
   final bool isUsingBleGps;
 
   const GPSInfoPanel({
     super.key,
-    required this.bleService,
+    required this.rtkService,
     required this.currentPosition,
     required this.isUsingBleGps,
   });
@@ -39,8 +39,8 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
     _currentPosition = widget.currentPosition;
 
     if (widget.isUsingBleGps) {
-      // Subscribe to BLE GPS data streams
-      _nmeaSubscription = widget.bleService.nmeaData.listen((data) {
+      // Subscribe to RTK GPS data streams (BLE or USB)
+      _nmeaSubscription = widget.rtkService.nmeaData.listen((data) {
         if (mounted) {
           setState(() {
             _latestNmeaData = data;
@@ -48,7 +48,7 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
         }
       });
 
-      _positionSubscription = widget.bleService.gpsData.listen((position) {
+      _positionSubscription = widget.rtkService.gpsData.listen((position) {
         if (mounted) {
           setState(() {
             _currentPosition = position;
@@ -129,8 +129,8 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final device = widget.bleService.connectedDevice;
-    final isBleConnected = widget.bleService.isConnected;
+    final deviceName = widget.rtkService.connectedDeviceName;
+    final isBleConnected = widget.rtkService.isConnected;
     final position = _currentPosition ?? widget.currentPosition;
     final nmeaData = _latestNmeaData;
 
@@ -299,7 +299,7 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
                   const SizedBox(height: 12),
                 ],
 
-                if (isBleConnected && device != null) ...[
+                if (isBleConnected) ...[
                   // RTK Device Info
                   _buildInfoRow('Source', 'RTK Device', Colors.green),
                   const SizedBox(height: 8),
@@ -307,9 +307,9 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
                   const SizedBox(height: 8),
                   _buildInfoRow(
                     'Device',
-                    device.platformName.isNotEmpty
-                        ? device.platformName
-                        : device.remoteId.toString(),
+                    deviceName?.isNotEmpty == true
+                        ? deviceName!
+                        : 'RTK Receiver',
                   ),
                   const SizedBox(height: 16),
                   // Button to disconnect from RTK device
@@ -318,7 +318,7 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
                     child: OutlinedButton.icon(
                       onPressed: () async {
                         try {
-                          await widget.bleService.disconnectDevice();
+                          await widget.rtkService.disconnect();
                           if (mounted) {
                             Navigator.of(
                               context,

@@ -8,6 +8,7 @@ import 'package:logging/logging.dart';
 import 'package:teleferika/ble/ble_service.dart';
 import 'package:teleferika/ble/nmea_parser.dart';
 import 'package:teleferika/ble/ntrip_client.dart';
+import 'package:teleferika/ble/rtk_device_service.dart';
 import 'package:teleferika/ble/usb_serial_service.dart';
 import 'package:teleferika/core/fix_quality_colors.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
@@ -40,23 +41,18 @@ class BLEScreen extends StatefulWidget {
 class _BLEScreenState extends State<BLEScreen>
     with SingleTickerProviderStateMixin {
   final Logger logger = Logger('BLEScreen');
-  final BLEService _bleService = BLEService.instance;
-  final UsbSerialService _usbService = UsbSerialService.instance;
+  final RtkDeviceService _rtkService = RtkDeviceService.instance;
 
   List<ScanResult> _scanResults = [];
   String? _lastConnectedDeviceId;
   BLEConnectionState _connectionState = BLEConnectionState.disconnected;
-  BLEConnectionState _usbConnectionState = BLEConnectionState.disconnected;
   bool _connectedViaUsb = false;
   bool _isScanning = false;
   StreamSubscription<List<ScanResult>>? _scanResultsSubscription;
   StreamSubscription<bool>? _isScanningSubscription;
   StreamSubscription<BLEConnectionState>? _connectionStateSubscription;
-  StreamSubscription<BLEConnectionState>? _usbConnectionStateSubscription;
   StreamSubscription<Position>? _gpsDataSubscription;
   StreamSubscription<NMEAData>? _nmeaDataSubscription;
-  StreamSubscription<Position>? _usbGpsDataSubscription;
-  StreamSubscription<NMEAData>? _usbNmeaDataSubscription;
   bool _hasPermissions = false;
 
   List<UsbDeviceInfo> _usbDevices = [];
@@ -128,36 +124,24 @@ class _BLEScreenState extends State<BLEScreen>
     });
   }
 
-  /// Refresh the connection state from the BLE and USB services
+  /// Refresh the connection state from the RTK device service
   void _refreshConnectionState() {
     if (!mounted) return;
 
     setState(() {
-      if (_usbService.isConnected) {
-        _connectedViaUsb = true;
-        _usbConnectionState = BLEConnectionState.connected;
-        _connectionState = BLEConnectionState.disconnected;
+      _connectedViaUsb = _rtkService.activeMode == RtkConnectionMode.usb;
+      if (_rtkService.isConnected) {
+        _connectionState = BLEConnectionState.connected;
         _lastDataReceivedTime = DateTime.now();
-        _connectionModeIndex = 1; // USB mode
+        _connectionModeIndex = _connectedViaUsb ? 1 : 0;
       } else {
-        _connectedViaUsb = false;
-        _usbConnectionState = BLEConnectionState.disconnected;
-        if (_bleService.connectedDevice != null) {
-          final wasDisconnected =
-              _connectionState == BLEConnectionState.disconnected;
-          _connectionState = BLEConnectionState.connected;
-          if (wasDisconnected) {
-            _lastDataReceivedTime = DateTime.now();
-          }
-        } else {
-          _connectionState = BLEConnectionState.disconnected;
-        }
-        _connectionModeIndex = 0; // Bluetooth mode
+        _connectionState = BLEConnectionState.disconnected;
+        _connectionModeIndex = 0;
       }
-      _isScanning = _bleService.isScanning;
-      
+      _isScanning = _rtkService.bleTransport.isScanning;
+
       // Refresh NTRIP connection state from active service
-      final ntripClient = _connectedViaUsb ? _usbService.ntripClient : _bleService.ntripClient;
+      final ntripClient = _rtkService.ntripClient;
       if (ntripClient != null) {
         _ntripConnectionState = ntripClient.connectionState;
       } else {
@@ -181,7 +165,7 @@ class _BLEScreenState extends State<BLEScreen>
   }
 
   void _setupSubscriptions() {
-    _scanResultsSubscription = _bleService.scanResults.listen((results) {
+    _scanResultsSubscription = _rtkService.bleTransport.scanResults.listen((results) {
       if (mounted) {
         setState(() {
           _scanResults = _sortScanResults(results);
@@ -191,7 +175,7 @@ class _BLEScreenState extends State<BLEScreen>
       }
     });
 
-    _isScanningSubscription = _bleService.isScanningStream.listen((isScanning) {
+    _isScanningSubscription = _rtkService.bleTransport.isScanningStream.listen((isScanning) {
       if (mounted) {
         setState(() {
           _isScanning = isScanning;
@@ -202,30 +186,55 @@ class _BLEScreenState extends State<BLEScreen>
     // NTRIP connection state subscription - subscribe to active service
     _setupNtripSubscriptions();
 
-    _connectionStateSubscription = _bleService.connectionState.listen((state) {
-      if (mounted && !_connectedViaUsb) {
+    _connectionStateSubscription = _rtkService.connectionState.listen((state) {
+      if (mounted) {
+        final wasError = _connectionState == BLEConnectionState.error;
         setState(() {
-          final wasConnected = _connectionState == BLEConnectionState.connected;
           _connectionState = state;
-          _isScanning = _bleService.isScanning;
+          _connectedViaUsb = _rtkService.activeMode == RtkConnectionMode.usb;
+          _isScanning = _rtkService.bleTransport.isScanning;
           if (state == BLEConnectionState.disconnected) {
             _hasReceivedFirstPosition = false;
             _lastDataReceivedTime = null;
             _currentPosition = null;
             _currentNmeaData = null;
-          } else if (state == BLEConnectionState.connected && !wasConnected) {
-            _connectionModeIndex = 0; // Bluetooth mode
+            _connectionModeIndex = 0;
+            _setupNtripSubscriptions();
+          } else if (state == BLEConnectionState.connected) {
+            _connectionModeIndex = _connectedViaUsb ? 1 : 0;
             _lastDataReceivedTime = DateTime.now();
-            _hasReceivedFirstPosition = false;
-            // Refresh NTRIP subscriptions for BLE service
+            if (_currentPosition != null || _currentNmeaData != null) {
+              _hasReceivedFirstPosition = true;
+            }
             _setupNtripSubscriptions();
           }
         });
+        // When USB connection fails, show a hint about permission
+        if (_connectedViaUsb &&
+            state == BLEConnectionState.error &&
+            !wasError &&
+            mounted) {
+          final msg = _rtkService.lastUsbConnectionError ?? '';
+          final isPermission = msg.contains('Permission') ||
+              msg.contains('SecurityException') ||
+              msg.contains('permission');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                isPermission
+                    ? 'USB permission required. If Android showed a dialog, tap Allow and try Connect again.'
+                    : 'USB connection failed.${msg.isNotEmpty ? ' $msg' : ''}',
+              ),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
       }
     });
 
-    _gpsDataSubscription = _bleService.gpsData.listen((position) {
-      if (mounted && !_connectedViaUsb) {
+    _gpsDataSubscription = _rtkService.gpsData.listen((position) {
+      if (mounted) {
         setState(() {
           _currentPosition = position;
           _hasReceivedFirstPosition = true;
@@ -233,87 +242,14 @@ class _BLEScreenState extends State<BLEScreen>
       }
     });
 
-    _nmeaDataSubscription = _bleService.nmeaData.listen((nmeaData) {
-      if (mounted && !_connectedViaUsb) {
+    _nmeaDataSubscription = _rtkService.nmeaData.listen((nmeaData) {
+      if (mounted) {
         setState(() {
           _currentNmeaData = nmeaData;
           _lastDataReceivedTime = DateTime.now();
         });
       }
     });
-
-    if (UsbSerialService.isSupported) {
-      _usbConnectionStateSubscription =
-          _usbService.connectionState.listen((state) {
-        if (mounted) {
-          final wasError = _usbConnectionState == BLEConnectionState.error;
-          setState(() {
-            _usbConnectionState = state;
-            if (_connectedViaUsb && state == BLEConnectionState.disconnected) {
-              _hasReceivedFirstPosition = false;
-              _lastDataReceivedTime = null;
-              _currentPosition = null;
-              _currentNmeaData = null;
-              _connectedViaUsb = false;
-              _connectionModeIndex = 0; // Bluetooth mode
-              // Refresh NTRIP subscriptions for BLE service
-              _setupNtripSubscriptions();
-            } else if (state == BLEConnectionState.connected) {
-              // connectToDevice() calls disconnectDevice() first, which emits
-              // "disconnected" and our listener sets _connectedViaUsb = false.
-              // So we must set it true again when the new connection is established.
-              _connectedViaUsb = true;
-              _connectionModeIndex = 1; // USB mode
-              _lastDataReceivedTime = DateTime.now();
-              // If we already have a position, mark that we've received the first one
-              if (_currentPosition != null || _currentNmeaData != null) {
-                _hasReceivedFirstPosition = true;
-              }
-              // Refresh NTRIP subscriptions for USB service
-              _setupNtripSubscriptions();
-            }
-          });
-          // When USB connection fails, show a hint about permission
-          if (_connectedViaUsb &&
-              state == BLEConnectionState.error &&
-              !wasError &&
-              mounted) {
-            final msg = _usbService.lastConnectionError ?? '';
-            final isPermission = msg.contains('Permission') ||
-                msg.contains('SecurityException') ||
-                msg.contains('permission');
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  isPermission
-                      ? 'USB permission required. If Android showed a dialog, tap Allow and try Connect again.'
-                      : 'USB connection failed.${msg.isNotEmpty ? ' $msg' : ''}',
-                ),
-                backgroundColor: Colors.orange,
-                duration: const Duration(seconds: 5),
-              ),
-            );
-          }
-        }
-      });
-      _usbGpsDataSubscription = _usbService.gpsData.listen((position) {
-        if (mounted && _connectedViaUsb) {
-          setState(() {
-            _currentPosition = position;
-            _hasReceivedFirstPosition = true;
-          });
-        }
-      });
-      _usbNmeaDataSubscription = _usbService.nmeaData.listen((nmeaData) {
-        if (mounted && _connectedViaUsb) {
-          setState(() {
-            _currentNmeaData = nmeaData;
-            _lastDataReceivedTime = DateTime.now();
-            _hasReceivedFirstPosition = true;
-          });
-        }
-      });
-    }
   }
 
   /// Sets up NTRIP subscriptions for the active service (BLE or USB)
@@ -321,9 +257,9 @@ class _BLEScreenState extends State<BLEScreen>
     // Cancel existing subscriptions
     _ntripConnectionStateSubscription?.cancel();
     _ntripErrorSubscription?.cancel();
-    
+
     // Get the active service's NTRIP client
-    final ntripClient = _connectedViaUsb ? _usbService.ntripClient : _bleService.ntripClient;
+    final ntripClient = _rtkService.ntripClient;
     
     if (ntripClient != null) {
       // Initialize state from current client state
@@ -369,11 +305,8 @@ class _BLEScreenState extends State<BLEScreen>
     _scanResultsSubscription?.cancel();
     _isScanningSubscription?.cancel();
     _connectionStateSubscription?.cancel();
-    _usbConnectionStateSubscription?.cancel();
     _gpsDataSubscription?.cancel();
     _nmeaDataSubscription?.cancel();
-    _usbGpsDataSubscription?.cancel();
-    _usbNmeaDataSubscription?.cancel();
     _ntripConnectionStateSubscription?.cancel();
     _ntripErrorSubscription?.cancel();
     _rtcmDataSubscription?.cancel();
@@ -393,11 +326,11 @@ class _BLEScreenState extends State<BLEScreen>
       setState(() {
         _isScanning = true;
       });
-      await _bleService.startScan();
+      await _rtkService.bleTransport.startScan();
       // Update state after scan starts (it may complete immediately)
       if (mounted) {
         setState(() {
-          _isScanning = _bleService.isScanning;
+          _isScanning = _rtkService.bleTransport.isScanning;
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -430,10 +363,10 @@ class _BLEScreenState extends State<BLEScreen>
       setState(() {
         _isScanning = false;
       });
-      await _bleService.stopScan();
+      await _rtkService.bleTransport.stopScan();
       if (mounted) {
         setState(() {
-          _isScanning = _bleService.isScanning;
+          _isScanning = _rtkService.bleTransport.isScanning;
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -446,7 +379,7 @@ class _BLEScreenState extends State<BLEScreen>
       logger.severe('Error stopping scan: $e');
       if (mounted) {
         setState(() {
-          _isScanning = _bleService.isScanning;
+          _isScanning = _rtkService.bleTransport.isScanning;
         });
       }
     }
@@ -454,8 +387,8 @@ class _BLEScreenState extends State<BLEScreen>
 
   Future<void> _connectToDevice(BluetoothDevice device) async {
     try {
-      final wasNtripConnected = _connectedViaUsb &&
-          _usbService.ntripClient?.connectionState == NTRIPConnectionState.connected;
+      final wasNtripConnected = _rtkService.ntripClient?.connectionState ==
+          NTRIPConnectionState.connected;
 
       if (mounted) {
         final s = S.of(context);
@@ -470,10 +403,10 @@ class _BLEScreenState extends State<BLEScreen>
         );
       }
 
-      await _bleService.connectToDevice(device, context);
+      await _rtkService.connectViaBle(device, context);
 
       if (!mounted) return;
-      if (!_bleService.isConnected) {
+      if (!_rtkService.isConnected) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -486,9 +419,6 @@ class _BLEScreenState extends State<BLEScreen>
         return;
       }
 
-      if (_usbService.isConnected) {
-        await _usbService.disconnectDevice();
-      }
       setState(() => _connectedViaUsb = false);
       _setupNtripSubscriptions();
 
@@ -516,12 +446,8 @@ class _BLEScreenState extends State<BLEScreen>
 
   Future<void> _disconnectDevice() async {
     try {
-      if (_connectedViaUsb) {
-        await _usbService.disconnectDevice();
-        setState(() => _connectedViaUsb = false);
-      } else {
-        await _bleService.disconnectDevice();
-      }
+      await _rtkService.disconnect();
+      setState(() => _connectedViaUsb = false);
       if (mounted) {
         setState(() {
           _hasReceivedFirstPosition = false;
@@ -543,24 +469,21 @@ class _BLEScreenState extends State<BLEScreen>
     }
   }
 
-  BLEConnectionState get _effectiveConnectionState =>
-      _connectedViaUsb ? _usbConnectionState : _connectionState;
+  BLEConnectionState get _effectiveConnectionState => _connectionState;
 
-  String? get _effectiveDeviceName =>
-      _connectedViaUsb ? _usbService.connectedDeviceName : _bleService.connectedDevice?.platformName;
+  String? get _effectiveDeviceName => _rtkService.connectedDeviceName;
 
-  bool get _isDeviceConnected =>
-      _connectionState == BLEConnectionState.connected || _usbConnectionState == BLEConnectionState.connected;
+  bool get _isDeviceConnected => _rtkService.isConnected;
 
   Future<void> _refreshUsbDevices() async {
-    final supported = UsbSerialService.isSupported;
+    final supported = RtkDeviceService.isUsbSupported;
     if (!supported) {
       logger.warning('[USB] Not supported, returning');
       return;
     }
     if (mounted) setState(() => _usbDevicesLoading = true);
     try {
-      final devices = await _usbService.listDevices();
+      final devices = await _rtkService.usbTransport.listDevices();
       if (mounted) {
         setState(() {
           _usbDevices = devices;
@@ -576,9 +499,9 @@ class _BLEScreenState extends State<BLEScreen>
   }
 
   Future<void> _connectToUsbDevice(UsbDeviceInfo info) async {
-    if (!UsbSerialService.isSupported) return;
-    final wasNtripConnected = !_connectedViaUsb &&
-        _bleService.ntripClient?.connectionState == NTRIPConnectionState.connected;
+    if (!RtkDeviceService.isUsbSupported) return;
+    final wasNtripConnected = _rtkService.ntripClient?.connectionState ==
+        NTRIPConnectionState.connected;
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -589,10 +512,10 @@ class _BLEScreenState extends State<BLEScreen>
       );
     }
 
-    await _usbService.connectToDevice(info);
+    await _rtkService.connectViaUsb(info);
 
     if (!mounted) return;
-    if (!_usbService.isConnected) {
+    if (!_rtkService.isConnected) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('USB connection failed'),
@@ -603,9 +526,6 @@ class _BLEScreenState extends State<BLEScreen>
       return;
     }
 
-    if (_bleService.connectedDevice != null) {
-      await _bleService.disconnectDevice();
-    }
     setState(() => _connectedViaUsb = true);
     _setupNtripSubscriptions();
 
@@ -615,7 +535,7 @@ class _BLEScreenState extends State<BLEScreen>
   }
 
   Future<void> _disconnectUsbDevice() async {
-    await _usbService.disconnectDevice();
+    await _rtkService.disconnect();
     if (mounted) {
       setState(() => _connectedViaUsb = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -643,29 +563,20 @@ class _BLEScreenState extends State<BLEScreen>
       setState(() => _ntripConnectionState = NTRIPConnectionState.connecting);
     }
 
-    final success = _connectedViaUsb
-        ? await _usbService.connectToNtrip(
-            host: host,
-            port: port,
-            mountPoint: mountPoint,
-            username: username,
-            password: password.isEmpty ? 'none' : password,
-            useSsl: _ntripUseSsl,
-          )
-        : await _bleService.connectToNtrip(
-            host: host,
-            port: port,
-            mountPoint: mountPoint,
-            username: username,
-            password: password.isEmpty ? 'none' : password,
-            useSsl: _ntripUseSsl,
-          );
+    final success = await _rtkService.connectToNtrip(
+      host: host,
+      port: port,
+      mountPoint: mountPoint,
+      username: username,
+      password: password.isEmpty ? 'none' : password,
+      useSsl: _ntripUseSsl,
+    );
 
     if (mounted) {
       _setupNtripSubscriptions();
       setState(() {
-        final client = _connectedViaUsb ? _usbService.ntripClient : _bleService.ntripClient;
-        _ntripConnectionState = client?.connectionState ?? NTRIPConnectionState.disconnected;
+        _ntripConnectionState = _rtkService.ntripClient?.connectionState ??
+            NTRIPConnectionState.disconnected;
       });
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -680,7 +591,7 @@ class _BLEScreenState extends State<BLEScreen>
 
   Future<void> _requestMtu(BluetoothDevice device) async {
     try {
-      await _bleService.requestMtu(device);
+      await BLEService.instance.requestMtu(device);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -757,11 +668,11 @@ class _BLEScreenState extends State<BLEScreen>
                   _buildNtripCard(s),
 
                 // Connection mode: Bluetooth | USB (Android only)
-                if (Platform.isAndroid && UsbSerialService.isSupported)
+                if (Platform.isAndroid && RtkDeviceService.isUsbSupported)
                   _buildConnectionModeSelector(s),
 
                 // Scan Controls (Bluetooth) or USB device list
-                if (!Platform.isAndroid || !UsbSerialService.isSupported || _connectionModeIndex == 0) ...[
+                if (!Platform.isAndroid || !RtkDeviceService.isUsbSupported || _connectionModeIndex == 0) ...[
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Row(
@@ -942,7 +853,7 @@ class _BLEScreenState extends State<BLEScreen>
 
   Widget _buildUsbDeviceList(S? s, BoxConstraints constraints) {
     final isConnectedViaUsb = _connectedViaUsb &&
-        _usbConnectionState == BLEConnectionState.connected;
+        _connectionState == BLEConnectionState.connected;
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -1074,7 +985,7 @@ class _BLEScreenState extends State<BLEScreen>
         final result = _scanResults[index];
         final device = result.device;
         final isConnected =
-            _bleService.connectedDevice?.remoteId == device.remoteId;
+            _rtkService.connectedBleDevice?.remoteId == device.remoteId;
 
         final wasPreviouslyConnected = _lastConnectedDeviceId == device.remoteId.toString();
 
@@ -1163,7 +1074,7 @@ class _BLEScreenState extends State<BLEScreen>
                     child: Text(s?.bleButtonConnect ?? 'Connect'),
                   ),
                   if (_connectionState == BLEConnectionState.connected &&
-                      _bleService.connectedDevice?.remoteId == device.remoteId)
+                      _rtkService.connectedBleDevice?.remoteId == device.remoteId)
                     ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);
@@ -1621,7 +1532,7 @@ class _BLEScreenState extends State<BLEScreen>
       usernameController: _ntripUsernameController,
       passwordController: _ntripPasswordController,
       useSsl: _ntripUseSsl,
-      isForwardingRtcm: _connectedViaUsb ? _usbService.isForwardingRtcm : _bleService.isForwardingRtcm,
+      isForwardingRtcm: _rtkService.isForwardingRtcm,
       canConnectNtrip: _hasReceivedFirstPosition,
       hostStatusRefreshTrigger: _hostStatusRefreshTrigger,
       onConnect: _connectToNtrip,
@@ -1752,23 +1663,14 @@ class _BLEScreenState extends State<BLEScreen>
         });
       }
 
-      final success = _connectedViaUsb
-          ? await _usbService.connectToNtrip(
-              host: host,
-              port: port,
-              mountPoint: mountPoint,
-              username: username,
-              password: password.isEmpty ? 'none' : password,
-              useSsl: _ntripUseSsl,
-            )
-          : await _bleService.connectToNtrip(
-              host: host,
-              port: port,
-              mountPoint: mountPoint,
-              username: username,
-              password: password.isEmpty ? 'none' : password,
-              useSsl: _ntripUseSsl,
-            );
+      final success = await _rtkService.connectToNtrip(
+        host: host,
+        port: port,
+        mountPoint: mountPoint,
+        username: username,
+        password: password.isEmpty ? 'none' : password,
+        useSsl: _ntripUseSsl,
+      );
 
       if (mounted) {
         if (success) {
@@ -1776,7 +1678,7 @@ class _BLEScreenState extends State<BLEScreen>
           _hasReceivedValidRtcm = false;
 
           // Update subscription to new client (from active service)
-          final ntripClient = _connectedViaUsb ? _usbService.ntripClient : _bleService.ntripClient;
+          final ntripClient = _rtkService.ntripClient;
           if (ntripClient != null) {
             _ntripConnectionStateSubscription?.cancel();
             _ntripErrorSubscription?.cancel();
@@ -1898,7 +1800,7 @@ class _BLEScreenState extends State<BLEScreen>
             }
           }
           _connectingHostId = null; // Clear tracking
-          final activeNtrip = _connectedViaUsb ? _usbService.ntripClient : _bleService.ntripClient;
+          final activeNtrip = _rtkService.ntripClient;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -1949,14 +1851,10 @@ class _BLEScreenState extends State<BLEScreen>
         _ntripConnectionState = NTRIPConnectionState.disconnected;
       });
 
-      if (_connectedViaUsb) {
-        await _usbService.disconnectFromNtrip();
-      } else {
-        await _bleService.disconnectFromNtrip();
-      }
+      await _rtkService.disconnectFromNtrip();
 
       if (mounted) {
-        final ntripClient = _connectedViaUsb ? _usbService.ntripClient : _bleService.ntripClient;
+        final ntripClient = _rtkService.ntripClient;
         if (ntripClient != null) {
           setState(() {
             _ntripConnectionState = ntripClient.connectionState;

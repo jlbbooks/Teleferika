@@ -13,6 +13,7 @@ import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 import 'package:teleferika/core/app_config.dart';
 import 'package:teleferika/ble/ble_service.dart';
+import 'package:teleferika/ble/rtk_device_service.dart';
 
 class MapControllerLogic {
   final ProjectModel project;
@@ -97,23 +98,23 @@ class MapControllerLogic {
     Function(Position) onPositionUpdate,
     Function(Object, [StackTrace?]) onError,
   ) {
-    final bleService = BLEService.instance;
+    final rtkService = RtkDeviceService.instance;
 
-    // First, check if BLE is connected and listen to BLE GPS
+    // First, check if RTK device (BLE or USB) is connected and listen
     _bleConnectionSubscription?.cancel();
-    _bleConnectionSubscription = bleService.connectionState.listen((state) {
+    _bleConnectionSubscription = rtkService.connectionState.listen((state) {
       if (state == BLEConnectionState.connected && !_isUsingBleGps) {
-        // BLE connected - switch to BLE GPS
+        // RTK connected - switch to RTK GPS
         _switchToBleGps(onPositionUpdate, onError);
       } else if (state == BLEConnectionState.disconnected && _isUsingBleGps) {
-        // BLE disconnected - switch back to device GPS
+        // RTK disconnected - switch back to device GPS
         _switchToDeviceGps(onPositionUpdate, onError);
       }
     });
 
     // Check initial connection state
-    if (bleService.connectedDevice != null) {
-      // Already connected - use BLE GPS
+    if (rtkService.isConnected) {
+      // Already connected - use RTK GPS
       _switchToBleGps(onPositionUpdate, onError);
     } else {
       // Not connected - use device GPS
@@ -139,10 +140,10 @@ class MapControllerLogic {
     _positionStreamSubscription?.cancel();
     _positionStreamSubscription = null;
 
-    // Subscribe to BLE GPS
-    final bleService = BLEService.instance;
+    // Subscribe to RTK GPS (BLE or USB)
+    final rtkService = RtkDeviceService.instance;
     _bleGpsSubscription?.cancel();
-    _bleGpsSubscription = bleService.gpsData.listen(
+    _bleGpsSubscription = rtkService.gpsData.listen(
       (position) {
         logger.finer(
           'MapControllerLogic: [GPS SOURCE: BLE] Position update -> '
