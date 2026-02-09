@@ -5,6 +5,7 @@ import 'package:teleferika/l10n/app_localizations.dart';
 class BleScanResultTile extends StatelessWidget {
   final ScanResult result;
   final bool isConnected;
+  final bool wasPreviouslyConnected;
   final VoidCallback onConnect;
   final VoidCallback onDisconnect;
   final VoidCallback? onTap;
@@ -13,6 +14,7 @@ class BleScanResultTile extends StatelessWidget {
     super.key,
     required this.result,
     required this.isConnected,
+    this.wasPreviouslyConnected = false,
     required this.onConnect,
     required this.onDisconnect,
     this.onTap,
@@ -23,19 +25,21 @@ class BleScanResultTile extends StatelessWidget {
     final s = S.of(context);
     final device = result.device;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: ListTile(
-        leading: Icon(
-          isConnected ? Icons.bluetooth_connected : Icons.bluetooth,
-          color: isConnected ? Colors.green : Colors.blue,
-        ),
-        title: Text(
-          device.platformName.isEmpty
-              ? (s?.bleUnknownDevice ?? 'Unknown Device')
-              : device.platformName,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
+    return Stack(
+      children: [
+        Card(
+          margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: ListTile(
+            leading: Icon(
+              isConnected ? Icons.bluetooth_connected : Icons.bluetooth,
+              color: isConnected ? Colors.green : Colors.blue,
+            ),
+            title: Text(
+              device.platformName.isEmpty
+                  ? (s?.bleUnknownDevice ?? 'Unknown Device')
+                  : device.platformName,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -61,8 +65,28 @@ class BleScanResultTile extends StatelessWidget {
                 onPressed: onConnect,
                 tooltip: s?.bleButtonConnect ?? 'Connect',
               ),
-        onTap: onTap,
-      ),
+            onTap: onTap,
+          ),
+        ),
+        if (wasPreviouslyConnected && !isConnected)
+          Positioned(
+            top: 0,
+            right: 0,
+            child: Container(
+              margin: const EdgeInsets.only(top: 8.0, right: 16.0),
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                color: Colors.orange,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.history,
+                size: 16,
+                color: Colors.white,
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

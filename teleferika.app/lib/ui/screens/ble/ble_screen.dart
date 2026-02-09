@@ -44,6 +44,7 @@ class _BLEScreenState extends State<BLEScreen>
   final UsbSerialService _usbService = UsbSerialService.instance;
 
   List<ScanResult> _scanResults = [];
+  String? _lastConnectedDeviceId;
   BLEConnectionState _connectionState = BLEConnectionState.disconnected;
   BLEConnectionState _usbConnectionState = BLEConnectionState.disconnected;
   bool _connectedViaUsb = false;
@@ -104,6 +105,7 @@ class _BLEScreenState extends State<BLEScreen>
     _setupSubscriptions();
     _setupPulseAnimation();
     _loadNtripSettings(); // Load persisted settings
+    _loadLastConnectedDeviceId(); // Load last connected device ID
     // _startScanStateCheckTimer(); - Removed in favor of stream
 
     // Auto-start scan if requested
@@ -182,7 +184,7 @@ class _BLEScreenState extends State<BLEScreen>
     _scanResultsSubscription = _bleService.scanResults.listen((results) {
       if (mounted) {
         setState(() {
-          _scanResults = results;
+          _scanResults = _sortScanResults(results);
           // Update scanning state based on service state
           // _isScanning = _bleService.isScanning; // Managed by stream now
         });
@@ -452,11 +454,9 @@ class _BLEScreenState extends State<BLEScreen>
 
   Future<void> _connectToDevice(BluetoothDevice device) async {
     try {
-      if (_usbService.isConnected) {
-        await _usbService.disconnectDevice();
-        setState(() => _connectedViaUsb = false);
-      }
-      await _bleService.connectToDevice(device, context);
+      final wasNtripConnected = _connectedViaUsb &&
+          _usbService.ntripClient?.connectionState == NTRIPConnectionState.connected;
+
       if (mounted) {
         final s = S.of(context);
         final connectingText =
@@ -468,6 +468,35 @@ class _BLEScreenState extends State<BLEScreen>
             duration: const Duration(milliseconds: 1000),
           ),
         );
+      }
+
+      await _bleService.connectToDevice(device, context);
+
+      if (!mounted) return;
+      if (!_bleService.isConnected) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              S.of(context)?.bleConnectionError ?? 'Connection error',
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(milliseconds: 3000),
+          ),
+        );
+        return;
+      }
+
+      if (_usbService.isConnected) {
+        await _usbService.disconnectDevice();
+      }
+      setState(() => _connectedViaUsb = false);
+      _setupNtripSubscriptions();
+
+      // Save the connected device ID for future scans
+      await _saveLastConnectedDeviceId(device.remoteId.toString());
+
+      if (wasNtripConnected) {
+        await _reconnectNtripAfterSwitch();
       }
     } catch (e) {
       logger.severe('Error connecting to device: $e');
@@ -548,11 +577,9 @@ class _BLEScreenState extends State<BLEScreen>
 
   Future<void> _connectToUsbDevice(UsbDeviceInfo info) async {
     if (!UsbSerialService.isSupported) return;
-    if (_bleService.connectedDevice != null) {
-      await _bleService.disconnectDevice();
-    }
-    setState(() => _connectedViaUsb = true);
-    await _usbService.connectToDevice(info);
+    final wasNtripConnected = !_connectedViaUsb &&
+        _bleService.ntripClient?.connectionState == NTRIPConnectionState.connected;
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -560,6 +587,30 @@ class _BLEScreenState extends State<BLEScreen>
           duration: const Duration(milliseconds: 1000),
         ),
       );
+    }
+
+    await _usbService.connectToDevice(info);
+
+    if (!mounted) return;
+    if (!_usbService.isConnected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('USB connection failed'),
+          backgroundColor: Colors.red,
+          duration: Duration(milliseconds: 3000),
+        ),
+      );
+      return;
+    }
+
+    if (_bleService.connectedDevice != null) {
+      await _bleService.disconnectDevice();
+    }
+    setState(() => _connectedViaUsb = true);
+    _setupNtripSubscriptions();
+
+    if (wasNtripConnected) {
+      await _reconnectNtripAfterSwitch();
     }
   }
 
@@ -573,6 +624,57 @@ class _BLEScreenState extends State<BLEScreen>
           duration: Duration(milliseconds: 1000),
         ),
       );
+    }
+  }
+
+  /// Reconnects NTRIP on the currently active transport using current form params.
+  /// Used after switching BLE↔USB so NTRIP stays active.
+  Future<void> _reconnectNtripAfterSwitch() async {
+    final host = _ntripHostController.text.trim();
+    final portStr = _ntripPortController.text.trim();
+    final mountPoint = _ntripMountPointController.text.trim();
+    final username = _ntripUsernameController.text.trim();
+    final password = _ntripPasswordController.text.trim();
+    if (host.isEmpty || mountPoint.isEmpty || username.isEmpty) return;
+    final port = int.tryParse(portStr) ?? (_ntripUseSsl ? 2102 : 2101);
+    if (port < 1 || port > 65535) return;
+
+    if (mounted) {
+      setState(() => _ntripConnectionState = NTRIPConnectionState.connecting);
+    }
+
+    final success = _connectedViaUsb
+        ? await _usbService.connectToNtrip(
+            host: host,
+            port: port,
+            mountPoint: mountPoint,
+            username: username,
+            password: password.isEmpty ? 'none' : password,
+            useSsl: _ntripUseSsl,
+          )
+        : await _bleService.connectToNtrip(
+            host: host,
+            port: port,
+            mountPoint: mountPoint,
+            username: username,
+            password: password.isEmpty ? 'none' : password,
+            useSsl: _ntripUseSsl,
+          );
+
+    if (mounted) {
+      _setupNtripSubscriptions();
+      setState(() {
+        final client = _connectedViaUsb ? _usbService.ntripClient : _bleService.ntripClient;
+        _ntripConnectionState = client?.connectionState ?? NTRIPConnectionState.disconnected;
+      });
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('NTRIP reconnected on new device'),
+            duration: Duration(milliseconds: 1500),
+          ),
+        );
+      }
     }
   }
 
@@ -974,9 +1076,12 @@ class _BLEScreenState extends State<BLEScreen>
         final isConnected =
             _bleService.connectedDevice?.remoteId == device.remoteId;
 
+        final wasPreviouslyConnected = _lastConnectedDeviceId == device.remoteId.toString();
+
         return BleScanResultTile(
           result: result,
           isConnected: isConnected,
+          wasPreviouslyConnected: wasPreviouslyConnected,
           onConnect: () => _connectToDevice(device),
           onDisconnect: _disconnectDevice,
           onTap: isConnected ? null : () => _showDeviceDetails(result, s),
@@ -1993,5 +2098,52 @@ class _BLEScreenState extends State<BLEScreen>
         logger.warning('Error saving NTRIP settings: $e');
       }
     }
+  }
+
+  /// Saves the last connected device ID to SharedPreferences
+  Future<void> _saveLastConnectedDeviceId(String deviceId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('lastConnectedBleDeviceId', deviceId);
+      if (mounted) {
+        setState(() {
+          _lastConnectedDeviceId = deviceId;
+        });
+      }
+    } catch (e) {
+      logger.warning('Error saving last connected device ID: $e');
+    }
+  }
+
+  /// Loads the last connected device ID from SharedPreferences
+  Future<void> _loadLastConnectedDeviceId() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final deviceId = prefs.getString('lastConnectedBleDeviceId');
+      if (mounted) {
+        setState(() {
+          _lastConnectedDeviceId = deviceId;
+        });
+      }
+    } catch (e) {
+      logger.warning('Error loading last connected device ID: $e');
+    }
+  }
+
+  /// Sorts scan results to put previously connected devices first
+  List<ScanResult> _sortScanResults(List<ScanResult> results) {
+    if (_lastConnectedDeviceId == null) return results;
+    
+    final sorted = List<ScanResult>.from(results);
+    sorted.sort((a, b) {
+      final aWasConnected = a.device.remoteId.toString() == _lastConnectedDeviceId;
+      final bWasConnected = b.device.remoteId.toString() == _lastConnectedDeviceId;
+      
+      if (aWasConnected && !bWasConnected) return -1;
+      if (!aWasConnected && bWasConnected) return 1;
+      return 0; // Keep original order for devices with same status
+    });
+    
+    return sorted;
   }
 }
