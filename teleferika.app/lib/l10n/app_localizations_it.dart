@@ -1488,7 +1488,7 @@ class SIt extends S {
       'I permessi Bluetooth e posizione sono necessari per scansionare e connettersi ai dispositivi BLE.';
 
   @override
-  String get ble_devices_section => 'Dispositivi Bluetooth';
+  String get ble_devices_section => 'Dispositivi di posizionamento';
 
   @override
   String get ble_devices_title => 'Dispositivi Bluetooth';
@@ -1568,6 +1568,10 @@ class SIt extends S {
 
   @override
   String get bleReceivingData => 'In attesa di posizione iniziale...';
+
+  @override
+  String get bleReceivingDataHint =>
+      'Se il ricevitore non ha fix, assicurati che abbia una vista libera del cielo.';
 
   @override
   String get bleNtripTitle => 'Correzioni NTRIP';

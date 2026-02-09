@@ -1365,7 +1365,7 @@ class SEn extends S {
       'When enabled, a satellite button appears on the map when connected to an RTK device. Tap it to view device information.';
 
   @override
-  String get bleScreenTitle => 'Bluetooth Devices';
+  String get bleScreenTitle => 'RTK Devices';
 
   @override
   String get bleButtonStartScan => 'Start Scan';
@@ -1473,14 +1473,14 @@ class SEn extends S {
       'Bluetooth and location permissions are needed to scan and connect to BLE devices.';
 
   @override
-  String get ble_devices_section => 'Bluetooth Devices';
+  String get ble_devices_section => 'Positioning devices';
 
   @override
-  String get ble_devices_title => 'Bluetooth Devices';
+  String get ble_devices_title => 'RTK Devices';
 
   @override
   String get ble_devices_description =>
-      'Scan and connect to Bluetooth Low Energy devices';
+      'Scan and connect to RTK receivers via Bluetooth or USB';
 
   @override
   String get bleGpsDataTitle => 'GPS Data from RTK Receiver';
@@ -1553,6 +1553,10 @@ class SEn extends S {
 
   @override
   String get bleReceivingData => 'Waiting for initial position...';
+
+  @override
+  String get bleReceivingDataHint =>
+      'If the receiver has no fix, ensure it has a clear view of the sky.';
 
   @override
   String get bleNtripTitle => 'NTRIP Corrections';

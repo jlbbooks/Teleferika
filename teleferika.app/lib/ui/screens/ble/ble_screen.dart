@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
@@ -7,6 +8,7 @@ import 'package:logging/logging.dart';
 import 'package:teleferika/ble/ble_service.dart';
 import 'package:teleferika/ble/nmea_parser.dart';
 import 'package:teleferika/ble/ntrip_client.dart';
+import 'package:teleferika/ble/usb_serial_service.dart';
 import 'package:teleferika/core/fix_quality_colors.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/widgets/permission_handler_widget.dart';
@@ -39,16 +41,26 @@ class _BLEScreenState extends State<BLEScreen>
     with SingleTickerProviderStateMixin {
   final Logger logger = Logger('BLEScreen');
   final BLEService _bleService = BLEService.instance;
+  final UsbSerialService _usbService = UsbSerialService.instance;
 
   List<ScanResult> _scanResults = [];
   BLEConnectionState _connectionState = BLEConnectionState.disconnected;
+  BLEConnectionState _usbConnectionState = BLEConnectionState.disconnected;
+  bool _connectedViaUsb = false;
   bool _isScanning = false;
   StreamSubscription<List<ScanResult>>? _scanResultsSubscription;
   StreamSubscription<bool>? _isScanningSubscription;
   StreamSubscription<BLEConnectionState>? _connectionStateSubscription;
+  StreamSubscription<BLEConnectionState>? _usbConnectionStateSubscription;
   StreamSubscription<Position>? _gpsDataSubscription;
   StreamSubscription<NMEAData>? _nmeaDataSubscription;
+  StreamSubscription<Position>? _usbGpsDataSubscription;
+  StreamSubscription<NMEAData>? _usbNmeaDataSubscription;
   bool _hasPermissions = false;
+
+  List<UsbDeviceInfo> _usbDevices = [];
+  bool _usbDevicesLoading = false;
+  int _connectionModeIndex = 0; // 0 = Bluetooth, 1 = USB
 
   // GPS data from RTK receiver
   Position? _currentPosition;
@@ -114,29 +126,41 @@ class _BLEScreenState extends State<BLEScreen>
     });
   }
 
-  /// Refresh the connection state from the BLE service
+  /// Refresh the connection state from the BLE and USB services
   void _refreshConnectionState() {
     if (!mounted) return;
 
     setState(() {
-      // Check current connection state from the service
-      if (_bleService.isConnected) {
-        final wasDisconnected =
-            _connectionState == BLEConnectionState.disconnected;
-        _connectionState = BLEConnectionState.connected;
-        // Also refresh connected device info if available
-        if (_bleService.connectedDevice != null && wasDisconnected) {
-          // Set initial timestamp to show indicator when transitioning from disconnected
-          _lastDataReceivedTime = DateTime.now();
-          if (const bool.fromEnvironment('dart.vm.product') == false) {
-            logger.info('BLEScreen: Refreshed state - device is connected');
-          }
-        }
-      } else {
+      if (_usbService.isConnected) {
+        _connectedViaUsb = true;
+        _usbConnectionState = BLEConnectionState.connected;
         _connectionState = BLEConnectionState.disconnected;
+        _lastDataReceivedTime = DateTime.now();
+        _connectionModeIndex = 1; // USB mode
+      } else {
+        _connectedViaUsb = false;
+        _usbConnectionState = BLEConnectionState.disconnected;
+        if (_bleService.connectedDevice != null) {
+          final wasDisconnected =
+              _connectionState == BLEConnectionState.disconnected;
+          _connectionState = BLEConnectionState.connected;
+          if (wasDisconnected) {
+            _lastDataReceivedTime = DateTime.now();
+          }
+        } else {
+          _connectionState = BLEConnectionState.disconnected;
+        }
+        _connectionModeIndex = 0; // Bluetooth mode
       }
-      // Also refresh scanning state
       _isScanning = _bleService.isScanning;
+      
+      // Refresh NTRIP connection state from active service
+      final ntripClient = _connectedViaUsb ? _usbService.ntripClient : _bleService.ntripClient;
+      if (ntripClient != null) {
+        _ntripConnectionState = ntripClient.connectionState;
+      } else {
+        _ntripConnectionState = NTRIPConnectionState.disconnected;
+      }
     });
   }
 
@@ -173,18 +197,150 @@ class _BLEScreenState extends State<BLEScreen>
       }
     });
 
-    // NTRIP connection state subscription
-    final ntripClient = _bleService.ntripClient;
-    if (ntripClient != null) {
-      _ntripConnectionStateSubscription = ntripClient.connectionStateStream
-          .listen((state) {
-            if (mounted) {
-              setState(() {
-                _ntripConnectionState = state;
-              });
+    // NTRIP connection state subscription - subscribe to active service
+    _setupNtripSubscriptions();
+
+    _connectionStateSubscription = _bleService.connectionState.listen((state) {
+      if (mounted && !_connectedViaUsb) {
+        setState(() {
+          final wasConnected = _connectionState == BLEConnectionState.connected;
+          _connectionState = state;
+          _isScanning = _bleService.isScanning;
+          if (state == BLEConnectionState.disconnected) {
+            _hasReceivedFirstPosition = false;
+            _lastDataReceivedTime = null;
+            _currentPosition = null;
+            _currentNmeaData = null;
+          } else if (state == BLEConnectionState.connected && !wasConnected) {
+            _connectionModeIndex = 0; // Bluetooth mode
+            _lastDataReceivedTime = DateTime.now();
+            _hasReceivedFirstPosition = false;
+            // Refresh NTRIP subscriptions for BLE service
+            _setupNtripSubscriptions();
+          }
+        });
+      }
+    });
+
+    _gpsDataSubscription = _bleService.gpsData.listen((position) {
+      if (mounted && !_connectedViaUsb) {
+        setState(() {
+          _currentPosition = position;
+          _hasReceivedFirstPosition = true;
+        });
+      }
+    });
+
+    _nmeaDataSubscription = _bleService.nmeaData.listen((nmeaData) {
+      if (mounted && !_connectedViaUsb) {
+        setState(() {
+          _currentNmeaData = nmeaData;
+          _lastDataReceivedTime = DateTime.now();
+        });
+      }
+    });
+
+    if (UsbSerialService.isSupported) {
+      _usbConnectionStateSubscription =
+          _usbService.connectionState.listen((state) {
+        if (mounted) {
+          final wasError = _usbConnectionState == BLEConnectionState.error;
+          setState(() {
+            _usbConnectionState = state;
+            if (_connectedViaUsb && state == BLEConnectionState.disconnected) {
+              _hasReceivedFirstPosition = false;
+              _lastDataReceivedTime = null;
+              _currentPosition = null;
+              _currentNmeaData = null;
+              _connectedViaUsb = false;
+              _connectionModeIndex = 0; // Bluetooth mode
+              // Refresh NTRIP subscriptions for BLE service
+              _setupNtripSubscriptions();
+            } else if (state == BLEConnectionState.connected) {
+              // connectToDevice() calls disconnectDevice() first, which emits
+              // "disconnected" and our listener sets _connectedViaUsb = false.
+              // So we must set it true again when the new connection is established.
+              _connectedViaUsb = true;
+              _connectionModeIndex = 1; // USB mode
+              _lastDataReceivedTime = DateTime.now();
+              // If we already have a position, mark that we've received the first one
+              if (_currentPosition != null || _currentNmeaData != null) {
+                _hasReceivedFirstPosition = true;
+              }
+              // Refresh NTRIP subscriptions for USB service
+              _setupNtripSubscriptions();
             }
           });
+          // When USB connection fails, show a hint about permission
+          if (_connectedViaUsb &&
+              state == BLEConnectionState.error &&
+              !wasError &&
+              mounted) {
+            final msg = _usbService.lastConnectionError ?? '';
+            final isPermission = msg.contains('Permission') ||
+                msg.contains('SecurityException') ||
+                msg.contains('permission');
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  isPermission
+                      ? 'USB permission required. If Android showed a dialog, tap Allow and try Connect again.'
+                      : 'USB connection failed.${msg.isNotEmpty ? ' $msg' : ''}',
+                ),
+                backgroundColor: Colors.orange,
+                duration: const Duration(seconds: 5),
+              ),
+            );
+          }
+        }
+      });
+      _usbGpsDataSubscription = _usbService.gpsData.listen((position) {
+        if (mounted && _connectedViaUsb) {
+          setState(() {
+            _currentPosition = position;
+            _hasReceivedFirstPosition = true;
+          });
+        }
+      });
+      _usbNmeaDataSubscription = _usbService.nmeaData.listen((nmeaData) {
+        if (mounted && _connectedViaUsb) {
+          setState(() {
+            _currentNmeaData = nmeaData;
+            _lastDataReceivedTime = DateTime.now();
+            _hasReceivedFirstPosition = true;
+          });
+        }
+      });
+    }
+  }
 
+  /// Sets up NTRIP subscriptions for the active service (BLE or USB)
+  void _setupNtripSubscriptions() {
+    // Cancel existing subscriptions
+    _ntripConnectionStateSubscription?.cancel();
+    _ntripErrorSubscription?.cancel();
+    
+    // Get the active service's NTRIP client
+    final ntripClient = _connectedViaUsb ? _usbService.ntripClient : _bleService.ntripClient;
+    
+    if (ntripClient != null) {
+      // Initialize state from current client state
+      if (mounted) {
+        setState(() {
+          _ntripConnectionState = ntripClient.connectionState;
+        });
+      }
+      
+      // Subscribe to connection state changes
+      _ntripConnectionStateSubscription = ntripClient.connectionStateStream.listen((state) {
+        if (mounted) {
+          setState(() {
+            _ntripConnectionState = state;
+          });
+        }
+      });
+
+      // Subscribe to errors
       _ntripErrorSubscription = ntripClient.errors.listen((error) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -196,56 +352,14 @@ class _BLEScreenState extends State<BLEScreen>
           );
         }
       });
+    } else {
+      // No active NTRIP client
+      if (mounted) {
+        setState(() {
+          _ntripConnectionState = NTRIPConnectionState.disconnected;
+        });
+      }
     }
-
-    _connectionStateSubscription = _bleService.connectionState.listen((state) {
-      if (mounted) {
-        setState(() {
-          final wasConnected = _connectionState == BLEConnectionState.connected;
-          _connectionState = state;
-          // Update scan state when connection state changes
-          _isScanning = _bleService.isScanning;
-          // Reset position tracking when disconnecting
-          if (state == BLEConnectionState.disconnected) {
-            _hasReceivedFirstPosition = false;
-            _lastDataReceivedTime = null;
-            _currentPosition = null;
-            _currentNmeaData = null;
-          } else if (state == BLEConnectionState.connected && !wasConnected) {
-            // Set initial timestamp when first connected to show indicator immediately
-            _lastDataReceivedTime = DateTime.now();
-            _hasReceivedFirstPosition = false; // Ensure this is false
-            if (const bool.fromEnvironment('dart.vm.product') == false) {
-              logger.info('BLEScreen: Connected - showing receiving indicator');
-            }
-          }
-        });
-      }
-    });
-
-    // Subscribe to GPS data from RTK receiver
-    _gpsDataSubscription = _bleService.gpsData.listen((position) {
-      if (mounted) {
-        setState(() {
-          _currentPosition = position;
-          _hasReceivedFirstPosition =
-              true; // Mark that we've received first position
-        });
-        // GPS position logging removed
-      }
-    });
-
-    // Subscribe to NMEA data for detailed information
-    _nmeaDataSubscription = _bleService.nmeaData.listen((nmeaData) {
-      if (mounted) {
-        setState(() {
-          _currentNmeaData = nmeaData;
-          // Update timestamp when we receive data (for pulsing indicator)
-          _lastDataReceivedTime = DateTime.now();
-        });
-        // NMEA data logging removed
-      }
-    });
   }
 
   @override
@@ -253,8 +367,11 @@ class _BLEScreenState extends State<BLEScreen>
     _scanResultsSubscription?.cancel();
     _isScanningSubscription?.cancel();
     _connectionStateSubscription?.cancel();
+    _usbConnectionStateSubscription?.cancel();
     _gpsDataSubscription?.cancel();
     _nmeaDataSubscription?.cancel();
+    _usbGpsDataSubscription?.cancel();
+    _usbNmeaDataSubscription?.cancel();
     _ntripConnectionStateSubscription?.cancel();
     _ntripErrorSubscription?.cancel();
     _rtcmDataSubscription?.cancel();
@@ -335,6 +452,10 @@ class _BLEScreenState extends State<BLEScreen>
 
   Future<void> _connectToDevice(BluetoothDevice device) async {
     try {
+      if (_usbService.isConnected) {
+        await _usbService.disconnectDevice();
+        setState(() => _connectedViaUsb = false);
+      }
       await _bleService.connectToDevice(device, context);
       if (mounted) {
         final s = S.of(context);
@@ -366,10 +487,14 @@ class _BLEScreenState extends State<BLEScreen>
 
   Future<void> _disconnectDevice() async {
     try {
-      await _bleService.disconnectDevice();
+      if (_connectedViaUsb) {
+        await _usbService.disconnectDevice();
+        setState(() => _connectedViaUsb = false);
+      } else {
+        await _bleService.disconnectDevice();
+      }
       if (mounted) {
         setState(() {
-          // Reset position tracking state on disconnect
           _hasReceivedFirstPosition = false;
           _lastDataReceivedTime = null;
           _currentPosition = null;
@@ -386,6 +511,68 @@ class _BLEScreenState extends State<BLEScreen>
       }
     } catch (e) {
       logger.severe('Error disconnecting device: $e');
+    }
+  }
+
+  BLEConnectionState get _effectiveConnectionState =>
+      _connectedViaUsb ? _usbConnectionState : _connectionState;
+
+  String? get _effectiveDeviceName =>
+      _connectedViaUsb ? _usbService.connectedDeviceName : _bleService.connectedDevice?.platformName;
+
+  bool get _isDeviceConnected =>
+      _connectionState == BLEConnectionState.connected || _usbConnectionState == BLEConnectionState.connected;
+
+  Future<void> _refreshUsbDevices() async {
+    final supported = UsbSerialService.isSupported;
+    if (!supported) {
+      logger.warning('[USB] Not supported, returning');
+      return;
+    }
+    if (mounted) setState(() => _usbDevicesLoading = true);
+    try {
+      final devices = await _usbService.listDevices();
+      if (mounted) {
+        setState(() {
+          _usbDevices = devices;
+          _usbDevicesLoading = false;
+        });
+      }
+    } catch (e, stackTrace) {
+      logger.severe('[USB] Failed to list USB devices', e, stackTrace);
+      if (mounted) {
+        setState(() => _usbDevicesLoading = false);
+      }
+    }
+  }
+
+  Future<void> _connectToUsbDevice(UsbDeviceInfo info) async {
+    if (!UsbSerialService.isSupported) return;
+    if (_bleService.connectedDevice != null) {
+      await _bleService.disconnectDevice();
+    }
+    setState(() => _connectedViaUsb = true);
+    await _usbService.connectToDevice(info);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Connecting to ${info.displayName}...'),
+          duration: const Duration(milliseconds: 1000),
+        ),
+      );
+    }
+  }
+
+  Future<void> _disconnectUsbDevice() async {
+    await _usbService.disconnectDevice();
+    if (mounted) {
+      setState(() => _connectedViaUsb = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('USB device disconnected.'),
+          duration: Duration(milliseconds: 1000),
+        ),
+      );
     }
   }
 
@@ -420,7 +607,15 @@ class _BLEScreenState extends State<BLEScreen>
     final s = S.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text(s?.bleScreenTitle ?? 'Bluetooth Devices')),
+      appBar: AppBar(
+        title: Row(
+          children: [
+            const Icon(Icons.satellite),
+            const SizedBox(width: 8),
+            Text(s?.bleScreenTitle ?? 'RTK Devices'),
+          ],
+        ),
+      ),
       body: SafeArea(
         child: Stack(
           children: [
@@ -431,8 +626,7 @@ class _BLEScreenState extends State<BLEScreen>
               child: _buildContent(s),
             ),
             // Show pulsing indicator when connected but no position received yet
-            if (_connectionState == BLEConnectionState.connected &&
-                !_hasReceivedFirstPosition)
+            if (_isDeviceConnected && !_hasReceivedFirstPosition)
               _buildDataReceivingIndicator(s),
           ],
         ),
@@ -452,55 +646,60 @@ class _BLEScreenState extends State<BLEScreen>
                 _buildConnectionStatusCard(s),
 
                 // GPS Data Card (shown when connected and receiving data)
-                if (_connectionState == BLEConnectionState.connected &&
+                if (_isDeviceConnected &&
                     (_currentPosition != null || _currentNmeaData != null))
                   _buildGpsDataCard(s),
 
-                // NTRIP Configuration Card (shown when BLE is connected)
-                if (_connectionState == BLEConnectionState.connected)
+                // NTRIP Configuration Card (shown when device is connected)
+                if (_isDeviceConnected)
                   _buildNtripCard(s),
 
-                // Scan Controls
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: _isScanning ? null : _startScan,
-                          icon: const Icon(Icons.search),
-                          label: Text(s?.bleButtonStartScan ?? 'Start Scan'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            foregroundColor: Colors.white,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8.0),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: _isScanning ? _stopScan : null,
-                          icon: const Icon(Icons.stop),
-                          label: Text(s?.bleButtonStopScan ?? 'Stop Scan'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            foregroundColor: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                // Connection mode: Bluetooth | USB (Android only)
+                if (Platform.isAndroid && UsbSerialService.isSupported)
+                  _buildConnectionModeSelector(s),
 
-                // Scan Results - use constrained height to prevent overflow
-                ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxHeight: constraints.maxHeight > 0
-                        ? (constraints.maxHeight * 0.5).clamp(200.0, 400.0)
-                        : 300,
+                // Scan Controls (Bluetooth) or USB device list
+                if (!Platform.isAndroid || !UsbSerialService.isSupported || _connectionModeIndex == 0) ...[
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: _isScanning ? null : _startScan,
+                            icon: const Icon(Icons.search),
+                            label: Text(s?.bleButtonStartScan ?? 'Start Scan'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8.0),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: _isScanning ? _stopScan : null,
+                            icon: const Icon(Icons.stop),
+                            label: Text(s?.bleButtonStopScan ?? 'Stop Scan'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  child: _buildScanResultsList(s),
-                ),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: constraints.maxHeight > 0
+                          ? (constraints.maxHeight * 0.5).clamp(200.0, 400.0)
+                          : 300,
+                    ),
+                    child: _buildScanResultsList(s),
+                  ),
+                ] else
+                  _buildUsbDeviceList(s, constraints),
               ],
             ),
           ),
@@ -510,29 +709,30 @@ class _BLEScreenState extends State<BLEScreen>
   }
 
   Widget _buildConnectionStatusCard(S? s) {
+    final state = _effectiveConnectionState;
     Color statusColor;
     IconData statusIcon;
     String statusText;
 
-    switch (_connectionState) {
+    switch (state) {
       case BLEConnectionState.connected:
         statusColor = Colors.green;
-        statusIcon = Icons.bluetooth_connected;
+        statusIcon = _connectedViaUsb ? Icons.usb : Icons.bluetooth_connected;
         statusText = s?.bleStatusConnected ?? 'Connected';
         break;
       case BLEConnectionState.connecting:
         statusColor = Colors.orange;
-        statusIcon = Icons.bluetooth_searching;
+        statusIcon = _connectedViaUsb ? Icons.usb : Icons.bluetooth_searching;
         statusText = s?.bleStatusConnecting ?? 'Connecting...';
         break;
       case BLEConnectionState.error:
         statusColor = Colors.red;
-        statusIcon = Icons.bluetooth_disabled;
+        statusIcon = _connectedViaUsb ? Icons.usb_off : Icons.bluetooth_disabled;
         statusText = s?.bleStatusError ?? 'Connection Error';
         break;
       case BLEConnectionState.waiting:
         statusColor = Colors.blue;
-        statusIcon = Icons.bluetooth_searching;
+        statusIcon = _connectedViaUsb ? Icons.usb : Icons.bluetooth_searching;
         statusText = s?.bleStatusWaiting ?? 'Waiting...';
         break;
       case BLEConnectionState.disconnected:
@@ -565,18 +765,16 @@ class _BLEScreenState extends State<BLEScreen>
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  if (_bleService.connectedDevice != null)
+                  if (_effectiveDeviceName != null && _effectiveDeviceName!.isNotEmpty)
                     Text(
-                      s?.bleConnectedDevice(
-                            _bleService.connectedDevice!.platformName,
-                          ) ??
-                          'Device: ${_bleService.connectedDevice!.platformName}',
+                      s?.bleConnectedDevice(_effectiveDeviceName!) ??
+                          'Device: $_effectiveDeviceName',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                 ],
               ),
             ),
-            if (_connectionState == BLEConnectionState.connected)
+            if (state == BLEConnectionState.connected)
               IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: _disconnectDevice,
@@ -584,6 +782,159 @@ class _BLEScreenState extends State<BLEScreen>
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildConnectionModeSelector(S? s) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: ChoiceChip(
+              label: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.bluetooth, size: 20),
+                  SizedBox(width: 8),
+                  Text('Bluetooth'),
+                ],
+              ),
+              selected: _connectionModeIndex == 0,
+              onSelected: (selected) {
+                if (selected) {
+                  setState(() => _connectionModeIndex = 0);
+                }
+              },
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: ChoiceChip(
+              label: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.usb, size: 20),
+                  SizedBox(width: 8),
+                  Text('USB'),
+                ],
+              ),
+              selected: _connectionModeIndex == 1,
+              onSelected: (selected) {
+                if (selected) {
+                  setState(() {
+                    _connectionModeIndex = 1;
+                    if (_usbDevices.isEmpty && !_usbDevicesLoading) {
+                      _refreshUsbDevices();
+                    }
+                  });
+                }
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUsbDeviceList(S? s, BoxConstraints constraints) {
+    final isConnectedViaUsb = _connectedViaUsb &&
+        _usbConnectionState == BLEConnectionState.connected;
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (isConnectedViaUsb)
+            ElevatedButton.icon(
+              onPressed: _disconnectUsbDevice,
+              icon: const Icon(Icons.usb_off),
+              label: const Text('Disconnect from USB device'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+            )
+          else
+            ElevatedButton.icon(
+              onPressed: _usbDevicesLoading
+                  ? null
+                  : () {
+                      _refreshUsbDevices();
+                    },
+              icon: _usbDevicesLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.refresh),
+              label: Text(_usbDevicesLoading ? 'Loading...' : 'Refresh USB devices'),
+            ),
+          const SizedBox(height: 12),
+          if (!isConnectedViaUsb)
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: constraints.maxHeight > 0
+                    ? (constraints.maxHeight * 0.5).clamp(200.0, 400.0)
+                    : 300,
+              ),
+              child: _usbDevices.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.usb_off,
+                              size: 48,
+                              color: Colors.grey.shade500,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No USB devices found',
+                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    color: Colors.grey.shade700,
+                                  ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Connect your RTK receiver with a USB cable (USB OTG). '
+                              'The phone must support USB host (OTG). Then tap Refresh.',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Colors.grey.shade600,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      physics: const ClampingScrollPhysics(),
+                      itemCount: _usbDevices.length,
+                      itemBuilder: (context, index) {
+                        final info = _usbDevices[index];
+                        return ListTile(
+                          leading: const Icon(Icons.usb),
+                          title: Text(
+                            info.displayName,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          trailing: ElevatedButton(
+                            onPressed: () => _connectToUsbDevice(info),
+                            child: const Text('Connect'),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+        ],
       ),
     );
   }
@@ -1104,21 +1455,45 @@ class _BLEScreenState extends State<BLEScreen>
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
+                        margin: const EdgeInsets.only(top: 2),
                         width: 12,
                         height: 12,
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           color: Colors.white,
                           shape: BoxShape.circle,
                         ),
                       ),
                       const SizedBox(width: 10),
-                      Text(
-                        s?.bleReceivingData ?? 'Receiving data...',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
+                      Flexible(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 200),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                s?.bleReceivingData ?? 'Receiving data...',
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                softWrap: true,
+                              ),
+                              if (s != null) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  s.bleReceivingDataHint,
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Colors.white.withValues(alpha: 0.9),
+                                  ),
+                                  softWrap: true,
+                                ),
+                              ],
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -1141,7 +1516,7 @@ class _BLEScreenState extends State<BLEScreen>
       usernameController: _ntripUsernameController,
       passwordController: _ntripPasswordController,
       useSsl: _ntripUseSsl,
-      isForwardingRtcm: _bleService.isForwardingRtcm,
+      isForwardingRtcm: _connectedViaUsb ? _usbService.isForwardingRtcm : _bleService.isForwardingRtcm,
       canConnectNtrip: _hasReceivedFirstPosition,
       hostStatusRefreshTrigger: _hostStatusRefreshTrigger,
       onConnect: _connectToNtrip,
@@ -1272,22 +1647,31 @@ class _BLEScreenState extends State<BLEScreen>
         });
       }
 
-      final success = await _bleService.connectToNtrip(
-        host: host,
-        port: port,
-        mountPoint: mountPoint,
-        username: username,
-        password: password.isEmpty ? 'none' : password,
-        useSsl: _ntripUseSsl,
-      );
+      final success = _connectedViaUsb
+          ? await _usbService.connectToNtrip(
+              host: host,
+              port: port,
+              mountPoint: mountPoint,
+              username: username,
+              password: password.isEmpty ? 'none' : password,
+              useSsl: _ntripUseSsl,
+            )
+          : await _bleService.connectToNtrip(
+              host: host,
+              port: port,
+              mountPoint: mountPoint,
+              username: username,
+              password: password.isEmpty ? 'none' : password,
+              useSsl: _ntripUseSsl,
+            );
 
       if (mounted) {
         if (success) {
           // Reset RTCM validation flag
           _hasReceivedValidRtcm = false;
 
-          // Update subscription to new client
-          final ntripClient = _bleService.ntripClient;
+          // Update subscription to new client (from active service)
+          final ntripClient = _connectedViaUsb ? _usbService.ntripClient : _bleService.ntripClient;
           if (ntripClient != null) {
             _ntripConnectionStateSubscription?.cancel();
             _ntripErrorSubscription?.cancel();
@@ -1409,10 +1793,11 @@ class _BLEScreenState extends State<BLEScreen>
             }
           }
           _connectingHostId = null; // Clear tracking
+          final activeNtrip = _connectedViaUsb ? _usbService.ntripClient : _bleService.ntripClient;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                _bleService.ntripClient?.errorMessage ??
+                activeNtrip?.errorMessage ??
                     (s?.bleNtripConnectionFailed ??
                         'Failed to connect to NTRIP caster'),
               ),
@@ -1455,16 +1840,18 @@ class _BLEScreenState extends State<BLEScreen>
   Future<void> _disconnectFromNtrip() async {
     final s = S.of(context);
     try {
-      // Update state immediately to show feedback
       setState(() {
         _ntripConnectionState = NTRIPConnectionState.disconnected;
       });
 
-      await _bleService.disconnectFromNtrip();
+      if (_connectedViaUsb) {
+        await _usbService.disconnectFromNtrip();
+      } else {
+        await _bleService.disconnectFromNtrip();
+      }
 
       if (mounted) {
-        // Ensure state is set correctly after disconnect
-        final ntripClient = _bleService.ntripClient;
+        final ntripClient = _connectedViaUsb ? _usbService.ntripClient : _bleService.ntripClient;
         if (ntripClient != null) {
           setState(() {
             _ntripConnectionState = ntripClient.connectionState;

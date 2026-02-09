@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Allow common USB serial adapters (FTDI, CP210x, CH340, CDC-ACM, etc.) for RTK devices -->
+<resources>
+    <!-- Match any USB device when no specific filter (Android 10+ needs a filter to receive USB_DEVICE_ATTACHED) -->
+    <usb-device vendor-id="-1" product-id="-1" />
+</resources>

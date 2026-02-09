@@ -390,88 +390,85 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               const SizedBox(height: 16),
 
-              // Bluetooth / Devices Section
+              // RTK & NTRIP Section
               _buildSectionHeader(
-                S.of(context)?.ble_devices_section ?? 'Bluetooth Devices',
-                Icons.bluetooth,
+                S.of(context)?.ble_devices_section ?? 'Positioning devices',
+                Icons.satellite,
               ),
               const SizedBox(height: 8),
 
               Card(
-                child: ListTile(
-                  leading: const Icon(
-                    Icons.bluetooth_searching,
-                    color: Colors.blue,
-                  ),
-                  title: Text(
-                    S.of(context)?.ble_devices_title ?? 'Bluetooth Devices',
-                    style: const TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                  subtitle: Text(
-                    S.of(context)?.ble_devices_description ??
-                        'Scan and connect to Bluetooth Low Energy devices',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const BLEScreen(),
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(
+                        Icons.satellite,
+                        color: Colors.blue,
                       ),
-                    );
-                  },
+                      title: Text(
+                        S.of(context)?.ble_devices_title ?? 'RTK Devices',
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      subtitle: Text(
+                        S.of(context)?.ble_devices_description ??
+                            'Scan and connect to RTK receivers via Bluetooth or USB',
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const BLEScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    if (kDebugMode) ...[
+                      const Divider(height: 1),
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'NTRIP Hosts Management',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Delete all saved NTRIP hosts from the database. This action cannot be undone.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: () => _deleteAllNtripHosts(context),
+                                icon: const Icon(Icons.delete_forever),
+                                label: const Text('DROP hosts'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
 
-              const SizedBox(height: 16),
-
-              // NTRIP Hosts Section (Debug only)
-              if (kDebugMode) ...[
-                _buildSectionHeader('NTRIP Hosts', Icons.satellite),
-                const SizedBox(height: 8),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'NTRIP Hosts Management',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Delete all saved NTRIP hosts from the database. This action cannot be undone.',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: () => _deleteAllNtripHosts(context),
-                            icon: const Icon(Icons.delete_forever),
-                            label: const Text('DROP hosts'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-              ] else
-                const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
               // Information Section
               _buildSectionHeader(

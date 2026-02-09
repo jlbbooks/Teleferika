@@ -1949,9 +1949,9 @@
   "@bluetooth_permission_description": {
     "description": "Descrizione per la richiesta del permesso Bluetooth."
   },
-  "ble_devices_section": "Dispositivi Bluetooth",
+  "ble_devices_section": "Dispositivi di posizionamento",
   "@ble_devices_section": {
-    "description": "Intestazione della sezione per i dispositivi Bluetooth nelle impostazioni."
+    "description": "Intestazione della sezione per i dispositivi di posizionamento (RTK/NTRIP) nelle impostazioni."
   },
   "ble_devices_title": "Dispositivi Bluetooth",
   "@ble_devices_title": {
@@ -2058,6 +2058,10 @@
   "bleReceivingData": "In attesa di posizione iniziale...",
   "@bleReceivingData": {
     "description": "Testo mostrato nell'indicatore pulsante quando si attende la posizione iniziale."
+  },
+  "bleReceivingDataHint": "Se il ricevitore non ha fix, assicurati che abbia una vista libera del cielo.",
+  "@bleReceivingDataHint": {
+    "description": "Suggerimento sotto il messaggio di attesa quando connesso ma senza posizione."
   },
   "bleNtripTitle": "Correzioni NTRIP",
   "@bleNtripTitle": {

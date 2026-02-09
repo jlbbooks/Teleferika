@@ -2380,10 +2380,10 @@ abstract class S {
   /// **'When enabled, a satellite button appears on the map when connected to an RTK device. Tap it to view device information.'**
   String get show_ble_satellite_button_description;
 
-  /// Title for the BLE screen.
+  /// Title for the RTK devices screen.
   ///
   /// In en, this message translates to:
-  /// **'Bluetooth Devices'**
+  /// **'RTK Devices'**
   String get bleScreenTitle;
 
   /// Button label to start BLE scanning.
@@ -2584,22 +2584,22 @@ abstract class S {
   /// **'Bluetooth and location permissions are needed to scan and connect to BLE devices.'**
   String get bluetooth_permission_description;
 
-  /// Section header for Bluetooth devices in settings.
+  /// Section header for positioning devices (RTK/NTRIP) in settings.
   ///
   /// In en, this message translates to:
-  /// **'Bluetooth Devices'**
+  /// **'Positioning devices'**
   String get ble_devices_section;
 
-  /// Title for Bluetooth devices entry in settings.
+  /// Title for RTK devices entry in settings.
   ///
   /// In en, this message translates to:
-  /// **'Bluetooth Devices'**
+  /// **'RTK Devices'**
   String get ble_devices_title;
 
-  /// Description for Bluetooth devices entry in settings.
+  /// Description for RTK devices entry in settings.
   ///
   /// In en, this message translates to:
-  /// **'Scan and connect to Bluetooth Low Energy devices'**
+  /// **'Scan and connect to RTK receivers via Bluetooth or USB'**
   String get ble_devices_description;
 
   /// Title for the GPS data card in BLE screen.
@@ -2739,6 +2739,12 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Waiting for initial position...'**
   String get bleReceivingData;
+
+  /// Hint shown under the waiting message when connected but no position yet.
+  ///
+  /// In en, this message translates to:
+  /// **'If the receiver has no fix, ensure it has a clear view of the sky.'**
+  String get bleReceivingDataHint;
 
   /// Title for the NTRIP corrections card.
   ///
