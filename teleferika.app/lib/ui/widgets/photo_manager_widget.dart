@@ -455,7 +455,7 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
     logger.info('_showAddPhotoOptions called.');
     if (_isSavingPhotos) {
       logger.warning(
-        "Attempted to show add photo options while auto-save is in progress. Aborting.",
+        'Attempted to show add photo options while auto-save is in progress. Aborting.',
       );
       showInfoStatus(
         S.of(context)?.photo_manager_wait_saving ??
@@ -732,9 +732,9 @@ class _PhotoManagerWidgetState extends State<PhotoManagerWidget>
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(8),
-                                    boxShadow: [
+                                    boxShadow: const [
                                       BoxShadow(
-                                        color: const Color.fromRGBO(
+                                        color: Color.fromRGBO(
                                           0,
                                           0,
                                           0,

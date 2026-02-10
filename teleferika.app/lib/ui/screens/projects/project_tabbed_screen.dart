@@ -222,7 +222,7 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
               'Failed to delete project from database.',
         );
       }
-      throw Exception("Failed to delete project");
+      throw Exception('Failed to delete project');
     }
   }
 
@@ -480,21 +480,21 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
       Tab(
         icon: Icon(Icons.info_outline, color: tabIconColor),
         child: Text(
-          s?.details_tab_label ?? "Details",
+          s?.details_tab_label ?? 'Details',
           style: TextStyle(color: tabTextColor),
         ),
       ),
       Tab(
         icon: Icon(Icons.list_alt_outlined, color: tabIconColor),
         child: Text(
-          s?.points_tab_label ?? "Points",
+          s?.points_tab_label ?? 'Points',
           style: TextStyle(color: tabTextColor),
         ),
       ),
       Tab(
         icon: Icon(Icons.map_outlined, color: tabIconColor),
         child: Text(
-          s?.map_tab_label ?? "Map",
+          s?.map_tab_label ?? 'Map',
           style: TextStyle(color: tabTextColor),
         ),
       ),
@@ -613,7 +613,7 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
                           isScrollable: false,
                           indicatorWeight: 2.0,
                           indicatorSize: TabBarIndicatorSize.tab,
-                          labelPadding: EdgeInsets.fromLTRB(0.0, 8, 0, 8),
+                          labelPadding: const EdgeInsets.fromLTRB(0.0, 8, 0, 8),
                           tabs: tabWidgets
                               .map(
                                 (tab) =>

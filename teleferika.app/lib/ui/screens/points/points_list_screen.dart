@@ -104,7 +104,7 @@ class PointsListScreenState extends State<PointsListScreen> with StatusMixin {
         });
       }
     } catch (e, stackTrace) {
-      logger.severe("Error loading points in PointsListScreen", e, stackTrace);
+      logger.severe('Error loading points in PointsListScreen', e, stackTrace);
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -292,7 +292,7 @@ class PointsListScreenState extends State<PointsListScreen> with StatusMixin {
       for (String pointId in _selectedPointIds) {
         final success = projectState.deletePoint(pointId);
         if (!success) {
-          logger.warning("Failed to delete point $pointId");
+          logger.warning('Failed to delete point $pointId');
         }
       }
 

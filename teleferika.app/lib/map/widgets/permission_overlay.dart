@@ -50,7 +50,7 @@ class PermissionOverlay {
 
                     // Title
                     Text(
-                      s?.mapPermissionsRequiredTitle ?? "Permissions Required",
+                      s?.mapPermissionsRequiredTitle ?? 'Permissions Required',
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -68,7 +68,7 @@ class PermissionOverlay {
                             'Location Permission',
                         description:
                             s?.mapLocationPermissionInfoText ??
-                            "Location permission is needed to show your current position and for some map features.",
+                            'Location permission is needed to show your current position and for some map features.',
                         color: Colors.blue,
                       ),
                       const SizedBox(height: 12),
@@ -81,7 +81,7 @@ class PermissionOverlay {
                             'Sensor Permission',
                         description:
                             s?.mapSensorPermissionInfoText ??
-                            "Sensor (compass) permission is needed for direction-based features.",
+                            'Sensor (compass) permission is needed for direction-based features.',
                         color: Colors.green,
                       ),
                       const SizedBox(height: 12),
@@ -98,7 +98,7 @@ class PermissionOverlay {
                             icon: const Icon(Icons.settings),
                             label: Text(
                               s?.mapButtonOpenAppSettings ??
-                                  "Open App Settings",
+                                  'Open App Settings',
                             ),
                             onPressed: () async {
                               openAppSettings();
@@ -118,7 +118,7 @@ class PermissionOverlay {
                         TextButton(
                           onPressed: onRetryPermissions,
                           child: Text(
-                            s?.mapButtonRetryPermissions ?? "Retry Permissions",
+                            s?.mapButtonRetryPermissions ?? 'Retry Permissions',
                           ),
                         ),
                       ],
@@ -180,7 +180,7 @@ class PermissionOverlay {
 
                   // Title
                   Text(
-                    s?.mapPermissionsRequiredTitle ?? "Permissions Required",
+                    s?.mapPermissionsRequiredTitle ?? 'Permissions Required',
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -198,7 +198,7 @@ class PermissionOverlay {
                           'Location Permission',
                       description:
                           s?.mapLocationPermissionInfoText ??
-                          "Location permission is needed to show your current position and for some map features.",
+                          'Location permission is needed to show your current position and for some map features.',
                       color: Colors.blue,
                     ),
                     const SizedBox(height: 12),
@@ -211,7 +211,7 @@ class PermissionOverlay {
                           'Sensor Permission',
                       description:
                           s?.mapSensorPermissionInfoText ??
-                          "Sensor (compass) permission is needed for direction-based features.",
+                          'Sensor (compass) permission is needed for direction-based features.',
                       color: Colors.green,
                     ),
                     const SizedBox(height: 12),
@@ -227,7 +227,7 @@ class PermissionOverlay {
                         child: ElevatedButton.icon(
                           icon: const Icon(Icons.settings),
                           label: Text(
-                            s?.mapButtonOpenAppSettings ?? "Open App Settings",
+                            s?.mapButtonOpenAppSettings ?? 'Open App Settings',
                           ),
                           onPressed: () async {
                             openAppSettings();
@@ -247,7 +247,7 @@ class PermissionOverlay {
                       TextButton(
                         onPressed: onRetryPermissions,
                         child: Text(
-                          s?.mapButtonRetryPermissions ?? "Retry Permissions",
+                          s?.mapButtonRetryPermissions ?? 'Retry Permissions',
                         ),
                       ),
                     ],

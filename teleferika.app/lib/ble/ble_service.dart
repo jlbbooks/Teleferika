@@ -121,7 +121,7 @@ class BLEService {
         }
       }
     } catch (e) {
-      _logger.warning("Scan error: $e");
+      _logger.warning('Scan error: $e');
       _connectionStateController.add(BLEConnectionState.error);
     } finally {
       isScanning = false;
@@ -189,7 +189,7 @@ class BLEService {
 
       _connectionStateController.add(BLEConnectionState.connected);
     } catch (e) {
-      _logger.warning("Connection error: $e");
+      _logger.warning('Connection error: $e');
       _connectionStateController.add(BLEConnectionState.error);
     }
   }
@@ -203,12 +203,12 @@ class BLEService {
       // Only log service details in debug mode
       final isDebug = const bool.fromEnvironment('dart.vm.product') == false;
       if (isDebug) {
-        _logger.fine("Found ${services.length} services");
+        _logger.fine('Found ${services.length} services');
         for (final service in services) {
-          _logger.finer("Service UUID: ${service.uuid}");
+          _logger.finer('Service UUID: ${service.uuid}');
           for (final characteristic in service.characteristics) {
             final uuid = characteristic.uuid.toString().toLowerCase();
-            _logger.finer("  Characteristic UUID: $uuid");
+            _logger.finer('  Characteristic UUID: $uuid');
           }
         }
       }
@@ -258,8 +258,8 @@ class BLEService {
 
       if (_uartService == null) {
         _logger.warning(
-          "Nordic UART Service not found. "
-          "Device may use different service UUIDs.",
+          'Nordic UART Service not found. '
+          'Device may use different service UUIDs.',
         );
         // Try to find any service with characteristics that support notifications
         await _tryFindGenericUartService(services);
@@ -276,11 +276,11 @@ class BLEService {
         try {
           await _tryEnableNmeaOutput();
         } catch (e) {
-          _logger.fine("Could not send NMEA enable command: $e");
+          _logger.fine('Could not send NMEA enable command: $e');
         }
       }
     } catch (e) {
-      _logger.warning("Service discovery error: $e");
+      _logger.warning('Service discovery error: $e');
     }
   }
 
@@ -305,7 +305,7 @@ class BLEService {
       // Try a simple newline to wake up the device
       await sendCommand('\r\n');
     } catch (e) {
-      _logger.fine("Error enabling NMEA output: $e");
+      _logger.fine('Error enabling NMEA output: $e');
     }
   }
 
@@ -389,7 +389,7 @@ class BLEService {
           _handleReceivedData(Uint8List.fromList(value));
         },
         onError: (error) {
-          _logger.warning("Data subscription error: $error");
+          _logger.warning('Data subscription error: $error');
         },
         cancelOnError: false,
       );
@@ -404,7 +404,7 @@ class BLEService {
         // Characteristic may not support read - this is fine
       }
     } catch (e) {
-      _logger.warning("Error subscribing to data: $e");
+      _logger.warning('Error subscribing to data: $e');
       rethrow;
     }
   }
@@ -515,8 +515,8 @@ class BLEService {
               // Log successful extraction for investigation
               if (const bool.fromEnvironment('dart.vm.product') == false) {
                 _logger.finer(
-                  "Extracted NMEA from binary data: ${extractedText.length} chars, "
-                  "preview: ${extractedText.substring(0, extractedText.length > 50 ? 50 : extractedText.length)}",
+                  'Extracted NMEA from binary data: ${extractedText.length} chars, '
+                  'preview: ${extractedText.substring(0, extractedText.length > 50 ? 50 : extractedText.length)}',
                 );
               }
               return; // Successfully processed
@@ -573,7 +573,7 @@ class BLEService {
 
           _logger.finer(
             "Received data that couldn't be decoded as UTF-8. "
-            "Length: ${data.length} bytes ($printableCount printable, $nonPrintableCount non-printable), "
+            'Length: ${data.length} bytes ($printableCount printable, $nonPrintableCount non-printable), '
             "Hex (first 30): $hexDump${data.length > 30 ? '...' : ''}, "
             "First byte: 0x${data[0].toRadixString(16)} (${data[0] >= 0x20 && data[0] <= 0x7E ? String.fromCharCode(data[0]) : 'non-printable'}), "
             "${asciiPreview != null ? 'ASCII extracted: $asciiPreview, ' : ''}"
@@ -586,7 +586,7 @@ class BLEService {
               (asciiFull.contains('\$') ||
                   asciiFull.contains(_reNmeaCommaNumbers))) {
             _logger.finer(
-              "Attempting to process extracted ASCII as potential NMEA fragment",
+              'Attempting to process extracted ASCII as potential NMEA fragment',
             );
             _nmeaBuffer += asciiFull;
             // Try to process complete sentences
@@ -626,7 +626,7 @@ class BLEService {
     } catch (e) {
       // Only log unexpected errors (not FormatException from UTF-8 decode)
       if (e is! FormatException) {
-        _logger.warning("Error handling received data: $e");
+        _logger.warning('Error handling received data: $e');
       }
     }
   }
@@ -663,7 +663,7 @@ class BLEService {
       // Note: We don't log "invalid" for non-position sentences (GSV, GSA, etc.)
       // as they are valid NMEA but don't contain position data
     } catch (e) {
-      _logger.warning("Error processing NMEA sentence: $e");
+      _logger.warning('Error processing NMEA sentence: $e');
     }
   }
 
@@ -676,7 +676,7 @@ class BLEService {
     try {
       await _rxCharacteristic!.write(data, withoutResponse: false);
     } catch (e) {
-      _logger.warning("Error sending data: $e");
+      _logger.warning('Error sending data: $e');
     }
   }
 
@@ -733,7 +733,7 @@ class BLEService {
         }
       }
     } catch (e, stackTrace) {
-      _logger.warning("Error forwarding RTCM data: $e", e, stackTrace);
+      _logger.warning('Error forwarding RTCM data: $e', e, stackTrace);
     }
   }
 
@@ -965,7 +965,7 @@ class BLEService {
           if (!errorMsg.contains('not connected') &&
               !errorMsg.contains('disconnected')) {
             _logger.fine(
-              "Error unsubscribing during unexpected disconnect: $e",
+              'Error unsubscribing during unexpected disconnect: $e',
             );
           }
         }
@@ -987,7 +987,7 @@ class BLEService {
       try {
         await device.disconnect();
       } catch (e) {
-        _logger.fine("Error during disconnect cleanup: $e");
+        _logger.fine('Error during disconnect cleanup: $e');
         // Ignore errors - device may already be disconnected
       }
     }
@@ -1021,7 +1021,7 @@ class BLEService {
           // Only log if it's not the expected "device is not connected" error
           if (!errorMsg.contains('not connected') &&
               !errorMsg.contains('disconnected')) {
-            _logger.fine("Error unsubscribing: $e");
+            _logger.fine('Error unsubscribing: $e');
           }
         }
       }
@@ -1066,24 +1066,24 @@ class BLEService {
     try {
       await device.requestMtu(size);
     } catch (e) {
-      _logger.fine("MTU error: $e");
+      _logger.fine('MTU error: $e');
     }
   }
 
   void _printScanResult(ScanResult r) {
-    _logger.finer("-------------------- BLE Scan Result --------------------");
-    _logger.finer("Device Name: ${r.device.platformName}");
-    _logger.finer("Device ID: ${r.device.remoteId}");
-    _logger.finer("RSSI: ${r.rssi}");
-    _logger.finer("Advertisement Data:");
-    _logger.finer("  Local Name: ${r.advertisementData.advName}");
-    _logger.finer("  Tx Power Level: ${r.advertisementData.txPowerLevel}");
-    _logger.finer("  Connectable: ${r.advertisementData.connectable}");
+    _logger.finer('-------------------- BLE Scan Result --------------------');
+    _logger.finer('Device Name: ${r.device.platformName}');
+    _logger.finer('Device ID: ${r.device.remoteId}');
+    _logger.finer('RSSI: ${r.rssi}');
+    _logger.finer('Advertisement Data:');
+    _logger.finer('  Local Name: ${r.advertisementData.advName}');
+    _logger.finer('  Tx Power Level: ${r.advertisementData.txPowerLevel}');
+    _logger.finer('  Connectable: ${r.advertisementData.connectable}');
     _logger.finer(
-      "  Manufacturer Data: ${r.advertisementData.manufacturerData}",
+      '  Manufacturer Data: ${r.advertisementData.manufacturerData}',
     );
-    _logger.finer("  Service UUIDs: ${r.advertisementData.serviceUuids}");
-    _logger.finer("  Service Data: ${r.advertisementData.serviceData}");
-    _logger.finer("----------------------------------------------------------");
+    _logger.finer('  Service UUIDs: ${r.advertisementData.serviceUuids}');
+    _logger.finer('  Service Data: ${r.advertisementData.serviceData}');
+    _logger.finer('----------------------------------------------------------');
   }
 }

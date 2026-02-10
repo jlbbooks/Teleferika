@@ -357,9 +357,9 @@ class _PointDetailsPanelState extends State<PointDetailsPanel> {
                 builder: (context) {
                   final points = context.projectState.currentPoints;
                   final selected = widget.selectedPoint;
-                  if (selected == null) return SizedBox.shrink();
+                  if (selected == null) return const SizedBox.shrink();
                   final idx = points.indexWhere((p) => p.id == selected.id);
-                  if (idx <= 0) return SizedBox.shrink();
+                  if (idx <= 0) return const SizedBox.shrink();
                   final prev = points[idx - 1];
                   final dist = prev.distanceFromPoint(selected);
                   String distStr;

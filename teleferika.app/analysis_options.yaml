@@ -21,9 +21,24 @@ linter:
   # `// ignore_for_file: name_of_lint` syntax on the line or in the file
   # producing the lint.
   rules:
-    # avoid_print: false  # Uncomment to disable the `avoid_print` rule
-    # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
     dangling_library_doc_comments: false  # Disable to allow library doc comments without library directives
+
+    # Code quality (recommended in CODE_REVIEW_RECOMMENDATIONS.md §9)
+    prefer_const_constructors: true
+    prefer_const_literals_to_create_immutables: true
+    unnecessary_null_checks: true
+
+    # Best practices
+    avoid_print: true  # Use logging instead
+    prefer_single_quotes: true
+    require_trailing_commas: true
+
+    # Safety
+    cancel_subscriptions: true
+    close_sinks: true
+
+    # Documentation (enable once public APIs have dartdoc)
+    public_member_api_docs: false
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options

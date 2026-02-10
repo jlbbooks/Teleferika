@@ -65,7 +65,7 @@ class GeometryService {
         points: [firstPoint, endPoint],
         strokeWidth: 2.0,
         color: Colors.black, // Choose a distinct color
-        pattern: StrokePattern.dotted(),
+        pattern: const StrokePattern.dotted(),
       );
     } catch (e) {
       logger.warning('Error calculating project heading line: $e');

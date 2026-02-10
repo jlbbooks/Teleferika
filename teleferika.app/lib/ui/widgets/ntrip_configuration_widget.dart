@@ -1014,7 +1014,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
 
   Future<void> _insertDefaultHost() async {
     try {
-      final defaultSetting = NtripSettingCompanion(
+      final defaultSetting = const NtripSettingCompanion(
         name: drift.Value('IMAX3'),
         country: drift.Value('Italy'),
         state: drift.Value('Trentino'),
@@ -1624,9 +1624,9 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
                         DropdownButtonFormField<String>(
                           initialValue: _selectedCountry,
                           isExpanded: true,
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             labelText: 'Country',
-                            border: const OutlineInputBorder(),
+                            border: OutlineInputBorder(),
                           ),
                           items: _countries.map((country) {
                             final localizedName =
@@ -1660,11 +1660,11 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
                                 },
                         )
                       else
-                        TextField(
+                        const TextField(
                           decoration: InputDecoration(
                             labelText: 'Country',
                             hintText: 'No countries available',
-                            border: const OutlineInputBorder(),
+                            border: OutlineInputBorder(),
                             enabled: false,
                           ),
                         ),
@@ -1674,9 +1674,9 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
                         DropdownButtonFormField<String>(
                           initialValue: _selectedState,
                           isExpanded: true,
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             labelText: 'State (Regione) *',
-                            border: const OutlineInputBorder(),
+                            border: OutlineInputBorder(),
                           ),
                           items: _states.map((state) {
                             final localizedName =
@@ -1710,11 +1710,11 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
                                 },
                         )
                       else if (_selectedCountry != null && _states.isEmpty)
-                        TextField(
+                        const TextField(
                           decoration: InputDecoration(
                             labelText: 'State (Regione)',
                             hintText: 'No states available for this country',
-                            border: const OutlineInputBorder(),
+                            border: OutlineInputBorder(),
                             enabled: false,
                           ),
                         ),
@@ -1724,9 +1724,9 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
                         DropdownButtonFormField<NtripSetting>(
                           initialValue: _selectedHost,
                           isExpanded: true,
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             labelText: 'Host Name',
-                            border: const OutlineInputBorder(),
+                            border: OutlineInputBorder(),
                           ),
                           items: _availableHosts.map((host) {
                             // Debug: log the connection status
@@ -1779,11 +1779,11 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
                         )
                       else if (_selectedState != null &&
                           _availableHosts.isEmpty)
-                        TextField(
+                        const TextField(
                           decoration: InputDecoration(
                             labelText: 'Host Name',
                             hintText: 'No hosts available',
-                            border: const OutlineInputBorder(),
+                            border: OutlineInputBorder(),
                             enabled: false,
                           ),
                         ),
@@ -1934,7 +1934,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.check_circle,
                               color: Colors.green,
                               size: 16,
@@ -1943,7 +1943,7 @@ class _NtripConfigurationWidgetState extends State<NtripConfigurationWidget> {
                             Text(
                               s?.bleNtripForwarding ??
                                   'Forwarding RTCM corrections',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: Colors.green,
                                 fontSize: 12,
                               ),

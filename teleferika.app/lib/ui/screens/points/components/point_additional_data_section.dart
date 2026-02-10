@@ -66,7 +66,7 @@ class PointAdditionalDataSection extends StatelessWidget {
               labelText: S.of(context)?.altitude_label ?? 'Altitude (m)',
               hintText:
                   S.of(context)?.altitude_hint ?? 'e.g. 1203.5 (Optional)',
-              prefixIcon: Icon(
+              prefixIcon: const Icon(
                 AppConfig.altitudeIcon,
                 color: AppConfig.altitudeColor,
                 size: 20,
@@ -127,7 +127,7 @@ class PointAdditionalDataSection extends StatelessWidget {
               final points = context.projectState.currentPoints;
               final selected = point;
               final idx = points.indexWhere((p) => p.id == selected.id);
-              if (idx <= 0) return SizedBox.shrink();
+              if (idx <= 0) return const SizedBox.shrink();
               final prev = points[idx - 1];
               final dist = prev.distanceFromPoint(selected);
               String distStr;
@@ -145,7 +145,7 @@ class PointAdditionalDataSection extends StatelessWidget {
                       size: 18,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       S.of(context)?.distanceFromPrevious(prev.name) ??
                           'Distance from ${prev.name}:',
@@ -153,7 +153,7 @@ class PointAdditionalDataSection extends StatelessWidget {
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       distStr,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -192,7 +192,7 @@ class PointAdditionalDataSection extends StatelessWidget {
                 }
               }
               if (distanceToLine == null || distanceToLine <= 0.0) {
-                return SizedBox.shrink();
+                return const SizedBox.shrink();
               }
               return Padding(
                 padding: const EdgeInsets.only(top: 8.0),
@@ -203,14 +203,14 @@ class PointAdditionalDataSection extends StatelessWidget {
                       size: 18,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       S.of(context)?.offsetLabel ?? 'Offset:',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       distanceToLineStr ?? '',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -249,14 +249,14 @@ class PointAdditionalDataSection extends StatelessWidget {
                 child: Row(
                   children: [
                     Icon(Icons.rotate_right, size: 18, color: angleColor),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       S.of(context)?.angleLabel ?? 'Angle:',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       '${angle.toStringAsFixed(1)}°',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(

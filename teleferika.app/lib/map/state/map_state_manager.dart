@@ -198,7 +198,7 @@ class MapStateManager extends ChangeNotifier {
         );
       },
       (error, [stackTrace]) {
-        logger.severe("Error getting location updates: $error");
+        logger.severe('Error getting location updates: $error');
         S.of(context);
         // Status will be handled by the parent component
         currentPosition = null;
@@ -237,7 +237,7 @@ class MapStateManager extends ChangeNotifier {
         }
       },
       (error, [stackTrace]) {
-        logger.severe("Error getting compass updates: $error");
+        logger.severe('Error getting compass updates: $error');
         S.of(context);
         // Status will be handled by the parent component
         currentDeviceHeading = null;
@@ -265,7 +265,7 @@ class MapStateManager extends ChangeNotifier {
       skipNextFitToPoints = false; // Reset the flag
     } catch (e, stackTrace) {
       logger.severe(
-        "MapStateManager: Error loading points for map",
+        'MapStateManager: Error loading points for map',
         e,
         stackTrace,
       );
@@ -346,7 +346,7 @@ class MapStateManager extends ChangeNotifier {
 
   void fitMapToPoints(BuildContext context) {
     if (!isMapReady) {
-      logger.info("MapStateManager: Attempted to fit map, but map not ready.");
+      logger.info('MapStateManager: Attempted to fit map, but map not ready.');
       return;
     }
 
@@ -611,7 +611,7 @@ class MapStateManager extends ChangeNotifier {
   /// Public method to refresh points from the database
   /// This can be called from the parent component when points are reordered
   Future<void> refreshPoints(BuildContext context) async {
-    logger.info("MapStateManager: External refresh requested.");
+    logger.info('MapStateManager: External refresh requested.');
     isExternalRefresh = true; // Set flag to prevent callback loops
 
     try {
@@ -636,7 +636,7 @@ class MapStateManager extends ChangeNotifier {
 
       skipNextFitToPoints = false; // Reset the flag
     } catch (e, stackTrace) {
-      logger.severe("MapStateManager: Error refreshing points", e, stackTrace);
+      logger.severe('MapStateManager: Error refreshing points', e, stackTrace);
       // Status will be handled by the parent component
     } finally {
       isExternalRefresh = false; // Reset flag after refresh

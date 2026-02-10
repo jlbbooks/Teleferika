@@ -73,7 +73,7 @@ class PointDetailsSection extends StatelessWidget {
             decoration: InputDecoration(
               labelText: S.of(context)?.latitude_label ?? 'Latitude',
               hintText: S.of(context)?.latitude_hint ?? 'e.g. 45.12345',
-              prefixIcon: Icon(
+              prefixIcon: const Icon(
                 AppConfig.latitudeIcon,
                 color: AppConfig.latitudeColor,
                 size: 20,
@@ -137,7 +137,7 @@ class PointDetailsSection extends StatelessWidget {
             decoration: InputDecoration(
               labelText: S.of(context)?.longitude_label ?? 'Longitude',
               hintText: S.of(context)?.longitude_hint ?? 'e.g. -12.54321',
-              prefixIcon: Icon(
+              prefixIcon: const Icon(
                 AppConfig.longitudeIcon,
                 color: AppConfig.longitudeColor,
                 size: 20,
@@ -202,7 +202,7 @@ class PointDetailsSection extends StatelessWidget {
               labelText: S.of(context)?.altitude_label ?? 'Altitude (m)',
               hintText:
                   S.of(context)?.altitude_hint ?? 'e.g. 1203.5 (Optional)',
-              prefixIcon: Icon(
+              prefixIcon: const Icon(
                 AppConfig.altitudeIcon,
                 color: AppConfig.altitudeColor,
                 size: 20,
@@ -265,7 +265,7 @@ class PointDetailsSection extends StatelessWidget {
             decoration: InputDecoration(
               labelText: S.of(context)?.gpsPrecisionLabel ?? 'GPS Precision:',
               hintText: 'e.g. 3.5',
-              prefixIcon: Icon(
+              prefixIcon: const Icon(
                 AppConfig.gpsPrecisionIcon,
                 color: AppConfig.gpsPrecisionColor,
                 size: 20,

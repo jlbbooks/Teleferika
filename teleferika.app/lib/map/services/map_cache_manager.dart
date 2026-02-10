@@ -78,14 +78,14 @@ class MapCacheManager {
       _validatedStores.add(_fallbackStoreName);
 
       return FMTCTileProvider(
-        stores: {_fallbackStoreName: BrowseStoreStrategy.readUpdateCreate},
+        stores: const {_fallbackStoreName: BrowseStoreStrategy.readUpdateCreate},
         loadingStrategy: BrowseLoadingStrategy.cacheFirst,
       );
     } catch (e) {
       _logger.severe('Failed to create fallback tile provider: $e');
       // Return a basic tile provider without caching as last resort
       return FMTCTileProvider(
-        stores: {},
+        stores: const {},
         loadingStrategy: BrowseLoadingStrategy.cacheFirst,
       );
     }

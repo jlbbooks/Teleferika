@@ -586,7 +586,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
             children: [
               Row(
                 children: [
-                  Icon(Icons.info_outline, color: Colors.grey, size: 20),
+                  const Icon(Icons.info_outline, color: Colors.grey, size: 20),
                   const SizedBox(width: 8),
                   Text(
                     S.of(context)?.no_license_found ?? 'No License Found',
@@ -687,7 +687,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         children: [
-          Icon(Icons.check_circle, color: Colors.green, size: 16),
+          const Icon(Icons.check_circle, color: Colors.green, size: 16),
           const SizedBox(width: 8),
           Expanded(child: Text(feature, style: const TextStyle(fontSize: 12))),
         ],
@@ -844,7 +844,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
     if (_isSelectionMode) {
       _toggleSelection(project.id);
     } else {
-      logger.info("Navigating to details for project: ${project.name}");
+      logger.info('Navigating to details for project: ${project.name}');
       // Clear any previous highlight before navigating
       setState(() {
         _highlightedProjectId = null;
@@ -874,7 +874,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         // For now, let's assume a full refresh might be safest if something non-specific happened.
         // _refreshProjectsListFromDb();
         logger.info(
-          "ProjectTabbedScreen returned with no specific ID or action.",
+          'ProjectTabbedScreen returned with no specific ID or action.',
         );
         // Clear global state to ensure fresh data for next navigation
         context.projectState.clearProject();
@@ -882,7 +882,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       }
 
       if (action == 'saved') {
-        logger.info("ProjectTabbedScreen returned: project $id was saved.");
+        logger.info('ProjectTabbedScreen returned: project $id was saved.');
         // Refresh from both database and global state to ensure consistency
         _refreshProjectsListFromDb();
         setState(() {
@@ -892,7 +892,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
         // Also clear any global state to ensure fresh data on next load
         context.projectState.clearProject();
       } else if (action == 'deleted') {
-        logger.info("ProjectTabbedScreen returned: project $id was deleted.");
+        logger.info('ProjectTabbedScreen returned: project $id was deleted.');
         setState(() {
           _currentProjects.removeWhere((p) => p.id == id);
           _highlightedProjectId = null; // Ensure no highlight on a deleted item
@@ -908,14 +908,14 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       } else if (action == 'navigated_back') {
         // User just came back, potentially from viewing an existing project. Highlight it.
         logger.info(
-          "ProjectTabbedScreen returned: navigated back from project $id.",
+          'ProjectTabbedScreen returned: navigated back from project $id.',
         );
         setState(() {
           _highlightedProjectId = id;
         });
         // Clear global state to ensure fresh data for next navigation
         context.projectState.clearProject();
-      } else if (result['action'] == "created" && result['id'] != null) {
+      } else if (result['action'] == 'created' && result['id'] != null) {
         logger.info(
           "ProjectTabbedScreen returned: project ${result['id']} was created (legacy path).",
         );
@@ -928,7 +928,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
       } else {
         // Fallback for your existing conditions, or new unhandled ones
         logger.info(
-          "ProjectTabbedScreen returned with result: $result. Refreshing list.",
+          'ProjectTabbedScreen returned with result: $result. Refreshing list.',
         );
         _refreshProjectsListFromDb();
         // If an ID is present in a generic success, highlight it
@@ -943,14 +943,14 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
     } else if (result is bool && result == true) {
       // Generic true, refresh list. Maybe highlight if a context can be inferred.
       logger.info(
-        "ProjectTabbedScreen returned generic true. Refreshing list.",
+        'ProjectTabbedScreen returned generic true. Refreshing list.',
       );
       _refreshProjectsListFromDb();
       // Clear global state for generic success
       context.projectState.clearProject();
     } else if (result == null) {
       logger.info(
-        "ProjectTabbedScreen returned null (e.g. back press without action). No specific action taken on list.",
+        'ProjectTabbedScreen returned null (e.g. back press without action). No specific action taken on list.',
       );
       // Clear global state when user just navigates back without action
       context.projectState.clearProject();
@@ -962,7 +962,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
   }
 
   void _navigateToAddProjectPage() async {
-    logger.info("Navigating to ProjectTabbedScreen for a new project.");
+    logger.info('Navigating to ProjectTabbedScreen for a new project.');
     ProjectModel newProject = ProjectModel(name: '', note: '');
 
     // Clear any previous highlight before navigating
@@ -1018,7 +1018,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                 TextButton(
                   child: Text(
                     S.of(context)?.buttonDelete ?? 'Delete',
-                    style: TextStyle(color: Colors.red),
+                    style: const TextStyle(color: Colors.red),
                   ),
                   onPressed: () => Navigator.of(context).pop(true),
                 ),
@@ -1037,7 +1037,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
           // ignore: use_build_context_synchronously
           final success = await context.projectState.deleteProject(id);
           if (!success) {
-            logger.warning("Failed to delete project $id");
+            logger.warning('Failed to delete project $id');
             if (mounted) {
               showErrorStatus(
                 S.of(context)?.error_deleting_project('Database error') ??
@@ -1055,7 +1055,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
           _highlightedProjectId = null;
         });
         logger.info(
-          "${_selectedProjectIdsForMultiSelect.length} project(s) deleted.",
+          '${_selectedProjectIdsForMultiSelect.length} project(s) deleted.',
         );
         if (mounted) {
           showSuccessStatus(
@@ -1068,7 +1068,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
           );
         }
       } catch (e, stackTrace) {
-        logger.severe("Error deleting projects", e, stackTrace);
+        logger.severe('Error deleting projects', e, stackTrace);
         if (mounted) {
           showErrorStatus(
             S
@@ -1143,12 +1143,12 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
             return AlertDialog(
               title: Row(
                 children: [
-                  Icon(Icons.warning, color: Colors.orange, size: 24),
+                  const Icon(Icons.warning, color: Colors.orange, size: 24),
                   const SizedBox(width: 8),
                   Text(S.of(context)?.clear_license ?? 'Clear License'),
                 ],
               ),
-              content: Text(
+              content: const Text(
                 'Are you sure you want to clear the current license? This action cannot be undone and will remove access to premium features.',
               ),
               actions: <Widget>[
@@ -1159,7 +1159,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                 TextButton(
                   child: Text(
                     S.of(context)?.clear_license ?? 'Clear License',
-                    style: TextStyle(color: Colors.red),
+                    style: const TextStyle(color: Colors.red),
                   ),
                   onPressed: () => Navigator.of(context).pop(true),
                 ),
@@ -1578,7 +1578,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
           ? AppBar(
               title: Row(
                 children: [
-                  Icon(Icons.select_all, size: 24),
+                  const Icon(Icons.select_all, size: 24),
                   const SizedBox(width: 12),
                   Text(
                     S
@@ -1608,7 +1608,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
           : AppBar(
               title: Row(
                 children: [
-                  Icon(Icons.folder_open, size: 24),
+                  const Icon(Icons.folder_open, size: 24),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -1715,7 +1715,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                                         : Colors.grey)),
                       ),
                       tooltip:
-                          "Licence Status / Import\n"
+                          'Licence Status / Import\n'
                           "License: ${_activeLicence?.email ?? 'None'}\n"
                           "Status: ${_activeLicence?.status ?? 'None'}",
                       onSelected: (String value) {
@@ -1780,8 +1780,8 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                               value: 'import_license',
                               child: Row(
                                 children: [
-                                  Icon(Icons.file_upload, size: 20),
-                                  SizedBox(width: 8),
+                                  const Icon(Icons.file_upload, size: 20),
+                                  const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       S.of(context)?.import_licence ??
@@ -1796,8 +1796,8 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                               value: 'request_license',
                               child: Row(
                                 children: [
-                                  Icon(Icons.request_page, size: 20),
-                                  SizedBox(width: 8),
+                                  const Icon(Icons.request_page, size: 20),
+                                  const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       S.of(context)?.request_license ??
@@ -1825,8 +1825,8 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                               value: 'test_license',
                               child: Row(
                                 children: [
-                                  Icon(Icons.bug_report, size: 20),
-                                  SizedBox(width: 8),
+                                  const Icon(Icons.bug_report, size: 20),
+                                  const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       S
@@ -1844,8 +1844,8 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                               value: 'test_validation',
                               child: Row(
                                 children: [
-                                  Icon(Icons.security, size: 20),
-                                  SizedBox(width: 8),
+                                  const Icon(Icons.security, size: 20),
+                                  const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       S.of(context)?.test_licence_validation ??
@@ -1860,8 +1860,8 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
                               value: 'clear_license',
                               child: Row(
                                 children: [
-                                  Icon(Icons.clear, size: 20),
-                                  SizedBox(width: 8),
+                                  const Icon(Icons.clear, size: 20),
+                                  const SizedBox(width: 8),
                                   Text(
                                     S.of(context)?.clear_license ??
                                         'Clear License',

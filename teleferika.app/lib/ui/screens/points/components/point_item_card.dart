@@ -237,7 +237,7 @@ class PointItemCard extends StatelessWidget {
             // Latitude
             Row(
               children: [
-                Icon(
+                const Icon(
                   AppConfig.latitudeIcon,
                   size: 18,
                   color: AppConfig.latitudeColor,
@@ -252,7 +252,7 @@ class PointItemCard extends StatelessWidget {
             // Longitude
             Row(
               children: [
-                Icon(
+                const Icon(
                   AppConfig.longitudeIcon,
                   size: 18,
                   color: AppConfig.longitudeColor,
@@ -269,7 +269,7 @@ class PointItemCard extends StatelessWidget {
             if (point.altitude != null)
               Row(
                 children: [
-                  Icon(
+                  const Icon(
                     AppConfig.altitudeIcon,
                     size: 18,
                     color: AppConfig.altitudeColor,
@@ -285,7 +285,7 @@ class PointItemCard extends StatelessWidget {
             if (point.gpsPrecision != null)
               Row(
                 children: [
-                  Icon(
+                  const Icon(
                     AppConfig.gpsPrecisionIcon,
                     size: 18,
                     color: AppConfig.gpsPrecisionColor,
@@ -410,7 +410,7 @@ class PointItemCard extends StatelessWidget {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     padding: const EdgeInsets.all(2),
-                                    child: Icon(
+                                    child: const Icon(
                                       Icons.sticky_note_2,
                                       color: Colors.white,
                                       size: 12,

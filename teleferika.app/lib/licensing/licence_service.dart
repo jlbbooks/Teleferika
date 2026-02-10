@@ -199,7 +199,7 @@ class LicenceService {
       _logger.info(
         'Licensing disabled - bypassing validation for: ${licence.email}',
       );
-      return LicenceValidationResult(isValid: true, error: null);
+      return const LicenceValidationResult(isValid: true, error: null);
     }
 
     try {

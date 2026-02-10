@@ -261,7 +261,7 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
                       widget.onMovePoint(pointToMove, latlng);
                     } catch (e) {
                       logger.warning(
-                        "Error finding point to move in onTap: ${widget.selectedPointId}. $e",
+                        'Error finding point to move in onTap: ${widget.selectedPointId}. $e',
                       );
                       // This will be handled by the parent component
                     }
@@ -275,7 +275,7 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
               },
               onMapReady: () {
                 logger.info(
-                  "FlutterMapWidget: Map is ready (onMapReady called).",
+                  'FlutterMapWidget: Map is ready (onMapReady called).',
                 );
                 widget.onMapReady();
               },
@@ -373,7 +373,7 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
                       borderColor: widget.projectHeadingLine!.borderColor,
                       borderStrokeWidth:
                           widget.projectHeadingLine!.borderStrokeWidth,
-                      pattern: StrokePattern.dotted(),
+                      pattern: const StrokePattern.dotted(),
                     ),
                   ],
                 ),
@@ -629,8 +629,8 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
       );
     } catch (e, st) {
       logger.severe('FlutterMapWidget: Exception building FlutterMap: $e\n$st');
-      return Stack(
-        children: [const Center(child: Text('Error building map. See logs.'))],
+      return const Stack(
+        children: [Center(child: Text('Error building map. See logs.'))],
       );
     }
   }

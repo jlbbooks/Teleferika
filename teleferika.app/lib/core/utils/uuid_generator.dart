@@ -2,7 +2,7 @@
 import 'package:uuid/uuid.dart';
 
 // Create a single, private instance of Uuid for efficiency.
-final _uuidInstance = Uuid();
+final _uuidInstance = const Uuid();
 
 /// Generates a v7 UUID string.
 ///

@@ -176,13 +176,13 @@ class DebugPanel extends StatelessWidget {
                     ),
                     Row(
                       children: [
-                        Icon(
+                        const Icon(
                           AppConfig.latitudeIcon,
                           size: 14,
                           color: AppConfig.latitudeColor,
                         ),
                         const SizedBox(width: 4),
-                        Text(
+                        const Text(
                           'Lat: ',
                           style: TextStyle(color: AppConfig.latitudeColor),
                         ),
@@ -194,13 +194,13 @@ class DebugPanel extends StatelessWidget {
                     ),
                     Row(
                       children: [
-                        Icon(
+                        const Icon(
                           AppConfig.longitudeIcon,
                           size: 14,
                           color: AppConfig.longitudeColor,
                         ),
                         const SizedBox(width: 4),
-                        Text(
+                        const Text(
                           'Lon: ',
                           style: TextStyle(color: AppConfig.longitudeColor),
                         ),
@@ -212,13 +212,13 @@ class DebugPanel extends StatelessWidget {
                     ),
                     Row(
                       children: [
-                        Icon(
+                        const Icon(
                           AppConfig.altitudeIcon,
                           size: 14,
                           color: AppConfig.altitudeColor,
                         ),
                         const SizedBox(width: 4),
-                        Text(
+                        const Text(
                           'Alt: ',
                           style: TextStyle(color: AppConfig.altitudeColor),
                         ),

@@ -297,7 +297,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               Container(
                                 width: 20,
                                 height: 20,
-                                decoration: BoxDecoration(
+                                decoration: const BoxDecoration(
                                   color: AppConfig.angleColorGood,
                                   shape: BoxShape.circle,
                                 ),
@@ -306,7 +306,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               Container(
                                 width: 20,
                                 height: 20,
-                                decoration: BoxDecoration(
+                                decoration: const BoxDecoration(
                                   color: AppConfig.angleColorBad,
                                   shape: BoxShape.circle,
                                 ),
@@ -465,9 +465,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            const Text(
                               'NTRIP Hosts Management',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w500,
                                 fontSize: 16,
                               ),

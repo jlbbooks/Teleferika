@@ -16,7 +16,7 @@ import 'drift_database_helper.dart';
 /// the old sqflite implementation to the new drift implementation.
 class SqliteMigrationHelper {
   static final Logger _logger = Logger('SqliteMigrationHelper');
-  static const String _oldDatabaseName = "Photogrammetry.db";
+  static const String _oldDatabaseName = 'Photogrammetry.db';
 
   /// Checks if there's an old sqflite database that needs migration
   static Future<bool> hasOldDatabase() async {

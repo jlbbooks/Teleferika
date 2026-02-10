@@ -11,7 +11,7 @@ Your Teleferika app is a well-structured Flutter project with solid architecture
 The following **high-priority** items have been implemented:
 
 | # | Item | What was done |
-|---|------|----------------|
+| --- | ------ | ---------------- |
 | 1 | Dependency management | `shared_preferences` was already pinned in `pubspec.yaml` (`^2.5.4`). No change needed. |
 | 2 | StreamController memory leaks | **BLEService**: Enhanced existing `dispose()` with `_disposed` guard, cancellation of `_ntripGgaPositionSubscription`, and `_ntripClient?.disconnect()` before `_ntripClient?.dispose()`. All broadcast controllers and subscriptions are now closed/cancelled. |
 | 3 | Database connection management | **DriftDatabaseHelper**: `close()` now sets `_database = null` after closing. **main.dart**: `_MyAppRootState.dispose()` calls `DriftDatabaseHelper.instance.close()` and `BLEService.instance.dispose()` on app shutdown. |
@@ -21,22 +21,25 @@ The following **high-priority** items have been implemented:
 The following **medium-priority** items have been implemented:
 
 | # | Item | What was done |
-|---|------|----------------|
+| --- | ------ | ---------------- |
 | 6 | Optimize database queries | **database.dart**: Added `ProjectWithPointsRaw`, `getAllProjectsWithPointsJoined()` (single join query for projects + points), and `getImagesForPointIds(List<String>)` (batch load images). **drift_database_helper.dart**: `getAllProjects()` now uses these two queries instead of 1 + N + N×M. |
 | 7 | BLE data processing performance | **ble_service.dart**: `_handleReceivedData` now takes `Uint8List` (convert at subscription with `Uint8List.fromList`). Cached class-level `RegExp` patterns (`_reNmeaLikeChars`, `_reNmeaTalker`, `_reNmeaCommaNumbers`, `_reNmeaTalkerOnly`) and `Latin1Decoder`; all inline regex and fallback decode use these. |
 | 8 | Code duplication in database helper | **converters/drift_converters.dart**: Added `DriftConverter<TModel, TCompanion>` base, `_ValueHelpers` for optional note/date, and `ProjectConverter`, `PointConverter`, `ImageConverter`. **drift_database_helper.dart**: Uses converter instances and no longer contains inline conversion methods. |
+| 9 | Improve lint configuration | **analysis_options.yaml**: Enabled `prefer_const_constructors`, `prefer_const_literals_to_create_immutables`, `unnecessary_null_checks`, `avoid_print`, `prefer_single_quotes`, `require_trailing_commas`, `cancel_subscriptions`, `close_sinks`, `public_member_api_docs: false`. Ran `dart fix --apply` (236 fixes in 34 files). Remaining infos: `close_sinks`, `use_build_context_synchronously`, `unnecessary_underscores` and a few unused-element warnings for gradual follow-up. |
 
 ---
 
 ## ✅ Strengths Identified
 
 ### Architecture & Design
+
 - **Excellent database architecture**: Drift implementation with proper migrations, type safety, and query optimization
 - **Singleton pattern usage**: Correctly implemented for services (BLEService, DriftDatabaseHelper, ProjectStateManager)
 - **Comprehensive logging**: Well-structured logging throughout the app using the `logging` package
 - **Good separation of concerns**: Clear directory structure (ble, db, core, ui, map, licensing)
 
 ### Code Quality
+
 - **Strong null safety**: Proper use of nullable types and null-aware operators
 - **Detailed documentation**: Excellent dartdoc comments on main classes
 - **Error handling**: Most database operations have proper try-catch blocks with logging
@@ -51,11 +54,13 @@ The following **medium-priority** items have been implemented:
 > **Issue**: `shared_preferences: any` in `pubspec.yaml` line 62 allows any version, which can cause breaking changes
 
 **Current:**
+
 ```yaml
 shared_preferences: any
 ```
 
 **Recommended:**
+
 ```yaml
 shared_preferences: ^2.3.3  # Pin to specific version
 ```
@@ -63,6 +68,7 @@ shared_preferences: ^2.3.3  # Pin to specific version
 **Impact**: Prevents unexpected breaking changes during dependency updates
 
 **Files to update:**
+
 - [pubspec.yaml](file:///home/michael/StudioProjects/Teleferika/teleferika.app/pubspec.yaml#L62)
 
 *Implemented: pubspec already had `shared_preferences: ^2.5.4`; no change made.*
@@ -77,6 +83,7 @@ shared_preferences: ^2.3.3  # Pin to specific version
 **Location:** [ble_service.dart](file:///home/michael/StudioProjects/Teleferika/teleferika.app/lib/ble/ble_service.dart#L62-82)
 
 **Current implementation:**
+
 ```dart
 final StreamController<List<ScanResult>> _scanResultsController =
     StreamController<List<ScanResult>>.broadcast();
@@ -85,6 +92,7 @@ final StreamController<List<ScanResult>> _scanResultsController =
 ```
 
 **Recommended fix:**
+
 ```dart
 class BLEService {
   // ... existing code ...
@@ -117,6 +125,7 @@ class BLEService {
 **Location:** [drift_database_helper.dart](file:///home/michael/StudioProjects/Teleferika/teleferika.app/lib/db/drift_database_helper.dart#L35-43)
 
 **Current:**
+
 ```dart
 Future<TeleferikaDatabase> get database async {
   if (_database != null) {
@@ -160,6 +169,7 @@ void dispose() {
 **However**, many UI screens catch errors without showing user feedback:
 
 **Recommended pattern:**
+
 ```dart
 try {
   await _dbHelper.insertProject(project);
@@ -187,6 +197,7 @@ try {
 **Location:** [project_state_manager.dart](file:///home/michael/StudioProjects/Teleferika/teleferika.app/lib/core/project_state_manager.dart#L266-283)
 
 **Current:**
+
 ```dart
 Future<void> updateProjectInDB() async {
   try {
@@ -202,6 +213,7 @@ Future<void> updateProjectInDB() async {
 ```
 
 **Recommended:**
+
 ```dart
 Future<void> updateProjectInDB() async {
   try {
@@ -230,6 +242,7 @@ Future<void> updateProjectInDB() async {
 **Location:** [drift_database_helper.dart](file:///home/michael/StudioProjects/Teleferika/teleferika.app/lib/db/drift_database_helper.dart#L46-74)
 
 **Current:**
+
 ```dart
 Future<List<ProjectModel>> getAllProjects() async {
   // ...
@@ -242,6 +255,7 @@ Future<List<ProjectModel>> getAllProjects() async {
 ```
 
 **Recommended:** Use Drift's join capabilities:
+
 ```dart
 Future<List<ProjectModel>> getAllProjects() async {
   final db = await database;
@@ -278,6 +292,7 @@ Future<List<ProjectModel>> getAllProjects() async {
 **Location:** [ble_service.dart](file:///home/michael/StudioProjects/Teleferika/teleferika.app/lib/ble/ble_service.dart#L400-621)
 
 **Current:**
+
 ```dart
 void _handleReceivedData(List<int> data) {
   // Multiple UTF-8 decode attempts, string manipulations
@@ -286,11 +301,13 @@ void _handleReceivedData(List<int> data) {
 ```
 
 **Recommendations:**
+
 1. **Use Uint8List instead of List\<int\>** for better performance
 2. **Cache regex patterns** instead of creating them each time
 3. **Consider using a state machine** for NMEA parsing instead of string splits
 
 **Example optimization:**
+
 ```dart
 // Class level
 final _nmeaSentenceRegex = RegExp(r'^\$[A-Z]{2}[A-Z]{3}.*\*[0-9A-F]{2}$');
@@ -337,11 +354,12 @@ class ProjectConverter implements DriftConverter<ProjectModel, Project, ProjectC
 
 ---
 
-### 9. **Improve Lint Configuration**
+### 9. **Improve Lint Configuration** ✅ Done
 
 **Current:** [analysis_options.yaml](file:///home/michael/StudioProjects/Teleferika/teleferika.app/analysis_options.yaml)
 
 **Recommended additions:**
+
 ```yaml
 linter:
   rules:
@@ -363,6 +381,8 @@ linter:
     public_member_api_docs: false  # Start with false, enable gradually
 ```
 
+*Implemented: All recommended rules added to **analysis_options.yaml**. Ran `dart fix --apply` (236 fixes). Remaining: 4 warnings (unused_local_variable, unused_element) and 12 infos (close_sinks in rtk_device_service, use_build_context_synchronously, unnecessary_underscores) for follow-up.*
+
 ---
 
 ### 10. **Missing Constraints in Database Schema**
@@ -372,6 +392,7 @@ linter:
 **Location:** [database.dart](file:///home/michael/StudioProjects/Teleferika/teleferika.app/lib/db/database.dart#L14-26)
 
 **Current:**
+
 ```dart
 class Projects extends Table {
   // ...
@@ -381,6 +402,7 @@ class Projects extends Table {
 ```
 
 **Recommended:**
+
 ```dart
 class Projects extends Table {
   // ...
@@ -390,6 +412,7 @@ class Projects extends Table {
 ```
 
 Then add helper methods:
+
 ```dart
 Future<List<Project>> getProjectsUsingCableType(String cableTypeId) async {
   return (select(projects)
@@ -414,6 +437,7 @@ Future<void> clearCableTypeFromProjects(String cableTypeId) async {
 **Location:** Multiple files
 
 **Example:**
+
 ```dart
 // Create enums for better type safety
 enum LogLevel {
@@ -438,10 +462,12 @@ enum ConnectionStatus {
 **Issue**: Magic numbers scattered throughout code
 
 **Examples:**
+
 - [ble_service.dart:32](file:///home/michael/StudioProjects/Teleferika/teleferika.app/lib/ble/ble_service.dart#L32): `const Duration(seconds: 20)` for scan timeout
 - [ble_service.dart:703](file:///home/michael/StudioProjects/Teleferika/teleferika.app/lib/ble/ble_service.dart#L703): `const maxChunkSize = 200`
 
 **Recommended:**
+
 ```dart
 // Create a constants file
 class BLEConstants {
@@ -458,6 +484,7 @@ class BLEConstants {
 **Recommendation:** Create integration tests for critical workflows
 
 **Example structure:**
+
 ```dart
 // test/integration/project_workflow_test.dart
 void main() {
@@ -479,12 +506,14 @@ void main() {
 > Your current Provider implementation works well, but for future scalability, consider migrating to Riverpod
 
 **Benefits:**
+
 - Compile-time safety
 - Better dependency injection
 - Easier testing
 - No BuildContext needed
 
 **Migration would be gradual:**
+
 ```dart
 // From:
 Provider<LicenceService>.value(value: LicenceService.instance)
@@ -502,6 +531,7 @@ final licenceServiceProvider = Provider((ref) => LicenceService.instance);
 **Location:** [loading_screen.dart:71](file:///home/michael/StudioProjects/Teleferika/teleferika.app/lib/ui/screens/loading/loading_screen.dart#L71)
 
 **Recommendation:**
+
 1. Create GitHub issues for TODOs
 2. Add issue references to comments: `// TODO(#123): Description`
 3. Use lint rule to enforce this pattern
@@ -515,6 +545,7 @@ final licenceServiceProvider = Provider((ref) => LicenceService.instance);
 **Location:** Projects list screen
 
 **Recommendation:**
+
 ```dart
 // Implement pagination
 Future<List<ProjectModel>> getProjectsPaginated({
@@ -536,6 +567,7 @@ Future<List<ProjectModel>> getProjectsPaginated({
 **Current:** Images loaded from disk each time
 
 **Recommendation:**
+
 ```dart
 // Add cached_network_image or flutter_cache_manager
 dependencies:
@@ -556,6 +588,7 @@ CachedNetworkImage(
 ### 18. **Add Performance Monitoring**
 
 **Recommendation:**
+
 ```dart
 // Add Firebase Performance or Sentry
 dependencies:
@@ -580,6 +613,7 @@ await SentryFlutter.init(
 **Current:** Query interceptor logs to console
 
 **Recommended:** Add performance thresholds:
+
 ```dart
 class DatabaseQueryInterceptor extends QueryInterceptor {
   static const _slowQueryThreshold = Duration(milliseconds: 100);
@@ -614,6 +648,7 @@ class DatabaseQueryInterceptor extends QueryInterceptor {
 **Location:** [database.dart](file:///home/michael/StudioProjects/Teleferika/teleferika.app/lib/db/database.dart#L69-83)
 
 **Recommended:**
+
 ```yaml
 dependencies:
   flutter_secure_storage: ^9.2.2
@@ -630,18 +665,21 @@ await storage.write(key: 'ntrip_password', value: password);
 ## 📋 Summary of Action Items
 
 ### Immediate (Week 1)
+
 - [x] Fix `shared_preferences: any` dependency version *(already pinned in pubspec)*
 - [x] Add `dispose()` method to `BLEService` *(enhanced existing dispose)*
 - [x] Add user feedback for error cases in UI *(project create/delete in tabbed and list screens)*
 - [x] Review and close database connection on app termination *(close in MyAppRoot.dispose)*
 
 ### Short-term (Month 1)
+
 - [x] Optimize `getAllProjects()` query to avoid N+1 pattern *(join + batch images in database.dart / drift_database_helper.dart)*
 - [ ] Add foreign key constraints for `cableEquipmentTypeId`
 - [ ] Extract magic numbers to constants
 - [ ] Enhance linter rules
 
 ### Long-term (Quarter 1)
+
 - [ ] Add integration tests for critical workflows
 - [ ] Implement pagination for project lists
 - [ ] Consider migration to Riverpod

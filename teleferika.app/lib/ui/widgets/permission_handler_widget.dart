@@ -433,7 +433,7 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
                   const SizedBox(height: 24),
 
                   Text(
-                    s?.mapPermissionsRequiredTitle ?? "Permissions Required",
+                    s?.mapPermissionsRequiredTitle ?? 'Permissions Required',
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -455,7 +455,7 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
                         child: ElevatedButton.icon(
                           icon: const Icon(Icons.settings),
                           label: Text(
-                            s?.mapButtonOpenAppSettings ?? "Open App Settings",
+                            s?.mapButtonOpenAppSettings ?? 'Open App Settings',
                           ),
                           onPressed: () async {
                             openAppSettings();
@@ -481,7 +481,7 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
                           _checkPermissions();
                         },
                         child: Text(
-                          s?.mapButtonRetryPermissions ?? "Retry Permissions",
+                          s?.mapButtonRetryPermissions ?? 'Retry Permissions',
                         ),
                       ),
                     ],
@@ -507,7 +507,7 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
         title = s?.locationPermissionTitle ?? 'Location Permission';
         description =
             s?.mapLocationPermissionInfoText ??
-            "Location permission is needed to show your current position and for some map features.";
+            'Location permission is needed to show your current position and for some map features.';
         color = Colors.blue;
         break;
       case PermissionType.sensor:
@@ -515,7 +515,7 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
         title = s?.sensorPermissionTitle ?? 'Sensor Permission';
         description =
             s?.mapSensorPermissionInfoText ??
-            "Sensor (compass) permission is needed for direction-based features.";
+            'Sensor (compass) permission is needed for direction-based features.';
         color = Colors.green;
         break;
       case PermissionType.camera:
@@ -523,7 +523,7 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
         title = s?.camera_permission_title ?? 'Camera Permission';
         description =
             s?.camera_permission_description ??
-            "Camera permission is needed to take photos.";
+            'Camera permission is needed to take photos.';
         color = Colors.purple;
         break;
       case PermissionType.microphone:
@@ -531,7 +531,7 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
         title = s?.microphone_permission_title ?? 'Microphone Permission';
         description =
             s?.microphone_permission_description ??
-            "Microphone permission is needed to record audio.";
+            'Microphone permission is needed to record audio.';
         color = Colors.orange;
         break;
       case PermissionType.storage:
@@ -539,7 +539,7 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
         title = s?.storage_permission_title ?? 'Storage Permission';
         description =
             s?.storage_permission_description ??
-            "Storage permission is needed to save files.";
+            'Storage permission is needed to save files.';
         color = Colors.teal;
         break;
       case PermissionType.bluetooth:
@@ -547,7 +547,7 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
         title = s?.bluetooth_permission_title ?? 'Bluetooth Permission';
         description =
             s?.bluetooth_permission_description ??
-            "Bluetooth and location permissions are needed to scan and connect to BLE devices.";
+            'Bluetooth and location permissions are needed to scan and connect to BLE devices.';
         color = Colors.blue;
         break;
     }

@@ -69,7 +69,7 @@ class _PointEditorScreenState extends State<PointEditorScreen>
     _gpsPrecisionController.addListener(_markUnsavedTextChanges);
 
     logger.info(
-      "PointEditorScreen initialized for Point ID: ${widget.point.id}, Initial image count: ${_currentImages.length}",
+      'PointEditorScreen initialized for Point ID: ${widget.point.id}, Initial image count: ${_currentImages.length}',
     );
   }
 
@@ -81,7 +81,7 @@ class _PointEditorScreenState extends State<PointEditorScreen>
         _hasUnsavedTextChanges = true;
         _hasUnsavedChanges = true;
       });
-      logger.info("Unsaved textual changes marked.");
+      logger.info('Unsaved textual changes marked.');
     }
   }
 
@@ -103,7 +103,7 @@ class _PointEditorScreenState extends State<PointEditorScreen>
 
   Future<void> _savePointDetails({bool calledFromWillPop = false}) async {
     logger.info(
-      "Attempting to save point details for point ID: ${widget.point.id}. Called from WillPop: $calledFromWillPop",
+      'Attempting to save point details for point ID: ${widget.point.id}. Called from WillPop: $calledFromWillPop',
     );
 
     // Parse form values
@@ -132,7 +132,7 @@ class _PointEditorScreenState extends State<PointEditorScreen>
     // Use model validation instead of form validation
     if (!pointToSave.isValid) {
       logger.warning(
-        "Point validation failed: ${pointToSave.validationErrors}",
+        'Point validation failed: ${pointToSave.validationErrors}',
       );
       showErrorStatus(
         S
@@ -171,20 +171,20 @@ class _PointEditorScreenState extends State<PointEditorScreen>
       if (exists) {
         final success = context.projectState.updatePoint(pointToSave);
         if (!success) {
-          logger.warning("Failed to update point ${pointToSave.id}");
+          logger.warning('Failed to update point ${pointToSave.id}');
           showErrorStatus('Error updating point');
           return;
         }
       } else {
         final success = context.projectState.createPoint(pointToSave);
         if (!success) {
-          logger.warning("Failed to create point ${pointToSave.id}");
+          logger.warning('Failed to create point ${pointToSave.id}');
           showErrorStatus('Error creating point');
           return;
         }
       }
       logger.info(
-        "Point ID ${widget.point.id} and its images updated successfully. Image count: ${_currentImages.length}",
+        'Point ID ${widget.point.id} and its images updated successfully. Image count: ${_currentImages.length}',
       );
       if (mounted) {
         setState(() {
@@ -203,7 +203,7 @@ class _PointEditorScreenState extends State<PointEditorScreen>
       }
     } catch (e, stackTrace) {
       logger.severe(
-        "Error saving point details for point ID ${widget.point.id}",
+        'Error saving point details for point ID ${widget.point.id}',
         e,
         stackTrace,
       );
@@ -315,7 +315,7 @@ class _PointEditorScreenState extends State<PointEditorScreen>
             TextButton(
               child: Text(
                 s?.buttonDelete ?? 'Delete',
-                style: TextStyle(color: Colors.red),
+                style: const TextStyle(color: Colors.red),
               ),
               onPressed: () => Navigator.of(dialogContext).pop(true),
             ),
@@ -383,7 +383,7 @@ class _PointEditorScreenState extends State<PointEditorScreen>
           ),
           leading: IconButton(
             // Custom back button to ensure _onWillPop is always triggered
-            icon: Icon(Icons.arrow_back),
+            icon: const Icon(Icons.arrow_back),
             onPressed: () async {
               if (await _onWillPop()) {
                 if (!context.mounted) return;
@@ -462,7 +462,7 @@ class _PointEditorScreenState extends State<PointEditorScreen>
                             // Don't mark _hasUnsavedTextChanges here, only _photosChangedAndSaved
                           });
                           logger.info(
-                            "PointEditorScreen: UI updated with new image list. Count: ${updatedImageList.length}",
+                            'PointEditorScreen: UI updated with new image list. Count: ${updatedImageList.length}',
                           );
                         },
                         onPhotosSavedSuccessfully: () {
@@ -473,7 +473,7 @@ class _PointEditorScreenState extends State<PointEditorScreen>
                                 true; // <--- ENSURE THIS LINE IS PRESENT AND CORRECT
                           });
                           logger.info(
-                            "PointEditorScreen: Notified that photos were successfully auto-saved. _photosChangedAndSaved = true",
+                            'PointEditorScreen: Notified that photos were successfully auto-saved. _photosChangedAndSaved = true',
                           );
                         },
                       ),

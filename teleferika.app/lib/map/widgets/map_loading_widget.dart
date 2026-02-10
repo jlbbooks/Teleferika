@@ -51,14 +51,14 @@ class MapLoadingWidget extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               Text(
-                S.of(context)?.mapLoadingPointsIndicator ?? "Loading points...",
+                S.of(context)?.mapLoadingPointsIndicator ?? 'Loading points...',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                "Please wait while we load your project data",
+                'Please wait while we load your project data',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(
                     context,

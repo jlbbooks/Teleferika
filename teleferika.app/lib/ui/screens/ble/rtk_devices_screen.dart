@@ -520,7 +520,7 @@ class _RtkDevicesScreenState extends State<RtkDevicesScreen>
         SnackBar(
           content: Text(S.of(context)?.usbConnectionFailed ?? 'USB connection failed'),
           backgroundColor: Colors.red,
-          duration: Duration(milliseconds: 3000),
+          duration: const Duration(milliseconds: 3000),
         ),
       );
       return;
@@ -541,7 +541,7 @@ class _RtkDevicesScreenState extends State<RtkDevicesScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(S.of(context)?.usbDeviceDisconnected ?? 'USB device disconnected.'),
-          duration: Duration(milliseconds: 1000),
+          duration: const Duration(milliseconds: 1000),
         ),
       );
     }
@@ -582,7 +582,7 @@ class _RtkDevicesScreenState extends State<RtkDevicesScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(S.of(context)?.ntripReconnectedOnNewDevice ?? 'NTRIP reconnected on new device'),
-            duration: Duration(milliseconds: 1500),
+            duration: const Duration(milliseconds: 1500),
           ),
         );
       }
@@ -633,7 +633,7 @@ class _RtkDevicesScreenState extends State<RtkDevicesScreen>
         child: Stack(
           children: [
             PermissionHandlerWidget(
-              requiredPermissions: [PermissionType.bluetooth],
+              requiredPermissions: const [PermissionType.bluetooth],
               onPermissionsResult: _handlePermissionsResult,
               showOverlay: true,
               child: _buildContent(s),

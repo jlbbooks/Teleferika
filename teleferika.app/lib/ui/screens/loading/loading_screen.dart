@@ -79,7 +79,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
                   const SizedBox(height: 20),
                   Text(
                     loadingText,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18.0,
                       fontWeight: FontWeight.bold,
@@ -99,7 +99,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
                         fontSize: 12.0,
                       ),
                     ),
-                  Divider(),
+                  const Divider(),
                   ?banner,
                 ],
               ),

@@ -331,7 +331,7 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
         weightPerMeterKg: Value(row.weightPerMeterKg),
         breakingLoadKn: Value(row.breakingLoadKn),
         elasticModulusGPa: row.elasticModulusGPa != null
-            ? Value(row.elasticModulusGPa!)
+            ? Value(row.elasticModulusGPa)
             : const Value.absent(),
         sortOrder: Value(row.sortOrder),
       ));
@@ -987,7 +987,7 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
             ..where((p) => p.cableEquipmentTypeId.equals(cableTypeId)))
           .write(
         ProjectCompanion(
-          cableEquipmentTypeId: Value(null),
+          cableEquipmentTypeId: const Value(null),
           lastUpdate: Value(now),
         ),
       );

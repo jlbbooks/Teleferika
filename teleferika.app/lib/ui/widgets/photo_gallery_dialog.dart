@@ -167,7 +167,7 @@ class _NoteEditDialogState extends State<NoteEditDialog> {
             // Header with icon and conditional title
             Row(
               children: [
-                Icon(Icons.sticky_note_2, color: Colors.white, size: 24),
+                const Icon(Icons.sticky_note_2, color: Colors.white, size: 24),
                 if (widget.initialNote.isEmpty) ...[
                   const SizedBox(width: 12),
                   Expanded(
@@ -473,7 +473,7 @@ class _PhotoGalleryDialogState extends State<PhotoGalleryDialog> {
                       children: [
                         Row(
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.sticky_note_2,
                               color: Colors.white,
                               size: 20,

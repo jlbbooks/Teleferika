@@ -90,7 +90,7 @@ class MigrationService {
                 ),
                 const SizedBox(height: 16),
                 if (result.stats != null) ...[
-                  Text('Migrated:'),
+                  const Text('Migrated:'),
                   Text('• ${result.stats!['projects']} projects'),
                   Text('• ${result.stats!['points']} points'),
                   Text('• ${result.stats!['images']} images'),
@@ -129,8 +129,8 @@ class MigrationService {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Row(
+        return const AlertDialog(
+          title: Row(
             children: [
               SizedBox(
                 width: 20,
@@ -141,7 +141,7 @@ class MigrationService {
               Text('Migrating Data'),
             ],
           ),
-          content: const Column(
+          content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(

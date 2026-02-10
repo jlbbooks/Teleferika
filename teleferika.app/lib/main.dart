@@ -173,7 +173,7 @@ class _MyAppRootState extends State<MyAppRoot> {
   void initState() {
     super.initState();
     // Use the logger instance from logger.dart
-    logger.info("MyAppRoot initState: Starting app initialization.");
+    logger.info('MyAppRoot initState: Starting app initialization.');
     _initializeApp();
   }
 
@@ -186,14 +186,14 @@ class _MyAppRootState extends State<MyAppRoot> {
 
   Future<void> _initializeApp() async {
     final startTime = DateTime.now();
-    logger.fine("Initialization started at $startTime");
+    logger.fine('Initialization started at $startTime');
 
     try {
       // Load version info
       final packageInfo = await PackageInfo.fromPlatform();
       _versionInfo = packageInfo.version;
       _buildNumber = packageInfo.buildNumber;
-      logger.info("Version info loaded successfully.");
+      logger.info('Version info loaded successfully.');
 
       logger.info('Initialising FMTCObjectBoxBackend');
       await FMTCObjectBoxBackend()
@@ -209,24 +209,24 @@ class _MyAppRootState extends State<MyAppRoot> {
       await Future.delayed(
         const Duration(milliseconds: kDebugMode ? 100 : 3000),
       );
-      logger.config("Other essential checks simulated successfully.");
+      logger.config('Other essential checks simulated successfully.');
     } catch (e, stackTrace) {
-      logger.severe("Error during app initialization", e, stackTrace);
+      logger.severe('Error during app initialization', e, stackTrace);
     }
 
     final endTime = DateTime.now();
     final duration = endTime.difference(startTime);
-    logger.fine("Initialization completed in ${duration.inMilliseconds}ms");
-    logger.fine("Version: $_versionInfo, Build: $_buildNumber");
+    logger.fine('Initialization completed in ${duration.inMilliseconds}ms');
+    logger.fine('Version: $_versionInfo, Build: $_buildNumber');
 
     if (mounted) {
       setState(() {
         _isInitialized = true;
       });
-      logger.info("Initialization complete. Navigating to main app.");
+      logger.info('Initialization complete. Navigating to main app.');
     } else {
       logger.warning(
-        "Widget was disposed during initialization, cannot navigate to main app.",
+        'Widget was disposed during initialization, cannot navigate to main app.',
       );
     }
   }
@@ -234,11 +234,11 @@ class _MyAppRootState extends State<MyAppRoot> {
   @override
   Widget build(BuildContext context) {
     if (!_isInitialized) {
-      logger.finest("Building LoadingScreen.");
+      logger.finest('Building LoadingScreen.');
       return const LoadingScreen();
     }
 
-    logger.finest("Building MyApp (which now loads ProjectsListScreen).");
+    logger.finest('Building MyApp (which now loads ProjectsListScreen).');
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ProjectStateManager()),

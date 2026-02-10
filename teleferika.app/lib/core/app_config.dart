@@ -121,7 +121,7 @@ class AppConfig {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.blue, width: 2),
+        borderSide: const BorderSide(color: Colors.blue, width: 2),
       ),
       filled: true,
       fillColor: Colors.grey.shade50,
@@ -175,7 +175,7 @@ class AppConfig {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.teal, width: 2),
+        borderSide: const BorderSide(color: Colors.teal, width: 2),
       ),
       filled: true,
       fillColor: Colors.grey.shade800,

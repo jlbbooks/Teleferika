@@ -282,7 +282,7 @@ class MapScreenState extends State<MapScreen>
   }
 
   Future<void> _handleEditPoint(PointModel point) async {
-    logger.info("Navigating to edit point ${point.name}");
+    logger.info('Navigating to edit point ${point.name}');
 
     final result = await Navigator.push<Map<String, dynamic>>(
       context,
@@ -300,7 +300,7 @@ class MapScreenState extends State<MapScreen>
             _stateManager.recalculateAndDrawLines(context);
           });
           logger.info(
-            "Point ${updatedPoint.name} details updated (pending save)!",
+            'Point ${updatedPoint.name} details updated (pending save)!',
           );
           showSuccessStatus(
             'Point ${updatedPoint.name} details updated (pending save)!',
@@ -321,7 +321,7 @@ class MapScreenState extends State<MapScreen>
             }
             _stateManager.recalculateAndDrawLines(context);
           });
-          logger.info("Point deleted from MapScreen.");
+          logger.info('Point deleted from MapScreen.');
           showSuccessStatus('Point deleted (pending save)!');
         }
       }
@@ -341,7 +341,7 @@ class MapScreenState extends State<MapScreen>
   }
 
   Future<void> _handleDeletePoint(PointModel point) async {
-    logger.info("Delete tapped for point ${point.name}");
+    logger.info('Delete tapped for point ${point.name}');
     await _handleDeletePointFromPanel(point);
   }
 
@@ -382,7 +382,7 @@ class MapScreenState extends State<MapScreen>
 
         setState(() {
           logger.info(
-            "Point ${pointToDelete.name} (ID: ${pointToDelete.id}) removed from MapScreen after panel delete.",
+            'Point ${pointToDelete.name} (ID: ${pointToDelete.id}) removed from MapScreen after panel delete.',
           );
           if (_stateManager.selectedPointId == pointToDelete.id) {
             _stateManager.selectedPointId = null;
@@ -514,7 +514,7 @@ class MapScreenState extends State<MapScreen>
   /// Public method to refresh points from the database
   /// This can be called from the parent component when points are reordered
   Future<void> refreshPoints() async {
-    logger.info("MapScreen: External refresh requested.");
+    logger.info('MapScreen: External refresh requested.');
     await _stateManager.refreshPoints(context);
     if (!mounted) return;
     setState(() {});
@@ -589,7 +589,7 @@ class MapScreenState extends State<MapScreen>
 
           try {
             return PermissionHandlerWidget(
-              requiredPermissions: [
+              requiredPermissions: const [
                 PermissionType.location,
                 PermissionType.sensor,
               ],
@@ -750,7 +750,7 @@ class MapScreenState extends State<MapScreen>
                                   horizontal: 8,
                                   vertical: 4,
                                 ),
-                                minimumSize: Size(0, 0),
+                                minimumSize: const Size(0, 0),
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                 visualDensity: VisualDensity.compact,
                                 shape: RoundedRectangleBorder(
@@ -892,7 +892,7 @@ class MapScreenState extends State<MapScreen>
           ],
           colorsStop: [0.0, 1.0],
           strokeWidth: 3.0,
-          pattern: StrokePattern.dotted(),
+          pattern: const StrokePattern.dotted(),
         );
       }
     }

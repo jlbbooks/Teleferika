@@ -70,16 +70,16 @@ class ProjectStateManager extends ChangeNotifier {
         _hasUnsavedNewPoint = false;
         notifyListeners();
         logger.info(
-          "ProjectStateManager: Loaded project  ${project.name} with ${project.points.length} points",
+          'ProjectStateManager: Loaded project  ${project.name} with ${project.points.length} points',
         );
       } else {
         logger.warning(
-          "ProjectStateManager: Project with ID $projectId not found",
+          'ProjectStateManager: Project with ID $projectId not found',
         );
       }
     } catch (e, stackTrace) {
       logger.severe(
-        "ProjectStateManager: Error loading project $projectId",
+        'ProjectStateManager: Error loading project $projectId',
         e,
         stackTrace,
       );
@@ -96,7 +96,7 @@ class ProjectStateManager extends ChangeNotifier {
     _hasUnsavedChanges = false;
     _hasUnsavedNewPoint = false;
     notifyListeners();
-    logger.info("ProjectStateManager: Cleared current project");
+    logger.info('ProjectStateManager: Cleared current project');
   }
 
   /// Save the current project to database
@@ -132,10 +132,10 @@ class ProjectStateManager extends ChangeNotifier {
         await _cleanupOrphanedImageFilesForCurrentProject();
       }
       _hasUnsavedChanges = false;
-      logger.info("ProjectStateManager: Project and points saved successfully");
+      logger.info('ProjectStateManager: Project and points saved successfully');
       return true;
     } catch (e, stackTrace) {
-      logger.severe("ProjectStateManager: Error saving project", e, stackTrace);
+      logger.severe('ProjectStateManager: Error saving project', e, stackTrace);
       return false;
     }
   }
@@ -186,7 +186,7 @@ class ProjectStateManager extends ChangeNotifier {
   Future<void> undoChanges() async {
     if (_currentProject?.id == null) return;
     await loadProject(_currentProject!.id);
-    logger.info("ProjectStateManager: Changes undone by reloading from DB");
+    logger.info('ProjectStateManager: Changes undone by reloading from DB');
   }
 
   /// Refresh points from database
@@ -199,12 +199,12 @@ class ProjectStateManager extends ChangeNotifier {
         _currentProject = project;
       }
       logger.info(
-        "ProjectStateManager: Refreshed ${project?.points.length ?? 0} points and project data",
+        'ProjectStateManager: Refreshed ${project?.points.length ?? 0} points and project data',
       );
       notifyListeners();
     } catch (e, stackTrace) {
       logger.severe(
-        "ProjectStateManager: Error refreshing points",
+        'ProjectStateManager: Error refreshing points',
         e,
         stackTrace,
       );
@@ -268,13 +268,13 @@ class ProjectStateManager extends ChangeNotifier {
       final result = await _dbHelper.updateProject(_currentProject!);
       if (result > 0) {
         logger.info(
-          "ProjectStateManager: Updated project ${_currentProject!.name}",
+          'ProjectStateManager: Updated project ${_currentProject!.name}',
         );
         notifyListeners();
       }
     } catch (e, stackTrace) {
       logger.severe(
-        "ProjectStateManager: Error updating project",
+        'ProjectStateManager: Error updating project',
         e,
         stackTrace,
       );
@@ -296,12 +296,12 @@ class ProjectStateManager extends ChangeNotifier {
   Future<bool> createProject(ProjectModel project) async {
     try {
       await _dbHelper.insertProject(project);
-      logger.info("ProjectStateManager: Created project ${project.name}");
+      logger.info('ProjectStateManager: Created project ${project.name}');
       await loadProject(project.id);
       return true;
     } catch (e, stackTrace) {
       logger.severe(
-        "ProjectStateManager: Error creating project",
+        'ProjectStateManager: Error creating project',
         e,
         stackTrace,
       );
@@ -327,12 +327,12 @@ class ProjectStateManager extends ChangeNotifier {
         await _cleanupProjectFiles(projectToDelete);
       }
 
-      logger.info("ProjectStateManager: Deleted project $projectId");
+      logger.info('ProjectStateManager: Deleted project $projectId');
       notifyListeners();
       return true;
     } catch (e, stackTrace) {
       logger.severe(
-        "ProjectStateManager: Error deleting project",
+        'ProjectStateManager: Error deleting project',
         e,
         stackTrace,
       );
@@ -373,11 +373,11 @@ class ProjectStateManager extends ChangeNotifier {
   Future<List<ProjectModel>> getAllProjects() async {
     try {
       final projects = await _dbHelper.getAllProjects();
-      logger.info("ProjectStateManager: Retrieved ${projects.length} projects");
+      logger.info('ProjectStateManager: Retrieved ${projects.length} projects');
       return projects;
     } catch (e, stackTrace) {
       logger.severe(
-        "ProjectStateManager: Error getting all projects",
+        'ProjectStateManager: Error getting all projects',
         e,
         stackTrace,
       );
@@ -389,13 +389,13 @@ class ProjectStateManager extends ChangeNotifier {
   bool createPoint(PointModel point) {
     if (_currentProject == null) {
       logger.warning(
-        "ProjectStateManager: Cannot create point - no current project",
+        'ProjectStateManager: Cannot create point - no current project',
       );
       return false;
     }
     addPointInEditingState(point);
     logger.info(
-      "ProjectStateManager: Created point ${point.id} in project ${_currentProject!.name}",
+      'ProjectStateManager: Created point ${point.id} in project ${_currentProject!.name}',
     );
     return true;
   }
@@ -404,13 +404,13 @@ class ProjectStateManager extends ChangeNotifier {
   bool updatePoint(PointModel point) {
     if (_currentProject == null) {
       logger.warning(
-        "ProjectStateManager: Cannot update point - no current project",
+        'ProjectStateManager: Cannot update point - no current project',
       );
       return false;
     }
     updatePointInEditingState(point);
     logger.info(
-      "ProjectStateManager: Updated point ${point.id} in project ${_currentProject!.name}",
+      'ProjectStateManager: Updated point ${point.id} in project ${_currentProject!.name}',
     );
     return true;
   }
@@ -419,13 +419,13 @@ class ProjectStateManager extends ChangeNotifier {
   bool deletePoint(String pointId) {
     if (_currentProject == null) {
       logger.warning(
-        "ProjectStateManager: Cannot delete point - no current project",
+        'ProjectStateManager: Cannot delete point - no current project',
       );
       return false;
     }
     deletePointInEditingState(pointId);
     logger.info(
-      "ProjectStateManager: Deleted point $pointId from project ${_currentProject!.name}",
+      'ProjectStateManager: Deleted point $pointId from project ${_currentProject!.name}',
     );
     return true;
   }
@@ -438,14 +438,14 @@ class ProjectStateManager extends ChangeNotifier {
   ) {
     if (_currentProject == null) {
       logger.warning(
-        "ProjectStateManager: Cannot move point - no current project",
+        'ProjectStateManager: Cannot move point - no current project',
       );
       return false;
     }
     final point = getPointById(pointId);
     if (point == null) {
       logger.warning(
-        "ProjectStateManager: Cannot move point - point $pointId not found",
+        'ProjectStateManager: Cannot move point - point $pointId not found',
       );
       return false;
     }
@@ -455,7 +455,7 @@ class ProjectStateManager extends ChangeNotifier {
     );
     updatePointInEditingState(updatedPoint);
     logger.info(
-      "ProjectStateManager: Moved point ${point.id} to ($newLatitude, $newLongitude)",
+      'ProjectStateManager: Moved point ${point.id} to ($newLatitude, $newLongitude)',
     );
     return true;
   }
