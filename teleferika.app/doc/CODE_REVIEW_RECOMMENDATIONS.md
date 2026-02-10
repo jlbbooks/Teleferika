@@ -18,11 +18,12 @@ The following **high-priority** items have been implemented:
 | 4 | Error handling – user feedback | **project_tabbed_screen.dart**: `_insertNewProjectToDb()` and `_deleteProjectFromDb()` now show `showErrorStatus` (with l10n) when create/delete fails. **projects_list_screen.dart**: Multi-delete loop shows error when a single project delete fails. |
 | 5 | State management – unnecessary rebuilds | **project_state_manager.dart**: Already correct — `notifyListeners()` only when `result > 0`, and `rethrow` in catch. No code change. |
 
-The following **medium-priority** item has been implemented:
+The following **medium-priority** items have been implemented:
 
 | # | Item | What was done |
 |---|------|----------------|
 | 6 | Optimize database queries | **database.dart**: Added `ProjectWithPointsRaw`, `getAllProjectsWithPointsJoined()` (single join query for projects + points), and `getImagesForPointIds(List<String>)` (batch load images). **drift_database_helper.dart**: `getAllProjects()` now uses these two queries instead of 1 + N + N×M. |
+| 7 | BLE data processing performance | **ble_service.dart**: `_handleReceivedData` now takes `Uint8List` (convert at subscription with `Uint8List.fromList`). Cached class-level `RegExp` patterns (`_reNmeaLikeChars`, `_reNmeaTalker`, `_reNmeaCommaNumbers`, `_reNmeaTalkerOnly`) and `Latin1Decoder`; all inline regex and fallback decode use these. |
 
 ---
 
@@ -269,7 +270,7 @@ Future<List<ProjectModel>> getAllProjects() async {
 
 ---
 
-### 7. **BLE Data Processing Performance**
+### 7. **BLE Data Processing Performance** ✅ Done
 
 **Issue**: Heavy string processing in the hot path
 
@@ -298,6 +299,8 @@ void _handleReceivedData(Uint8List data) {  // ← Changed to Uint8List
   // Faster decoding and processing
 }
 ```
+
+*Implemented: **ble_service.dart** — `_handleReceivedData(Uint8List data)`; call sites use `Uint8List.fromList(value)`. Cached regexes: `_reNmeaLikeChars`, `_reNmeaTalker`, `_reNmeaCommaNumbers`, `_reNmeaTalkerOnly` and `Latin1Decoder`; all NMEA-pattern checks and Latin-1 fallback use them. State machine for NMEA left as future improvement.*
 
 ---
 

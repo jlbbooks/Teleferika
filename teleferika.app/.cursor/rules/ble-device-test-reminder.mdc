@@ -1,0 +1,14 @@
+---
+description: Remind to test BLE data path with physical device when available
+alwaysApply: true
+---
+
+# BLE device test reminder
+
+When the user opens this project or works on BLE code, **remind them once**:
+
+- **Test the BLE data reception path** with a physical RTK/BLE device when available.
+- The code in `lib/ble/ble_service.dart` was updated (Uint8List, cached regex, Latin1 in `_handleReceivedData`) and has **not yet been validated on a real device**.
+- There is an in-file TODO: `TODO(device-test)` in `ble_service.dart`; it can be removed or updated after successful testing.
+
+Do not repeat the reminder in the same conversation unless the user asks to test or mentions the device.

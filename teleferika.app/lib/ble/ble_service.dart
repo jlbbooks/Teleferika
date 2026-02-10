@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:geolocator/geolocator.dart';
@@ -49,6 +50,16 @@ class BLEService {
       '0000ffe1-0000-1000-8000-00805f9b34fb';
   static const String nordicUartRxCharacteristicUuidFull =
       '6e400002-b5a3-f393-e0a9-e50e24dcca9e';
+
+  // Cached regex patterns for NMEA parsing (avoid allocating in hot path)
+  static final RegExp _reNmeaLikeChars = RegExp(r'[\$A-Za-z0-9,]');
+  static final RegExp _reNmeaTalker = RegExp(r'\$[A-Z]{2}[A-Z]{3}');
+  static final RegExp _reNmeaCommaNumbers = RegExp(r'[0-9]+,[0-9]+');
+  static final RegExp _reNmeaTalkerOnly = RegExp(r'[A-Z]{2}[A-Z]{3}');
+  static const Latin1Decoder _latin1Decoder = Latin1Decoder();
+
+  // TODO(device-test): Test BLE data path with physical RTK/BLE device when available.
+  // _handleReceivedData (Uint8List, cached regex, Latin1) was optimized and not yet validated on device.
 
   BluetoothService? _uartService;
   BluetoothCharacteristic? _txCharacteristic;
@@ -372,10 +383,10 @@ class BLEService {
     try {
       await characteristic.setNotifyValue(true);
 
-      // Listen to value updates
+      // Listen to value updates (convert to Uint8List for faster hot path)
       _dataSubscription = characteristic.onValueReceived.listen(
         (value) {
-          _handleReceivedData(value);
+          _handleReceivedData(Uint8List.fromList(value));
         },
         onError: (error) {
           _logger.warning("Data subscription error: $error");
@@ -387,7 +398,7 @@ class BLEService {
       try {
         final currentValue = await characteristic.read();
         if (currentValue.isNotEmpty) {
-          _handleReceivedData(currentValue);
+          _handleReceivedData(Uint8List.fromList(currentValue));
         }
       } catch (e) {
         // Characteristic may not support read - this is fine
@@ -399,7 +410,8 @@ class BLEService {
   }
 
   /// Handles received data bytes and parses NMEA sentences.
-  void _handleReceivedData(List<int> data) {
+  /// Uses [Uint8List] for better performance in the hot path.
+  void _handleReceivedData(Uint8List data) {
     try {
       // Raw data reception logging removed
 
@@ -439,10 +451,9 @@ class BLEService {
           // It's ASCII but UTF-8 decode failed - might be a continuation byte issue
           // Try decoding as Latin-1 (which maps bytes 0x00-0xFF directly to characters)
           try {
-            text = String.fromCharCodes(data);
+            text = _latin1Decoder.convert(data);
             // If it looks like it could be part of NMEA (contains $, letters, numbers, commas)
-            if (text.contains(RegExp(r'[\$A-Za-z0-9,]')) ||
-                _nmeaBuffer.isNotEmpty) {
+            if (text.contains(_reNmeaLikeChars) || _nmeaBuffer.isNotEmpty) {
               // Likely part of an NMEA sentence - add to buffer
               _nmeaBuffer += text;
               // Try to process if we have complete sentences
@@ -483,12 +494,9 @@ class BLEService {
           if (printableBytes.isNotEmpty) {
             extractedText = String.fromCharCodes(printableBytes);
             // Check if it contains NMEA-like patterns (starts with $, or contains comma-separated numbers/letters)
-            final hasNmeaMarker = extractedText.contains(
-              RegExp(r'\$[A-Z]{2}[A-Z]{3}'),
-            );
-            final hasNmeaPattern =
-                extractedText.contains(RegExp(r'[0-9]+,[0-9]+')) ||
-                extractedText.contains(RegExp(r'[A-Z]{2}[A-Z]{3}'));
+            final hasNmeaMarker = extractedText.contains(_reNmeaTalker);
+            final hasNmeaPattern = extractedText.contains(_reNmeaCommaNumbers) ||
+                extractedText.contains(_reNmeaTalkerOnly);
 
             if (hasNmeaMarker || (hasNmeaPattern && _nmeaBuffer.isNotEmpty)) {
               // Contains NMEA sentence markers or patterns - process it
@@ -576,7 +584,7 @@ class BLEService {
           if (asciiFull != null &&
               asciiFull.length > 5 &&
               (asciiFull.contains('\$') ||
-                  asciiFull.contains(RegExp(r'[0-9]+,[0-9]+')))) {
+                  asciiFull.contains(_reNmeaCommaNumbers))) {
             _logger.finer(
               "Attempting to process extracted ASCII as potential NMEA fragment",
             );
