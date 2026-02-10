@@ -1,0 +1,33 @@
+---
+description: Use foreign keys when adding new tables or reference columns
+globs: "**/db/database.dart"
+alwaysApply: false
+---
+
+# Database schema – foreign keys
+
+When adding **new tables** or **new columns that reference another table** in `database.dart`:
+
+- **Always** add a foreign key with `.references(OtherTable, #id, ...)` when a column stores an ID pointing to another table.
+- Prefer explicit `onDelete` where it makes sense (e.g. `onDelete: KeyAction.cascade` for child rows, or `KeyAction.setNull` for optional references).
+- This keeps referential integrity and avoids later migrations to add FKs (SQLite requires recreating the table to add a constraint).
+
+**Example – new table with FK:**
+
+```dart
+class NewChild extends Table {
+  TextColumn get id => text()();
+  TextColumn get parentId =>
+      text().references(Projects, #id, onDelete: KeyAction.cascade)();
+  // ...
+}
+```
+
+**Example – new optional reference column:**
+
+```dart
+TextColumn get someTypeId =>
+    text().nullable().references(SomeTypes, #id)();
+```
+
+See existing definitions: `Points.projectId`, `Images.pointId`, `Projects.cableEquipmentTypeId`.

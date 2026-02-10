@@ -1,5 +1,7 @@
 # Reminders (open when you start work)
 
+- **New DB tables/columns** → Use foreign keys for any column that references another table (`database.dart`: `.references(OtherTable, #id, ...)`). See `.cursor/rules/db-foreign-keys.mdc`.
+
 - [ ] **Test BLE data path with physical device** (when you have the RTK/BLE device)  
   → `teleferika.app/lib/ble/ble_service.dart`: `_handleReceivedData` (Uint8List, cached regex, Latin1) was optimized and not yet validated on device. Remove this line after testing.
 

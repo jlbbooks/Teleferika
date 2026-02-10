@@ -19,7 +19,8 @@ class Projects extends Table {
   TextColumn get lastUpdate => text().nullable()();
   TextColumn get date => text().nullable()();
   RealColumn get presumedTotalLength => real().nullable()();
-  TextColumn get cableEquipmentTypeId => text().nullable()();
+  TextColumn get cableEquipmentTypeId =>
+      text().nullable().references(CableTypes, #id)();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -199,7 +200,7 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
   }
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration {
@@ -306,6 +307,37 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
 
           _logger.info(
             'projects and cable_types updated for version 5',
+          );
+        }
+
+        if (from < 6) {
+          // Add foreign key: projects.cable_equipment_type_id -> cable_types.id
+          _logger.info(
+            'Adding foreign key constraint on projects.cable_equipment_type_id',
+          );
+          await customStatement('PRAGMA foreign_keys = OFF');
+          await customStatement(
+            'CREATE TABLE projects_new ('
+            'id TEXT NOT NULL, '
+            'name TEXT NOT NULL, '
+            'note TEXT, '
+            'azimuth REAL, '
+            'last_update TEXT, '
+            'date TEXT, '
+            'presumed_total_length REAL, '
+            'cable_equipment_type_id TEXT REFERENCES cable_types(id), '
+            'PRIMARY KEY (id))',
+          );
+          await customStatement(
+            'INSERT INTO projects_new SELECT * FROM projects',
+          );
+          await customStatement('DROP TABLE projects');
+          await customStatement(
+            'ALTER TABLE projects_new RENAME TO projects',
+          );
+          await customStatement('PRAGMA foreign_keys = ON');
+          _logger.info(
+            'projects table recreated with cable_types foreign key',
           );
         }
 

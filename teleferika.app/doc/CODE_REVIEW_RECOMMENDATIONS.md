@@ -26,6 +26,7 @@ The following **medium-priority** items have been implemented:
 | 7 | BLE data processing performance | **ble_service.dart**: `_handleReceivedData` now takes `Uint8List` (convert at subscription with `Uint8List.fromList`). Cached class-level `RegExp` patterns (`_reNmeaLikeChars`, `_reNmeaTalker`, `_reNmeaCommaNumbers`, `_reNmeaTalkerOnly`) and `Latin1Decoder`; all inline regex and fallback decode use these. |
 | 8 | Code duplication in database helper | **converters/drift_converters.dart**: Added `DriftConverter<TModel, TCompanion>` base, `_ValueHelpers` for optional note/date, and `ProjectConverter`, `PointConverter`, `ImageConverter`. **drift_database_helper.dart**: Uses converter instances and no longer contains inline conversion methods. |
 | 9 | Improve lint configuration | **analysis_options.yaml**: Enabled `prefer_const_constructors`, `prefer_const_literals_to_create_immutables`, `unnecessary_null_checks`, `avoid_print`, `prefer_single_quotes`, `require_trailing_commas`, `cancel_subscriptions`, `close_sinks`, `public_member_api_docs: false`. Ran `dart fix --apply` (236 fixes in 34 files). Remaining infos: `close_sinks`, `use_build_context_synchronously`, `unnecessary_underscores` and a few unused-element warnings for gradual follow-up. |
+| 10 | Missing constraints in database schema | **database.dart**: `Projects.cableEquipmentTypeId` now has `.references(CableTypes, #id)`. Schema version bumped to 6; migration recreates `projects` table with FK (PRAGMA foreign_keys OFF, create/copy/drop/rename, ON). Helper methods `getProjectsUsingCableType(String)` and `clearCableTypeFromProjects(String)` were already present. |
 
 ---
 
@@ -385,28 +386,18 @@ linter:
 
 ---
 
-### 10. **Missing Constraints in Database Schema**
+### 10. **Missing Constraints in Database Schema** ✅ Done
 
 **Issue**: No foreign key validation for `cableEquipmentTypeId`
 
 **Location:** [database.dart](file:///home/michael/StudioProjects/Teleferika/teleferika.app/lib/db/database.dart#L14-26)
-
-**Current:**
-
-```dart
-class Projects extends Table {
-  // ...
-  TextColumn get cableEquipmentTypeId => text().nullable()();
-  // No foreign key constraint
-}
-```
 
 **Recommended:**
 
 ```dart
 class Projects extends Table {
   // ...
-  TextColumn get cableEquipmentTypeId => 
+  TextColumn get cableEquipmentTypeId =>
       text().nullable().references(CableTypes, #id)();
 }
 ```
@@ -428,6 +419,22 @@ Future<void> clearCableTypeFromProjects(String cableTypeId) async {
 }
 ```
 
+*Implemented: **database.dart** — `cableEquipmentTypeId` now has `.references(CableTypes, #id)`. Schema version 6; migration recreates `projects` with FK (PRAGMA foreign_keys OFF, create/copy/drop/rename). `getProjectsUsingCableType` and `clearCableTypeFromProjects` were already present in TeleferikaDatabase.*
+
+<<<<<<< Current (Your changes)
+=======
+**Foreign keys everywhere (audit, DB version kept at 6)**  
+All cross-table references in the schema already have foreign keys; no further migrations are required:
+
+| Table    | Column                  | References   | Constraint / behaviour |
+|----------|-------------------------|-------------|-------------------------|
+| Projects | `cableEquipmentTypeId`  | CableTypes  | nullable, no onDelete  |
+| Points   | `projectId`             | Projects    | required, ON DELETE CASCADE |
+| Images   | `pointId`               | Points      | required, ON DELETE CASCADE |
+
+CableTypes and NtripSettings do not reference other tables. **Recommendation:** For any future table or column that references another table, add `.references(OtherTable, #id, ...)` from the start so the schema is correct on create and no table-recreate migration is needed.
+
+>>>>>>> Incoming (Background Agent changes)
 ---
 
 ## 📝 Low Priority / Code Quality Improvements
@@ -674,7 +681,7 @@ await storage.write(key: 'ntrip_password', value: password);
 ### Short-term (Month 1)
 
 - [x] Optimize `getAllProjects()` query to avoid N+1 pattern *(join + batch images in database.dart / drift_database_helper.dart)*
-- [ ] Add foreign key constraints for `cableEquipmentTypeId`
+- [x] Add foreign key constraints for `cableEquipmentTypeId`
 - [ ] Extract magic numbers to constants
 - [ ] Enhance linter rules
 
