@@ -1230,6 +1230,22 @@ class _RtkDevicesScreenState extends State<RtkDevicesScreen>
                   s?.bleGpsSpeed ?? 'Speed',
                   '${_currentNmeaData!.speed!.toStringAsFixed(2)} km/h',
                 ),
+              if (_currentNmeaData!.dgpsAgeSec != null)
+                _buildGpsDataRow(
+                  s?.bleGpsDgpsAge ?? 'DGPS age',
+                  '${_currentNmeaData!.dgpsAgeSec!.toStringAsFixed(1)} s',
+                ),
+              if (_currentNmeaData!.dgpsStationId != null &&
+                  _currentNmeaData!.dgpsStationId!.isNotEmpty)
+                _buildGpsDataRow(
+                  s?.bleGpsDgpsStation ?? 'DGPS station',
+                  _currentNmeaData!.dgpsStationId!,
+                ),
+              if (_currentNmeaData!.magneticVariation != null)
+                _buildGpsDataRow(
+                  s?.bleGpsMagneticVariation ?? 'Mag. var.',
+                  '${_currentNmeaData!.magneticVariation!.toStringAsFixed(1)}°',
+                ),
             ],
             if (_currentPosition?.timestamp != null)
               Padding(

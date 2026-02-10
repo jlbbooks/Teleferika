@@ -1534,6 +1534,15 @@ class SIt extends S {
   String get bleGpsUpdated => 'Aggiornato:';
 
   @override
+  String get bleGpsDgpsAge => 'Età DGPS';
+
+  @override
+  String get bleGpsDgpsStation => 'Stazione DGPS';
+
+  @override
+  String get bleGpsMagneticVariation => 'Var. mag.';
+
+  @override
   String get bleGpsFixQualityInvalid => 'Non valido';
 
   @override

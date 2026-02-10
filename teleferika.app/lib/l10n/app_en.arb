@@ -2019,6 +2019,18 @@
   "@bleGpsUpdated": {
     "description": "Label for GPS data update timestamp."
   },
+  "bleGpsDgpsAge": "DGPS age",
+  "@bleGpsDgpsAge": {
+    "description": "Label for time since last DGPS/RTK correction (seconds)."
+  },
+  "bleGpsDgpsStation": "DGPS station",
+  "@bleGpsDgpsStation": {
+    "description": "Label for DGPS/RTK reference station ID."
+  },
+  "bleGpsMagneticVariation": "Mag. var.",
+  "@bleGpsMagneticVariation": {
+    "description": "Label for magnetic variation (declination) in degrees."
+  },
   "bleGpsFixQualityInvalid": "Invalid",
   "@bleGpsFixQualityInvalid": {
     "description": "Fix quality text for invalid fix."

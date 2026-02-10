@@ -110,11 +110,15 @@ class NMEAParser {
       // Geoid height (fields 11-12) - geoid height,M
       final geoidHeight = double.tryParse(fields[11]) ?? 0.0;
 
-      // Time since last DGPS update (field 13)
-      final dgpsAge = fields.length > 13 ? fields[13] : '';
+      // Time since last DGPS update (field 13) - seconds; useful for RTK/DGPS quality
+      final dgpsAgeSec = fields.length > 13 && fields[13].isNotEmpty
+          ? double.tryParse(fields[13])
+          : null;
 
-      // DGPS station ID (field 14)
-      final dgpsStationId = fields.length > 14 ? fields[14].split('*')[0] : '';
+      // DGPS station ID (field 14) - which reference station is providing corrections
+      final dgpsStationId = fields.length > 14 && fields[14].isNotEmpty
+          ? fields[14].split('*')[0].trim()
+          : null;
 
       // Calculate accuracy from HDOP (rough approximation)
       // Multiplier varies by fix quality:
@@ -134,6 +138,8 @@ class NMEAParser {
         hdop: hdop,
         time: time,
         geoidHeight: geoidHeight,
+        dgpsAgeSec: dgpsAgeSec,
+        dgpsStationId: dgpsStationId,
         sentenceType: 'GPGGA',
       );
     } catch (e) {
@@ -186,8 +192,8 @@ class NMEAParser {
       // Parse date separately for the date field (for compatibility)
       final date = _parseDate(dateStr);
 
-      // Magnetic variation (fields 10-11)
-      final magVar = double.tryParse(fields[10]) ?? 0.0;
+      // Magnetic variation (fields 10-11) - degrees, for true/magnetic heading conversion
+      final magneticVariation = double.tryParse(fields[10]);
 
       return NMEAData(
         latitude: latitude,
@@ -201,6 +207,7 @@ class NMEAParser {
         speed: speedKnots * 1.852, // Convert knots to km/h
         course: course,
         date: date,
+        magneticVariation: magneticVariation,
         sentenceType: 'GPRMC',
       );
     } catch (e) {
@@ -362,9 +369,15 @@ class NMEAData {
   final double? hdop; // Horizontal Dilution of Precision
   final DateTime? time;
   final double? geoidHeight;
+  /// Seconds since last DGPS/RTK correction (GPGGA field 13). High values may indicate stale corrections.
+  final double? dgpsAgeSec;
+  /// DGPS/RTK reference station ID (GPGGA field 14).
+  final String? dgpsStationId;
   final double? speed; // in km/h
-  final double? course; // in degrees
+  final double? course; // in degrees (true)
   final DateTime? date;
+  /// Magnetic variation in degrees (GPRMC). Use for true ↔ magnetic heading conversion.
+  final double? magneticVariation;
   final String sentenceType;
 
   NMEAData({
@@ -377,9 +390,12 @@ class NMEAData {
     this.hdop,
     this.time,
     this.geoidHeight,
+    this.dgpsAgeSec,
+    this.dgpsStationId,
     this.speed,
     this.course,
     this.date,
+    this.magneticVariation,
     required this.sentenceType,
   });
 
@@ -391,6 +407,8 @@ class NMEAData {
     return 'NMEAData(lat: $latitude, lon: $longitude, alt: $altitude, '
         'accuracy: $accuracy, satellites: $satellites, fix: $fixQuality, '
         'hdop: $hdop, time: $time, geoidHeight: $geoidHeight, '
-        'speed: $speed, course: $course, date: $date, sentenceType: $sentenceType)';
+        'dgpsAgeSec: $dgpsAgeSec, dgpsStationId: $dgpsStationId, '
+        'speed: $speed, course: $course, date: $date, magneticVariation: $magneticVariation, '
+        'sentenceType: $sentenceType)';
   }
 }

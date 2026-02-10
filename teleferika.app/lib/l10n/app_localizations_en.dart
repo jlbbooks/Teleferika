@@ -1519,6 +1519,15 @@ class SEn extends S {
   String get bleGpsUpdated => 'Updated:';
 
   @override
+  String get bleGpsDgpsAge => 'DGPS age';
+
+  @override
+  String get bleGpsDgpsStation => 'DGPS station';
+
+  @override
+  String get bleGpsMagneticVariation => 'Mag. var.';
+
+  @override
   String get bleGpsFixQualityInvalid => 'Invalid';
 
   @override

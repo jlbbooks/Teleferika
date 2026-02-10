@@ -239,6 +239,28 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
                     _buildInfoRow(S.of(context)?.bleGpsHdop ?? 'HDOP', nmeaData!.hdop!.toStringAsFixed(2)),
                     const SizedBox(height: 8),
                   ],
+                  // DGPS/RTK correction age and station (only from NMEA)
+                  if (nmeaData?.dgpsAgeSec != null) ...[
+                    _buildInfoRow(
+                      S.of(context)?.bleGpsDgpsAge ?? 'DGPS age',
+                      '${nmeaData!.dgpsAgeSec!.toStringAsFixed(1)} s',
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  if (nmeaData?.dgpsStationId != null && nmeaData!.dgpsStationId!.isNotEmpty) ...[
+                    _buildInfoRow(
+                      S.of(context)?.bleGpsDgpsStation ?? 'DGPS station',
+                      nmeaData.dgpsStationId!,
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  if (nmeaData?.magneticVariation != null) ...[
+                    _buildInfoRow(
+                      S.of(context)?.bleGpsMagneticVariation ?? 'Mag. var.',
+                      '${nmeaData!.magneticVariation!.toStringAsFixed(1)}°',
+                    ),
+                    const SizedBox(height: 8),
+                  ],
 
                   // Coordinates
                   _buildInfoRow(

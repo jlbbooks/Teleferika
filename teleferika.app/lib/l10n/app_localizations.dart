@@ -2674,6 +2674,24 @@ abstract class S {
   /// **'Updated:'**
   String get bleGpsUpdated;
 
+  /// Label for time since last DGPS/RTK correction (seconds).
+  ///
+  /// In en, this message translates to:
+  /// **'DGPS age'**
+  String get bleGpsDgpsAge;
+
+  /// Label for DGPS/RTK reference station ID.
+  ///
+  /// In en, this message translates to:
+  /// **'DGPS station'**
+  String get bleGpsDgpsStation;
+
+  /// Label for magnetic variation (declination) in degrees.
+  ///
+  /// In en, this message translates to:
+  /// **'Mag. var.'**
+  String get bleGpsMagneticVariation;
+
   /// Fix quality text for invalid fix.
   ///
   /// In en, this message translates to:

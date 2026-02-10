@@ -2009,6 +2009,18 @@
   "@bleGpsUpdated": {
     "description": "Etichetta per il timestamp di aggiornamento dati GPS."
   },
+  "bleGpsDgpsAge": "Età DGPS",
+  "@bleGpsDgpsAge": {
+    "description": "Etichetta per il tempo dall'ultima correzione DGPS/RTK (secondi)."
+  },
+  "bleGpsDgpsStation": "Stazione DGPS",
+  "@bleGpsDgpsStation": {
+    "description": "Etichetta per l'ID della stazione di riferimento DGPS/RTK."
+  },
+  "bleGpsMagneticVariation": "Var. mag.",
+  "@bleGpsMagneticVariation": {
+    "description": "Etichetta per la variazione magnetica (declinazione) in gradi."
+  },
   "bleGpsFixQualityInvalid": "Non valido",
   "@bleGpsFixQualityInvalid": {
     "description": "Testo qualità fix per fix non valido."
