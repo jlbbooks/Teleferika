@@ -47,13 +47,24 @@ class DriftDatabaseHelper {
     _logger.info('Getting all projects');
     try {
       final db = await database;
-      final projects = await db.getAllProjects();
+      // Single join query for projects + points (avoids N+1)
+      final projectsWithPoints = await db.getAllProjectsWithPointsJoined();
 
-      List<ProjectModel> projectModels = [];
-      for (final project in projects) {
-        _logger.fine('Loading points for project: ${project.name}');
-        final points = await getPointsForProject(project.id);
-        projectModels.add(_projectFromDrift(project, points));
+      // Batch-load all images for all points in one query
+      final allPointIds = projectsWithPoints
+          .expand((p) => p.points.map((pt) => pt.id))
+          .toList();
+      final imagesByPointId = await db.getImagesForPointIds(allPointIds);
+
+      final List<ProjectModel> projectModels = [];
+      for (final row in projectsWithPoints) {
+        final pointModels = row.points
+            .map((point) => _pointFromDrift(
+                  point,
+                  imagesByPointId[point.id] ?? [],
+                ))
+            .toList();
+        projectModels.add(_projectFromDrift(row.project, pointModels));
       }
 
       // Sort by last update, newest first

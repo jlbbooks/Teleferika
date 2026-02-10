@@ -97,6 +97,15 @@ class PointWithImages {
   PointWithImages({required this.point, required this.images});
 }
 
+/// Result of projects left-join points (single query, no N+1).
+/// Used by [TeleferikaDatabase.getAllProjectsWithPointsJoined].
+class ProjectWithPointsRaw {
+  final Project project;
+  final List<Point> points;
+
+  ProjectWithPointsRaw({required this.project, required this.points});
+}
+
 // Query interceptor for monitoring database operations
 class DatabaseQueryInterceptor extends QueryInterceptor {
   final Logger _logger = Logger('DatabaseQueryInterceptor');
@@ -555,6 +564,66 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
       return imageList;
     } catch (e) {
       _logger.severe('Error getting images for point $pointId: $e');
+      rethrow;
+    }
+  }
+
+  /// Loads all images for the given point IDs in one query.
+  /// Returns a map from pointId to list of images (ordered by ordinalNumber).
+  Future<Map<String, List<Image>>> getImagesForPointIds(
+    List<String> pointIds,
+  ) async {
+    if (pointIds.isEmpty) {
+      return {};
+    }
+    _logger.fine('Getting images for ${pointIds.length} points (batch)');
+    try {
+      final imageList = await (select(images)
+            ..where((i) => i.pointId.isIn(pointIds))
+            ..orderBy([(i) => OrderingTerm(expression: i.ordinalNumber)]))
+          .get();
+      final map = <String, List<Image>>{};
+      for (final img in imageList) {
+        map.putIfAbsent(img.pointId, () => []).add(img);
+      }
+      _logger.fine('Retrieved ${imageList.length} images for ${map.length} points');
+      return map;
+    } catch (e) {
+      _logger.severe('Error getting images for point IDs: $e');
+      rethrow;
+    }
+  }
+
+  /// Returns all projects with their points in a single join query (avoids N+1).
+  /// Points are ordered by [Points.ordinalNumber].
+  Future<List<ProjectWithPointsRaw>> getAllProjectsWithPointsJoined() async {
+    _logger.fine('Getting all projects with points (join)');
+    try {
+      final query = select(projects).join([
+        leftOuterJoin(points, points.projectId.equalsExp(projects.id)),
+      ])
+        ..orderBy([
+          OrderingTerm(expression: projects.id),
+          OrderingTerm(expression: points.ordinalNumber),
+        ]);
+      final rows = await query.get();
+      final map = <String, ProjectWithPointsRaw>{};
+      for (final row in rows) {
+        final project = row.readTable(projects);
+        final point = row.readTableOrNull(points);
+        map.putIfAbsent(
+          project.id,
+          () => ProjectWithPointsRaw(project: project, points: []),
+        );
+        if (point != null) {
+          map[project.id]!.points.add(point);
+        }
+      }
+      final result = map.values.toList();
+      _logger.fine('Retrieved ${result.length} projects with points (join)');
+      return result;
+    } catch (e) {
+      _logger.severe('Error getting all projects with points (join): $e');
       rethrow;
     }
   }

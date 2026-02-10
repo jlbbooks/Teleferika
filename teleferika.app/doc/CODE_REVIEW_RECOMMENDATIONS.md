@@ -18,6 +18,12 @@ The following **high-priority** items have been implemented:
 | 4 | Error handling – user feedback | **project_tabbed_screen.dart**: `_insertNewProjectToDb()` and `_deleteProjectFromDb()` now show `showErrorStatus` (with l10n) when create/delete fails. **projects_list_screen.dart**: Multi-delete loop shows error when a single project delete fails. |
 | 5 | State management – unnecessary rebuilds | **project_state_manager.dart**: Already correct — `notifyListeners()` only when `result > 0`, and `rethrow` in catch. No code change. |
 
+The following **medium-priority** item has been implemented:
+
+| # | Item | What was done |
+|---|------|----------------|
+| 6 | Optimize database queries | **database.dart**: Added `ProjectWithPointsRaw`, `getAllProjectsWithPointsJoined()` (single join query for projects + points), and `getImagesForPointIds(List<String>)` (batch load images). **drift_database_helper.dart**: `getAllProjects()` now uses these two queries instead of 1 + N + N×M. |
+
 ---
 
 ## ✅ Strengths Identified
@@ -215,7 +221,7 @@ Future<void> updateProjectInDB() async {
 
 ## 🎯 Medium Priority Improvements
 
-### 6. **Optimize Database Queries**
+### 6. **Optimize Database Queries** ✅ Done
 
 **Issue**: N+1 query pattern in `getAllProjects()`
 
@@ -258,6 +264,8 @@ Future<List<ProjectModel>> getAllProjects() async {
 ```
 
 **Impact**: Reduces database queries from O(n) to O(1)
+
+*Implemented: **database.dart** — Added `ProjectWithPointsRaw`, `getAllProjectsWithPointsJoined()` (single left-outer-join for projects + points), and `getImagesForPointIds(List<String>)` (batch load images). **drift_database_helper.dart** — `getAllProjects()` now runs 2 queries total (join + batch images) instead of 1 + N + N×M.*
 
 ---
 
@@ -622,7 +630,7 @@ await storage.write(key: 'ntrip_password', value: password);
 - [x] Review and close database connection on app termination *(close in MyAppRoot.dispose)*
 
 ### Short-term (Month 1)
-- [ ] Optimize `getAllProjects()` query to avoid N+1 pattern
+- [x] Optimize `getAllProjects()` query to avoid N+1 pattern *(join + batch images in database.dart / drift_database_helper.dart)*
 - [ ] Add foreign key constraints for `cableEquipmentTypeId`
 - [ ] Extract magic numbers to constants
 - [ ] Enhance linter rules
