@@ -37,6 +37,7 @@ import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:logging/logging.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
+import 'package:teleferika/ble/ble_service.dart';
 import 'package:teleferika/core/app_config.dart';
 import 'package:teleferika/core/project_state_manager.dart';
 import 'package:teleferika/db/drift_database_helper.dart';
@@ -174,6 +175,13 @@ class _MyAppRootState extends State<MyAppRoot> {
     // Use the logger instance from logger.dart
     logger.info("MyAppRoot initState: Starting app initialization.");
     _initializeApp();
+  }
+
+  @override
+  void dispose() {
+    DriftDatabaseHelper.instance.close();
+    BLEService.instance.dispose();
+    super.dispose();
   }
 
   Future<void> _initializeApp() async {

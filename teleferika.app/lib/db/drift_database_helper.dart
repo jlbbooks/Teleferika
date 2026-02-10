@@ -579,12 +579,17 @@ class DriftDatabaseHelper {
     }
   }
 
+  /// Closes the database connection. Call on app termination to release resources.
+  /// After calling, [database] will create a new connection if accessed again.
   Future close() async {
     _logger.info('Closing database connection');
     try {
-      final db = await database;
-      await db.close();
-      _logger.info('Database connection closed successfully');
+      final db = _database;
+      _database = null;
+      if (db != null) {
+        await db.close();
+        _logger.info('Database connection closed successfully');
+      }
     } catch (e) {
       _logger.severe('Error closing database connection: $e');
       rethrow;

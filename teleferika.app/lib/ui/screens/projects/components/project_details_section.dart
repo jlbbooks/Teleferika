@@ -411,7 +411,8 @@ class ProjectDetailsSectionState extends State<ProjectDetailsSection>
     // Only use selectedValue when it exists in the items list. Before cable
     // types load, cableTypes is null so items only have "Not set"; using a
     // non-null value would trigger the dropdown assertion.
-    final bool valueInItems = cableTypes != null &&
+    final bool valueInItems =
+        cableTypes != null &&
         cableTypes.isNotEmpty &&
         selectedValue != null &&
         cableTypes.any((t) => t.id == selectedValue);
@@ -419,7 +420,7 @@ class ProjectDetailsSectionState extends State<ProjectDetailsSection>
 
     final notSetLabel = s?.cableEquipmentTypeNotSet ?? 'Not set';
     return DropdownButtonFormField<String?>(
-      value: effectiveValue,
+      initialValue: effectiveValue,
       decoration: InputDecoration(
         labelText:
             s?.formFieldCableEquipmentTypeLabel ?? 'Cable / equipment type',

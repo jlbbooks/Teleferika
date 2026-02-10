@@ -159,7 +159,12 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
     // Insert the new project into the DB so points can be added
     final success = await context.projectState.createProject(widget.project);
     if (!success) {
-      // logger.severe("Failed to create new project in database"); // logger is not defined
+      if (mounted) {
+        showErrorStatus(
+          S.of(context)?.error_saving_project('Database error') ??
+              'Failed to save project to database.',
+        );
+      }
       return;
     }
     // Optionally reload from DB to get any DB-generated fields
@@ -211,7 +216,12 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
   Future<void> _deleteProjectFromDb() async {
     final success = await context.projectState.deleteProject(widget.project.id);
     if (!success) {
-      // logger.severe("Failed to delete project from database"); // logger is not defined
+      if (mounted) {
+        showErrorStatus(
+          S.of(context)?.error_deleting_project('Database error') ??
+              'Failed to delete project from database.',
+        );
+      }
       throw Exception("Failed to delete project");
     }
   }

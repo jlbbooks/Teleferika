@@ -92,6 +92,8 @@ class BLEService {
   /// Gets whether RTCM corrections are being forwarded.
   bool get isForwardingRtcm => _isForwardingRtcm;
 
+  bool _disposed = false;
+
   Future<void> startScan() async {
     if (isScanning) return;
     isScanning = true;
@@ -1032,15 +1034,20 @@ class BLEService {
   /// the BLE service (e.g., app termination). For normal screen navigation,
   /// the service should remain active to continue receiving GPS data.
   void dispose() {
-    _deviceConnectionSubscription?.cancel();
-    disconnectFromNtrip();
-    _ntripClient?.dispose();
-    _rtcmSubscription?.cancel();
+    if (_disposed) return;
+    _disposed = true;
     _dataSubscription?.cancel();
+    _deviceConnectionSubscription?.cancel();
+    _rtcmSubscription?.cancel();
+    _ntripGgaPositionSubscription?.cancel();
+    disconnectFromNtrip();
+    _ntripClient?.disconnect();
+    _ntripClient?.dispose();
     _scanResultsController.close();
     _connectionStateController.close();
     _gpsDataController.close();
     _nmeaDataController.close();
+    _logger.info('BLEService disposed');
   }
 
   /// Checks if the service is currently connected to a device

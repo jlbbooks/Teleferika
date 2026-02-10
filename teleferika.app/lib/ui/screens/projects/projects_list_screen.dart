@@ -1038,6 +1038,12 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
           final success = await context.projectState.deleteProject(id);
           if (!success) {
             logger.warning("Failed to delete project $id");
+            if (mounted) {
+              showErrorStatus(
+                S.of(context)?.error_deleting_project('Database error') ??
+                    'Failed to delete project.',
+              );
+            }
           }
         }
         setState(() {

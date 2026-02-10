@@ -96,16 +96,16 @@ Questo documento elenca **funzionalità potenziali** che potrebbero rendere Tele
 
 ## Tabella riepilogativa
 
-| Area        | Esempio di funzionalità              | Beneficio per le aziende                                           |
-| ----------- | ------------------------------------ | ------------------------------------------------------------------ |
-| Meccanica   | Freccia/franco (semplificato)        | Controllo rapido “franco OK?”; si integra con flussi SEILAPLAN/CHPS |
-| Meccanica   | Carico/campata o suggerimento “campata max” | Supporta lunghezza campate e decisioni sui supporti intermedi   |
-| Terreno     | Profilo altimetrico (vista o export)  | Revisione standard; input per progettazione da desktop              |
-| Modello dati| Tipo cavo/attrezzatura per progetto   | ✅ Implementato — tabella DB, dati di seed, selezione progetto |
-| Export      | KML, Shapefile/GeoJSON, CSV profilo  | Si integra con GIS e SEILAPLAN/CHPS; passaggio di consegne migliore |
-| Reporting   | Report linea (PDF/HTML)               | Pratiche, documentazione, passaggio alla progettazione              |
-| Sicurezza   | Controlli pendenza / inclinazione    | Allineato a controlli su sistemi gravitazionali e sicurezza        |
-| Struttura   | Tipi punto (ancoraggio, torre, piazzale) | Dati da campo più chiari; pronti per analisi tiranti/progetto   |
+| Area         | Esempio di funzionalità                     | Beneficio per le aziende                                            |
+| ------------ | ------------------------------------------- | ------------------------------------------------------------------- |
+| Meccanica    | Freccia/franco (semplificato)               | Controllo rapido “franco OK?”; si integra con flussi SEILAPLAN/CHPS |
+| Meccanica    | Carico/campata o suggerimento “campata max” | Supporta lunghezza campate e decisioni sui supporti intermedi       |
+| Terreno      | Profilo altimetrico (vista o export)        | Revisione standard; input per progettazione da desktop              |
+| Modello dati | Tipo cavo/attrezzatura per progetto         | Sì — Implementato: tabella DB, dati di seed, selezione progetto     |
+| Export       | KML, Shapefile/GeoJSON, CSV profilo         | Si integra con GIS e SEILAPLAN/CHPS; passaggio di consegne migliore |
+| Reporting    | Report linea (PDF/HTML)                     | Pratiche, documentazione, passaggio alla progettazione              |
+| Sicurezza    | Controlli pendenza / inclinazione           | Allineato a controlli su sistemi gravitazionali e sicurezza         |
+| Struttura    | Tipi punto (ancoraggio, torre, piazzale)    | Dati da campo più chiari; pronti per analisi tiranti/progetto       |
 
 ---
 
