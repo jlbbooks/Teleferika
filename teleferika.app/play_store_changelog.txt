@@ -1,4 +1,7 @@
 <en-GB>
+- Project state management: single source of truth for points, batch saves, create-and-open new projects
+- Cable types management: configure cable/equipment presets per project in project Details; manage types in Settings
+- Undo now correctly resets all project fields (including cable type); improved details form sync
 - USB RTK support: Connect RTK receivers via USB cable on Android (USB OTG)
 - Unified RTK Devices screen for both Bluetooth and USB connections
 - Improved USB disconnect detection when cable is unplugged
@@ -8,6 +11,9 @@
 </en-GB>
 
 <it-IT>
+- Gestione stato progetto: unica fonte di verità per i punti, salvataggio in batch, crea e apri nuovi progetti
+- Tipi di cavo: configura preset cavo/attrezzatura per progetto in Dettagli; gestisci tipi in Impostazioni
+- Annulla ora ripristina correttamente tutti i campi progetto (incluso tipo cavo); sincronizzazione migliorata
 - Supporto USB RTK: connetti ricevitori RTK via cavo USB su Android (USB OTG)
 - Schermata unificata Dispositivi RTK per connessioni Bluetooth e USB
 - Migliorata rilevazione disconnessione USB quando il cavo viene scollegato
