@@ -113,4 +113,21 @@ The `MapStateManager` class centralizes all map-related state and provides metho
 - Permission handling
 - Animation control
 
-This separation allows the UI components to focus on rendering while the state manager handles all the complex logic and state transitions. 
+This separation allows the UI components to focus on rendering while the state manager handles all the complex logic and state transitions.
+
+## Heading and magnetic variation
+
+The map shows the **current heading** (location arrow) and uses two possible references:
+
+- **Device compass** → **magnetic** heading (0° = magnetic north).
+- **NMEA from RTK** → **course over ground** and **magnetic variation** (GPRMC). Course is **true** heading; variation is used to convert compass to true.
+
+**Why it matters:** Project azimuth and survey headings are in **true** north. If the location arrow used only the compass (magnetic), it would not align with the project heading line where declination is significant.
+
+**Behaviour:**
+
+- **Location marker (arrow)** uses `MapStateManager.effectiveDeviceHeading`: when NMEA from the RTK device provides **magnetic variation**, the compass reading is converted to **true** heading (`magnetic + variation`, 0–360°). The arrow then matches project azimuth and GPS course. When RTK is disconnected or magVar is not in NMEA, the arrow uses raw compass (magnetic).
+- **GPS info panel** “Course” shows `position.heading`, which is already true from GPRMC when using RTK.
+- **Project azimuth** (heading line, azimuth arrow) is always in true north.
+
+**Implementation:** `MapStateManager` holds optional `magneticVariation` (set from NMEA in the map screen, cleared on BLE disconnect). The getter `effectiveDeviceHeading` returns compass + magVar when both are set, otherwise the raw device heading. See **`doc/map/HEADING_AND_MAGNETIC_VARIATION.md`** for full detail.

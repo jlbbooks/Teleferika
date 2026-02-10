@@ -64,6 +64,25 @@ class MapStateManager extends ChangeNotifier {
   /// Get whether BLE GPS is currently being used as the GPS source
   bool get isUsingBleGps => _controller.isUsingBleGps;
 
+  /// Device heading for the map marker. When [magneticVariation] is set (from RTK NMEA),
+  /// returns compass heading converted to true north so the arrow matches project azimuth.
+  double? get effectiveDeviceHeading {
+    if (currentDeviceHeading == null) return null;
+    if (_magneticVariation == null) return currentDeviceHeading;
+    final trueHeading =
+        (currentDeviceHeading! + _magneticVariation!) % 360.0;
+    return trueHeading < 0 ? trueHeading + 360.0 : trueHeading;
+  }
+
+  double? _magneticVariation;
+
+  /// Set magnetic variation from NMEA (GPRMC) when using RTK. Clear when RTK disconnects.
+  set magneticVariation(double? value) {
+    if (_magneticVariation == value) return;
+    _magneticVariation = value;
+    notifyListeners();
+  }
+
   /// Set the current map type and save to preferences
   set currentMapType(MapType value) {
     if (_currentMapType.id != value.id) {

@@ -96,9 +96,9 @@ class MapScreenState extends State<MapScreen>
 
         setState(() {
           _isBleConnected = state == BLEConnectionState.connected;
-          // Clear fix quality when disconnected
           if (!_isBleConnected) {
             _bleFixQuality = null;
+            _stateManager.magneticVariation = null;
           }
         });
 
@@ -117,12 +117,12 @@ class MapScreenState extends State<MapScreen>
       }
     });
 
-    // Listen to NMEA data to get fix quality
+    // Listen to NMEA data to get fix quality and magnetic variation (for compass → true heading)
     _nmeaDataSubscription = _rtkService.nmeaData.listen((nmeaData) {
       if (mounted) {
-        // NMEA data logging removed
         setState(() {
           _bleFixQuality = nmeaData.fixQuality;
+          _stateManager.magneticVariation = nmeaData.magneticVariation;
         });
       }
     });
@@ -629,7 +629,7 @@ class MapScreenState extends State<MapScreen>
                             glowAnimationValue:
                                 _stateManager.glowAnimationValue,
                             currentDeviceHeading:
-                                _stateManager.currentDeviceHeading,
+                                _stateManager.effectiveDeviceHeading,
                             locationStreamController:
                                 _stateManager.locationStreamController,
                             arrowheadAnimation:
