@@ -893,6 +893,42 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
       rethrow;
     }
   }
+
+  /// Returns projects that use the given cable type (id and name only).
+  Future<List<Project>> getProjectsUsingCableType(String cableTypeId) async {
+    _logger.fine('Getting projects using cable type: $cableTypeId');
+    try {
+      final list = await (select(projects)
+            ..where((p) => p.cableEquipmentTypeId.equals(cableTypeId)))
+          .get();
+      _logger.fine('Found ${list.length} project(s) using cable type');
+      return list;
+    } catch (e) {
+      _logger.severe('Error getting projects by cable type: $e');
+      rethrow;
+    }
+  }
+
+  /// Clears [cableTypeId] from all projects that reference it (before deleting).
+  Future<int> clearCableTypeFromProjects(String cableTypeId) async {
+    _logger.fine('Clearing cable type $cableTypeId from projects');
+    try {
+      final now = DateTime.now().toIso8601String();
+      final count = await (update(projects)
+            ..where((p) => p.cableEquipmentTypeId.equals(cableTypeId)))
+          .write(
+        ProjectCompanion(
+          cableEquipmentTypeId: Value(null),
+          lastUpdate: Value(now),
+        ),
+      );
+      _logger.fine('Cleared cable type from $count project(s)');
+      return count;
+    } catch (e) {
+      _logger.severe('Error clearing cable type from projects: $e');
+      rethrow;
+    }
+  }
 }
 
 LazyDatabase _openConnection() {

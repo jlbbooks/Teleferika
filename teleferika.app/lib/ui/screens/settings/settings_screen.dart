@@ -5,6 +5,7 @@ import 'package:teleferika/core/app_config.dart';
 import 'package:teleferika/core/settings_service.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/screens/ble/rtk_devices_screen.dart';
+import 'package:teleferika/ui/screens/settings/cable_types_screen.dart';
 import 'package:teleferika/db/drift_database_helper.dart';
 
 /// Settings screen for configuring application behavior.
@@ -385,6 +386,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _saveSettings();
                   },
                   secondary: const Icon(Icons.satellite),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Cable Types Section
+              _buildSectionHeader(
+                S.of(context)?.cableTypesSection ?? 'Cable Types',
+                Icons.cable,
+              ),
+              const SizedBox(height: 8),
+
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.cable, color: Colors.blue),
+                  title: Text(
+                    S.of(context)?.cableTypesTitle ?? 'Cable Types',
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  subtitle: Text(
+                    S.of(context)?.cableTypesDescription ??
+                        'Add or remove cable types used in projects',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CableTypesScreen(),
+                      ),
+                    );
+                  },
                 ),
               ),
 

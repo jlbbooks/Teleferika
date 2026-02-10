@@ -17,6 +17,7 @@ class ProjectDetailsSection extends StatefulWidget {
   final ProjectModel project;
   final bool isNew;
   final int pointsCount;
+
   /// Cable types from DB (project-level presets + user-added). When null, uses static presets.
   final List<CableType>? cableTypes;
 
@@ -380,10 +381,21 @@ class ProjectDetailsSectionState extends State<ProjectDetailsSection>
     S? s,
     ProjectModel project,
   ) {
-    final notSetLabel =
-        s?.cableEquipmentTypeNotSet ?? 'Not set';
+    final selectedValue = _currentProject.cableEquipmentTypeId;
+    final cableTypes = widget.cableTypes;
+
+    // Only use selectedValue when it exists in the items list. Before cable
+    // types load, cableTypes is null so items only have "Not set"; using a
+    // non-null value would trigger the dropdown assertion.
+    final bool valueInItems = cableTypes != null &&
+        cableTypes.isNotEmpty &&
+        selectedValue != null &&
+        cableTypes.any((t) => t.id == selectedValue);
+    final effectiveValue = valueInItems ? selectedValue : null;
+
+    final notSetLabel = s?.cableEquipmentTypeNotSet ?? 'Not set';
     return DropdownButtonFormField<String?>(
-      value: _currentProject.cableEquipmentTypeId,
+      value: effectiveValue,
       decoration: InputDecoration(
         labelText:
             s?.formFieldCableEquipmentTypeLabel ?? 'Cable / equipment type',
@@ -419,16 +431,10 @@ class ProjectDetailsSectionState extends State<ProjectDetailsSection>
         ),
       ),
       items: [
-        DropdownMenuItem<String?>(
-          value: null,
-          child: Text(notSetLabel),
-        ),
+        DropdownMenuItem<String?>(value: null, child: Text(notSetLabel)),
         if (widget.cableTypes != null && widget.cableTypes!.isNotEmpty)
           ...widget.cableTypes!.map(
-            (t) => DropdownMenuItem<String?>(
-              value: t.id,
-              child: Text(t.name),
-            ),
+            (t) => DropdownMenuItem<String?>(value: t.id, child: Text(t.name)),
           ),
       ],
       onChanged: (String? value) {

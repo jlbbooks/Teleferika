@@ -1742,4 +1742,79 @@ class SEn extends S {
 
   @override
   String get mapBleConnectionError => 'BLE connection error occurred.';
+
+  @override
+  String get cableTypesSection => 'Cable Types';
+
+  @override
+  String get cableTypesTitle => 'Cable Types';
+
+  @override
+  String get cableTypesDescription =>
+      'Add or remove cable types used in projects';
+
+  @override
+  String get cableTypeAddButton => 'Add';
+
+  @override
+  String get cableTypeAddTitle => 'Add Cable Type';
+
+  @override
+  String get cableTypeEditTitle => 'Edit Cable Type';
+
+  @override
+  String get cableTypeEditButton => 'Edit';
+
+  @override
+  String get cableTypeAddedSnackbar => 'Cable type added.';
+
+  @override
+  String get cableTypeUpdatedSnackbar => 'Cable type updated.';
+
+  @override
+  String get cableTypeDeletedSnackbar => 'Cable type deleted.';
+
+  @override
+  String get cableTypeDeleteProjectsLabel => 'Projects using this type:';
+
+  @override
+  String get cableTypeDeleteConfirmTitle => 'Delete Cable Type?';
+
+  @override
+  String cableTypeDeleteConfirmMessage(String name) {
+    return 'Delete \"$name\"? Projects using this type will have it cleared. This cannot be undone.';
+  }
+
+  @override
+  String errorAddingCableType(String error) {
+    return 'Error adding cable type: $error';
+  }
+
+  @override
+  String errorUpdatingCableType(String error) {
+    return 'Error updating cable type: $error';
+  }
+
+  @override
+  String errorDeletingCableType(String error) {
+    return 'Error deleting: $error';
+  }
+
+  @override
+  String errorLoadingCableTypes(String error) {
+    return 'Error loading cable types: $error';
+  }
+
+  @override
+  String get cableTypesEmpty => 'No cable types yet.';
+
+  @override
+  String get cableTypesEmptyHint =>
+      'Tap + to add a cable type for use in projects.';
+
+  @override
+  String get required => 'Required';
+
+  @override
+  String get retry => 'Retry';
 }

@@ -221,10 +221,21 @@ class DriftDatabaseHelper {
     }
   }
 
+  Future<List<Project>> getProjectsUsingCableType(String cableTypeId) async {
+    try {
+      final db = await database;
+      return await db.getProjectsUsingCableType(cableTypeId);
+    } catch (e) {
+      _logger.severe('Error getting projects using cable type: $e');
+      rethrow;
+    }
+  }
+
   Future<int> deleteCableType(String id) async {
     _logger.info('Deleting cable type: $id');
     try {
       final db = await database;
+      await db.clearCableTypeFromProjects(id);
       return await db.deleteCableType(id);
     } catch (e) {
       _logger.severe('Error deleting cable type $id: $e');

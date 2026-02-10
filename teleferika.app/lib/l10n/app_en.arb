@@ -2246,5 +2246,103 @@
   "gpsConnectRtkDevice": "Connect RTK Device",
   "gpsCourseLabel": "Course",
   "mapRtkDisconnectedUsingDeviceGps": "RTK device disconnected. Using device GPS.",
-  "mapBleConnectionError": "BLE connection error occurred."
+  "mapBleConnectionError": "BLE connection error occurred.",
+  "cableTypesSection": "Cable Types",
+  "@cableTypesSection": {
+    "description": "Section header for cable types in settings."
+  },
+  "cableTypesTitle": "Cable Types",
+  "@cableTypesTitle": {
+    "description": "Title for the cable types management screen."
+  },
+  "cableTypesDescription": "Add or remove cable types used in projects",
+  "@cableTypesDescription": {
+    "description": "Description for cable types entry in settings."
+  },
+  "cableTypeAddButton": "Add",
+  "@cableTypeAddButton": {
+    "description": "Button label to add a cable type."
+  },
+  "cableTypeAddTitle": "Add Cable Type",
+  "@cableTypeAddTitle": {
+    "description": "Title for the add cable type dialog."
+  },
+  "cableTypeEditTitle": "Edit Cable Type",
+  "@cableTypeEditTitle": {
+    "description": "Title for the edit cable type dialog."
+  },
+  "cableTypeEditButton": "Edit",
+  "@cableTypeEditButton": {
+    "description": "Button/tooltip for editing a cable type."
+  },
+  "cableTypeAddedSnackbar": "Cable type added.",
+  "@cableTypeAddedSnackbar": {
+    "description": "Snackbar when a cable type is added."
+  },
+  "cableTypeUpdatedSnackbar": "Cable type updated.",
+  "@cableTypeUpdatedSnackbar": {
+    "description": "Snackbar when a cable type is updated."
+  },
+  "cableTypeDeletedSnackbar": "Cable type deleted.",
+  "@cableTypeDeletedSnackbar": {
+    "description": "Snackbar when a cable type is deleted."
+  },
+  "cableTypeDeleteProjectsLabel": "Projects using this type:",
+  "@cableTypeDeleteProjectsLabel": {
+    "description": "Label for the list of projects that use the cable type being deleted."
+  },
+  "cableTypeDeleteConfirmTitle": "Delete Cable Type?",
+  "@cableTypeDeleteConfirmTitle": {
+    "description": "Title for cable type delete confirmation."
+  },
+  "cableTypeDeleteConfirmMessage": "Delete \"{name}\"? Projects using this type will have it cleared. This cannot be undone.",
+  "@cableTypeDeleteConfirmMessage": {
+    "description": "Message for cable type delete confirmation.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Skyline 14 mm"
+      }
+    }
+  },
+  "errorAddingCableType": "Error adding cable type: {error}",
+  "errorUpdatingCableType": "Error updating cable type: {error}",
+  "@errorUpdatingCableType": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "@errorAddingCableType": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "errorDeletingCableType": "Error deleting: {error}",
+  "@errorDeletingCableType": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "errorLoadingCableTypes": "Error loading cable types: {error}",
+  "@errorLoadingCableTypes": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "cableTypesEmpty": "No cable types yet.",
+  "@cableTypesEmpty": {
+    "description": "Empty state message on cable types screen."
+  },
+  "cableTypesEmptyHint": "Tap + to add a cable type for use in projects.",
+  "@cableTypesEmptyHint": {
+    "description": "Hint when cable types list is empty."
+  },
+  "required": "Required",
+  "@required": {
+    "description": "Validation message for required field."
+  },
+  "retry": "Retry",
+  "@retry": {
+    "description": "Retry button label."
+  }
 }
