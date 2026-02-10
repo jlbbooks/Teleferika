@@ -1,23 +1,15 @@
 <en-GB>
-- Project state management: single source of truth for points, batch saves, create-and-open new projects
-- Cable types management: configure cable/equipment presets per project in project Details; manage types in Settings
-- Undo now correctly resets all project fields (including cable type); improved details form sync
-- USB RTK support: Connect RTK receivers via USB cable on Android (USB OTG)
-- Unified RTK Devices screen for both Bluetooth and USB connections
-- Improved USB disconnect detection when cable is unplugged
-- Localized BLE and USB related messages
-- Connection status indicators for NTRIP hosts (green checkmark / red X)
-- Automatic selection of last used NTRIP host
+- Map: heading and magnetic variation for accurate compass and bearing display
+- GPS: improved NMEA data handling and localised status messages
+- Projects and points load faster when opening the app
+- Database: referential integrity for cable types; more reliable data
+- Code quality and stability improvements
 </en-GB>
 
 <it-IT>
-- Gestione stato progetto: unica fonte di verità per i punti, salvataggio in batch, crea e apri nuovi progetti
-- Tipi di cavo: configura preset cavo/attrezzatura per progetto in Dettagli; gestisci tipi in Impostazioni
-- Annulla ora ripristina correttamente tutti i campi progetto (incluso tipo cavo); sincronizzazione migliorata
-- Supporto USB RTK: connetti ricevitori RTK via cavo USB su Android (USB OTG)
-- Schermata unificata Dispositivi RTK per connessioni Bluetooth e USB
-- Migliorata rilevazione disconnessione USB quando il cavo viene scollegato
-- Messaggi BLE e USB localizzati
-- Indicatori di stato connessione per host NTRIP (spunta verde / X rossa)
-- Selezione automatica dell'ultimo host NTRIP utilizzato
+- Mappa: direzione e declinazione magnetica per bussola e rilevamenti corretti
+- GPS: gestione NMEA migliorata e messaggi di stato localizzati
+- Progetti e punti si caricano più velocemente all'apertura dell'app
+- Database: integrità referenziale per i tipi di cavo; dati più affidabili
+- Miglioramenti a qualità del codice e stabilità
 </it-IT>
