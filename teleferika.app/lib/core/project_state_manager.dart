@@ -294,9 +294,12 @@ class ProjectStateManager extends ChangeNotifier {
     }
   }
 
-  /// Set the current project and unsaved state (used by UI forms)
+  /// Updates project metadata (name, note, azimuth, etc.) from the given [project]
+  /// and sets unsaved state. Keeps the current points list so that form edits never
+  /// overwrite points added/edited elsewhere (all editing is in memory until save;
+  /// undo reloads from DB).
   void setProjectEditState(ProjectModel project, bool hasUnsavedChanges) {
-    _currentProject = project;
+    _currentProject = project.copyWith(points: _currentPoints);
     _hasUnsavedChanges = hasUnsavedChanges;
     notifyListeners();
   }
