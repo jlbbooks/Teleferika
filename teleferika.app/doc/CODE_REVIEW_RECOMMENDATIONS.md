@@ -24,6 +24,7 @@ The following **medium-priority** items have been implemented:
 |---|------|----------------|
 | 6 | Optimize database queries | **database.dart**: Added `ProjectWithPointsRaw`, `getAllProjectsWithPointsJoined()` (single join query for projects + points), and `getImagesForPointIds(List<String>)` (batch load images). **drift_database_helper.dart**: `getAllProjects()` now uses these two queries instead of 1 + N + N×M. |
 | 7 | BLE data processing performance | **ble_service.dart**: `_handleReceivedData` now takes `Uint8List` (convert at subscription with `Uint8List.fromList`). Cached class-level `RegExp` patterns (`_reNmeaLikeChars`, `_reNmeaTalker`, `_reNmeaCommaNumbers`, `_reNmeaTalkerOnly`) and `Latin1Decoder`; all inline regex and fallback decode use these. |
+| 8 | Code duplication in database helper | **converters/drift_converters.dart**: Added `DriftConverter<TModel, TCompanion>` base, `_ValueHelpers` for optional note/date, and `ProjectConverter`, `PointConverter`, `ImageConverter`. **drift_database_helper.dart**: Uses converter instances and no longer contains inline conversion methods. |
 
 ---
 
@@ -304,7 +305,7 @@ void _handleReceivedData(Uint8List data) {  // ← Changed to Uint8List
 
 ---
 
-### 8. **Code Duplication in Database Helper**
+### 8. **Code Duplication in Database Helper** ✅ Done
 
 **Issue**: Conversion methods have similar patterns
 
@@ -331,6 +332,8 @@ class ProjectConverter implements DriftConverter<ProjectModel, Project, ProjectC
   }
 }
 ```
+
+*Implemented: **lib/db/converters/drift_converters.dart** — `DriftConverter<TModel, TCompanion>` base with `toCompanion`; `_ValueHelpers` for optional note/ISO date and `parseDateTime`; `ProjectConverter`, `PointConverter`, `ImageConverter` with `fromDrift`/`toCompanion`. Helper uses converter instances and no longer defines inline conversion methods.*
 
 ---
 

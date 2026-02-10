@@ -7,6 +7,7 @@ import 'package:drift/drift.dart';
 
 import 'package:teleferika/core/utils/uuid_generator.dart';
 
+import 'converters/drift_converters.dart';
 import 'models/image_model.dart';
 import 'models/point_model.dart';
 import 'models/project_model.dart';
@@ -24,8 +25,18 @@ import 'database.dart';
 class DriftDatabaseHelper {
   static final Logger _logger = Logger('DriftDatabaseHelper');
 
+  late final ImageConverter _imageConverter;
+  late final PointConverter _pointConverter;
+  late final ProjectConverter _projectConverter;
+
   DriftDatabaseHelper._privateConstructor() {
     _logger.info('DriftDatabaseHelper instance created');
+    _imageConverter = ImageConverter(logger: _logger);
+    _pointConverter = PointConverter(
+      logger: _logger,
+      imageConverter: _imageConverter,
+    );
+    _projectConverter = ProjectConverter(logger: _logger);
   }
 
   static final DriftDatabaseHelper instance =
@@ -59,12 +70,12 @@ class DriftDatabaseHelper {
       final List<ProjectModel> projectModels = [];
       for (final row in projectsWithPoints) {
         final pointModels = row.points
-            .map((point) => _pointFromDrift(
+            .map((point) => _pointConverter.fromDrift(
                   point,
                   imagesByPointId[point.id] ?? [],
                 ))
             .toList();
-        projectModels.add(_projectFromDrift(row.project, pointModels));
+        projectModels.add(_projectConverter.fromDrift(row.project, pointModels));
       }
 
       // Sort by last update, newest first
@@ -95,7 +106,7 @@ class DriftDatabaseHelper {
       }
 
       final points = await getPointsForProject(id);
-      final result = _projectFromDrift(project, points);
+      final result = _projectConverter.fromDrift(project, points);
       _logger.info(
         'Retrieved project: ${result.name} with ${points.length} points',
       );
@@ -117,7 +128,7 @@ class DriftDatabaseHelper {
       _logger.fine(
         'Project prepared with lastUpdate: ${projectToInsert.lastUpdate}',
       );
-      final companion = _projectToDriftCompanion(projectToInsert);
+      final companion = _projectConverter.toCompanion(projectToInsert);
       _logger.fine('ProjectCompanion created, calling db.insertProject');
       final id = await db.insertProject(companion);
       _logger.info('Project inserted successfully with ID: $id');
@@ -133,7 +144,7 @@ class DriftDatabaseHelper {
     try {
       final db = await database;
       final projectToUpdate = project.copyWith(lastUpdate: DateTime.now());
-      final companion = _projectToDriftCompanion(projectToUpdate);
+      final companion = _projectConverter.toCompanion(projectToUpdate);
       final success = await db.updateProject(companion);
       final result = success ? 1 : 0;
       _logger.info('Project update ${success ? 'succeeded' : 'failed'}');
@@ -266,7 +277,7 @@ class DriftDatabaseHelper {
         _logger.fine('Starting transaction for point insertion');
 
         // Insert the point
-        final pointCompanion = _pointToDriftCompanion(point);
+        final pointCompanion = _pointConverter.toCompanion(point);
         await db.insertPoint(pointCompanion);
         _logger.fine('Point inserted successfully');
 
@@ -276,7 +287,7 @@ class DriftDatabaseHelper {
             'Batch inserting ${point.images.length} images for point',
           );
           final imageCompanions = point.images
-              .map((image) => _imageToDriftCompanion(image))
+              .map((image) => _imageConverter.toCompanion(image))
               .toList();
           await db.insertImages(imageCompanions);
           _logger.fine('All images inserted successfully');
@@ -301,7 +312,7 @@ class DriftDatabaseHelper {
       final db = await database;
 
       // Update the point
-      final pointCompanion = _pointToDriftCompanion(point);
+      final pointCompanion = _pointConverter.toCompanion(point);
       final success = await db.updatePoint(pointCompanion);
 
       if (success) {
@@ -321,7 +332,7 @@ class DriftDatabaseHelper {
         if (point.images.isNotEmpty) {
           _logger.fine('Batch inserting ${point.images.length} new images');
           final imageCompanions = point.images
-              .map((image) => _imageToDriftCompanion(image))
+              .map((image) => _imageConverter.toCompanion(image))
               .toList();
           await db.insertImages(imageCompanions);
         }
@@ -362,7 +373,7 @@ class DriftDatabaseHelper {
         return null;
       }
 
-      final result = _pointFromDrift(
+      final result = _pointConverter.fromDrift(
         pointWithImages.point,
         pointWithImages.images,
       );
@@ -387,7 +398,7 @@ class DriftDatabaseHelper {
     _logger.info('Inserting image: ${image.id} for point: ${image.pointId}');
     try {
       final db = await database;
-      final companion = _imageToDriftCompanion(image);
+      final companion = _imageConverter.toCompanion(image);
       await db.insertImage(companion);
 
       // Update project timestamp
@@ -408,7 +419,7 @@ class DriftDatabaseHelper {
     _logger.info('Updating image: ${image.id}');
     try {
       final db = await database;
-      final companion = _imageToDriftCompanion(image);
+      final companion = _imageConverter.toCompanion(image);
       final success = await db.updateImage(companion);
 
       if (success) {
@@ -462,7 +473,7 @@ class DriftDatabaseHelper {
         return null;
       }
 
-      final result = _imageFromDrift(image);
+      final result = _imageConverter.fromDrift(image);
       _logger.fine('Image found: ${result.imagePath}');
       return result;
     } catch (e) {
@@ -493,7 +504,7 @@ class DriftDatabaseHelper {
       List<PointModel> pointModels = [];
       for (final point in points) {
         final images = await db.getImagesForPoint(point.id);
-        pointModels.add(_pointFromDrift(point, images));
+        pointModels.add(_pointConverter.fromDrift(point, images));
       }
 
       _logger.fine(
@@ -535,7 +546,7 @@ class DriftDatabaseHelper {
     try {
       final db = await database;
       final images = await db.getImagesForPoint(pointId);
-      final result = images.map(_imageFromDrift).toList();
+      final result = images.map(_imageConverter.fromDrift).toList();
       _logger.fine('Retrieved ${result.length} images for point $pointId');
       return result;
     } catch (e) {
@@ -745,94 +756,5 @@ class DriftDatabaseHelper {
       _logger.severe('Error saving NTRIP settings: $e');
       rethrow;
     }
-  }
-
-  // Conversion methods between Drift and Model classes
-  ProjectModel _projectFromDrift(Project project, List<PointModel> points) {
-    _logger.fine('Converting Drift Project to ProjectModel: ${project.name}');
-    return ProjectModel(
-      id: project.id,
-      name: project.name,
-      note: project.note ?? '',
-      azimuth: project.azimuth,
-      lastUpdate: project.lastUpdate != null
-          ? DateTime.tryParse(project.lastUpdate!)
-          : null,
-      date: project.date != null ? DateTime.tryParse(project.date!) : null,
-      points: points,
-      presumedTotalLength: project.presumedTotalLength,
-      cableEquipmentTypeId: project.cableEquipmentTypeId,
-    );
-  }
-
-  ProjectCompanion _projectToDriftCompanion(ProjectModel project) {
-    _logger.fine(
-      'Converting ProjectModel to ProjectCompanion: ${project.name}',
-    );
-    return ProjectCompanion(
-      id: Value(project.id),
-      name: Value(project.name),
-      note: Value(project.note.isEmpty ? null : project.note),
-      azimuth: Value(project.azimuth),
-      lastUpdate: Value(project.lastUpdate?.toIso8601String()),
-      date: Value(project.date?.toIso8601String()),
-      presumedTotalLength: Value(project.presumedTotalLength),
-      cableEquipmentTypeId: Value(project.cableEquipmentTypeId),
-    );
-  }
-
-  PointModel _pointFromDrift(Point point, List<Image> images) {
-    _logger.fine('Converting Drift Point to PointModel: ${point.id}');
-    return PointModel(
-      id: point.id,
-      projectId: point.projectId,
-      latitude: point.latitude,
-      longitude: point.longitude,
-      altitude: point.altitude,
-      gpsPrecision: point.gpsPrecision,
-      ordinalNumber: point.ordinalNumber,
-      note: point.note ?? '',
-      timestamp: point.timestamp != null
-          ? DateTime.tryParse(point.timestamp!)
-          : null,
-      images: images.map(_imageFromDrift).toList(),
-    );
-  }
-
-  PointCompanion _pointToDriftCompanion(PointModel point) {
-    _logger.fine('Converting PointModel to PointCompanion: ${point.id}');
-    return PointCompanion(
-      id: Value(point.id),
-      projectId: Value(point.projectId),
-      latitude: Value(point.latitude),
-      longitude: Value(point.longitude),
-      altitude: Value(point.altitude),
-      gpsPrecision: Value(point.gpsPrecision),
-      ordinalNumber: Value(point.ordinalNumber),
-      note: Value(point.note.isEmpty ? null : point.note),
-      timestamp: Value(point.timestamp?.toIso8601String()),
-    );
-  }
-
-  ImageModel _imageFromDrift(Image image) {
-    _logger.fine('Converting Drift Image to ImageModel: ${image.id}');
-    return ImageModel(
-      id: image.id,
-      pointId: image.pointId,
-      ordinalNumber: image.ordinalNumber,
-      imagePath: image.imagePath,
-      note: image.note ?? '',
-    );
-  }
-
-  ImageCompanion _imageToDriftCompanion(ImageModel image) {
-    _logger.fine('Converting ImageModel to ImageCompanion: ${image.id}');
-    return ImageCompanion(
-      id: Value(image.id),
-      pointId: Value(image.pointId),
-      ordinalNumber: Value(image.ordinalNumber),
-      imagePath: Value(image.imagePath),
-      note: Value(image.note.isEmpty ? null : image.note),
-    );
   }
 }
