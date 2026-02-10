@@ -169,14 +169,14 @@ class _PointEditorScreenState extends State<PointEditorScreen>
         (p) => p.id == pointToSave.id,
       );
       if (exists) {
-        final success = await context.projectState.updatePoint(pointToSave);
+        final success = context.projectState.updatePoint(pointToSave);
         if (!success) {
           logger.warning("Failed to update point ${pointToSave.id}");
           showErrorStatus('Error updating point');
           return;
         }
       } else {
-        final success = await context.projectState.createPoint(pointToSave);
+        final success = context.projectState.createPoint(pointToSave);
         if (!success) {
           logger.warning("Failed to create point ${pointToSave.id}");
           showErrorStatus('Error creating point');

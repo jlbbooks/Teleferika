@@ -250,16 +250,16 @@ class MapControllerLogic {
     }
   }
 
-  Future<bool> movePoint(PointModel pointToMove, LatLng newPosition) async {
+  bool movePoint(PointModel pointToMove, LatLng newPosition) {
     final updatedPoint = pointToMove.copyWith(
       latitude: newPosition.latitude,
       longitude: newPosition.longitude,
     );
-    return await _projectState.updatePoint(updatedPoint);
+    return _projectState.updatePoint(updatedPoint);
   }
 
-  Future<bool> deletePoint(String pointId) async {
-    return await _projectState.deletePoint(pointId);
+  bool deletePoint(String pointId) {
+    return _projectState.deletePoint(pointId);
   }
 
   // Map calculations
@@ -453,10 +453,10 @@ class MapControllerLogic {
   }
 
   // Save a new point to the database
-  Future<bool> saveNewPoint(PointModel point) async {
+  bool saveNewPoint(PointModel point) {
     // Mark the point as saved before inserting
     final savedPoint = point.copyWith(isUnsaved: false);
-    return await _projectState.createPoint(savedPoint);
+    return _projectState.createPoint(savedPoint);
   }
 
   /// Saves a new point and returns the saved point with proper state management

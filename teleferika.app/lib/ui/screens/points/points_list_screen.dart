@@ -290,7 +290,7 @@ class PointsListScreenState extends State<PointsListScreen> with StatusMixin {
     try {
       // Delete points in editing state (in-memory only)
       for (String pointId in _selectedPointIds) {
-        final success = await projectState.deletePoint(pointId);
+        final success = projectState.deletePoint(pointId);
         if (!success) {
           logger.warning("Failed to delete point $pointId");
         }

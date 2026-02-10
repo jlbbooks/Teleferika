@@ -23,7 +23,6 @@ class ProjectStateManager extends ChangeNotifier {
   final DriftDatabaseHelper _dbHelper = DriftDatabaseHelper.instance;
 
   ProjectModel? _currentProject;
-  List<PointModel> _currentPoints = [];
   bool _isLoading = false;
 
   // Project editing state
@@ -45,7 +44,9 @@ class ProjectStateManager extends ChangeNotifier {
   // Getters
   ProjectModel? get currentProject => _currentProject;
 
-  List<PointModel> get currentPoints => List.unmodifiable(_currentPoints);
+  List<PointModel> get currentPoints => _currentProject != null
+      ? List.unmodifiable(_currentProject!.points)
+      : <PointModel>[];
 
   bool get isLoading => _isLoading;
 
@@ -59,19 +60,17 @@ class ProjectStateManager extends ChangeNotifier {
   Future<void> loadProject(String projectId) async {
     if (_isLoading) return;
 
-    setState(() => _isLoading = true);
+    _runAndNotify(() => _isLoading = true);
 
     try {
       final project = await _dbHelper.getProjectById(projectId);
       if (project != null) {
         _currentProject = project;
-        _currentPoints = project.points;
-        // Removed: _editingProject = project; // Initialize editing copy
         _hasUnsavedChanges = false;
         _hasUnsavedNewPoint = false;
         notifyListeners();
         logger.info(
-          "ProjectStateManager: Loaded project  ${project.name} with ${_currentPoints.length} points",
+          "ProjectStateManager: Loaded project  ${project.name} with ${project.points.length} points",
         );
       } else {
         logger.warning(
@@ -86,15 +85,14 @@ class ProjectStateManager extends ChangeNotifier {
       );
       rethrow;
     } finally {
-      setState(() => _isLoading = false);
+      _runAndNotify(() => _isLoading = false);
     }
   }
 
   /// Clear the current project (when switching projects or closing)
   void clearProject() {
+    _isLoading = false;
     _currentProject = null;
-    _currentPoints = [];
-    // Removed: _editingProject = null;
     _hasUnsavedChanges = false;
     _hasUnsavedNewPoint = false;
     notifyListeners();
@@ -122,8 +120,8 @@ class ProjectStateManager extends ChangeNotifier {
       }
       // 2. Delete any DB points not present in memory
       final pointsToDelete = dbPointIds.difference(memPointIds);
-      for (final pointId in pointsToDelete) {
-        await _dbHelper.deletePointById(pointId);
+      if (pointsToDelete.isNotEmpty) {
+        await _dbHelper.deletePointsByIds(pointsToDelete.toList());
       }
       // 3. Now update the project (with valid start/end point IDs)
       await updateProjectInDB();
@@ -189,7 +187,6 @@ class ProjectStateManager extends ChangeNotifier {
     if (_currentProject?.id == null) return;
     await loadProject(_currentProject!.id);
     logger.info("ProjectStateManager: Changes undone by reloading from DB");
-    notifyListeners();
   }
 
   /// Refresh points from database
@@ -197,17 +194,12 @@ class ProjectStateManager extends ChangeNotifier {
     if (_currentProject == null) return;
 
     try {
-      // Refresh both points and project data to get updated start/end point IDs
-      final points = await _dbHelper.getPointsForProject(_currentProject!.id);
       final project = await _dbHelper.getProjectById(_currentProject!.id);
-
-      _currentPoints = points;
       if (project != null) {
         _currentProject = project;
       }
-
       logger.info(
-        "ProjectStateManager: Refreshed ${points.length} points and project data",
+        "ProjectStateManager: Refreshed ${project?.points.length ?? 0} points and project data",
       );
       notifyListeners();
     } catch (e, stackTrace) {
@@ -229,7 +221,6 @@ class ProjectStateManager extends ChangeNotifier {
     points.add(pointWithOrdinal);
     final resequenced = OrdinalManager.resequence(points);
     _currentProject = _currentProject!.copyWith(points: resequenced);
-    _currentPoints = resequenced;
     _hasUnsavedChanges = true;
     notifyListeners();
   }
@@ -243,7 +234,6 @@ class ProjectStateManager extends ChangeNotifier {
       points[index] = updatedPoint;
       final resequenced = OrdinalManager.resequence(points);
       _currentProject = _currentProject!.copyWith(points: resequenced);
-      _currentPoints = resequenced;
       _hasUnsavedChanges = true;
       notifyListeners();
     } else {
@@ -259,7 +249,6 @@ class ProjectStateManager extends ChangeNotifier {
     final points = List<PointModel>.from(_currentProject!.points);
     final resequenced = OrdinalManager.removeById(points, pointId);
     _currentProject = _currentProject!.copyWith(points: resequenced);
-    _currentPoints = resequenced;
     _hasUnsavedChanges = true;
     notifyListeners();
   }
@@ -269,7 +258,6 @@ class ProjectStateManager extends ChangeNotifier {
     if (_currentProject == null) return;
     final resequenced = OrdinalManager.resequence(newOrder);
     _currentProject = _currentProject!.copyWith(points: resequenced);
-    _currentPoints = resequenced;
     _hasUnsavedChanges = true;
     notifyListeners();
   }
@@ -299,17 +287,17 @@ class ProjectStateManager extends ChangeNotifier {
   /// overwrite points added/edited elsewhere (all editing is in memory until save;
   /// undo reloads from DB).
   void setProjectEditState(ProjectModel project, bool hasUnsavedChanges) {
-    _currentProject = project.copyWith(points: _currentPoints);
+    _currentProject = project.copyWith(points: _currentProject?.points ?? []);
     _hasUnsavedChanges = hasUnsavedChanges;
     notifyListeners();
   }
 
-  /// Create a new project in the database
+  /// Create a new project in the database and open it as the current project.
   Future<bool> createProject(ProjectModel project) async {
     try {
       await _dbHelper.insertProject(project);
       logger.info("ProjectStateManager: Created project ${project.name}");
-      notifyListeners();
+      await loadProject(project.id);
       return true;
     } catch (e, stackTrace) {
       logger.severe(
@@ -398,7 +386,7 @@ class ProjectStateManager extends ChangeNotifier {
   }
 
   /// Create a new point in the current project (in-memory only, not DB)
-  Future<bool> createPoint(PointModel point) async {
+  bool createPoint(PointModel point) {
     if (_currentProject == null) {
       logger.warning(
         "ProjectStateManager: Cannot create point - no current project",
@@ -413,7 +401,7 @@ class ProjectStateManager extends ChangeNotifier {
   }
 
   /// Update a point in the current project (in-memory only, not DB)
-  Future<bool> updatePoint(PointModel point) async {
+  bool updatePoint(PointModel point) {
     if (_currentProject == null) {
       logger.warning(
         "ProjectStateManager: Cannot update point - no current project",
@@ -428,7 +416,7 @@ class ProjectStateManager extends ChangeNotifier {
   }
 
   /// Delete a point from the current project (in-memory only, not DB)
-  Future<bool> deletePoint(String pointId) async {
+  bool deletePoint(String pointId) {
     if (_currentProject == null) {
       logger.warning(
         "ProjectStateManager: Cannot delete point - no current project",
@@ -443,11 +431,11 @@ class ProjectStateManager extends ChangeNotifier {
   }
 
   /// Move a point to new coordinates (in-memory only, not DB)
-  Future<bool> movePoint(
+  bool movePoint(
     String pointId,
     double newLatitude,
     double newLongitude,
-  ) async {
+  ) {
     if (_currentProject == null) {
       logger.warning(
         "ProjectStateManager: Cannot move point - no current project",
@@ -474,21 +462,22 @@ class ProjectStateManager extends ChangeNotifier {
 
   /// Get a specific point by ID
   PointModel? getPointById(String pointId) {
-    try {
-      return _currentPoints.firstWhere((p) => p.id == pointId);
-    } catch (e) {
-      return null;
+    final points = _currentProject?.points ?? [];
+    for (final p in points) {
+      if (p.id == pointId) return p;
     }
+    return null;
   }
 
   /// Get points sorted by ordinal number
   List<PointModel> get sortedPoints {
-    final sorted = List<PointModel>.from(_currentPoints);
+    final points = _currentProject?.points ?? [];
+    final sorted = List<PointModel>.from(points);
     sorted.sort((a, b) => a.ordinalNumber.compareTo(b.ordinalNumber));
     return sorted;
   }
 
-  void setState(VoidCallback fn) {
+  void _runAndNotify(VoidCallback fn) {
     fn();
     notifyListeners();
   }
