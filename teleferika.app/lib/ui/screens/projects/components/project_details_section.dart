@@ -47,28 +47,51 @@ class ProjectDetailsSectionState extends State<ProjectDetailsSection>
   bool _dirty = false;
   String _originalAzimuthValue = '';
   bool _azimuthFieldModified = false;
+  bool _isSyncingFromProject = false;
 
   @override
   void initState() {
     super.initState();
-    _currentProject = widget.project;
-    _projectDate =
-        widget.project.date ?? (widget.isNew ? DateTime.now() : null);
-
-    _nameController = TextEditingController(text: widget.project.name);
-    _noteController = TextEditingController(text: widget.project.note);
-    _presumedTotalLengthController = TextEditingController(
-      text: widget.project.presumedTotalLength?.toString() ?? '',
-    );
-    _azimuthController = TextEditingController(
-      text: widget.project.azimuth?.toString() ?? '',
-    );
-    _originalAzimuthValue = _azimuthController.text;
-
+    _nameController = TextEditingController();
+    _noteController = TextEditingController();
+    _presumedTotalLengthController = TextEditingController();
+    _azimuthController = TextEditingController();
     _nameController.addListener(_onChanged);
     _noteController.addListener(_onChanged);
     _presumedTotalLengthController.addListener(_onChanged);
     _azimuthController.addListener(_onAzimuthChanged);
+    _syncFromProject(widget.project);
+  }
+
+  @override
+  void didUpdateWidget(covariant ProjectDetailsSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // When project is updated from outside (e.g. Undo reloads from DB), sync
+    // form and local state so cable type and other fields reset correctly.
+    if (oldWidget.project != widget.project &&
+        widget.project != _currentProject) {
+      _syncFromProject(widget.project);
+    }
+  }
+
+  void _syncFromProject(ProjectModel project) {
+    _isSyncingFromProject = true;
+    try {
+      setState(() {
+        _currentProject = project;
+        _projectDate = project.date ?? (widget.isNew ? DateTime.now() : null);
+        _dirty = false;
+        _azimuthFieldModified = false;
+      });
+      _nameController.text = project.name;
+      _noteController.text = project.note;
+      _presumedTotalLengthController.text =
+          project.presumedTotalLength?.toString() ?? '';
+      _azimuthController.text = project.azimuth?.toString() ?? '';
+      _originalAzimuthValue = _azimuthController.text;
+    } finally {
+      _isSyncingFromProject = false;
+    }
   }
 
   @override
@@ -81,6 +104,7 @@ class ProjectDetailsSectionState extends State<ProjectDetailsSection>
   }
 
   void _onChanged() {
+    if (_isSyncingFromProject) return;
     final name = _nameController.text.trim();
     final note = _noteController.text.trim();
     final presumed = double.tryParse(_presumedTotalLengthController.text);
