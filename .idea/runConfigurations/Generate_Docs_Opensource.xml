@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Generate Docs Opensource" type="BashConfigurationType" factoryName="Bash">
+    <option name="INTERPRETER_OPTIONS" value="" />
+    <option name="INTERPRETER_PATH" value="/bin/bash" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/teleferika.app/scripts/build-app.sh" />
+    <option name="PARAMETERS" value="docs opensource" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/teleferika.app" />
+    <option name="USE_PROJECT_INTERPRETER" value="false" />
+    <envs />
+    <method v="2" />
+  </configuration>
+</component>

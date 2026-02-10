@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Flutter (Open Source)" type="FlutterRunConfigurationType" factoryName="Flutter" focusToolWindowBeforeRun="true">
+    <option name="additionalArgs" value="--flavor=opensource --dart-define=FLAVOR_NAME=opensource" />
+    <option name="filePath" value="$PROJECT_DIR$/teleferika.app/lib/main.dart" />
+    <method v="2" />
+  </configuration>
+</component>
