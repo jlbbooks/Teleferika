@@ -65,7 +65,18 @@ This document summarizes the app’s **current** functionality that is relevant 
 
 ---
 
-## 7. Project and Line Organization
+## 7. Cable / Equipment Type (Project Level)
+
+- **Project-level cable type selection** — each project can be assigned a cable/equipment type (e.g. rope diameter, weight, breaking load).
+- **Cable types table** — a separate DB table stores cable types with UUIDs; built-in types (Italy/EU forestry: fune portante, fune traente, skyline, mainline) are seeded on first run.
+- **Seed data** — `cable_equipment_presets.dart` defines built-in cable types with fixed UUIDs; seeding runs only when the table is empty.
+- **User-added types** — the DB supports adding custom cable types at runtime (UI to be implemented); project details always read from the DB, not from presets.
+
+**Use case:** Consistent assumptions for future sag, clearance, or payload logic; aligns vocabulary with desktop tools (e.g. SEILAPLAN).
+
+---
+
+## 8. Project and Line Organization
 
 - **Projects** group points into distinct lines or operations.
 - **Points list and editor** support ordering, numbering, and editing of points (e.g. anchor sequence along the line).
@@ -74,7 +85,7 @@ This document summarizes the app’s **current** functionality that is relevant 
 
 ---
 
-## 8. Fine-Tuning Point Positions (Marker Slide)
+## 9. Fine-Tuning Point Positions (Marker Slide)
 
 - **Marker slide:** long-press and drag a marker on the map to move it; coordinates are updated when you release.
 - Original position can be shown during drag; coordinate conversion uses the map projection for accurate placement.
@@ -83,7 +94,7 @@ This document summarizes the app’s **current** functionality that is relevant 
 
 ---
 
-## 9. Photos at Points
+## 10. Photos at Points
 
 - **Images linked to points** (per-point photo attachment) for documenting anchors, supports, obstacles, and landings.
 
@@ -91,7 +102,7 @@ This document summarizes the app’s **current** functionality that is relevant 
 
 ---
 
-## 10. Line Visualization on the Map
+## 11. Line Visualization on the Map
 
 - **Polylines** connect points in sequence along the line.
 - **Polyline arrowhead** indicates direction of the line.
@@ -101,7 +112,7 @@ This document summarizes the app’s **current** functionality that is relevant 
 
 ---
 
-## 11. Data Export
+## 12. Data Export
 
 - **Data export** (in the full/licensed version) to use project and point data in other tools, reports, or permits.
 
@@ -109,7 +120,7 @@ This document summarizes the app’s **current** functionality that is relevant 
 
 ---
 
-## 12. Location Accuracy Feedback
+## 13. Location Accuracy Feedback
 
 - **Location marker with accuracy circle** so you see current GPS quality when placing or checking points (e.g. for RTK or standard GNSS).
 
@@ -119,6 +130,6 @@ This document summarizes the app’s **current** functionality that is relevant 
 
 ## Summary
 
-Teleferika today supports **field survey of ropeway lines**: GPS point collection with altitude, compass/azimuth alignment, bearing/distance and rope length, multiple map types (including topo and satellite), offline use, photo documentation per point, and line visualization with slope-related coloring. It is aimed at forest technicians, surveyors, project managers, and environmental planners who need to lay out and document cable crane lines for log transport.
+Teleferika today supports **field survey of ropeway lines**: GPS point collection with altitude, compass/azimuth alignment, bearing/distance and rope length, project-level cable/equipment type selection, multiple map types (including topo and satellite), offline use, photo documentation per point, and line visualization with slope-related coloring. It is aimed at forest technicians, surveyors, project managers, and environmental planners who need to lay out and document cable crane lines for log transport.
 
 For possible future features that could further help companies, see **[FUNCTIONS_FOR_COMPANIES_README.md](./FUNCTIONS_FOR_COMPANIES_README.md)**.

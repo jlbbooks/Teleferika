@@ -51,6 +51,12 @@ class SIt extends S {
       'Lunghezza totale presunta (m)';
 
   @override
+  String get formFieldCableEquipmentTypeLabel => 'Tipo cavo / attrezzatura';
+
+  @override
+  String get cableEquipmentTypeNotSet => 'Non impostato';
+
+  @override
   String get buttonSave => 'Salva';
 
   @override
@@ -1755,4 +1761,79 @@ class SIt extends S {
   @override
   String get mapBleConnectionError =>
       'Si è verificato un errore di connessione BLE.';
+
+  @override
+  String get cableTypesSection => 'Tipi di cavo';
+
+  @override
+  String get cableTypesTitle => 'Tipi di cavo';
+
+  @override
+  String get cableTypesDescription =>
+      'Aggiungi o rimuovi i tipi di cavo usati nei progetti';
+
+  @override
+  String get cableTypeAddButton => 'Aggiungi';
+
+  @override
+  String get cableTypeAddTitle => 'Aggiungi tipo di cavo';
+
+  @override
+  String get cableTypeEditTitle => 'Modifica tipo di cavo';
+
+  @override
+  String get cableTypeEditButton => 'Modifica';
+
+  @override
+  String get cableTypeAddedSnackbar => 'Tipo di cavo aggiunto.';
+
+  @override
+  String get cableTypeUpdatedSnackbar => 'Tipo di cavo aggiornato.';
+
+  @override
+  String get cableTypeDeletedSnackbar => 'Tipo di cavo eliminato.';
+
+  @override
+  String get cableTypeDeleteProjectsLabel => 'Progetti che usano questo tipo:';
+
+  @override
+  String get cableTypeDeleteConfirmTitle => 'Eliminare il tipo di cavo?';
+
+  @override
+  String cableTypeDeleteConfirmMessage(String name) {
+    return 'Eliminare \"$name\"? I progetti che usano questo tipo verranno aggiornati. Questa azione non può essere annullata.';
+  }
+
+  @override
+  String errorAddingCableType(String error) {
+    return 'Errore nell\'aggiunta del tipo di cavo: $error';
+  }
+
+  @override
+  String errorUpdatingCableType(String error) {
+    return 'Errore nell\'aggiornamento del tipo di cavo: $error';
+  }
+
+  @override
+  String errorDeletingCableType(String error) {
+    return 'Errore durante l\'eliminazione: $error';
+  }
+
+  @override
+  String errorLoadingCableTypes(String error) {
+    return 'Errore nel caricamento dei tipi di cavo: $error';
+  }
+
+  @override
+  String get cableTypesEmpty => 'Nessun tipo di cavo.';
+
+  @override
+  String get cableTypesEmptyHint =>
+      'Tocca + per aggiungere un tipo di cavo da usare nei progetti.';
+
+  @override
+  String get required => 'Obbligatorio';
+
+  @override
+  String get retry => 'Riprova';
 }

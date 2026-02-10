@@ -72,6 +72,7 @@ The Drift schema maintains the same structure as the existing database:
 - `lastUpdate` (TEXT, NULLABLE) - ISO8601 DateTime string
 - `date` (TEXT, NULLABLE) - ISO8601 DateTime string
 - `presumedTotalLength` (REAL, NULLABLE)
+- `cableEquipmentTypeId` (TEXT, NULLABLE) — references CableTypes.id
 
 ### Points Table
 - `id` (TEXT, PRIMARY KEY)
@@ -90,6 +91,17 @@ The Drift schema maintains the same structure as the existing database:
 - `ordinalNumber` (INTEGER, NOT NULL)
 - `imagePath` (TEXT, NOT NULL)
 - `note` (TEXT, NULLABLE)
+
+### CableTypes Table
+- `id` (TEXT, PRIMARY KEY) — UUID
+- `name` (TEXT, NOT NULL)
+- `diameterMm` (REAL, NOT NULL)
+- `weightPerMeterKg` (REAL, NOT NULL)
+- `breakingLoadKn` (REAL, NOT NULL)
+- `elasticModulusGPa` (REAL, NULLABLE)
+- `sortOrder` (INTEGER, default 0)
+
+Projects reference cable types via `cableEquipmentTypeId` (TEXT, NULLABLE). Built-in types are seeded from `cable_equipment_presets.dart` when the table is empty.
 
 ## Usage Examples
 

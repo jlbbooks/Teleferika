@@ -6,6 +6,7 @@ import 'package:drift/native.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:logging/logging.dart';
+import 'package:teleferika/projects/cable_equipment_presets.dart';
 
 part 'database.g.dart';
 
@@ -18,6 +19,7 @@ class Projects extends Table {
   TextColumn get lastUpdate => text().nullable()();
   TextColumn get date => text().nullable()();
   RealColumn get presumedTotalLength => real().nullable()();
+  TextColumn get cableEquipmentTypeId => text().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -46,6 +48,19 @@ class Images extends Table {
   IntColumn get ordinalNumber => integer()();
   TextColumn get imagePath => text()();
   TextColumn get note => text().nullable()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+class CableTypes extends Table {
+  TextColumn get id => text()();
+  TextColumn get name => text()();
+  RealColumn get diameterMm => real()();
+  RealColumn get weightPerMeterKg => real()();
+  RealColumn get breakingLoadKn => real()();
+  RealColumn get elasticModulusGPa => real().nullable()();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -166,7 +181,7 @@ class DatabaseQueryInterceptor extends QueryInterceptor {
 }
 
 // Database class
-@DriftDatabase(tables: [Projects, Points, Images, NtripSettings])
+@DriftDatabase(tables: [Projects, Points, Images, CableTypes, NtripSettings])
 class TeleferikaDatabase extends _$TeleferikaDatabase {
   static final Logger _logger = Logger('TeleferikaDatabase');
 
@@ -175,7 +190,7 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
   }
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration {
@@ -183,6 +198,7 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
       onCreate: (Migrator m) async {
         _logger.info('Creating database schema (version $schemaVersion)');
         await m.createAll();
+        await _seedCableTypes();
         _logger.info('Database schema created successfully');
       },
       onUpgrade: (Migrator m, int from, int to) async {
@@ -263,9 +279,55 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
           );
         }
 
+        if (from < 5) {
+          // Add cable/equipment type to projects + cable_types table (idempotent)
+          _logger.info(
+            'Adding cable_equipment_type_id column and cable_types table',
+          );
+
+          final projectColumns = await _getTableColumnNames('projects');
+          if (!projectColumns.contains('cable_equipment_type_id')) {
+            await customStatement(
+              'ALTER TABLE projects ADD COLUMN cable_equipment_type_id TEXT',
+            );
+          }
+
+          await m.createTable(cableTypes);
+          await _seedCableTypes();
+
+          _logger.info(
+            'projects and cable_types updated for version 5',
+          );
+        }
+
         _logger.info('Database upgrade completed');
       },
     );
+  }
+
+  /// Seeds built-in cable types (Italy/EU forestry). Idempotent: only inserts
+  /// when the table is empty so migration can be re-run safely.
+  /// Uses [cableEquipmentTypeSeedData] with fixed UUIDs.
+  Future<void> _seedCableTypes() async {
+    final existing = await select(cableTypes).get();
+    if (existing.isNotEmpty) {
+      _logger.fine('cable_types already seeded (${existing.length} rows), skipping');
+      return;
+    }
+    for (final row in cableEquipmentTypeSeedData) {
+      await into(cableTypes).insert(CableTypeCompanion(
+        id: Value(row.id),
+        name: Value(row.name),
+        diameterMm: Value(row.diameterMm),
+        weightPerMeterKg: Value(row.weightPerMeterKg),
+        breakingLoadKn: Value(row.breakingLoadKn),
+        elasticModulusGPa: row.elasticModulusGPa != null
+            ? Value(row.elasticModulusGPa!)
+            : const Value.absent(),
+        sortOrder: Value(row.sortOrder),
+      ));
+    }
+    _logger.info('Seeded ${cableEquipmentTypeSeedData.length} cable types');
   }
 
   /// Returns the set of column names for [tableName]. Used to make migrations
@@ -344,6 +406,63 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
       return deleted;
     } catch (e) {
       _logger.severe('Error deleting project $id: $e');
+      rethrow;
+    }
+  }
+
+  // Cable type operations
+  Future<List<CableType>> getAllCableTypes() async {
+    _logger.fine('Getting all cable types');
+    try {
+      final list = await (select(cableTypes)
+            ..orderBy([(t) => OrderingTerm(expression: t.sortOrder)]))
+          .get();
+      _logger.fine('Retrieved ${list.length} cable types');
+      return list;
+    } catch (e) {
+      _logger.severe('Error getting cable types: $e');
+      rethrow;
+    }
+  }
+
+  Future<CableType?> getCableTypeById(String id) async {
+    _logger.fine('Getting cable type by ID: $id');
+    try {
+      return await (select(cableTypes)..where((t) => t.id.equals(id)))
+          .getSingleOrNull();
+    } catch (e) {
+      _logger.severe('Error getting cable type $id: $e');
+      rethrow;
+    }
+  }
+
+  Future<int> insertCableType(CableTypeCompanion cableType) async {
+    _logger.fine('Inserting cable type: ${cableType.name.value}');
+    try {
+      final rowsAffected = await into(cableTypes).insert(cableType);
+      return rowsAffected > 0 ? 1 : 0;
+    } catch (e, stackTrace) {
+      _logger.severe('Error inserting cable type: $e', e, stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<bool> updateCableType(CableTypeCompanion cableType) async {
+    _logger.fine('Updating cable type: ${cableType.id.value}');
+    try {
+      return await update(cableTypes).replace(cableType);
+    } catch (e) {
+      _logger.severe('Error updating cable type: $e');
+      rethrow;
+    }
+  }
+
+  Future<int> deleteCableType(String id) async {
+    _logger.fine('Deleting cable type: $id');
+    try {
+      return await (delete(cableTypes)..where((t) => t.id.equals(id))).go();
+    } catch (e) {
+      _logger.severe('Error deleting cable type $id: $e');
       rethrow;
     }
   }
@@ -771,6 +890,42 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
       _logger.fine('Project timestamp updated successfully');
     } catch (e) {
       _logger.severe('Error updating project timestamp $projectId: $e');
+      rethrow;
+    }
+  }
+
+  /// Returns projects that use the given cable type (id and name only).
+  Future<List<Project>> getProjectsUsingCableType(String cableTypeId) async {
+    _logger.fine('Getting projects using cable type: $cableTypeId');
+    try {
+      final list = await (select(projects)
+            ..where((p) => p.cableEquipmentTypeId.equals(cableTypeId)))
+          .get();
+      _logger.fine('Found ${list.length} project(s) using cable type');
+      return list;
+    } catch (e) {
+      _logger.severe('Error getting projects by cable type: $e');
+      rethrow;
+    }
+  }
+
+  /// Clears [cableTypeId] from all projects that reference it (before deleting).
+  Future<int> clearCableTypeFromProjects(String cableTypeId) async {
+    _logger.fine('Clearing cable type $cableTypeId from projects');
+    try {
+      final now = DateTime.now().toIso8601String();
+      final count = await (update(projects)
+            ..where((p) => p.cableEquipmentTypeId.equals(cableTypeId)))
+          .write(
+        ProjectCompanion(
+          cableEquipmentTypeId: Value(null),
+          lastUpdate: Value(now),
+        ),
+      );
+      _logger.fine('Cleared cable type from $count project(s)');
+      return count;
+    } catch (e) {
+      _logger.severe('Error clearing cable type from projects: $e');
       rethrow;
     }
   }

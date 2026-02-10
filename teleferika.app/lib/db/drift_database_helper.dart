@@ -5,6 +5,8 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:drift/drift.dart';
 
+import 'package:teleferika/core/utils/uuid_generator.dart';
+
 import 'models/image_model.dart';
 import 'models/point_model.dart';
 import 'models/project_model.dart';
@@ -140,6 +142,103 @@ class DriftDatabaseHelper {
       return deleted;
     } catch (e) {
       _logger.severe('Error deleting project $id: $e');
+      rethrow;
+    }
+  }
+
+  // Cable type methods
+  Future<List<CableType>> getAllCableTypes() async {
+    _logger.info('Getting all cable types');
+    try {
+      final db = await database;
+      return await db.getAllCableTypes();
+    } catch (e) {
+      _logger.severe('Error getting cable types: $e');
+      rethrow;
+    }
+  }
+
+  Future<CableType?> getCableTypeById(String id) async {
+    _logger.info('Getting cable type by ID: $id');
+    try {
+      final db = await database;
+      return await db.getCableTypeById(id);
+    } catch (e) {
+      _logger.severe('Error getting cable type $id: $e');
+      rethrow;
+    }
+  }
+
+  Future<String> insertCableType({
+    required String name,
+    required double diameterMm,
+    required double weightPerMeterKg,
+    required double breakingLoadKn,
+    double? elasticModulusGPa,
+    int sortOrder = 1000,
+  }) async {
+    _logger.info('Inserting cable type: $name');
+    try {
+      final db = await database;
+      final id = generateUuid();
+      final companion = CableTypeCompanion.insert(
+        id: id,
+        name: name,
+        diameterMm: diameterMm,
+        weightPerMeterKg: weightPerMeterKg,
+        breakingLoadKn: breakingLoadKn,
+        elasticModulusGPa: elasticModulusGPa != null
+            ? Value(elasticModulusGPa)
+            : const Value.absent(),
+        sortOrder: Value(sortOrder),
+      );
+      await db.insertCableType(companion);
+      _logger.info('Cable type inserted with ID: $id');
+      return id;
+    } catch (e, stackTrace) {
+      _logger.severe('Error inserting cable type: $e', e, stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<bool> updateCableType(CableType cableType) async {
+    _logger.info('Updating cable type: ${cableType.id}');
+    try {
+      final db = await database;
+      final companion = CableTypeCompanion(
+        id: Value(cableType.id),
+        name: Value(cableType.name),
+        diameterMm: Value(cableType.diameterMm),
+        weightPerMeterKg: Value(cableType.weightPerMeterKg),
+        breakingLoadKn: Value(cableType.breakingLoadKn),
+        elasticModulusGPa: Value(cableType.elasticModulusGPa),
+        sortOrder: Value(cableType.sortOrder),
+      );
+      return await db.updateCableType(companion);
+    } catch (e) {
+      _logger.severe('Error updating cable type: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<Project>> getProjectsUsingCableType(String cableTypeId) async {
+    try {
+      final db = await database;
+      return await db.getProjectsUsingCableType(cableTypeId);
+    } catch (e) {
+      _logger.severe('Error getting projects using cable type: $e');
+      rethrow;
+    }
+  }
+
+  Future<int> deleteCableType(String id) async {
+    _logger.info('Deleting cable type: $id');
+    try {
+      final db = await database;
+      await db.clearCableTypeFromProjects(id);
+      return await db.deleteCableType(id);
+    } catch (e) {
+      _logger.severe('Error deleting cable type $id: $e');
       rethrow;
     }
   }
@@ -646,6 +745,7 @@ class DriftDatabaseHelper {
       date: project.date != null ? DateTime.tryParse(project.date!) : null,
       points: points,
       presumedTotalLength: project.presumedTotalLength,
+      cableEquipmentTypeId: project.cableEquipmentTypeId,
     );
   }
 
@@ -661,6 +761,7 @@ class DriftDatabaseHelper {
       lastUpdate: Value(project.lastUpdate?.toIso8601String()),
       date: Value(project.date?.toIso8601String()),
       presumedTotalLength: Value(project.presumedTotalLength),
+      cableEquipmentTypeId: Value(project.cableEquipmentTypeId),
     );
   }
 

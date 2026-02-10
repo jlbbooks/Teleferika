@@ -58,6 +58,14 @@
   "@formFieldPresumedTotalLengthLabel": {
     "description": "Etichetta per il campo lunghezza totale presunta del modulo."
   },
+  "formFieldCableEquipmentTypeLabel": "Tipo cavo / attrezzatura",
+  "@formFieldCableEquipmentTypeLabel": {
+    "description": "Etichetta per il campo tipo cavo o attrezzatura (preset a livello progetto)."
+  },
+  "cableEquipmentTypeNotSet": "Non impostato",
+  "@cableEquipmentTypeNotSet": {
+    "description": "Opzione menu quando nessun tipo cavo/attrezzatura è selezionato."
+  },
   "buttonSave": "Salva",
   "@buttonSave": {
     "description": "Etichetta per il pulsante salva."
@@ -2197,5 +2205,26 @@
   "gpsConnectRtkDevice": "Connetti dispositivo RTK",
   "gpsCourseLabel": "Rotta",
   "mapRtkDisconnectedUsingDeviceGps": "Dispositivo RTK disconnesso. Uso del GPS del dispositivo.",
-  "mapBleConnectionError": "Si è verificato un errore di connessione BLE."
+  "mapBleConnectionError": "Si è verificato un errore di connessione BLE.",
+  "cableTypesSection": "Tipi di cavo",
+  "cableTypesTitle": "Tipi di cavo",
+  "cableTypesDescription": "Aggiungi o rimuovi i tipi di cavo usati nei progetti",
+  "cableTypeAddButton": "Aggiungi",
+  "cableTypeAddTitle": "Aggiungi tipo di cavo",
+  "cableTypeEditTitle": "Modifica tipo di cavo",
+  "cableTypeEditButton": "Modifica",
+  "cableTypeAddedSnackbar": "Tipo di cavo aggiunto.",
+  "cableTypeUpdatedSnackbar": "Tipo di cavo aggiornato.",
+  "cableTypeDeletedSnackbar": "Tipo di cavo eliminato.",
+  "cableTypeDeleteProjectsLabel": "Progetti che usano questo tipo:",
+  "cableTypeDeleteConfirmTitle": "Eliminare il tipo di cavo?",
+  "cableTypeDeleteConfirmMessage": "Eliminare \"{name}\"? I progetti che usano questo tipo verranno aggiornati. Questa azione non può essere annullata.",
+  "errorAddingCableType": "Errore nell'aggiunta del tipo di cavo: {error}",
+  "errorUpdatingCableType": "Errore nell'aggiornamento del tipo di cavo: {error}",
+  "errorDeletingCableType": "Errore durante l'eliminazione: {error}",
+  "errorLoadingCableTypes": "Errore nel caricamento dei tipi di cavo: {error}",
+  "cableTypesEmpty": "Nessun tipo di cavo.",
+  "cableTypesEmptyHint": "Tocca + per aggiungere un tipo di cavo da usare nei progetti.",
+  "required": "Obbligatorio",
+  "retry": "Riprova"
 }

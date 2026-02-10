@@ -44,8 +44,8 @@ This document lists **potential features** that could make Teleferika more usefu
 
 ### Cable crane / rope type
 
-- **Idea:** **Project-level “cable/equipment type”** (or a small set of presets): e.g. rope diameter, weight, strength, or named crane type.
-- **Why it helps:** Enables consistent assumptions for any future sag, clearance, or payload logic and aligns vocabulary with desktop software (e.g. SEILAPLAN’s cable crane type).
+- **Implemented:** **Project-level cable/equipment type selection** is available. Cable types are stored in a dedicated DB table with UUIDs; built-in types (Italy/EU forestry) are seeded on first run from `cable_equipment_presets.dart`. Project details read from the DB; user-added types are supported (UI to be implemented).
+- **Future:** Named crane types, extended manufacturer data, or integration with sag/payload calculations.
 
 ---
 
@@ -101,7 +101,7 @@ This document lists **potential features** that could make Teleferika more usefu
 | Mechanics  | Sag/clearance (simplified)           | Quick “clearance OK?” check; fits SEILAPLAN/CHPS workflow   |
 | Mechanics  | Payload/span or “max span” hint      | Supports span length and intermediate support decisions     |
 | Terrain    | Elevation profile (view or export)   | Standard review; input for desktop design                   |
-| Data model | Cable/equipment type per project     | Consistent design assumptions; link to office tools         |
+| Data model | Cable/equipment type per project     | ✅ Implemented — DB table, seed data, project selection      |
 | Export     | KML, Shapefile/GeoJSON, profile CSV  | Fits GIS and SEILAPLAN/CHPS; better handover                |
 | Reporting  | Line report (PDF/HTML)               | Permits, documentation, handover to design                  |
 | Safety     | Slope / inclination checks           | Aligns with gravity-system and safety checks in other tools |

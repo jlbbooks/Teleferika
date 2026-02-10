@@ -17,6 +17,7 @@ class ProjectModel {
   static const String columnLastUpdate = 'last_update';
   static const String columnDate = 'date';
   static const String columnPresumedTotalLength = 'presumed_total_length';
+  static const String columnCableEquipmentTypeId = 'cable_equipment_type_id';
 
   final String id;
   final String name;
@@ -25,6 +26,8 @@ class ProjectModel {
   final DateTime? lastUpdate; // Tracks when the record was last modified in DB
   final DateTime? date; // User-settable date for the project
   final double? presumedTotalLength;
+  /// Optional preset id for cable/equipment type (e.g. rope diameter, crane type).
+  final String? cableEquipmentTypeId;
   final List<PointModel>
   _points; // In-memory list of points for this project (not persisted in DB)
 
@@ -40,6 +43,7 @@ class ProjectModel {
     this.date,
     List<PointModel>? points,
     this.presumedTotalLength,
+    this.cableEquipmentTypeId,
   }) : id = id ?? generateUuid(),
        _points = points ?? const []; // Default to empty list
 
@@ -52,6 +56,7 @@ class ProjectModel {
       columnLastUpdate: lastUpdate?.toIso8601String(),
       columnDate: date?.toIso8601String(),
       columnPresumedTotalLength: presumedTotalLength,
+      columnCableEquipmentTypeId: cableEquipmentTypeId,
       // points is not persisted in DB, so not included here
     };
   }
@@ -73,6 +78,7 @@ class ProjectModel {
           : null,
       points: points,
       presumedTotalLength: map[columnPresumedTotalLength] as double?,
+      cableEquipmentTypeId: map[columnCableEquipmentTypeId] as String?,
     );
   }
 
@@ -90,6 +96,8 @@ class ProjectModel {
     List<PointModel>? points,
     double? presumedTotalLength,
     bool clearPresumedTotalLength = false,
+    String? cableEquipmentTypeId,
+    bool clearCableEquipmentTypeId = false,
   }) {
     return ProjectModel(
       id: id ?? this.id,
@@ -102,6 +110,9 @@ class ProjectModel {
       presumedTotalLength: clearPresumedTotalLength
           ? null
           : (presumedTotalLength ?? this.presumedTotalLength),
+      cableEquipmentTypeId: clearCableEquipmentTypeId
+          ? null
+          : (cableEquipmentTypeId ?? this.cableEquipmentTypeId),
     );
   }
 
@@ -129,6 +140,7 @@ class ProjectModel {
                 date != null &&
                 other.date!.isAtSameMomentAs(date!))) &&
         other.presumedTotalLength == presumedTotalLength &&
+        other.cableEquipmentTypeId == cableEquipmentTypeId &&
         _listEquals(other.points, points);
   }
 
@@ -149,6 +161,7 @@ class ProjectModel {
     lastUpdate,
     date,
     presumedTotalLength,
+    cableEquipmentTypeId,
     Object.hashAll(points),
   );
 

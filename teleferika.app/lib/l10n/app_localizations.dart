@@ -175,6 +175,18 @@ abstract class S {
   /// **'Presumed Total Length (m)'**
   String get formFieldPresumedTotalLengthLabel;
 
+  /// Label for the cable or equipment type form field (project-level preset).
+  ///
+  /// In en, this message translates to:
+  /// **'Cable / equipment type'**
+  String get formFieldCableEquipmentTypeLabel;
+
+  /// Dropdown option when no cable/equipment type is selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Not set'**
+  String get cableEquipmentTypeNotSet;
+
   /// Label for the save button.
   ///
   /// In en, this message translates to:
@@ -3075,6 +3087,132 @@ abstract class S {
   /// In en, this message translates to:
   /// **'BLE connection error occurred.'**
   String get mapBleConnectionError;
+
+  /// Section header for cable types in settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Cable Types'**
+  String get cableTypesSection;
+
+  /// Title for the cable types management screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Cable Types'**
+  String get cableTypesTitle;
+
+  /// Description for cable types entry in settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Add or remove cable types used in projects'**
+  String get cableTypesDescription;
+
+  /// Button label to add a cable type.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get cableTypeAddButton;
+
+  /// Title for the add cable type dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Cable Type'**
+  String get cableTypeAddTitle;
+
+  /// Title for the edit cable type dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Cable Type'**
+  String get cableTypeEditTitle;
+
+  /// Button/tooltip for editing a cable type.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get cableTypeEditButton;
+
+  /// Snackbar when a cable type is added.
+  ///
+  /// In en, this message translates to:
+  /// **'Cable type added.'**
+  String get cableTypeAddedSnackbar;
+
+  /// Snackbar when a cable type is updated.
+  ///
+  /// In en, this message translates to:
+  /// **'Cable type updated.'**
+  String get cableTypeUpdatedSnackbar;
+
+  /// Snackbar when a cable type is deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Cable type deleted.'**
+  String get cableTypeDeletedSnackbar;
+
+  /// Label for the list of projects that use the cable type being deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Projects using this type:'**
+  String get cableTypeDeleteProjectsLabel;
+
+  /// Title for cable type delete confirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Cable Type?'**
+  String get cableTypeDeleteConfirmTitle;
+
+  /// Message for cable type delete confirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete \"{name}\"? Projects using this type will have it cleared. This cannot be undone.'**
+  String cableTypeDeleteConfirmMessage(String name);
+
+  /// No description provided for @errorAddingCableType.
+  ///
+  /// In en, this message translates to:
+  /// **'Error adding cable type: {error}'**
+  String errorAddingCableType(String error);
+
+  /// No description provided for @errorUpdatingCableType.
+  ///
+  /// In en, this message translates to:
+  /// **'Error updating cable type: {error}'**
+  String errorUpdatingCableType(String error);
+
+  /// No description provided for @errorDeletingCableType.
+  ///
+  /// In en, this message translates to:
+  /// **'Error deleting: {error}'**
+  String errorDeletingCableType(String error);
+
+  /// No description provided for @errorLoadingCableTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading cable types: {error}'**
+  String errorLoadingCableTypes(String error);
+
+  /// Empty state message on cable types screen.
+  ///
+  /// In en, this message translates to:
+  /// **'No cable types yet.'**
+  String get cableTypesEmpty;
+
+  /// Hint when cable types list is empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap + to add a cable type for use in projects.'**
+  String get cableTypesEmptyHint;
+
+  /// Validation message for required field.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get required;
+
+  /// Retry button label.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

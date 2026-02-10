@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+- **MapType**: Added minZoom and maxZoom properties to all map types based on actual HTTP testing
+- **MapDownloadService**: Added zoom level validation against map type's supported range
+- **LicencedMapDownloadPage**: Enhanced zoom slider functionality with map type constraints
+
+### Changed
+- **Cable types refactor:** Cable/equipment types now use UUIDs throughout
+  - Seed data in `cable_equipment_presets.dart` uses fixed UUIDs; seeding runs only when cable_types table is empty
+  - Project details read cable type info from the DB, not from static presets
+  - `cable_equipment_presets.dart` is used only for DB seeding; user-added types supported via DB (UI to be implemented)
+- **LicencedMapDownloadPage**: Updated documentation to include bulk download validation features
+- **MapCacheManager**: Added TODO comment with researched zoom level information for future implementation
+
+### Fixed
+- **LicencedMapDownloadPage**: Restored bulk download validation logic that was removed during redesign
+
+### Technical
+- `CableTypeSeedRecord` includes `id` field with fixed UUIDs
+- Removed fallback to `cableEquipmentTypePresets` in project details dropdown; cable types come from `getAllCableTypes()`
+
 ## [1.1.2+93] - 2026-02-04
 
 ### Added
@@ -231,43 +253,6 @@ All notable changes to this project will be documented in this file.
   - Dual event handling via onMapEvent and mapController.stream
   - Handles all MapEvent types that can change zoom (MapEventMove, MapEventRotate, MapEventFlingAnimation, MapEventDoubleTapZoom, MapEventScrollWheelZoom, MapEventNonRotatedSizeChange)
   - Proper state management with mounted checks and error handling
-
-## [Unreleased]
-### Added
-- **MapType**: Added minZoom and maxZoom properties to all map types based on actual HTTP testing
-  - OpenStreetMap: 0-19 zoom levels
-  - Esri Satellite: 0-23 zoom levels  
-  - Esri World Topo: 0-23 zoom levels
-  - OpenTopoMap: 0-17 zoom levels
-  - CartoDB Positron: 0-20 zoom levels
-  - Thunderforest Outdoors: 0-22 zoom levels
-  - Thunderforest Landscape: 0-22 zoom levels
-- **MapDownloadService**: Added zoom level validation against map type's supported range
-  - Validates min/max zoom levels before starting downloads
-  - Throws ArgumentError if zoom levels are outside supported range
-  - Added getSupportedZoomRange() helper method
-- **LicencedMapDownloadPage**: Enhanced zoom slider functionality with map type constraints
-  - Replaced separate min/max sliders with a single RangeSlider showing full range (0-23)
-  - Added red zones to visually indicate unsupported zoom ranges for each map type
-  - Automatic validation prevents selecting values outside the map type's supported range
-  - Visual legend explains red zones as "Unsupported by [MapType]"
-  - Automatic adjustment of zoom levels when switching map types
-  - Visual indicator in help panel showing supported zoom range for current map type
-  - Proper initialization of zoom levels within valid ranges
-
-### Fixed
-- **LicencedMapDownloadPage**: Restored bulk download validation logic that was removed during redesign
-  - Fixed download button to respect `allowsBulkDownload` property from selected map type
-  - Restored red error message overlay for map types that don't allow bulk downloads
-  - Added comprehensive documentation for bulk download restrictions and validation
-  - Enhanced user feedback with visual indicators for restricted map types
-
-### Changed
-- **LicencedMapDownloadPage**: Updated documentation to include bulk download validation features
-  - Added documentation for bulk download restrictions and error handling
-  - Enhanced method documentation with validation details
-  - Added inline comments explaining UI logic for bulk download restrictions
-- **MapCacheManager**: Added TODO comment with researched zoom level information for future implementation
 
 ## [0.9.30+71] - 2025-01-27
 ### Added
