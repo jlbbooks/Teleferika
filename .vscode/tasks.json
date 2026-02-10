@@ -1,0 +1,80 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "setup-opensource",
+      "type": "shell",
+      "command": "./scripts/setup-flavor.sh",
+      "args": ["opensource"],
+      "options": { "cwd": "${workspaceFolder}/teleferika.app" },
+      "group": "build",
+      "presentation": { "echo": true, "reveal": "always", "focus": false, "panel": "shared", "showReuseMessage": true, "clear": false },
+      "problemMatcher": [],
+      "windows": { "command": "scripts\\setup-flavor.bat" }
+    },
+    {
+      "label": "setup-full",
+      "type": "shell",
+      "command": "./scripts/setup-flavor.sh",
+      "args": ["full"],
+      "options": { "cwd": "${workspaceFolder}/teleferika.app" },
+      "group": "build",
+      "presentation": { "echo": true, "reveal": "always", "focus": false, "panel": "shared", "showReuseMessage": true, "clear": false },
+      "problemMatcher": [],
+      "windows": { "command": "scripts\\setup-flavor.bat" }
+    },
+    {
+      "label": "clean-setup-opensource",
+      "type": "shell",
+      "command": "./scripts/setup-flavor.sh",
+      "args": ["opensource", "true"],
+      "options": { "cwd": "${workspaceFolder}/teleferika.app" },
+      "group": "build",
+      "presentation": { "echo": true, "reveal": "always", "focus": false, "panel": "shared" },
+      "problemMatcher": [],
+      "windows": { "command": "scripts\\setup-flavor.bat" }
+    },
+    {
+      "label": "clean-setup-full",
+      "type": "shell",
+      "command": "./scripts/setup-flavor.sh",
+      "args": ["full", "true"],
+      "options": { "cwd": "${workspaceFolder}/teleferika.app" },
+      "group": "build",
+      "presentation": { "echo": true, "reveal": "always", "focus": false, "panel": "shared" },
+      "problemMatcher": [],
+      "windows": { "command": "scripts\\setup-flavor.bat" }
+    },
+    {
+      "label": "generate-docs-opensource",
+      "type": "shell",
+      "command": "./scripts/build-app.sh",
+      "args": ["docs", "opensource"],
+      "options": { "cwd": "${workspaceFolder}/teleferika.app" },
+      "group": "build",
+      "presentation": { "echo": true, "reveal": "always", "focus": false, "panel": "shared", "showReuseMessage": true, "clear": false },
+      "problemMatcher": [],
+      "windows": { "command": "scripts\\build-app.sh", "args": ["docs", "opensource"] }
+    },
+    {
+      "label": "generate-docs-full",
+      "type": "shell",
+      "command": "./scripts/build-app.sh",
+      "args": ["docs", "full"],
+      "options": { "cwd": "${workspaceFolder}/teleferika.app" },
+      "group": "build",
+      "presentation": { "echo": true, "reveal": "always", "focus": false, "panel": "shared", "showReuseMessage": true, "clear": false },
+      "problemMatcher": [],
+      "windows": { "command": "scripts\\build-app.sh", "args": ["docs", "full"] }
+    },
+    {
+      "label": "licence_server: generate",
+      "type": "shell",
+      "command": "dart run tool/embed_version.dart && dart run tool/embed_assets.dart",
+      "options": { "cwd": "${workspaceFolder}/licence_server" },
+      "group": "build",
+      "presentation": { "echo": true, "reveal": "always", "focus": false, "panel": "shared" },
+      "problemMatcher": []
+    }
+  ]
+}

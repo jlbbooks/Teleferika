@@ -1,0 +1,102 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Flutter (Full Version)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/teleferika.app",
+      "args": [
+        "--flavor=full",
+        "--dart-define=FLAVOR_NAME=full",
+        "--verbose"
+      ],
+      "console": "debugConsole"
+    },
+    {
+      "name": "Flutter (Open Source)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/teleferika.app",
+      "args": [
+        "--flavor=opensource",
+        "--dart-define=FLAVOR_NAME=opensource"
+      ],
+      "console": "debugConsole"
+    },
+    {
+      "name": "Flutter (Open Source) with setup",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "setup-opensource",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/teleferika.app",
+      "args": [
+        "--flavor=opensource",
+        "--dart-define=FLAVOR_NAME=opensource"
+      ],
+      "console": "debugConsole"
+    },
+    {
+      "name": "Flutter (Full Version) with setup",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "setup-full",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/teleferika.app",
+      "args": [
+        "--flavor=full",
+        "--dart-define=FLAVOR_NAME=full"
+      ],
+      "console": "debugConsole"
+    },
+    {
+      "name": "Flutter (Open Source Clean)",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "clean-setup-opensource",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/teleferika.app",
+      "args": [
+        "--flavor=opensource",
+        "--dart-define=FLAVOR_NAME=opensource"
+      ],
+      "console": "debugConsole"
+    },
+    {
+      "name": "Flutter (Full Version Clean)",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "clean-setup-full",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/teleferika.app",
+      "args": [
+        "--flavor=full",
+        "--dart-define=FLAVOR_NAME=full"
+      ],
+      "console": "debugConsole"
+    },
+    {
+      "name": "Flutter (Current Config)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "cwd": "${workspaceFolder}/teleferika.app",
+      "args": [
+        "--flavor=full",
+        "--dart-define=FLAVOR_NAME=full"
+      ]
+    },
+    {
+      "name": "License Server (Dart)",
+      "request": "launch",
+      "type": "dart",
+      "preLaunchTask": "licence_server: generate",
+      "program": "bin/server.dart",
+      "cwd": "${workspaceFolder}/licence_server",
+      "console": "debugConsole"
+    }
+  ]
+}

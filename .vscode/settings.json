@@ -1,4 +1,8 @@
 {
   "java.configuration.updateBuildConfiguration": "automatic",
-  "java.compile.nullAnalysis.mode": "automatic"
+  "java.compile.nullAnalysis.mode": "automatic",
+  "java.import.exclusions": [
+    "**/licensed_features_package/**",
+    "**/licence_server/**"
+  ]
 }
