@@ -199,12 +199,40 @@ if [ "$COMMAND" = "build" ]; then
             fi
             ;;
         ipa)
-            if flutter build ipa --flavor "$FLAVOR" --"$MODE"; then
+            print_status "Apple ID must be logged in for IPA export. You can:"
+            print_status "  • Terminal: fastlane spaceauth -u YOUR_APPLE_ID  (if fastlane is installed)"
+            print_status "  • Xcode: Settings → Accounts"
+            read -r -p "Press Enter to start the IPA build (or Ctrl+C to cancel)... " _
+            ipa_built=false
+            ipa_retry=0
+            while [ "$ipa_built" = false ] && [ "$ipa_retry" -lt 2 ]; do
+                if flutter build ipa --flavor "$FLAVOR" --"$MODE"; then
+                    if [ -n "$(find build/ios/ipa -maxdepth 1 -name '*.ipa' 2>/dev/null)" ]; then
+                        ipa_built=true
+                    fi
+                fi
+                if [ "$ipa_built" = false ]; then
+                    if [ "$ipa_retry" -eq 0 ]; then
+                        print_warning "IPA export failed (e.g. 'session has expired')."
+                        print_status "Re-login option 1 (terminal): run  fastlane spaceauth -u YOUR_APPLE_ID  in another terminal, then return here."
+                        print_status "Re-login option 2 (Xcode): we can open the archive so you can use Distribute App or Settings → Accounts."
+                        if [ "$(uname)" = "Darwin" ] && [ -d "build/ios/archive/Runner.xcarchive" ]; then
+                            read -r -p "Open archive in Xcode now? [Y/n] " open_xcode
+                            if [ "${open_xcode:-Y}" != "n" ] && [ "${open_xcode:-Y}" != "N" ]; then
+                                open build/ios/archive/Runner.xcarchive
+                            fi
+                        fi
+                        read -r -p "Press Enter after you've logged in to retry the IPA export... " _
+                        ipa_retry=$((ipa_retry + 1))
+                    else
+                        print_error "❌ IPA export failed again. Try distributing from Xcode: open build/ios/archive/Runner.xcarchive"
+                        exit 1
+                    fi
+                fi
+            done
+            if [ "$ipa_built" = true ]; then
                 print_success "✅ IPA built successfully"
                 print_status "IPA location: build/ios/ipa/"
-            else
-                print_error "❌ IPA build failed"
-                exit 1
             fi
             ;;
         *)
