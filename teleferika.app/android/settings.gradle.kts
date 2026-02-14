@@ -18,10 +18,8 @@ pluginManagement {
 
 plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
-    
-    // AGP 9.0.0 is not yet compatible with Flutter (causes NPE in Flutter Gradle plugin).
-    // The following comment suppresses the "A newer version of com.android.application is available" warning in Android Studio.
-    //noinspection GradleDependency
+    // AGP 9.0.1 requires Gradle 9.1+ but Flutter plugins (e.g. usb_serial) use jcenter() removed in Gradle 9.
+    // Revert to AGP 8 until plugins are updated. See docs.flutter.dev/release/breaking-changes/migrate-to-agp-9
     id("com.android.application") version "8.13.2" apply false
     id("org.jetbrains.kotlin.android") version "2.3.10" apply false
 }

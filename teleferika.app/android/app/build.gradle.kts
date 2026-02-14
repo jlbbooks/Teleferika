@@ -31,7 +31,6 @@ val localProperties = Properties().apply {
 val flutterVersionCode = localProperties.getProperty("flutter.versionCode", "1")
 val flutterVersionName = localProperties.getProperty("flutter.versionName", "1.0.0")
 
-// Configure Kotlin compiler options at the top level
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_21)
@@ -40,6 +39,10 @@ kotlin {
 
 android {
     namespace = "com.jlbbooks.teleferika"
+
+    buildFeatures {
+        buildConfig = true
+    }
     compileSdkVersion(flutter.compileSdkVersion)
     ndkVersion = flutter.ndkVersion
 
