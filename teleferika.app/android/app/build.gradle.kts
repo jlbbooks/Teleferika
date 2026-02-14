@@ -46,6 +46,14 @@ android {
     compileSdkVersion(flutter.compileSdkVersion)
     ndkVersion = flutter.ndkVersion
 
+    // Required for 16 KB page size support (Android 15+ / Play policy Nov 2025+).
+    // Ensures native libs are not legacy-packed so they stay page-aligned.
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
+
     signingConfigs {
         create("release") { // This will be used for your release build if you don't override it
             if (keystoreProperties.isNotEmpty()) {
