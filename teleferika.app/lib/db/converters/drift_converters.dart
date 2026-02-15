@@ -49,6 +49,7 @@ class ProjectConverter implements DriftConverter<ProjectModel, ProjectCompanion>
       points: points,
       presumedTotalLength: project.presumedTotalLength,
       cableEquipmentTypeId: project.cableEquipmentTypeId,
+      profileChartHeight: project.profileChartHeight,
     );
   }
 
@@ -66,6 +67,7 @@ class ProjectConverter implements DriftConverter<ProjectModel, ProjectCompanion>
       date: _ValueHelpers.optionalIsoDate(project.date),
       presumedTotalLength: Value(project.presumedTotalLength),
       cableEquipmentTypeId: Value(project.cableEquipmentTypeId),
+      profileChartHeight: Value(project.profileChartHeight),
     );
   }
 }

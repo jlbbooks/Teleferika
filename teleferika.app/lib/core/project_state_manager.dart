@@ -262,6 +262,27 @@ class ProjectStateManager extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Updates only the profile chart height: writes to DB and updates in-memory
+  /// project without setting [hasUnsavedChanges].
+  Future<void> updateProfileChartHeightOnly(String projectId, double height) async {
+    if (_currentProject?.id != projectId) return;
+    try {
+      await _dbHelper.updateProjectProfileChartHeight(projectId, height);
+      _currentProject = _currentProject!.copyWith(profileChartHeight: height);
+      notifyListeners();
+      logger.fine(
+        'ProjectStateManager: Updated profileChartHeight to $height for $projectId',
+      );
+    } catch (e, stackTrace) {
+      logger.severe(
+        'ProjectStateManager: Error updating profileChartHeight',
+        e,
+        stackTrace,
+      );
+      rethrow;
+    }
+  }
+
   /// Update project details in DB
   Future<void> updateProjectInDB() async {
     try {

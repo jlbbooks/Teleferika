@@ -4,6 +4,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 
@@ -43,6 +44,7 @@ class LineProfileSection extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           sliver: SliverToBoxAdapter(
             child: _ExpandableProfileChart(
+              project: project,
               profileData: profileData,
               points: points,
             ),
@@ -158,10 +160,12 @@ class _ProfileData {
 }
 
 class _ExpandableProfileChart extends StatefulWidget {
+  final ProjectModel project;
   final _ProfileData profileData;
   final List<PointModel> points;
 
   const _ExpandableProfileChart({
+    required this.project,
     required this.profileData,
     required this.points,
   });
@@ -174,13 +178,30 @@ class _ExpandableProfileChartState extends State<_ExpandableProfileChart> {
   static const _minChartHeight = 120.0;
   static const _maxChartHeight = 500.0;
   static const _defaultChartHeight = 220.0;
+  static const _outerMargin = 4.0;
 
-  double _chartHeight = _defaultChartHeight;
+  late double _chartHeight;
+  bool _pendingSquareInitialHeight = true;
+  double? _lastLayoutWidth;
+
+  @override
+  void initState() {
+    super.initState();
+    final saved = widget.project.profileChartHeight;
+    _chartHeight = (saved != null)
+        ? saved.clamp(_minChartHeight, _maxChartHeight)
+        : _defaultChartHeight;
+    _pendingSquareInitialHeight = saved == null;
+  }
 
   void _onResize(double delta) {
-    setState(() {
-      _chartHeight = (_chartHeight + delta).clamp(_minChartHeight, _maxChartHeight);
-    });
+    final newHeight =
+        (_chartHeight + delta).clamp(_minChartHeight, _maxChartHeight);
+    setState(() => _chartHeight = newHeight);
+    context.projectState.updateProfileChartHeightOnly(
+      widget.project.id,
+      newHeight,
+    );
   }
 
   @override
@@ -191,20 +212,38 @@ class _ExpandableProfileChartState extends State<_ExpandableProfileChart> {
     final chartSectionHeight =
         titleAndSpacingHeight + _chartHeight + axisPaddingVertical;
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SizedBox(
-          height: chartSectionHeight,
-          child: _ProfileChart(
-            profileData: widget.profileData,
-            points: widget.points,
-            preferredChartHeight: _chartHeight,
-          ),
-        ),
-        _ChartResizeHandle(onVerticalDrag: _onResize),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final chartWidth = constraints.maxWidth - _outerMargin * 2;
+        _lastLayoutWidth = chartWidth;
+
+        if (_pendingSquareInitialHeight) {
+          _pendingSquareInitialHeight = false;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            final w = _lastLayoutWidth ?? _defaultChartHeight;
+            setState(() {
+              _chartHeight = w.clamp(_minChartHeight, _maxChartHeight);
+            });
+          });
+        }
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              height: chartSectionHeight,
+              child: _ProfileChart(
+                profileData: widget.profileData,
+                points: widget.points,
+                preferredChartHeight: _chartHeight,
+              ),
+            ),
+            _ChartResizeHandle(onVerticalDrag: _onResize),
+          ],
+        );
+      },
     );
   }
 }

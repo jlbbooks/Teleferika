@@ -21,6 +21,8 @@ class Projects extends Table {
   RealColumn get presumedTotalLength => real().nullable()();
   TextColumn get cableEquipmentTypeId =>
       text().nullable().references(CableTypes, #id)();
+  /// Height of the line profile chart (saved per project, does not mark project dirty).
+  RealColumn get profileChartHeight => real().nullable()();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -200,7 +202,7 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
   }
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration {
@@ -339,6 +341,19 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
           _logger.info(
             'projects table recreated with cable_types foreign key',
           );
+        }
+
+        if (from < 7) {
+          _logger.info(
+            'Adding profile_chart_height column to projects table',
+          );
+          final projectColumns = await _getTableColumnNames('projects');
+          if (!projectColumns.contains('profile_chart_height')) {
+            await customStatement(
+              'ALTER TABLE projects ADD COLUMN profile_chart_height REAL',
+            );
+          }
+          _logger.info('projects table updated with profile_chart_height');
         }
 
         _logger.info('Database upgrade completed');
@@ -991,6 +1006,25 @@ class TeleferikaDatabase extends _$TeleferikaDatabase {
       _logger.fine('Project timestamp updated successfully');
     } catch (e) {
       _logger.severe('Error updating project timestamp $projectId: $e');
+      rethrow;
+    }
+  }
+
+  /// Updates only the profile chart height for a project (does not touch lastUpdate or dirty state).
+  Future<void> updateProjectProfileChartHeight(
+    String projectId,
+    double? height,
+  ) async {
+    _logger.fine('Updating project $projectId profileChartHeight: $height');
+    try {
+      await (update(projects)..where((p) => p.id.equals(projectId))).write(
+        ProjectCompanion(profileChartHeight: Value(height)),
+      );
+      _logger.fine('Project profileChartHeight updated');
+    } catch (e) {
+      _logger.severe(
+        'Error updating project profileChartHeight $projectId: $e',
+      );
       rethrow;
     }
   }
