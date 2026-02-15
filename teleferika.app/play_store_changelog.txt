@@ -1,15 +1,17 @@
 <en-GB>
-- Map: heading and magnetic variation for accurate compass and bearing display
-- GPS: improved NMEA data handling and localised status messages
-- Projects and points load faster when opening the app
-- Database: referential integrity for cable types; more reliable data
-- Code quality and stability improvements
+- New Profile tab: elevation profile and plan (top-view) chart for each project line
+- Elevation profile: altitude vs cumulative distance with point labels and axis ticks
+- Plan view: lateral offset from straight line (first to last point) for line alignment
+- Resizable chart height with drag handle; height saved per project
+- Profile tab documentation added (PROFILE_TAB_README.md)
+- Code: profile chart extracted to dedicated widget for clarity
 </en-GB>
 
 <it-IT>
-- Mappa: direzione e declinazione magnetica per bussola e rilevamenti corretti
-- GPS: gestione NMEA migliorata e messaggi di stato localizzati
-- Progetti e punti si caricano più velocemente all'apertura dell'app
-- Database: integrità referenziale per i tipi di cavo; dati più affidabili
-- Miglioramenti a qualità del codice e stabilità
+- Nuova scheda Profilo: grafico del profilo altimetrico e in pianta per ogni linea di progetto
+- Profilo altimetrico: quota vs distanza cumulativa con etichette dei punti e assi
+- Vista in pianta: scostamento laterale dalla linea retta (primo–ultimo punto) per l’allineamento
+- Altezza del grafico ridimensionabile con trascinamento; altezza salvata per progetto
+- Documentazione della scheda Profilo aggiunta (PROFILE_TAB_README.md)
+- Codice: grafico di profilo estratto in widget dedicato per maggiore chiarezza
 </it-IT>
