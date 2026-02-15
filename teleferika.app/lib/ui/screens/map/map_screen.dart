@@ -37,8 +37,14 @@ import '../../../ble/rtk_device_service.dart';
 class MapScreen extends StatefulWidget {
   final ProjectModel project;
   final String? selectedPointId;
+  final bool isMapTabActive;
 
-  const MapScreen({super.key, required this.project, this.selectedPointId});
+  const MapScreen({
+    super.key,
+    required this.project,
+    this.selectedPointId,
+    this.isMapTabActive = true,
+  });
 
   @override
   State<MapScreen> createState() => MapScreenState();
@@ -78,6 +84,7 @@ class MapScreenState extends State<MapScreen>
   void initState() {
     super.initState();
     _stateManager = MapStateManager();
+    _stateManager.isMapTabActive = widget.isMapTabActive;
     _stateManager.selectedPointId = widget.selectedPointId;
     _loadSettings();
     _initBleConnectionListener();
@@ -168,6 +175,10 @@ class MapScreenState extends State<MapScreen>
     if (widget.selectedPointId != oldWidget.selectedPointId) {
       _stateManager.selectedPointId = widget.selectedPointId;
       setState(() {}); // Only call setState once after updating state
+    }
+
+    if (widget.isMapTabActive != oldWidget.isMapTabActive) {
+      _stateManager.isMapTabActive = widget.isMapTabActive;
     }
   }
 
@@ -602,6 +613,7 @@ class MapScreenState extends State<MapScreen>
                       child: Stack(
                         children: [
                           FlutterMapWidget(
+                            isMapTabActive: widget.isMapTabActive,
                             polylinePathPoints: polylinePathPoints,
                             connectingLine: connectingLine,
                             projectHeadingLine:

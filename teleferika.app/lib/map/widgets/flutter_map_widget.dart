@@ -56,6 +56,7 @@ class FlutterMapWidget extends StatefulWidget {
   final String? slidingPointId;
   final LatLng? currentSlidePosition;
   final List<Widget>? additionalLayers;
+  final bool isMapTabActive;
 
   const FlutterMapWidget({
     super.key,
@@ -92,6 +93,7 @@ class FlutterMapWidget extends StatefulWidget {
     required this.slidingPointId,
     required this.currentSlidePosition,
     this.additionalLayers,
+    this.isMapTabActive = true,
   });
 
   @override
@@ -378,11 +380,15 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
                   ],
                 ),
               // Angle arcs as polylines (so they rotate with the map)
-              if (_isValidPolyline(widget.polylinePathPoints) &&
+              // Only build when map tab is active to avoid unnecessary work on GPS updates
+              if (widget.isMapTabActive &&
+                  _isValidPolyline(widget.polylinePathPoints) &&
                   widget.polylinePathPoints.length > 2)
                 PolylineLayer(polylines: _buildAngleArcPolylines(context)),
               // Angle labels as markers (don't rotate with the map) - rendered first (bottom layer)
-              if (_isValidPolyline(widget.polylinePathPoints) &&
+              // Only build when map tab is active to avoid unnecessary work on GPS updates
+              if (widget.isMapTabActive &&
+                  _isValidPolyline(widget.polylinePathPoints) &&
                   widget.polylinePathPoints.length > 2)
                 MarkerLayer(
                   markers: _buildAngleLabelMarkers(context),

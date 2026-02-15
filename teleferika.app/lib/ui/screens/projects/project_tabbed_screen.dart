@@ -492,7 +492,11 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
           key: _pointsTabKey,
           project: currentProject ?? widget.project,
         ),
-        MapScreen(key: _mapTabKey, project: currentProject ?? widget.project),
+        MapScreen(
+          key: _mapTabKey,
+          project: currentProject ?? widget.project,
+          isMapTabActive: _tabController.index == ProjectEditorTab.map.index,
+        ),
         LineProfileSection(
           project: currentProject ?? widget.project,
           points: currentPoints,

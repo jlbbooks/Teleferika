@@ -80,7 +80,7 @@ class MapStateManager extends ChangeNotifier {
   set magneticVariation(double? value) {
     if (_magneticVariation == value) return;
     _magneticVariation = value;
-    notifyListeners();
+    if (_isMapTabActive) notifyListeners();
   }
 
   /// Set the current map type and save to preferences
@@ -118,6 +118,20 @@ class MapStateManager extends ChangeNotifier {
 
   // Track if already initialized to prevent multiple initializations
   bool _isInitialized = false;
+
+  /// Whether the map tab is currently active. When false, GPS/compass updates
+  /// skip [notifyListeners] to avoid unnecessary rebuilds when the map is not visible.
+  bool _isMapTabActive = true;
+
+  set isMapTabActive(bool value) {
+    if (_isMapTabActive != value) {
+      _isMapTabActive = value;
+      if (value) {
+        // Switching to active - notify so map shows latest state
+        notifyListeners();
+      }
+    }
+  }
 
   /// Load the saved map type from SharedPreferences
   Future<void> _loadSavedMapType() async {
@@ -200,7 +214,7 @@ class MapStateManager extends ChangeNotifier {
     _controller.startListeningToLocation(
       (position) {
         currentPosition = position;
-        notifyListeners();
+        if (_isMapTabActive) notifyListeners();
 
         // Save the location to preferences for future use
         MapPreferencesService.saveLastLocation(
@@ -221,7 +235,7 @@ class MapStateManager extends ChangeNotifier {
         S.of(context);
         // Status will be handled by the parent component
         currentPosition = null;
-        notifyListeners();
+        if (_isMapTabActive) notifyListeners();
       },
     );
   }
@@ -233,7 +247,7 @@ class MapStateManager extends ChangeNotifier {
         currentDeviceHeading = heading;
         currentCompassAccuracy = accuracy;
         shouldCalibrateCompass = shouldCalibrate;
-        notifyListeners();
+        if (_isMapTabActive) notifyListeners();
 
         // Show calibrate compass notice if it just became true
         if (shouldCalibrate == true &&
@@ -262,7 +276,7 @@ class MapStateManager extends ChangeNotifier {
         currentDeviceHeading = null;
         currentCompassAccuracy = null;
         shouldCalibrateCompass = null;
-        notifyListeners();
+        if (_isMapTabActive) notifyListeners();
       },
     );
   }
