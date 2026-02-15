@@ -8,10 +8,26 @@ import 'package:teleferika/core/project_provider.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
 
-/// Tab content showing the elevation profile of the line:
-/// altitude of each point vs. cumulative distance along the line.
-/// Vertical axis bounded by min/max altitude; each point shown as a dot with its name.
-class LineProfileSection extends StatelessWidget {
+/// Bearing from [start] to [end] in degrees (0–360).
+double _bearingDegrees(PointModel start, PointModel end) {
+  final lat1 = start.latitude * math.pi / 180;
+  final lon1 = start.longitude * math.pi / 180;
+  final lat2 = end.latitude * math.pi / 180;
+  final lon2 = end.longitude * math.pi / 180;
+  final dLon = lon2 - lon1;
+  final y = math.sin(dLon) * math.cos(lat2);
+  final x =
+      math.cos(lat1) * math.sin(lat2) -
+      math.sin(lat1) * math.cos(lat2) * math.cos(dLon);
+  final bearingRad = math.atan2(y, x);
+  final bearingDeg = bearingRad * 180 / math.pi;
+  return (bearingDeg + 360) % 360;
+}
+
+enum _ProfileChartMode { elevation, plan }
+
+/// Tab content showing elevation and plan (top-view) profiles of the line.
+class LineProfileSection extends StatefulWidget {
   final ProjectModel project;
   final List<PointModel> points;
 
@@ -22,31 +38,110 @@ class LineProfileSection extends StatelessWidget {
   });
 
   @override
+  State<LineProfileSection> createState() => _LineProfileSectionState();
+}
+
+class _LineProfileSectionState extends State<LineProfileSection> {
+  @override
+  void initState() {
+    super.initState();
+    _syncModeFromState();
+  }
+
+  @override
+  void didUpdateWidget(covariant LineProfileSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.project.id != widget.project.id) _syncModeFromState();
+  }
+
+  void _syncModeFromState() {
+    final saved = context.projectState.lastProfileChartMode;
+    if (saved == 'plan' || saved == 'elevation') {
+      final mode = saved == 'plan' ? _ProfileChartMode.plan : _ProfileChartMode.elevation;
+      if (mounted) setState(() => _mode = mode);
+    }
+  }
+
+  _ProfileChartMode _mode = _ProfileChartMode.elevation;
+
+  @override
   Widget build(BuildContext context) {
-    if (points.length < 2) {
+    if (widget.points.length < 2) {
       return _buildEmptyState(
         context,
-        'Add at least two points to see the elevation profile.',
+        'Add at least two points to see the profile.',
       );
     }
 
-    final profileData = _computeProfileData(points);
-    if (profileData == null) {
+    final profileData = _computeProfileData(widget.points);
+    final planProfileData = _computePlanProfileData(widget.points);
+    final canShowElevation = profileData != null;
+    final canShowPlan = planProfileData != null;
+
+    if (!canShowElevation && !canShowPlan) {
       return _buildEmptyState(
         context,
         'Add altitude to points to see the elevation profile.',
       );
     }
 
+    // If current mode is elevation but no altitude data, switch to plan
+    if (_mode == _ProfileChartMode.elevation && !canShowElevation && canShowPlan) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() => _mode = _ProfileChartMode.plan);
+          context.projectState.setProfileChartMode('plan');
+        }
+      });
+    }
+
+    final effectiveMode = canShowElevation && _mode == _ProfileChartMode.elevation
+        ? _ProfileChartMode.elevation
+        : _ProfileChartMode.plan;
+
     return CustomScrollView(
       slivers: [
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           sliver: SliverToBoxAdapter(
-            child: _ExpandableProfileChart(
-              project: project,
-              profileData: profileData,
-              points: points,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (canShowElevation && canShowPlan)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: SegmentedButton<_ProfileChartMode>(
+                      segments: const [
+                        ButtonSegment(
+                          value: _ProfileChartMode.elevation,
+                          label: Text('Elevation'),
+                          icon: Icon(Icons.terrain, size: 18),
+                        ),
+                        ButtonSegment(
+                          value: _ProfileChartMode.plan,
+                          label: Text('Plan view'),
+                          icon: Icon(Icons.straighten, size: 18),
+                        ),
+                      ],
+                      selected: {effectiveMode},
+                      onSelectionChanged: (Set<_ProfileChartMode> s) {
+                        final v = s.first;
+                        if (v == _ProfileChartMode.elevation && !canShowElevation) return;
+                        setState(() => _mode = v);
+                        context.projectState.setProfileChartMode(
+                          v == _ProfileChartMode.elevation ? 'elevation' : 'plan',
+                        );
+                      },
+                    ),
+                  ),
+                _ExpandableProfileChart(
+                  project: widget.project,
+                  mode: effectiveMode,
+                  profileData: effectiveMode == _ProfileChartMode.elevation ? profileData : null,
+                  planProfileData: effectiveMode == _ProfileChartMode.plan ? planProfileData : null,
+                  points: widget.points,
+                ),
+              ],
             ),
           ),
         ),
@@ -128,6 +223,59 @@ class LineProfileSection extends StatelessWidget {
       totalDistance: distances.last,
     );
   }
+
+  /// Plan (top-view) profile: first at bottom-left, last at top-right;
+  /// Y = lateral offset from the straight line (m). Returns null if fewer than 2 points.
+  static _PlanProfileData? _computePlanProfileData(List<PointModel> points) {
+    if (points.length < 2) return null;
+    final first = points.first;
+    final last = points.last;
+    final bearingRefDeg = _bearingDegrees(first, last);
+    final totalAlong = first.distanceFromPoint(last);
+    if (totalAlong <= 0) return null;
+
+    final alongDistances = <double>[];
+    final lateralOffsets = <double>[];
+    for (int i = 0; i < points.length; i++) {
+      final dist = first.distanceFromPoint(points[i]);
+      final bearingDeg = _bearingDegrees(first, points[i]);
+      final bearingRad = (bearingDeg - bearingRefDeg) * math.pi / 180;
+      final along = dist * math.cos(bearingRad);
+      final across = dist * math.sin(bearingRad);
+      alongDistances.add(along);
+      lateralOffsets.add(across);
+    }
+
+    double minLateral = lateralOffsets.reduce(math.min);
+    double maxLateral = lateralOffsets.reduce(math.max);
+    if (maxLateral <= minLateral) {
+      maxLateral = minLateral + 1;
+    }
+
+    return _PlanProfileData(
+      alongDistances: alongDistances,
+      lateralOffsets: lateralOffsets,
+      minLateral: minLateral,
+      maxLateral: maxLateral,
+      totalAlong: totalAlong,
+    );
+  }
+}
+
+class _PlanProfileData {
+  final List<double> alongDistances;
+  final List<double> lateralOffsets;
+  final double minLateral;
+  final double maxLateral;
+  final double totalAlong;
+
+  _PlanProfileData({
+    required this.alongDistances,
+    required this.lateralOffsets,
+    required this.minLateral,
+    required this.maxLateral,
+    required this.totalAlong,
+  });
 }
 
 class _ProfileData {
@@ -161,12 +309,16 @@ class _ProfileData {
 
 class _ExpandableProfileChart extends StatefulWidget {
   final ProjectModel project;
-  final _ProfileData profileData;
+  final _ProfileChartMode mode;
+  final _ProfileData? profileData;
+  final _PlanProfileData? planProfileData;
   final List<PointModel> points;
 
   const _ExpandableProfileChart({
     required this.project,
+    required this.mode,
     required this.profileData,
+    required this.planProfileData,
     required this.points,
   });
 
@@ -180,33 +332,47 @@ class _ExpandableProfileChartState extends State<_ExpandableProfileChart> {
   static const _defaultChartHeight = 220.0;
   static const _outerMargin = 4.0;
 
-  late double _chartHeight;
-  bool _pendingSquareInitialHeight = true;
+  late double _elevationChartHeight;
+  late double _planChartHeight;
+  bool _elevationSquareApplied = false;
+  bool _planSquareApplied = false;
   double? _lastLayoutWidth;
 
   @override
   void initState() {
     super.initState();
-    final saved = widget.project.profileChartHeight;
-    _chartHeight = (saved != null)
-        ? saved.clamp(_minChartHeight, _maxChartHeight)
+    _elevationChartHeight = (widget.project.profileChartHeight != null)
+        ? widget.project.profileChartHeight!.clamp(_minChartHeight, _maxChartHeight)
         : _defaultChartHeight;
-    _pendingSquareInitialHeight = saved == null;
+    _planChartHeight = (widget.project.planProfileChartHeight != null)
+        ? widget.project.planProfileChartHeight!.clamp(_minChartHeight, _maxChartHeight)
+        : _defaultChartHeight;
+    _elevationSquareApplied = widget.project.profileChartHeight != null;
+    _planSquareApplied = widget.project.planProfileChartHeight != null;
   }
 
+  double get _chartHeight => widget.mode == _ProfileChartMode.elevation
+      ? _elevationChartHeight
+      : _planChartHeight;
+
   void _onResize(double delta) {
-    final newHeight =
-        (_chartHeight + delta).clamp(_minChartHeight, _maxChartHeight);
-    setState(() => _chartHeight = newHeight);
-    context.projectState.updateProfileChartHeightOnly(
-      widget.project.id,
-      newHeight,
-    );
+    final newHeight = (_chartHeight + delta).clamp(_minChartHeight, _maxChartHeight);
+    setState(() {
+      if (widget.mode == _ProfileChartMode.elevation) {
+        _elevationChartHeight = newHeight;
+      } else {
+        _planChartHeight = newHeight;
+      }
+    });
+    if (widget.mode == _ProfileChartMode.elevation) {
+      context.projectState.updateProfileChartHeightOnly(widget.project.id, newHeight);
+    } else {
+      context.projectState.updatePlanProfileChartHeightOnly(widget.project.id, newHeight);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Title + spacing + chart container height
     const titleAndSpacingHeight = 32.0;
     const axisPaddingVertical = 72.0;
     final chartSectionHeight =
@@ -217,14 +383,30 @@ class _ExpandableProfileChartState extends State<_ExpandableProfileChart> {
         final chartWidth = constraints.maxWidth - _outerMargin * 2;
         _lastLayoutWidth = chartWidth;
 
-        if (_pendingSquareInitialHeight) {
-          _pendingSquareInitialHeight = false;
+        final needSquareElevation = !_elevationSquareApplied &&
+            widget.project.profileChartHeight == null &&
+            widget.mode == _ProfileChartMode.elevation;
+        final needSquarePlan = !_planSquareApplied &&
+            widget.project.planProfileChartHeight == null &&
+            widget.mode == _ProfileChartMode.plan;
+
+        if (needSquareElevation) {
+          _elevationSquareApplied = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
             final w = _lastLayoutWidth ?? _defaultChartHeight;
-            setState(() {
-              _chartHeight = w.clamp(_minChartHeight, _maxChartHeight);
-            });
+            final h = w.clamp(_minChartHeight, _maxChartHeight);
+            setState(() => _elevationChartHeight = h);
+            context.projectState.updateProfileChartHeightOnly(widget.project.id, h);
+          });
+        } else if (needSquarePlan) {
+          _planSquareApplied = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            final w = _lastLayoutWidth ?? _defaultChartHeight;
+            final h = w.clamp(_minChartHeight, _maxChartHeight);
+            setState(() => _planChartHeight = h);
+            context.projectState.updatePlanProfileChartHeightOnly(widget.project.id, h);
           });
         }
 
@@ -235,7 +417,9 @@ class _ExpandableProfileChartState extends State<_ExpandableProfileChart> {
             SizedBox(
               height: chartSectionHeight,
               child: _ProfileChart(
+                mode: widget.mode,
                 profileData: widget.profileData,
+                planProfileData: widget.planProfileData,
                 points: widget.points,
                 preferredChartHeight: _chartHeight,
               ),
@@ -274,12 +458,16 @@ class _ChartResizeHandle extends StatelessWidget {
 }
 
 class _ProfileChart extends StatelessWidget {
-  final _ProfileData profileData;
+  final _ProfileChartMode mode;
+  final _ProfileData? profileData;
+  final _PlanProfileData? planProfileData;
   final List<PointModel> points;
   final double? preferredChartHeight;
 
   const _ProfileChart({
+    required this.mode,
     required this.profileData,
+    required this.planProfileData,
     required this.points,
     this.preferredChartHeight,
   });
@@ -312,7 +500,9 @@ class _ProfileChart extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Elevation profile',
+                mode == _ProfileChartMode.elevation
+                    ? 'Elevation profile'
+                    : 'Plan view (lateral offset)',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: Theme.of(context)
                           .colorScheme
@@ -339,7 +529,9 @@ class _ProfileChart extends StatelessWidget {
                       child: CustomPaint(
                         size: Size(contentWidth, contentHeight),
                         painter: _ProfilePainter(
+                          mode: mode,
                           profileData: profileData,
+                          planProfileData: planProfileData,
                           points: points,
                           chartWidth: contentWidth,
                           chartHeight: contentHeight,
@@ -348,7 +540,9 @@ class _ProfileChart extends StatelessWidget {
                       ),
                     ),
                     _PointLabels(
+                      mode: mode,
                       profileData: profileData,
+                      planProfileData: planProfileData,
                       points: points,
                       chartWidth: contentWidth,
                       chartHeight: contentHeight,
@@ -357,14 +551,18 @@ class _ProfileChart extends StatelessWidget {
                       theme: Theme.of(context),
                     ),
                     _YAxisPointLabels(
+                      mode: mode,
                       profileData: profileData,
+                      planProfileData: planProfileData,
                       points: points,
                       chartHeight: contentHeight,
                       paddingTop: axisPadding.top,
                       theme: Theme.of(context),
                     ),
                     _XAxisPointLabels(
+                      mode: mode,
                       profileData: profileData,
+                      planProfileData: planProfileData,
                       points: points,
                       chartWidth: contentWidth,
                       paddingLeft: axisPadding.left,
@@ -384,30 +582,46 @@ class _ProfileChart extends StatelessWidget {
 }
 
 class _ProfilePainter extends CustomPainter {
-  final _ProfileData profileData;
+  final _ProfileChartMode mode;
+  final _ProfileData? profileData;
+  final _PlanProfileData? planProfileData;
   final List<PointModel> points;
   final double chartWidth;
   final double chartHeight;
   final ThemeData theme;
 
   _ProfilePainter({
+    required this.mode,
     required this.profileData,
+    required this.planProfileData,
     required this.points,
     required this.chartWidth,
     required this.chartHeight,
     required this.theme,
   });
 
-  double _x(double distance) {
-    if (profileData.totalDistance <= 0) return 0;
-    return (distance / profileData.totalDistance) * chartWidth;
+  double _xElevation(double distance) {
+    if (profileData!.totalDistance <= 0) return 0;
+    return (distance / profileData!.totalDistance) * chartWidth;
   }
 
-  double _y(double altitude) {
-    final range = profileData.maxAltitude - profileData.minAltitude;
+  double _yElevation(double altitude) {
+    final range = profileData!.maxAltitude - profileData!.minAltitude;
     if (range <= 0) return chartHeight / 2;
     return chartHeight -
-        ((altitude - profileData.minAltitude) / range) * chartHeight;
+        ((altitude - profileData!.minAltitude) / range) * chartHeight;
+  }
+
+  double _xPlan(double along) {
+    if (planProfileData!.totalAlong <= 0) return 0;
+    return (along / planProfileData!.totalAlong) * chartWidth;
+  }
+
+  double _yPlan(double lateral) {
+    final range = planProfileData!.maxLateral - planProfileData!.minLateral;
+    if (range <= 0) return chartHeight / 2;
+    return chartHeight -
+        ((lateral - planProfileData!.minLateral) / range) * chartHeight;
   }
 
   void _drawDottedLine(Canvas canvas, Offset from, Offset to, Paint paint) {
@@ -474,70 +688,76 @@ class _ProfilePainter extends CustomPainter {
     final path = Path();
     bool started = false;
 
-    for (int i = 0; i < points.length; i++) {
-      final alt = profileData.altitudes[i];
-      if (alt == null) continue;
-
-      final x = _x(profileData.distances[i]);
-      final y = _y(alt);
-
-      if (!started) {
-        path.moveTo(x, y);
-        started = true;
-      } else {
-        path.lineTo(x, y);
+    if (mode == _ProfileChartMode.elevation && profileData != null) {
+      for (int i = 0; i < points.length; i++) {
+        final alt = profileData!.altitudes[i];
+        if (alt == null) continue;
+        final x = _xElevation(profileData!.distances[i]);
+        final y = _yElevation(alt);
+        if (!started) {
+          path.moveTo(x, y);
+          started = true;
+        } else {
+          path.lineTo(x, y);
+        }
+      }
+    } else if (mode == _ProfileChartMode.plan && planProfileData != null) {
+      for (int i = 0; i < points.length; i++) {
+        final x = _xPlan(planProfileData!.alongDistances[i]);
+        final y = _yPlan(planProfileData!.lateralOffsets[i]);
+        if (!started) {
+          path.moveTo(x, y);
+          started = true;
+        } else {
+          path.lineTo(x, y);
+        }
       }
     }
 
     canvas.drawPath(path, linePaint);
 
     const dotRadius = 6.0;
-    for (int i = 0; i < points.length; i++) {
-      final alt = profileData.altitudes[i];
-      if (alt == null) continue;
-
-      final xi = _x(profileData.distances[i]);
-      final yi = _y(alt);
-
-      // Dotted line from point to Y axis (horizontal)
-      _drawDottedLine(
-        canvas,
-        Offset(0, yi),
-        Offset(xi, yi),
-        dottedPaint,
-      );
-      // Dotted line from point to X axis (vertical)
-      _drawDottedLine(
-        canvas,
-        Offset(xi, yi),
-        Offset(xi, chartHeight),
-        dottedPaint,
-      );
-
-      // Y-axis tick at this point
-      canvas.drawLine(Offset(0, yi), Offset(tickLen, yi), axisPaint);
-      // X-axis tick at this point
-      canvas.drawLine(
-        Offset(xi, chartHeight),
-        Offset(xi, chartHeight - tickLen),
-        axisPaint,
-      );
-
-      canvas.drawCircle(Offset(xi, yi), dotRadius, dotPaint);
-      canvas.drawCircle(Offset(xi, yi), dotRadius, dotBorderPaint);
+    if (mode == _ProfileChartMode.elevation && profileData != null) {
+      for (int i = 0; i < points.length; i++) {
+        final alt = profileData!.altitudes[i];
+        if (alt == null) continue;
+        final xi = _xElevation(profileData!.distances[i]);
+        final yi = _yElevation(alt);
+        _drawDottedLine(canvas, Offset(0, yi), Offset(xi, yi), dottedPaint);
+        _drawDottedLine(canvas, Offset(xi, yi), Offset(xi, chartHeight), dottedPaint);
+        canvas.drawLine(Offset(0, yi), Offset(tickLen, yi), axisPaint);
+        canvas.drawLine(Offset(xi, chartHeight), Offset(xi, chartHeight - tickLen), axisPaint);
+        canvas.drawCircle(Offset(xi, yi), dotRadius, dotPaint);
+        canvas.drawCircle(Offset(xi, yi), dotRadius, dotBorderPaint);
+      }
+    } else if (mode == _ProfileChartMode.plan && planProfileData != null) {
+      for (int i = 0; i < points.length; i++) {
+        final xi = _xPlan(planProfileData!.alongDistances[i]);
+        final yi = _yPlan(planProfileData!.lateralOffsets[i]);
+        _drawDottedLine(canvas, Offset(0, yi), Offset(xi, yi), dottedPaint);
+        _drawDottedLine(canvas, Offset(xi, yi), Offset(xi, chartHeight), dottedPaint);
+        canvas.drawLine(Offset(0, yi), Offset(tickLen, yi), axisPaint);
+        canvas.drawLine(Offset(xi, chartHeight), Offset(xi, chartHeight - tickLen), axisPaint);
+        canvas.drawCircle(Offset(xi, yi), dotRadius, dotPaint);
+        canvas.drawCircle(Offset(xi, yi), dotRadius, dotBorderPaint);
+      }
     }
   }
 
   @override
   bool shouldRepaint(covariant _ProfilePainter old) {
-    return old.profileData != profileData ||
+    return old.mode != mode ||
+        old.profileData != profileData ||
+        old.planProfileData != planProfileData ||
         old.chartWidth != chartWidth ||
         old.chartHeight != chartHeight;
   }
 }
 
 class _PointLabels extends StatelessWidget {
-  final _ProfileData profileData;
+  final _ProfileChartMode mode;
+  final _ProfileData? profileData;
+  final _PlanProfileData? planProfileData;
   final List<PointModel> points;
   final double chartWidth;
   final double chartHeight;
@@ -546,7 +766,9 @@ class _PointLabels extends StatelessWidget {
   final ThemeData theme;
 
   const _PointLabels({
+    required this.mode,
     required this.profileData,
+    required this.planProfileData,
     required this.points,
     required this.chartWidth,
     required this.chartHeight,
@@ -555,40 +777,44 @@ class _PointLabels extends StatelessWidget {
     required this.theme,
   });
 
-  double _x(double distance) {
-    if (profileData.totalDistance <= 0) return 0;
-    return (distance / profileData.totalDistance) * chartWidth;
-  }
-
-  double _y(double altitude) {
-    final range = profileData.maxAltitude - profileData.minAltitude;
-    if (range <= 0) return chartHeight / 2;
-    return chartHeight -
-        ((altitude - profileData.minAltitude) / range) * chartHeight;
-  }
-
   @override
   Widget build(BuildContext context) {
     return IgnorePointer(
       child: Stack(
         children: [
           for (int i = 0; i < points.length; i++) ...[
-            _labelAt(
-              profileData.distances[i],
-              profileData.altitudes[i],
-              points[i].name,
-              i,
-            ),
+            if (mode == _ProfileChartMode.elevation && profileData != null &&
+                profileData!.altitudes[i] != null)
+              _labelAt(
+                paddingLeft + (profileData!.totalDistance <= 0 ? 0 : (profileData!.distances[i] / profileData!.totalDistance) * chartWidth),
+                paddingTop + _yElevation(profileData!.altitudes[i]!),
+                points[i].name,
+              ),
+            if (mode == _ProfileChartMode.plan && planProfileData != null)
+              _labelAt(
+                paddingLeft + (planProfileData!.totalAlong <= 0 ? 0 : (planProfileData!.alongDistances[i] / planProfileData!.totalAlong) * chartWidth),
+                paddingTop + _yPlan(planProfileData!.lateralOffsets[i]),
+                points[i].name,
+              ),
           ],
         ],
       ),
     );
   }
 
-  Widget _labelAt(double distance, double? altitude, String name, int index) {
-    if (altitude == null) return const SizedBox.shrink();
-    final x = paddingLeft + _x(distance);
-    final y = paddingTop + _y(altitude);
+  double _yElevation(double altitude) {
+    final range = profileData!.maxAltitude - profileData!.minAltitude;
+    if (range <= 0) return chartHeight / 2;
+    return chartHeight - ((altitude - profileData!.minAltitude) / range) * chartHeight;
+  }
+
+  double _yPlan(double lateral) {
+    final range = planProfileData!.maxLateral - planProfileData!.minLateral;
+    if (range <= 0) return chartHeight / 2;
+    return chartHeight - ((lateral - planProfileData!.minLateral) / range) * chartHeight;
+  }
+
+  Widget _labelAt(double x, double y, String name) {
     return Positioned(
       left: x - 24,
       top: y + 10,
@@ -608,30 +834,23 @@ class _PointLabels extends StatelessWidget {
 }
 
 class _YAxisPointLabels extends StatelessWidget {
-  final _ProfileData profileData;
+  final _ProfileChartMode mode;
+  final _ProfileData? profileData;
+  final _PlanProfileData? planProfileData;
   final List<PointModel> points;
   final double chartHeight;
   final double paddingTop;
   final ThemeData theme;
 
   const _YAxisPointLabels({
+    required this.mode,
     required this.profileData,
+    required this.planProfileData,
     required this.points,
     required this.chartHeight,
     required this.paddingTop,
     required this.theme,
   });
-
-  double _y(double altitude) {
-    final range = profileData.maxAltitude - profileData.minAltitude;
-    if (range <= 0) return chartHeight / 2;
-    return chartHeight -
-        ((altitude - profileData.minAltitude) / range) * chartHeight;
-  }
-
-  static String _formatAltitude(double m) {
-    return '${m.toStringAsFixed(0)} m';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -643,37 +862,65 @@ class _YAxisPointLabels extends StatelessWidget {
       child: IgnorePointer(
         child: Stack(
           children: [
-            for (int i = 0; i < points.length; i++) ...[
-              if (profileData.altitudes[i] != null)
-                Positioned(
-                  left: 0,
-                  top: (_y(profileData.altitudes[i]!) - 8)
-                      .clamp(0.0, chartHeight - 16),
-                  width: 42,
-                  height: 16,
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: Text(
-                      _formatAltitude(profileData.altitudes[i]!),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.7),
-                          ),
-                    ),
+            if (mode == _ProfileChartMode.elevation && profileData != null)
+              for (int i = 0; i < points.length; i++)
+                if (profileData!.altitudes[i] != null)
+                  _label(
+                    _yElevation(profileData!.altitudes[i]!),
+                    _formatAltitude(profileData!.altitudes[i]!),
                   ),
+            if (mode == _ProfileChartMode.plan && planProfileData != null)
+              for (int i = 0; i < points.length; i++)
+                _label(
+                  _yPlan(planProfileData!.lateralOffsets[i]),
+                  _formatLateral(planProfileData!.lateralOffsets[i]),
                 ),
-            ],
           ],
         ),
       ),
     );
   }
+
+  double _yElevation(double altitude) {
+    final range = profileData!.maxAltitude - profileData!.minAltitude;
+    if (range <= 0) return chartHeight / 2;
+    return chartHeight - ((altitude - profileData!.minAltitude) / range) * chartHeight;
+  }
+
+  double _yPlan(double lateral) {
+    final range = planProfileData!.maxLateral - planProfileData!.minLateral;
+    if (range <= 0) return chartHeight / 2;
+    return chartHeight - ((lateral - planProfileData!.minLateral) / range) * chartHeight;
+  }
+
+  Widget _label(double y, String text) {
+    return Positioned(
+      left: 0,
+      top: (y - 8).clamp(0.0, chartHeight - 16),
+      width: 42,
+      height: 16,
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: Text(
+          text,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
+        ),
+      ),
+    );
+  }
+
+  static String _formatAltitude(double m) => '${m.toStringAsFixed(0)} m';
+  static String _formatLateral(double m) => '${m.toStringAsFixed(0)} m';
 }
 
 class _XAxisPointLabels extends StatelessWidget {
-  final _ProfileData profileData;
+  final _ProfileChartMode mode;
+  final _ProfileData? profileData;
+  final _PlanProfileData? planProfileData;
   final List<PointModel> points;
   final double chartWidth;
   final double paddingLeft;
@@ -682,7 +929,9 @@ class _XAxisPointLabels extends StatelessWidget {
   final ThemeData theme;
 
   const _XAxisPointLabels({
+    required this.mode,
     required this.profileData,
+    required this.planProfileData,
     required this.points,
     required this.chartWidth,
     required this.paddingLeft,
@@ -691,15 +940,8 @@ class _XAxisPointLabels extends StatelessWidget {
     required this.theme,
   });
 
-  double _x(double distance) {
-    if (profileData.totalDistance <= 0) return 0;
-    return (distance / profileData.totalDistance) * chartWidth;
-  }
-
   static String _formatDistance(double m) {
-    if (m >= 1000) {
-      return '${(m / 1000).toStringAsFixed(1)} km';
-    }
+    if (m >= 1000) return '${(m / 1000).toStringAsFixed(1)} km';
     return '${m.toStringAsFixed(0)} m';
   }
 
@@ -713,28 +955,39 @@ class _XAxisPointLabels extends StatelessWidget {
       child: IgnorePointer(
         child: Stack(
           children: [
-            for (int i = 0; i < points.length; i++) ...[
-              if (profileData.altitudes[i] != null)
-                Positioned(
-                  left: (_x(profileData.distances[i]) - 24)
-                      .clamp(0.0, chartWidth - 48),
-                  top: 0,
-                  width: 48,
-                  height: 28,
-                  child: Text(
-                    _formatDistance(profileData.distances[i]),
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.7),
-                        ),
+            if (mode == _ProfileChartMode.elevation && profileData != null)
+              for (int i = 0; i < points.length; i++)
+                if (profileData!.altitudes[i] != null)
+                  _label(
+                    (profileData!.totalDistance <= 0 ? 0 : (profileData!.distances[i] / profileData!.totalDistance) * chartWidth),
+                    _formatDistance(profileData!.distances[i]),
                   ),
+            if (mode == _ProfileChartMode.plan && planProfileData != null)
+              for (int i = 0; i < points.length; i++)
+                _label(
+                  (planProfileData!.totalAlong <= 0 ? 0 : (planProfileData!.alongDistances[i] / planProfileData!.totalAlong) * chartWidth),
+                  _formatDistance(planProfileData!.alongDistances[i]),
                 ),
-            ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _label(double x, String text) {
+    return Positioned(
+      left: (x - 24).clamp(0.0, chartWidth - 48),
+      top: 0,
+      width: 48,
+      height: 28,
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+            ),
       ),
     );
   }

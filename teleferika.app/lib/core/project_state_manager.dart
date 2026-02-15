@@ -32,7 +32,24 @@ class ProjectStateManager extends ChangeNotifier {
   // Track if there is an unsaved new point (e.g., in MapToolView)
   bool _hasUnsavedNewPoint = false;
 
+  /// Last selected profile chart mode per project id ('elevation' | 'plan').
+  /// Memory only; does not dirty the project.
+  final Map<String, String> _profileChartModeByProjectId = {};
+
   bool get hasUnsavedNewPoint => _hasUnsavedNewPoint;
+
+  /// Last profile chart mode for the current project, if any. Values: 'elevation', 'plan'.
+  String? get lastProfileChartMode =>
+      _currentProject == null
+          ? null
+          : _profileChartModeByProjectId[_currentProject!.id];
+
+  /// Sets the profile chart mode for the current project (memory only, does not set dirty).
+  void setProfileChartMode(String mode) {
+    if (_currentProject == null) return;
+    _profileChartModeByProjectId[_currentProject!.id] = mode;
+    notifyListeners();
+  }
 
   void setHasUnsavedNewPoint(bool value) {
     if (_hasUnsavedNewPoint != value) {
@@ -276,6 +293,27 @@ class ProjectStateManager extends ChangeNotifier {
     } catch (e, stackTrace) {
       logger.severe(
         'ProjectStateManager: Error updating profileChartHeight',
+        e,
+        stackTrace,
+      );
+      rethrow;
+    }
+  }
+
+  /// Updates only the plan profile chart height: writes to DB and updates in-memory
+  /// project without setting [hasUnsavedChanges].
+  Future<void> updatePlanProfileChartHeightOnly(String projectId, double height) async {
+    if (_currentProject?.id != projectId) return;
+    try {
+      await _dbHelper.updateProjectPlanProfileChartHeight(projectId, height);
+      _currentProject = _currentProject!.copyWith(planProfileChartHeight: height);
+      notifyListeners();
+      logger.fine(
+        'ProjectStateManager: Updated planProfileChartHeight to $height for $projectId',
+      );
+    } catch (e, stackTrace) {
+      logger.severe(
+        'ProjectStateManager: Error updating planProfileChartHeight',
         e,
         stackTrace,
       );

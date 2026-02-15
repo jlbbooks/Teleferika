@@ -173,6 +173,24 @@ class DriftDatabaseHelper {
     }
   }
 
+  /// Updates only the plan profile chart height (does not set lastUpdate or dirty state).
+  Future<void> updateProjectPlanProfileChartHeight(
+    String projectId,
+    double? height,
+  ) async {
+    _logger.fine('Updating project $projectId planProfileChartHeight: $height');
+    try {
+      final db = await database;
+      await db.updateProjectPlanProfileChartHeight(projectId, height);
+      _logger.fine('Project planProfileChartHeight updated');
+    } catch (e) {
+      _logger.severe(
+        'Error updating project planProfileChartHeight $projectId: $e',
+      );
+      rethrow;
+    }
+  }
+
   Future<int> deleteProject(String id) async {
     _logger.info('Deleting project: $id');
     try {

@@ -50,6 +50,7 @@ class ProjectConverter implements DriftConverter<ProjectModel, ProjectCompanion>
       presumedTotalLength: project.presumedTotalLength,
       cableEquipmentTypeId: project.cableEquipmentTypeId,
       profileChartHeight: project.profileChartHeight,
+      planProfileChartHeight: project.planProfileChartHeight,
     );
   }
 
@@ -68,6 +69,7 @@ class ProjectConverter implements DriftConverter<ProjectModel, ProjectCompanion>
       presumedTotalLength: Value(project.presumedTotalLength),
       cableEquipmentTypeId: Value(project.cableEquipmentTypeId),
       profileChartHeight: Value(project.profileChartHeight),
+      planProfileChartHeight: Value(project.planProfileChartHeight),
     );
   }
 }

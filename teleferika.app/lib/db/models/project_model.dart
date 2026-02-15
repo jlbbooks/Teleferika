@@ -19,6 +19,7 @@ class ProjectModel {
   static const String columnPresumedTotalLength = 'presumed_total_length';
   static const String columnCableEquipmentTypeId = 'cable_equipment_type_id';
   static const String columnProfileChartHeight = 'profile_chart_height';
+  static const String columnPlanProfileChartHeight = 'plan_profile_chart_height';
 
   final String id;
   final String name;
@@ -31,6 +32,8 @@ class ProjectModel {
   final String? cableEquipmentTypeId;
   /// Saved height of the line profile chart (persisted without marking project dirty).
   final double? profileChartHeight;
+  /// Saved height of the plan (top-view) profile chart (persisted without marking project dirty).
+  final double? planProfileChartHeight;
   final List<PointModel>
   _points; // In-memory list of points for this project (not persisted in DB)
 
@@ -48,6 +51,7 @@ class ProjectModel {
     this.presumedTotalLength,
     this.cableEquipmentTypeId,
     this.profileChartHeight,
+    this.planProfileChartHeight,
   }) : id = id ?? generateUuid(),
        _points = points ?? const []; // Default to empty list
 
@@ -62,6 +66,7 @@ class ProjectModel {
       columnPresumedTotalLength: presumedTotalLength,
       columnCableEquipmentTypeId: cableEquipmentTypeId,
       columnProfileChartHeight: profileChartHeight,
+      columnPlanProfileChartHeight: planProfileChartHeight,
       // points is not persisted in DB, so not included here
     };
   }
@@ -85,6 +90,7 @@ class ProjectModel {
       presumedTotalLength: map[columnPresumedTotalLength] as double?,
       cableEquipmentTypeId: map[columnCableEquipmentTypeId] as String?,
       profileChartHeight: map[columnProfileChartHeight] as double?,
+      planProfileChartHeight: map[columnPlanProfileChartHeight] as double?,
     );
   }
 
@@ -106,6 +112,8 @@ class ProjectModel {
     bool clearCableEquipmentTypeId = false,
     double? profileChartHeight,
     bool clearProfileChartHeight = false,
+    double? planProfileChartHeight,
+    bool clearPlanProfileChartHeight = false,
   }) {
     return ProjectModel(
       id: id ?? this.id,
@@ -124,6 +132,9 @@ class ProjectModel {
       profileChartHeight: clearProfileChartHeight
           ? null
           : (profileChartHeight ?? this.profileChartHeight),
+      planProfileChartHeight: clearPlanProfileChartHeight
+          ? null
+          : (planProfileChartHeight ?? this.planProfileChartHeight),
     );
   }
 
@@ -153,6 +164,7 @@ class ProjectModel {
         other.presumedTotalLength == presumedTotalLength &&
         other.cableEquipmentTypeId == cableEquipmentTypeId &&
         other.profileChartHeight == profileChartHeight &&
+        other.planProfileChartHeight == planProfileChartHeight &&
         _listEquals(other.points, points);
   }
 
@@ -175,6 +187,7 @@ class ProjectModel {
     presumedTotalLength,
     cableEquipmentTypeId,
     profileChartHeight,
+    planProfileChartHeight,
     Object.hashAll(points),
   );
 
