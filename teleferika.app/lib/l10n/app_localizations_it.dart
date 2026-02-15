@@ -406,6 +406,9 @@ class SIt extends S {
   String get map_tab_label => 'Mappa';
 
   @override
+  String get profile_tab_label => 'Profilo';
+
+  @override
   String get export_page_title => 'Esporta progetto';
 
   @override

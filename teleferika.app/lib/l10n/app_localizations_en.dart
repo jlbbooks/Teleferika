@@ -403,6 +403,9 @@ class SEn extends S {
   String get map_tab_label => 'Map';
 
   @override
+  String get profile_tab_label => 'Profile';
+
+  @override
   String get export_page_title => 'Export Project Data';
 
   @override

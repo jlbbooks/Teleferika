@@ -417,6 +417,10 @@
   "@map_tab_label": {
     "description": "Etichetta per la tab della mappa."
   },
+  "profile_tab_label": "Profilo",
+  "@profile_tab_label": {
+    "description": "Etichetta per la tab del profilo altimetrico (quota vs. distanza)."
+  },
   "unsaved_changes_discard_message": "Hai modifiche non salvate. Scartarle e uscire?",
   "@unsaved_changes_discard_message": {
     "description": "Messaggio mostrato nella finestra di dialogo quando ci sono modifiche non salvate e l'utente tenta di uscire dalla pagina."

@@ -525,6 +525,10 @@
   "@map_tab_label": {
     "description": "Tab label for map view."
   },
+  "profile_tab_label": "Profile",
+  "@profile_tab_label": {
+    "description": "Tab label for line elevation profile (altitude vs. distance)."
+  },
   "export_page_title": "Export Project Data",
   "@export_page_title": {
     "description": "Title for the export data page."

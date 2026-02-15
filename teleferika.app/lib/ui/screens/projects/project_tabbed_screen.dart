@@ -17,6 +17,7 @@ import 'package:teleferika/ui/screens/points/components/points_section.dart';
 import '../points/points_list_screen.dart';
 import 'package:teleferika/db/database.dart';
 import 'package:teleferika/db/drift_database_helper.dart';
+import 'package:teleferika/ui/screens/projects/components/line_profile_section.dart';
 import 'package:teleferika/ui/screens/projects/components/project_details_section.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
 import 'package:teleferika/core/settings_service.dart';
@@ -26,7 +27,7 @@ enum ProjectEditorTab {
   details, // 0
   points, // 1
   map, // 2
-  // Add more tabs here if needed
+  profile, // 3 — elevation vs. distance (longitudinal profile)
 }
 
 // Helper function to convert degrees to radians
@@ -492,6 +493,10 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
           project: currentProject ?? widget.project,
         ),
         MapScreen(key: _mapTabKey, project: currentProject ?? widget.project),
+        LineProfileSection(
+          project: currentProject ?? widget.project,
+          points: currentPoints,
+        ),
       ],
     );
     List<Widget> tabWidgets = [
@@ -513,6 +518,13 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
         icon: Icon(Icons.map_outlined, color: tabIconColor),
         child: Text(
           s?.map_tab_label ?? 'Map',
+          style: TextStyle(color: tabTextColor),
+        ),
+      ),
+      Tab(
+        icon: Icon(Icons.terrain, color: tabIconColor),
+        child: Text(
+          s?.profile_tab_label ?? 'Profile',
           style: TextStyle(color: tabTextColor),
         ),
       ),

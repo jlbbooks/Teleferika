@@ -745,6 +745,12 @@ abstract class S {
   /// **'Map'**
   String get map_tab_label;
 
+  /// Tab label for line elevation profile (altitude vs. distance).
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get profile_tab_label;
+
   /// Title for the export data page.
   ///
   /// In en, this message translates to:
