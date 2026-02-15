@@ -1,6 +1,8 @@
 // line_profile_section.dart
 // Longitudinal profile: elevation vs. distance along the line (Section 2 — Terrain and Elevation).
 
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:teleferika/db/models/point_model.dart';
 import 'package:teleferika/db/models/project_model.dart';
@@ -40,7 +42,7 @@ class LineProfileSection extends StatelessWidget {
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
           sliver: SliverToBoxAdapter(
-            child: _ProfileChart(
+            child: _ExpandableProfileChart(
               profileData: profileData,
               points: points,
             ),
@@ -155,13 +157,92 @@ class _ProfileData {
       Object.hash(totalDistance, minAltitude, maxAltitude, distances.length);
 }
 
+class _ExpandableProfileChart extends StatefulWidget {
+  final _ProfileData profileData;
+  final List<PointModel> points;
+
+  const _ExpandableProfileChart({
+    required this.profileData,
+    required this.points,
+  });
+
+  @override
+  State<_ExpandableProfileChart> createState() => _ExpandableProfileChartState();
+}
+
+class _ExpandableProfileChartState extends State<_ExpandableProfileChart> {
+  static const _minChartHeight = 120.0;
+  static const _maxChartHeight = 500.0;
+  static const _defaultChartHeight = 220.0;
+
+  double _chartHeight = _defaultChartHeight;
+
+  void _onResize(double delta) {
+    setState(() {
+      _chartHeight = (_chartHeight + delta).clamp(_minChartHeight, _maxChartHeight);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Title + spacing + chart container height
+    const titleAndSpacingHeight = 32.0;
+    const axisPaddingVertical = 72.0;
+    final chartSectionHeight =
+        titleAndSpacingHeight + _chartHeight + axisPaddingVertical;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SizedBox(
+          height: chartSectionHeight,
+          child: _ProfileChart(
+            profileData: widget.profileData,
+            points: widget.points,
+            preferredChartHeight: _chartHeight,
+          ),
+        ),
+        _ChartResizeHandle(onVerticalDrag: _onResize),
+      ],
+    );
+  }
+}
+
+class _ChartResizeHandle extends StatelessWidget {
+  final void Function(double delta) onVerticalDrag;
+
+  const _ChartResizeHandle({required this.onVerticalDrag});
+
+  @override
+  Widget build(BuildContext context) {
+    const handleHeight = 28.0;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onVerticalDragUpdate: (details) => onVerticalDrag(details.delta.dy),
+      child: Container(
+        height: handleHeight,
+        alignment: Alignment.center,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        child: Icon(
+          Icons.drag_handle,
+          size: 20,
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+        ),
+      ),
+    );
+  }
+}
+
 class _ProfileChart extends StatelessWidget {
   final _ProfileData profileData;
   final List<PointModel> points;
+  final double? preferredChartHeight;
 
   const _ProfileChart({
     required this.profileData,
     required this.points,
+    this.preferredChartHeight,
   });
 
   @override
@@ -173,10 +254,15 @@ class _ProfileChart extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final chartWidth = constraints.maxWidth - outerMargin * 2;
-        final availableHeight = constraints.maxHeight.isFinite
-            ? constraints.maxHeight - outerMargin * 2
-            : defaultChartHeight;
-        final chartHeight = (availableHeight - axisPadding.vertical).clamp(120.0, double.infinity);
+        final chartHeight = preferredChartHeight != null
+            ? preferredChartHeight!.clamp(120.0, 500.0)
+            : () {
+                final availableHeight = constraints.maxHeight.isFinite
+                    ? constraints.maxHeight - outerMargin * 2
+                    : defaultChartHeight;
+                return (availableHeight - axisPadding.vertical)
+                    .clamp(120.0, double.infinity);
+              }();
         final contentWidth = chartWidth - axisPadding.horizontal;
         final contentHeight = chartHeight;
 
@@ -285,11 +371,37 @@ class _ProfilePainter extends CustomPainter {
         ((altitude - profileData.minAltitude) / range) * chartHeight;
   }
 
+  void _drawDottedLine(Canvas canvas, Offset from, Offset to, Paint paint) {
+    const dotLength = 2.0;
+    const gapLength = 4.0;
+    final dx = to.dx - from.dx;
+    final dy = to.dy - from.dy;
+    final length = math.sqrt(dx * dx + dy * dy);
+    if (length <= 0) return;
+    final ux = dx / length;
+    final uy = dy / length;
+    double t = 0;
+    while (t < length) {
+      final tEnd = (t + dotLength).clamp(0.0, length);
+      canvas.drawLine(
+        Offset(from.dx + t * ux, from.dy + t * uy),
+        Offset(from.dx + tEnd * ux, from.dy + tEnd * uy),
+        paint,
+      );
+      t += dotLength + gapLength;
+    }
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
     final axisColor = theme.colorScheme.outline.withValues(alpha: 0.6);
     final axisPaint = Paint()
       ..color = axisColor
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+
+    final dottedPaint = Paint()
+      ..color = theme.colorScheme.outline.withValues(alpha: 0.4)
       ..strokeWidth = 1
       ..style = PaintingStyle.stroke;
 
@@ -347,6 +459,21 @@ class _ProfilePainter extends CustomPainter {
 
       final xi = _x(profileData.distances[i]);
       final yi = _y(alt);
+
+      // Dotted line from point to Y axis (horizontal)
+      _drawDottedLine(
+        canvas,
+        Offset(0, yi),
+        Offset(xi, yi),
+        dottedPaint,
+      );
+      // Dotted line from point to X axis (vertical)
+      _drawDottedLine(
+        canvas,
+        Offset(xi, yi),
+        Offset(xi, chartHeight),
+        dottedPaint,
+      );
 
       // Y-axis tick at this point
       canvas.drawLine(Offset(0, yi), Offset(tickLen, yi), axisPaint);
