@@ -87,7 +87,9 @@ class UsbSerialService {
   /// Lists available USB serial devices. Returns empty on non-Android.
   Future<List<UsbDeviceInfo>> listDevices() async {
     if (!isSupported) {
-      _logger.warning('listDevices() not supported (not Android), returning []');
+      _logger.warning(
+        'listDevices() not supported (not Android), returning []',
+      );
       return [];
     }
     try {
@@ -95,11 +97,14 @@ class UsbSerialService {
       final result = <UsbDeviceInfo>[];
       for (var i = 0; i < devices.length; i++) {
         final d = devices[i];
-        result.add(UsbDeviceInfo(
-          deviceId: i,
-          displayName: 'USB Serial ${d.productName ?? 'Device'} (${d.manufacturerName ?? 'Unknown'})',
-          device: d,
-        ));
+        result.add(
+          UsbDeviceInfo(
+            deviceId: i,
+            displayName:
+                'USB Serial ${d.productName ?? 'Device'} (${d.manufacturerName ?? 'Unknown'})',
+            device: d,
+          ),
+        );
       }
       return result;
     } catch (e, stackTrace) {
@@ -162,7 +167,8 @@ class UsbSerialService {
             // Match our device if event has device info; otherwise assume it's ours
             final eventDevice = event.device;
             final ours = _connectedDevice;
-            final isOurs = eventDevice == null ||
+            final isOurs =
+                eventDevice == null ||
                 (ours != null &&
                     ours.deviceId == eventDevice.deviceId &&
                     ours.pid == eventDevice.pid &&
@@ -174,7 +180,9 @@ class UsbSerialService {
           }
         }, cancelOnError: false);
       } else {
-        _logger.fine('USB event stream not available, cable disconnect may not be detected');
+        _logger.fine(
+          'USB event stream not available, cable disconnect may not be detected',
+        );
       }
 
       final stream = port.inputStream;
@@ -354,7 +362,7 @@ class UsbSerialService {
           _isForwardingRtcm = true;
           forwardRtcmData(rtcmData);
         },
-        onError: (_, __) => _isForwardingRtcm = false,
+        onError: (_, _) => _isForwardingRtcm = false,
         onDone: () => _isForwardingRtcm = false,
         cancelOnError: false,
       );

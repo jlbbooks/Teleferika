@@ -4,5 +4,6 @@
   "java.import.exclusions": [
     "**/licensed_features_package/**",
     "**/licence_server/**"
-  ]
+  ],
+  "dart.flutterSdkPath": ".fvm/versions/3.41.1"
 }

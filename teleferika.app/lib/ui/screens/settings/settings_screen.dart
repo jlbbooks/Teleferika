@@ -27,7 +27,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final SettingsService _settingsService = SettingsService();
 
   // Settings state
-  bool _showSaveIconAlways = AppConfig.showSaveIconAlways;
+  bool _showSaveIconAlways = false;
   double _angleToRedThreshold = AppConfig.angleToRedThreshold;
   bool _showAllProjectsOnMap = false;
   bool _showBleSatelliteButton = true;
@@ -121,7 +121,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await _settingsService.resetToDefaults();
 
       setState(() {
-        _showSaveIconAlways = AppConfig.showSaveIconAlways;
+        _showSaveIconAlways = true;
         _angleToRedThreshold = AppConfig.angleToRedThreshold;
         _showAllProjectsOnMap = false;
         _showBleSatelliteButton = true;
@@ -435,10 +435,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Column(
                   children: [
                     ListTile(
-                      leading: const Icon(
-                        Icons.satellite,
-                        color: Colors.blue,
-                      ),
+                      leading: const Icon(Icons.satellite, color: Colors.blue),
                       title: Text(
                         S.of(context)?.ble_devices_title ?? 'RTK Devices',
                         style: const TextStyle(fontWeight: FontWeight.w500),
@@ -446,7 +443,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       subtitle: Text(
                         S.of(context)?.ble_devices_description ??
                             'Scan and connect to RTK receivers via Bluetooth or USB',
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
                       ),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () {
@@ -490,7 +490,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.red,
                                   foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
                                 ),
                               ),
                             ),

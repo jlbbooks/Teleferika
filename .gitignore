@@ -83,3 +83,6 @@ keys/
 *.tar.gz
 *.buildinfo
 *.changes
+
+# FVM Version Cache
+.fvm/

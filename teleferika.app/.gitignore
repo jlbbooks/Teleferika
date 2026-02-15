@@ -98,7 +98,9 @@ coverage/
 lib/generated_plugin_registrant.dart
 
 # FVM: ignore .fvm/ except config and version files we want to commit
-.fvm/*
 !.fvm/fvm_config.json
 !.fvm/version
 !.fvm/release
+
+# FVM Version Cache
+.fvm/

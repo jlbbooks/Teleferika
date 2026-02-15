@@ -19,7 +19,7 @@ import 'package:teleferika/db/database.dart';
 import 'package:teleferika/db/drift_database_helper.dart';
 import 'package:teleferika/ui/screens/projects/components/project_details_section.dart';
 import 'package:teleferika/ui/widgets/status_indicator.dart';
-import 'package:teleferika/core/app_config.dart';
+import 'package:teleferika/core/settings_service.dart';
 import 'package:logging/logging.dart';
 
 enum ProjectEditorTab {
@@ -111,6 +111,9 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
   // Store reference to ProjectStateManager for safe disposal
   ProjectStateManager? _projectStateManager;
 
+  final SettingsService _settingsService = SettingsService();
+  bool _showSaveIconAlways = true;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -145,6 +148,9 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
       }
     });
 
+    // Load user preference for save icon visibility
+    _loadShowSaveIconSetting();
+
     // Defer global state loading until after build is complete
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.isNew) {
@@ -153,6 +159,19 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
         _loadProjectIntoGlobalState();
       }
     });
+  }
+
+  Future<void> _loadShowSaveIconSetting() async {
+    try {
+      final value = await _settingsService.showSaveIconAlways;
+      if (mounted) {
+        setState(() {
+          _showSaveIconAlways = value;
+        });
+      }
+    } catch (e) {
+      logger.warning('Error loading showSaveIconAlways setting: $e');
+    }
   }
 
   Future<void> _insertNewProjectToDb() async {
@@ -188,8 +207,7 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
 
   Future<void> _loadCableTypes() async {
     try {
-      final list =
-          await DriftDatabaseHelper.instance.getAllCableTypes();
+      final list = await DriftDatabaseHelper.instance.getAllCableTypes();
       if (mounted) {
         setState(() => _cableTypes = list);
       }
@@ -522,7 +540,7 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
                 },
           tooltip: 'Undo Changes',
         ),
-      if (AppConfig.showSaveIconAlways ||
+      if (_showSaveIconAlways ||
           context.projectState.hasUnsavedChanges)
         IconButton(
           icon: Icon(Icons.save, color: saveButtonColor),

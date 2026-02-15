@@ -21,19 +21,18 @@ class SettingsService {
   static const String _showBleSatelliteButtonKey = 'show_ble_satellite_button';
 
   /// Get the current value for showSaveIconAlways setting.
-  /// Returns the stored value or the default from AppConfig.
+  /// Returns the stored value or the default (true).
   Future<bool> get showSaveIconAlways async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      return prefs.getBool(_showSaveIconAlwaysKey) ??
-          AppConfig.showSaveIconAlways;
+      return prefs.getBool(_showSaveIconAlwaysKey) ?? true;
     } catch (e, stackTrace) {
       _logger.warning(
         'Error getting showSaveIconAlways setting, using default',
         e,
         stackTrace,
       );
-      return AppConfig.showSaveIconAlways;
+      return true;
     }
   }
 

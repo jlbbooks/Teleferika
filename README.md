@@ -36,8 +36,11 @@ Teleferika.fresh/
 │   ├── pubspec.yaml             # Server dependencies
 │   └── README.md                # Server documentation
 │
-├── .gitmodules                  # Git submodule configuration
-└── README.md                    # This file
+├── .fvmrc                        # FVM Flutter version (repo-wide)
+├── .fvm/                         # FVM SDK symlink (from root)
+├── .gitmodules                   # Git submodule configuration
+├── scripts/fvm-use.sh            # Sync FVM version across root and apps
+└── README.md                     # This file
 ```
 
 ## 🎯 Project Components
@@ -147,6 +150,18 @@ The project supports two flavors:
 
 ## 🔧 Development
 
+### Flutter version (FVM)
+
+The repo uses [FVM](https://fvm.app) so the root and all Flutter apps use the same Flutter version.
+
+- **Single source of truth:** `.fvmrc` at the repo root (and root `.fvm/`) defines the version. The IDE uses the root SDK when the workspace is opened at repo root (see `.vscode/settings.json`).
+- **When upgrading Flutter:** run the sync script from the repo root so root and every app stay on the same version:
+  ```bash
+  ./scripts/fvm-use.sh 3.41.1
+  ```
+  With no argument it reads the version from the root `.fvmrc`.
+- **Adding a new Flutter app:** add its directory to the `fvm-use.sh` list so it gets updated when you run the script.
+
 ### Working with Submodules
 
 **Update submodules to latest:**
@@ -192,7 +207,11 @@ For the full version:
 
 ## 🛠️ Scripts
 
-All setup and build scripts are located in `teleferika.app/scripts/`:
+**Repo root** (`scripts/`):
+
+- `fvm-use.sh [version]` - Set FVM Flutter version for repo root and all apps (teleferika.app, licence_server). Run when upgrading Flutter so everything stays in sync.
+
+**Main app** (`teleferika.app/scripts/`):
 
 - `setup-flavor.sh` / `setup-flavor.ps1` - Main setup script
 - `setup-opensource.sh` / `setup-opensource.ps1` - Quick setup for opensource
