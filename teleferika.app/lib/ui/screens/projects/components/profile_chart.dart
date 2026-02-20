@@ -412,7 +412,7 @@ class _ProfilePainter extends CustomPainter {
 
     const tickLen = 5.0;
 
-    canvas.drawLine(Offset(0, 0), Offset(0, chartHeight), axisPaint);
+    canvas.drawLine(const Offset(0, 0), Offset(0, chartHeight), axisPaint);
     canvas.drawLine(
       Offset(0, chartHeight),
       Offset(chartWidth, chartHeight),
