@@ -7,7 +7,7 @@ description: "TeleferiKa app."
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
-version: 1.2.5+100
+version: 1.2.5+101
 
 environment:
   sdk: ">=3.11.0 <4.0.0"
@@ -65,6 +65,7 @@ dependencies:
   usb_serial: ^0.5.2
   uuid: ^4.5.1
   xml: ^6.5.0
+  flutter_svg: ^2.2.3
 
 dev_dependencies:
   build_runner: ^2.11.1
