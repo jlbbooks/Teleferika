@@ -143,16 +143,6 @@ class MapCacheLogger {
     );
   }
 
-  /// Format bytes to human readable format
-  static String _formatBytes(double bytes) {
-    if (bytes < 1024) return '${bytes.toStringAsFixed(0)} B';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    if (bytes < 1024 * 1024 * 1024) {
-      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
-    }
-    return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
-  }
-
   /// Get a summary of cache usage for debugging
   static Future<Map<String, dynamic>> getCacheSummary() async {
     final summary = <String, dynamic>{};
