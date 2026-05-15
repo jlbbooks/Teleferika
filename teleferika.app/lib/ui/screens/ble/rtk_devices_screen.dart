@@ -403,7 +403,7 @@ class _RtkDevicesScreenState extends State<RtkDevicesScreen>
         );
       }
 
-      await _rtkService.connectViaBle(device, context);
+      await _rtkService.connectViaBle(device);
 
       if (!mounted) return;
       if (!_rtkService.isConnected) {
@@ -1815,18 +1815,20 @@ class _RtkDevicesScreenState extends State<RtkDevicesScreen>
             }
           }
           _connectingHostId = null; // Clear tracking
-          final activeNtrip = _rtkService.ntripClient;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                activeNtrip?.errorMessage ??
-                    (s?.bleNtripConnectionFailed ??
-                        'Failed to connect to NTRIP caster'),
+          if (mounted) {
+            final activeNtrip = _rtkService.ntripClient;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  activeNtrip?.errorMessage ??
+                      (s?.bleNtripConnectionFailed ??
+                          'Failed to connect to NTRIP caster'),
+                ),
+                backgroundColor: Colors.red,
+                duration: const Duration(milliseconds: 1000),
               ),
-              backgroundColor: Colors.red,
-              duration: const Duration(milliseconds: 1000),
-            ),
-          );
+            );
+          }
         }
       }
     } catch (e) {
@@ -1848,13 +1850,15 @@ class _RtkDevicesScreenState extends State<RtkDevicesScreen>
           }
           _connectingHostId = null;
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(S.of(context)?.errorWithMessage(e.toString()) ?? 'Error: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(milliseconds: 3000),
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(S.of(context)?.errorWithMessage(e.toString()) ?? 'Error: $e'),
+              backgroundColor: Colors.red,
+              duration: const Duration(milliseconds: 3000),
+            ),
+          );
+        }
       }
     }
   }

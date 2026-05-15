@@ -1,8 +1,6 @@
 import 'dart:async';
-
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:logging/logging.dart';
@@ -100,11 +98,11 @@ class RtkDeviceService {
   static bool get isUsbSupported => Platform.isAndroid;
 
   /// Connect via BLE. Disconnects USB if connected.
-  /// [context] is optional; pass for UI (e.g. dialogs) in BLE flow.
-  Future<void> connectViaBle(BluetoothDevice device, [BuildContext? context]) async {
+  /// Caller may show UI (e.g. dialogs/snackbars) after this future completes, guarded by mounted.
+  Future<void> connectViaBle(BluetoothDevice device) async {
     _ensureInitialized();
     await _disconnectCurrent();
-    await _bleTransport.connectToDevice(device, context);
+    await _bleTransport.connectToDevice(device);
     await _setActiveTransport(_bleTransport, RtkConnectionMode.ble);
   }
 
@@ -227,4 +225,14 @@ class RtkDeviceService {
 
   /// USB: last connection error (when using USB).
   String? get lastUsbConnectionError => _usbTransport.lastConnectionError;
+
+  /// Disposes the service and closes all streams.
+  void dispose() {
+    _connectionStateSub?.cancel();
+    _gpsDataSub?.cancel();
+    _nmeaDataSub?.cancel();
+    _connectionStateController.close();
+    _gpsDataController.close();
+    _nmeaDataController.close();
+  }
 }

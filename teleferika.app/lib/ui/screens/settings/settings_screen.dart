@@ -484,7 +484,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton.icon(
-                                onPressed: () => _deleteAllNtripHosts(context),
+                                onPressed: () => _deleteAllNtripHosts(),
                                 icon: const Icon(Icons.delete_forever),
                                 label: const Text('DROP hosts'),
                                 style: ElevatedButton.styleFrom(
@@ -563,11 +563,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Future<void> _deleteAllNtripHosts(BuildContext context) async {
-    // Show confirmation dialog
+  Future<void> _deleteAllNtripHosts() async {
+    // Show confirmation dialog (use State's context)
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text('Delete All NTRIP Hosts'),
           content: const Text(
@@ -575,11 +575,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
+              onPressed: () => Navigator.of(dialogContext).pop(false),
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
               style: TextButton.styleFrom(foregroundColor: Colors.red),
               child: const Text('DELETE ALL'),
             ),

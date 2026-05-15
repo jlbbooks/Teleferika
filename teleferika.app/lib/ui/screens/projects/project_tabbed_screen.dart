@@ -176,8 +176,9 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
   }
 
   Future<void> _insertNewProjectToDb() async {
+    final projectState = context.projectState;
     // Insert the new project into the DB so points can be added
-    final success = await context.projectState.createProject(widget.project);
+    final success = await projectState.createProject(widget.project);
     if (!success) {
       if (mounted) {
         showErrorStatus(
@@ -189,10 +190,8 @@ class _ProjectTabbedScreenState extends State<ProjectTabbedScreen>
     }
     // Optionally reload from DB to get any DB-generated fields
     // Reload the project into global state to ensure we have the latest data
-    // ignore: use_build_context_synchronously
-    await context.projectState.loadProject(widget.project.id);
-    // ignore: use_build_context_synchronously
-    final dbProject = context.projectState.currentProject;
+    await projectState.loadProject(widget.project.id);
+    final dbProject = projectState.currentProject;
     if (dbProject != null && mounted) {
       setState(() {
         _isEffectivelyNew = true;

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:teleferika/ble/ble_service.dart';
@@ -73,9 +72,8 @@ class BleRtkTransport implements RtkDeviceTransport {
   Future<void> disconnect() => _bleService.disconnectDevice();
 
   /// BLE-specific: connect to a device. Call this before using the transport.
-  /// [context] is optional; pass for UI (e.g. dialogs) in BLE flow.
-  Future<void> connectToDevice(BluetoothDevice device, [BuildContext? context]) =>
-      _bleService.connectToDevice(device, context);
+  Future<void> connectToDevice(BluetoothDevice device) =>
+      _bleService.connectToDevice(device);
 
   /// BLE-specific: the connected BLE device.
   BluetoothDevice? get connectedDevice => _bleService.connectedDevice;

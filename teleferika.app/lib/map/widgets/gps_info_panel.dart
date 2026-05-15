@@ -341,22 +341,21 @@ class _GPSInfoPanelState extends State<GPSInfoPanel> {
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       onPressed: () async {
+                        final navigator = Navigator.of(context);
+                        final messenger = ScaffoldMessenger.of(context);
+                        final s = S.of(context);
                         try {
                           await widget.rtkService.disconnect();
-                          if (mounted) {
-                            Navigator.of(
-                              context,
-                            ).pop(); // Close the GPS info panel
-                          }
+                          if (!mounted) return;
+                          navigator.pop(); // Close the GPS info panel
                         } catch (e) {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(S.of(context)?.errorDisconnecting(e.toString()) ?? 'Error disconnecting: $e'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
+                          if (!mounted) return;
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text(s?.errorDisconnecting(e.toString()) ?? 'Error disconnecting: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
                         }
                       },
                       icon: const Icon(Icons.bluetooth_disabled),

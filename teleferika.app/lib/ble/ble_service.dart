@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:logging/logging.dart';
@@ -57,9 +56,6 @@ class BLEService {
   static final RegExp _reNmeaCommaNumbers = RegExp(r'[0-9]+,[0-9]+');
   static final RegExp _reNmeaTalkerOnly = RegExp(r'[A-Z]{2}[A-Z]{3}');
   static const Latin1Decoder _latin1Decoder = Latin1Decoder();
-
-  // TODO(device-test): Test BLE data path with physical RTK/BLE device when available.
-  // _handleReceivedData (Uint8List, cached regex, Latin1) was optimized and not yet validated on device.
 
   BluetoothService? _uartService;
   BluetoothCharacteristic? _txCharacteristic;
@@ -136,11 +132,7 @@ class BLEService {
   }
 
   /// Connects to the given BLE device and discovers services.
-  /// [context] is optional; pass it if you need it for UI (e.g. dialogs) in future extensions.
-  Future<void> connectToDevice(
-    BluetoothDevice device, [
-    BuildContext? context,
-  ]) async {
+  Future<void> connectToDevice(BluetoothDevice device) async {
     _connectionStateController.add(BLEConnectionState.connecting);
 
     try {
@@ -495,7 +487,8 @@ class BLEService {
             extractedText = String.fromCharCodes(printableBytes);
             // Check if it contains NMEA-like patterns (starts with $, or contains comma-separated numbers/letters)
             final hasNmeaMarker = extractedText.contains(_reNmeaTalker);
-            final hasNmeaPattern = extractedText.contains(_reNmeaCommaNumbers) ||
+            final hasNmeaPattern =
+                extractedText.contains(_reNmeaCommaNumbers) ||
                 extractedText.contains(_reNmeaTalkerOnly);
 
             if (hasNmeaMarker || (hasNmeaPattern && _nmeaBuffer.isNotEmpty)) {

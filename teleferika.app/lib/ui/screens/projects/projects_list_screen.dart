@@ -994,6 +994,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
   Future<void> _deleteSelectedProjects() async {
     if (_selectedProjectIdsForMultiSelect.isEmpty) return;
 
+    final projectState = context.projectState;
     bool confirmDelete =
         await showDialog(
           context: context,
@@ -1034,8 +1035,7 @@ class _ProjectsListScreenState extends State<ProjectsListScreen>
           _selectedProjectIdsForMultiSelect,
         );
         for (String id in idsToDelete) {
-          // ignore: use_build_context_synchronously
-          final success = await context.projectState.deleteProject(id);
+          final success = await projectState.deleteProject(id);
           if (!success) {
             logger.warning('Failed to delete project $id');
             if (mounted) {
