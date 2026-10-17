@@ -827,7 +827,7 @@ packages:
       path: "../licensed_features_package"
       relative: true
     source: path
-    version: "0.8.3+26"
+    version: "0.9.0+27"
   lints:
     dependency: transitive
     description:
