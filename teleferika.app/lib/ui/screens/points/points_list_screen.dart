@@ -160,17 +160,11 @@ class PointsListScreenState extends State<PointsListScreen> with StatusMixin {
   }
 
   Future<void> _handleReorder(int oldIndex, int newIndex) async {
-    // 1. Adjust newIndex based on ReorderableListView behavior
-    final int adjustedNewIndex = (newIndex > oldIndex)
-        ? newIndex - 1
-        : newIndex;
-
-    // 2. Validate indices
-    if (!_isValidReorder(oldIndex, adjustedNewIndex)) {
+    // onReorderItem already adjusts newIndex for the removed item at oldIndex.
+    if (!_isValidReorder(oldIndex, newIndex)) {
       return;
     }
 
-    // 3. Get current points from editing state
     final projectState = Provider.of<ProjectStateManager>(
       context,
       listen: false,
@@ -180,10 +174,10 @@ class PointsListScreenState extends State<PointsListScreen> with StatusMixin {
         _getReorderedPointsWithNewOrdinals(
           currentPoints,
           oldIndex,
-          adjustedNewIndex,
+          newIndex,
         );
 
-    // 4. Update the editing state (in-memory only)
+    // Update the editing state (in-memory only)
     projectState.reorderPointsInEditingState(reorderedPointsWithNewOrdinals);
   }
 
@@ -391,7 +385,7 @@ class PointsListScreenState extends State<PointsListScreen> with StatusMixin {
               Expanded(
                 child: ReorderableListView.builder(
                   itemCount: points.length,
-                  onReorder: _isSelectionMode
+                  onReorderItem: _isSelectionMode
                       ? (int oldIndex, int newIndex) async {}
                       : _handleReorder,
                   itemBuilder: (context, index) {

@@ -1,8 +1,8 @@
 # TODO List
 
-## Device testing (when device is available)
+## Device testing
 
-- [ ] **Test BLE data path** with physical RTK/BLE device: `lib/ble/ble_service.dart` — `_handleReceivedData` (Uint8List, cached regex, Latin1) not yet validated on device. See `TODO(device-test)` in that file.
+- [x] **BLE data path** validated with physical RTK/BLE device (`lib/ble/ble_service.dart` — `_handleReceivedData`).
 
 ## Background NTRIP Connection
 
