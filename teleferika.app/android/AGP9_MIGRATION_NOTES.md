@@ -1,6 +1,22 @@
 # AGP 9 migration notes
 
-We tried upgrading to **Android Gradle Plugin 9.0.1** and **Gradle 9.1.0**. The project was reverted to **AGP 8.13.2** and **Gradle 8.14.4** due to plugin compatibility.
+## Current status (AGP 8.13.2 + Gradle 9.5.1)
+
+The project uses **AGP 8.13.2** and **Gradle 9.5.1**. Gradle 9 removes `jcenter()`, which breaks stock `usb_serial` 0.5.2.
+
+**Symptom:** Flutter prints a misleading “Starting AGP 9+, only the new DSL…” box. That handler matches any `NullPointerException` while applying `dev.flutter.flutter-gradle-plugin`. The real failure is usually:
+
+```text
+Could not find method jcenter() for arguments [] on repository container
+```
+
+in `:usb_serial`’s `android/build.gradle`, then Flutter NPEs because the Android extension was never created.
+
+**Fix in this repo:** `usb_serial` is vendored at `teleferika.app/third_party/usb_serial` with `jcenter()` → `mavenCentral()`, referenced via a path dependency in `pubspec.yaml`.
+
+---
+
+We previously tried upgrading to **Android Gradle Plugin 9.0.1** and **Gradle 9.1.0**. The project was reverted to **AGP 8.13.2** due to plugin compatibility.
 
 ## What was tried
 
