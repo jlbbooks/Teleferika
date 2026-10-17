@@ -5,4 +5,5 @@
     "**/licensed_features_package/**",
     "**/licence_server/**"
   ],
+  "dart.flutterSdkPath": ".fvm/versions/3.47.7"
 }

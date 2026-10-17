@@ -84,7 +84,7 @@ keys/
 *.buildinfo
 *.changes
 
-# FVM: ignore local SDK cache; keep version pin files (use .fvm/* so files can be un-ignored)
+# FVM: ignore local SDK cache; keep version pin files (.fvm/* not .fvm/ so un-ignore works)
 .fvm/*
 !.fvm/fvm_config.json
 !.fvm/version
