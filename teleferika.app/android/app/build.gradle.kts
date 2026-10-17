@@ -42,6 +42,7 @@ android {
 
     buildFeatures {
         buildConfig = true
+        resValues = true
     }
     // permission_handler 13+ needs API 37 (ACCESS_LOCAL_NETWORK / CINNAMON_BUN).
     // Flutter's default is still 36; override until the toolchain catches up.

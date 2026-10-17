@@ -19,25 +19,32 @@ subprojects {
 
     fun configureAndroidCompat() {
         try {
-            if (project.hasProperty("android")) {
-                val android = project.extensions.getByName("android") as? com.android.build.gradle.BaseExtension
-                android?.apply {
-                    // Use the compileSdk version from the app project if available, otherwise default to 37
-                    val sdkVersion = try {
-                        val appProject = rootProject.findProject(":app")
-                        val appAndroid = appProject?.extensions?.findByName("android") as? com.android.build.gradle.BaseExtension
-                        appAndroid?.compileSdkVersion ?: "android-37"
-                    } catch (_: Exception) {
-                        "android-37"
-                    }
-                    compileSdkVersion(sdkVersion)
-
-                    buildFeatures.buildConfig = true
-
-                    if (namespace == null) {
-                        namespace = project.group.toString()
-                    }
+            val androidExt = project.extensions.findByName("android")
+            if (androidExt != null) {
+                try {
+                    val method = androidExt.javaClass.getMethod("setCompileSdk", Int::class.javaObjectType)
+                    method.invoke(androidExt, 37)
+                } catch (_: Exception) {
+                    try {
+                        val method = androidExt.javaClass.getMethod("compileSdkVersion", String::class.java)
+                        method.invoke(androidExt, "android-37")
+                    } catch (_: Exception) {}
                 }
+
+                try {
+                    val getBuildFeatures = androidExt.javaClass.getMethod("getBuildFeatures")
+                    val buildFeatures = getBuildFeatures.invoke(androidExt)
+                    val setBuildConfig = buildFeatures.javaClass.getMethod("setBuildConfig", Boolean::class.javaObjectType)
+                    setBuildConfig.invoke(buildFeatures, true)
+                } catch (_: Exception) {}
+
+                try {
+                    val getNamespace = androidExt.javaClass.getMethod("getNamespace")
+                    if (getNamespace.invoke(androidExt) == null) {
+                        val setNamespace = androidExt.javaClass.getMethod("setNamespace", String::class.java)
+                        setNamespace.invoke(androidExt, project.group.toString())
+                    }
+                } catch (_: Exception) {}
             }
         } catch (_: Exception) {
             // Ignore when Gradle sync runs in a limited context (e.g. Cursor/VS Code without full Flutter setup)
