@@ -126,4 +126,4 @@ A ready-made patch file is in **android/patches/usb_serial_jcenter_to_mavencentr
   - `android.newDsl=false`
   - `android.builtInKotlin=false` (until all plugins support AGP 9 built-in Kotlin).
 - In **app/build.gradle.kts** set `buildFeatures.resValues = true` if you use product flavor `resValue()`.
-- Official Flutter notes: https://docs.flutter.dev/release/breaking-changes/migrate-to-agp-9
+- Official Flutter notes: <https://docs.flutter.dev/release/breaking-changes/migrate-to-agp-9>
