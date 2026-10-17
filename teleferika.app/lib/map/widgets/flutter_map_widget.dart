@@ -326,6 +326,13 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
                   headingSectorRadius: 40,
                 ),
                 positionStream: widget.locationStreamController.stream,
+                // Log stream errors (position/heading) instead of failing silently.
+                errorHandler: (exception) {
+                  Logger('FlutterMapWidget').warning(
+                    'CurrentLocationLayer stream error: $exception',
+                  );
+                  return exception;
+                },
               ),
               ...(_isValidPolyline(widget.polylinePathPoints)
                   ? () {
