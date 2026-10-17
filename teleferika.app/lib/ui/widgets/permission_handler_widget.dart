@@ -349,7 +349,9 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
       return false;
     }
 
-    // Check Bluetooth permissions (Android 12+)
+    // Check Bluetooth permissions (Android 12+).
+    // On Android, permanent denial is only reliable from request() results
+    // (permission_handler 13+); do not infer it from .status alone.
     try {
       final bluetoothScanStatus = await Permission.bluetoothScan.status;
       final bluetoothConnectStatus = await Permission.bluetoothConnect.status;
@@ -357,14 +359,9 @@ class _PermissionHandlerWidgetState extends State<PermissionHandlerWidget> {
       if (_isRetrying ||
           bluetoothScanStatus.isDenied ||
           bluetoothConnectStatus.isDenied) {
-        await Permission.bluetoothScan.request();
-        await Permission.bluetoothConnect.request();
-
-        // Check again after request
-        final scanGranted = (await Permission.bluetoothScan.status).isGranted;
-        final connectGranted =
-            (await Permission.bluetoothConnect.status).isGranted;
-        return scanGranted && connectGranted;
+        final scanResult = await Permission.bluetoothScan.request();
+        final connectResult = await Permission.bluetoothConnect.request();
+        return scanResult.isGranted && connectResult.isGranted;
       }
 
       return bluetoothScanStatus.isGranted && bluetoothConnectStatus.isGranted;
