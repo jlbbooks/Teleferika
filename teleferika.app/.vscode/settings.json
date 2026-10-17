@@ -9,7 +9,7 @@
   },
   "dart.showDartDeveloperLogs": false,
   "dart.openDevTools": "flutter",
-  "dart.flutterSdkPath": ".fvm/versions/3.47.2",
+  "dart.flutterSdkPath": ".fvm/versions/3.47.7",
   "java.compile.nullAnalysis.mode": "automatic",
   "java.configuration.updateBuildConfiguration": "automatic",
   "java.jdt.ls.java.home": "/usr/lib/jvm/java-21-openjdk",
