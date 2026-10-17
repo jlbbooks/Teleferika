@@ -21,7 +21,7 @@ plugins {
     // AGP 9.0.1 requires Gradle 9.1+ but Flutter plugins (e.g. usb_serial) use jcenter() removed in Gradle 9.
     // Revert to AGP 8 until plugins are updated. See docs.flutter.dev/release/breaking-changes/migrate-to-agp-9
     id("com.android.application") version "8.13.2" apply false
-    id("org.jetbrains.kotlin.android") version "2.3.10" apply false
+    id("org.jetbrains.kotlin.android") version "2.3.20" apply false
 }
 
 include(":app")

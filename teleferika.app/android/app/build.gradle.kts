@@ -43,7 +43,9 @@ android {
     buildFeatures {
         buildConfig = true
     }
-    compileSdkVersion(flutter.compileSdkVersion)
+    // permission_handler 13+ needs API 37 (ACCESS_LOCAL_NETWORK / CINNAMON_BUN).
+    // Flutter's default is still 36; override until the toolchain catches up.
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     // Required for 16 KB page size support (Android 15+ / Play policy Nov 2025+).

@@ -22,13 +22,13 @@ subprojects {
             if (project.hasProperty("android")) {
                 val android = project.extensions.getByName("android") as? com.android.build.gradle.BaseExtension
                 android?.apply {
-                    // Use the compileSdk version from the app project if available, otherwise default to 36
+                    // Use the compileSdk version from the app project if available, otherwise default to 37
                     val sdkVersion = try {
                         val appProject = rootProject.findProject(":app")
                         val appAndroid = appProject?.extensions?.findByName("android") as? com.android.build.gradle.BaseExtension
-                        appAndroid?.compileSdkVersion ?: "android-36"
+                        appAndroid?.compileSdkVersion ?: "android-37"
                     } catch (_: Exception) {
-                        "android-36"
+                        "android-37"
                     }
                     compileSdkVersion(sdkVersion)
 
