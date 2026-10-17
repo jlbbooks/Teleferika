@@ -18,6 +18,7 @@ import 'package:teleferika/map/markers/location_markers.dart';
 import 'package:teleferika/map/markers/moving_timber_marker.dart';
 import 'package:teleferika/geometry/geometry_service.dart';
 import 'package:teleferika/map/services/map_cache_manager.dart';
+import 'package:teleferika/map/map_tile_builder.dart';
 import 'package:teleferika/map/map_type.dart';
 import 'package:teleferika/map/state/map_state_manager.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -114,7 +115,7 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
       logger.warning(
         'Failed to create cached tile provider, using default provider: $e',
       );
-      // Fallback to default tile provider (supports aborting requests natively in flutter_map 8.2.0)
+      // Fallback when FMTC is unavailable (NetworkTileProvider aborts stale requests).
       return NetworkTileProvider(
         cachingProvider: BuiltInMapCachingProvider.getOrCreateInstance(
           maxCacheSize: 1_000_000_000, // 1 GB is the default
@@ -213,6 +214,8 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
               keepAlive: true,
               minZoom: widget.currentMapType.minZoom.toDouble(),
               maxZoom: widget.currentMapType.maxZoom.toDouble(),
+              // Avoid empty bands at extreme latitudes when panning vertically.
+              cameraConstraint: const CameraConstraint.containLatitude(),
               onMapEvent: (MapEvent event) {
                 // Handle all map events that might change zoom or rotation
                 if (event is MapEventMove ||
@@ -287,6 +290,7 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
                 urlTemplate: _getTileLayerUrlWithApiKey(widget.currentMapType),
                 userAgentPackageName: 'com.jlbbooks.teleferika',
                 tileProvider: _getTileProvider(widget.currentMapType),
+                tileBuilder: teleferikaMapTileBuilder,
                 retinaMode: widget.currentMapType.supportsRetina
                     ? RetinaMode.isHighDensity(context)
                     : null,
@@ -309,8 +313,6 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
               CurrentLocationLayer(
                 style: LocationMarkerStyle(
                   marker: CurrentLocationWithAzimuthMarker(
-                    accuracy: widget.currentPosition?.accuracy,
-                    zoomLevel: _currentZoom,
                     azimuth: Provider.of<ProjectStateManager>(
                       context,
                       listen: false,
@@ -319,7 +321,8 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
                     mapRotation: _getMapRotation(),
                   ),
                   markerSize: const Size.square(60),
-                  showAccuracyCircle: false,
+                  showAccuracyCircle: true,
+                  accuracyCircleColor: Colors.red.withValues(alpha: 0.4),
                   headingSectorRadius: 40,
                 ),
                 positionStream: widget.locationStreamController.stream,
@@ -641,9 +644,10 @@ class _FlutterMapWidgetState extends State<FlutterMapWidget> {
     }
   }
 
-  // Helper to check if a polyline has at least two distinct points
+  // Helper to check if a polyline has at least two distinct, finite points
   bool _isValidPolyline(List<LatLng> points) {
     if (points.length < 2) return false;
+    if (!points.every(isFiniteLatLng)) return false;
     final first = points.first;
     return points.any(
       (p) => p.latitude != first.latitude || p.longitude != first.longitude,

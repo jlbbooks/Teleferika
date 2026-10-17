@@ -97,10 +97,8 @@ coverage/
 # Generated plugin registrant
 lib/generated_plugin_registrant.dart
 
-# FVM: ignore .fvm/ except config and version files we want to commit
+# FVM: ignore local SDK cache; keep version pin files (.fvm/* not .fvm/ so un-ignore works)
+.fvm/*
 !.fvm/fvm_config.json
 !.fvm/version
 !.fvm/release
-
-# FVM Version Cache
-.fvm/
