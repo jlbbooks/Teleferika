@@ -404,20 +404,18 @@ class LicenceService {
   /// Import a licence from a user-selected file
   Future<Licence?> importLicenceFromFile() async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
+      final PlatformFile? picked = await FilePicker.pickFile(
         type: FileType.custom,
         allowedExtensions: ['lic', 'txt', 'json'],
-        allowMultiple: false,
       );
+      final path = picked?.path;
 
-      if (result == null ||
-          result.files.isEmpty ||
-          result.files.single.path == null) {
+      if (path == null) {
         _logger.info('User cancelled licence file selection');
         return null;
       }
 
-      final file = File(result.files.single.path!);
+      final file = File(path);
 
       // Validate file size (max 1MB)
       final fileSize = await file.length();

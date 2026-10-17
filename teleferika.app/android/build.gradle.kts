@@ -10,7 +10,14 @@ layout.buildDirectory.set(file("../build"))
 subprojects {
     layout.buildDirectory.set(file("${rootProject.layout.buildDirectory.get()}/${project.name}"))
 
-    afterEvaluate {
+    // Plugins such as android_file_picker read extensions.getByName("flutter") during their
+    // own evaluation. Flutter only creates that extension while configuring :app, so plugins
+    // must wait for :app first (otherwise AGP 8 builds fail with "Extension 'flutter' does not exist").
+    if (name != "app") {
+        evaluationDependsOn(":app")
+    }
+
+    fun configureAndroidCompat() {
         try {
             if (project.hasProperty("android")) {
                 val android = project.extensions.getByName("android") as? com.android.build.gradle.BaseExtension
@@ -35,6 +42,14 @@ subprojects {
         } catch (_: Exception) {
             // Ignore when Gradle sync runs in a limited context (e.g. Cursor/VS Code without full Flutter setup)
         }
+    }
+
+    // evaluationDependsOn(":app") can evaluate this project as a side effect before we register
+    // afterEvaluate, so guard against "project is already evaluated".
+    if (state.executed) {
+        configureAndroidCompat()
+    } else {
+        afterEvaluate { configureAndroidCompat() }
     }
 }
 
