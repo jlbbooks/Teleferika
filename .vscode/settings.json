@@ -5,6 +5,6 @@
     "**/licensed_features_package/**",
     "**/licence_server/**"
   ],
-  "dart.flutterSdkPath": ".fvm/versions/3.47.7",
+  "dart.flutterSdkPath": ".fvm/versions/3.47.8",
   "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx4G -Xms100m -Xlog:disable"
 }
