@@ -106,10 +106,13 @@ compileOptions {
     buildTypes {
         getByName("release") {
             signingConfig = signingConfigs.getByName("release")
-            // Other release build type configurations like ProGuard, R8, etc.
-            // e.g., isMinifyEnabled = true
             isMinifyEnabled = true
-            // proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // Keep getDefaultProguardFile so AGP wires the expected path; a
+            // workaround task below materializes that file (see note there).
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
         // You might have a debug build type as well, typically it doesn't need explicit signing here
         // as it uses the debug keystore by default.
@@ -143,6 +146,23 @@ flutter {
     source = "../.."
 }
 
+// AGP 9.2.1 + Flutter (android.newDsl=false): :app:extractProguardFiles runs
+// but never writes intermediates/default_proguard_files/global/*. Seed that
+// path from our vendored SDK defaults so R8/lint see a real file.
+tasks.named("extractProguardFiles").configure {
+    val vendored = file("proguard-android-optimize.txt")
+    val dest =
+        file(
+            "build/intermediates/default_proguard_files/global/" +
+                "proguard-android-optimize.txt-9.2.1",
+        )
+    inputs.file(vendored)
+    outputs.file(dest)
+    doLast {
+        dest.parentFile.mkdirs()
+        vendored.copyTo(dest, overwrite = true)
+    }
+}
 
 dependencies {
     "coreLibraryDesugaring"("com.android.tools:desugar_jdk_libs:2.1.5")
