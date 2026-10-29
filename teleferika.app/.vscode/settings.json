@@ -9,7 +9,11 @@
   },
   "dart.showDartDeveloperLogs": false,
   "dart.openDevTools": "flutter",
-  "dart.flutterSdkPath": ".fvm/versions/3.47.8",
+  "dart.flutterSdkPath": ".fvm/flutter_sdk",
+  "dart.env": {
+    "ANDROID_HOME": "/home/michael/.AndroidStudio_sdk",
+    "ANDROID_SDK_ROOT": "/home/michael/.AndroidStudio_sdk"
+  },
   "java.compile.nullAnalysis.mode": "automatic",
   "java.configuration.updateBuildConfiguration": "automatic",
   "java.jdt.ls.java.home": "/usr/lib/jvm/java-21-openjdk",

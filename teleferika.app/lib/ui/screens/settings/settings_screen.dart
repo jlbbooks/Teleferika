@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:teleferika/core/app_config.dart';
 import 'package:teleferika/core/settings_service.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
@@ -31,6 +32,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   double _angleToRedThreshold = AppConfig.angleToRedThreshold;
   bool _showAllProjectsOnMap = false;
   bool _showBleSatelliteButton = true;
+  String? _appVersionLabel;
 
   // Controllers for text fields
   final TextEditingController _angleThresholdController =
@@ -40,12 +42,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _loadSettings();
+    _loadAppVersion();
   }
 
   @override
   void dispose() {
     _angleThresholdController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadAppVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (!mounted) return;
+      setState(() {
+        _appVersionLabel = '${info.version}+${info.buildNumber}';
+      });
+    } catch (e, stackTrace) {
+      logger.warning('Failed to load app version', e, stackTrace);
+    }
   }
 
   /// Load settings from SettingsService
@@ -526,6 +541,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           fontSize: 16,
                         ),
                       ),
+                      if (_appVersionLabel != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          S.of(context)?.app_version_label(_appVersionLabel!) ??
+                              'App Version: $_appVersionLabel',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 8),
                       Text(
                         S.of(context)?.settings_info_description ??

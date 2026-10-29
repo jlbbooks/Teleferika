@@ -5,6 +5,15 @@
     "**/licensed_features_package/**",
     "**/licence_server/**"
   ],
-  "dart.flutterSdkPath": ".fvm/versions/3.47.8",
-  "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx4G -Xms100m -Xlog:disable"
+  "dart.flutterSdkPath": ".fvm/flutter_sdk",
+  "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx4G -Xms100m -Xlog:disable",
+  "dart.env": {
+    "ANDROID_HOME": "/home/michael/.AndroidStudio_sdk",
+    "ANDROID_SDK_ROOT": "/home/michael/.AndroidStudio_sdk"
+  },
+  "terminal.integrated.env.linux": {
+    "ANDROID_HOME": "/home/michael/.AndroidStudio_sdk",
+    "ANDROID_SDK_ROOT": "/home/michael/.AndroidStudio_sdk",
+    "PATH": "/home/michael/.AndroidStudio_sdk/platform-tools:/home/michael/.AndroidStudio_sdk/emulator:/home/michael/.AndroidStudio_sdk/cmdline-tools/latest/bin:${env:PATH}"
+  }
 }
