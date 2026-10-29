@@ -81,6 +81,8 @@ dev_dependencies:
 # drift_dev still declares build <5; build 5.0 is the republished 4.1 API required by build_runner 2.17.
 # vector_graphics_compiler still caps xml at 7.0.1; 7.1 is API-compatible for our SVG/KML use.
 dependency_overrides:
+  # shapekit 0.3.x pins sqlite3 ^2 for GeoPackage; drift_flutter needs ^3.
+  sqlite3: ^3.0.0
   win32: ^6.4.0
   build: ^5.0.0
   xml: ^7.1.0

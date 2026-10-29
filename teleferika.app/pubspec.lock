@@ -1200,10 +1200,10 @@ packages:
     dependency: transitive
     description:
       name: shapekit
-      sha256: e3c102c12e02beff4dbaf2ebdda11bacb32b5597f931ec1dcff5db5693fe7c56
+      sha256: "3a7ab49159253e6fe85ecc0427b359e43d58b8ff936e78f29d5051c3fdeb4560"
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.4"
+    version: "0.3.2"
   share_plus:
     dependency: "direct main"
     description:
@@ -1370,7 +1370,7 @@ packages:
     source: hosted
     version: "0.7.0+eol"
   sqlite3:
-    dependency: transitive
+    dependency: "direct overridden"
     description:
       name: sqlite3
       sha256: "5340531ad17f386ae444873f643f281060b6238cc702edeee6b1e90bc4c6874e"
