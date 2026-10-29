@@ -68,7 +68,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
 
           return Scaffold(
             backgroundColor:
-                Colors.blueAccent, // TODO: Or your app's splash background
+                Colors.blueAccent, // Match splash / brand background if needed
             body: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
