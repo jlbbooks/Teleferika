@@ -34,6 +34,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
+import 'package:image_picker_android/image_picker_android.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:logging/logging.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
@@ -84,6 +86,13 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Call the setupLogging function from logger.dart
   setupLogging();
+
+  // Prefer Android Photo Picker so gallery picks need no READ_MEDIA_* permissions
+  // (required by Google Play photo/video permission policy on API 33+).
+  final imagePickerImplementation = ImagePickerPlatform.instance;
+  if (imagePickerImplementation is ImagePickerAndroid) {
+    imagePickerImplementation.useAndroidPhotoPicker = true;
+  }
 
   // Suppress flutter_blue_plus debug logs (set to warning level to suppress debug/info logs)
   // This reduces noise from BLE characteristic write/read operations

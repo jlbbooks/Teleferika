@@ -3,35 +3,11 @@
         flutter needs it to communicate with the running application
         to allow setting breakpoints, to provide hot reload, etc.
     -->
-    <!-- Permissions for file saving and sharing -->
-    <!-- Required for Android 9 (API 28) and below for writing to shared storage. -->
-    <!-- For Android 10+, its behavior changes with Scoped Storage, but plugins might still need it. -->
+    <!-- Storage for Android 12 and below only. On Android 13+ (API 33+), gallery
+         access uses the system Photo Picker via image_picker — do NOT declare
+         READ_MEDIA_IMAGES / READ_MEDIA_VIDEO (Play policy). -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-    <!--
-        Generally needed alongside WRITE_EXTERNAL_STORAGE for older Android versions.
-        For Android 13+, this permission is no longer requested directly for typical apps
-        that don't need broad access to all shared files.
-        However, file_picker or share_plus might still benefit from its declaration
-        for compatibility or certain edge cases on older APIs.
-        If you target API 33+, Android Studio might warn you about this permission.
-    You can add 'android:maxSdkVersion="32"' if you only need it for older versions.
-    -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-    <!--
-        If you are ONLY saving to app-specific directories or using Storage Access Framework
-        (which file_picker's saveFile typically does), WRITE_EXTERNAL_STORAGE might not be
-        strictly necessary on Android 10+. However, it's often included for plugin compatibility
-        and for older OS versions.
-
-        For Android 11 (API 30) and above, if you need to access *all files* (rarely needed,
-        and requires special Google Play approval), you would declare:
-        <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
-        THIS IS LIKELY NOT NEEDED for your use case and makes Play Store submission harder.
-    -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
-    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
-
 
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Bluetooth / BLE -->
