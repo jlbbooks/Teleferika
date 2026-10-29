@@ -58,7 +58,7 @@ flowchart LR
 
 ## Development
 
-[[Setup]] · [[Flavors]] · [[FVM]] · [[Scripts]] · [[Debugging]] · [[Documentation Index]]
+[[Setup]] · [[Flavors]] · [[FVM]] · [[Scripts]] · [[Debugging]] · [[iOS SPM Plugin Warnings]] · [[Documentation Index]]
 
 ## Glossary
 

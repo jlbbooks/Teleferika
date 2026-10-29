@@ -11,6 +11,7 @@ tags:
 - [[Scripts]]
 - [[Flavors]]
 - [[Debugging]]
+- [[iOS SPM Plugin Warnings]]
 - [[Documentation Index]]
 - [[Open Reminders]]
 - [[Field Survey Workflow]]

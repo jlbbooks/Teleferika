@@ -16,6 +16,7 @@ Pointers into **existing** markdown in the git tree (vault summarizes; source do
 - `README.md` — monorepo
 - `REMINDERS.md` — → [[Open Reminders]]
 - `docs/` — upgrade / async BuildContext plans
+- `docs/knowledge/` — durable known-issue notes (e.g. iOS SPM plugin warnings → [[iOS SPM Plugin Warnings]])
 
 ## App
 
