@@ -2360,5 +2360,59 @@
   "retry": "Retry",
   "@retry": {
     "description": "Retry button label."
+  },
+  "send_feedback": "Send feedback",
+  "@send_feedback": {
+    "description": "Settings list tile title that opens the feedback page."
+  },
+  "send_feedback_description": "Tell us what you think about the app",
+  "@send_feedback_description": {
+    "description": "Settings list tile subtitle for feedback."
+  },
+  "feedback_title": "Feedback",
+  "@feedback_title": {
+    "description": "App bar title on the feedback screen."
+  },
+  "feedback_page_description": "Describe your feedback. Your email app will open with a message ready to send to {email}.",
+  "@feedback_page_description": {
+    "description": "Intro text on the feedback form explaining mailto delivery.",
+    "placeholders": {
+      "email": {
+        "type": "String",
+        "example": "info@jlbbooks.it"
+      }
+    }
+  },
+  "feedback_message_label": "Message",
+  "@feedback_message_label": {
+    "description": "Label for the feedback message field."
+  },
+  "feedback_message_hint": "What would you like to tell us?",
+  "@feedback_message_hint": {
+    "description": "Hint for the feedback message field."
+  },
+  "feedback_message_required": "Please enter a message",
+  "@feedback_message_required": {
+    "description": "Validation when feedback message is empty."
+  },
+  "feedback_reply_email_label": "Your email (optional)",
+  "@feedback_reply_email_label": {
+    "description": "Label for optional reply-to email on the feedback form."
+  },
+  "feedback_email_invalid": "Enter a valid email address",
+  "@feedback_email_invalid": {
+    "description": "Validation when optional reply email is malformed."
+  },
+  "feedback_send": "Send",
+  "@feedback_send": {
+    "description": "Primary button on the feedback form."
+  },
+  "feedback_mail_opened": "Email app opened. Send the message to finish.",
+  "@feedback_mail_opened": {
+    "description": "SnackBar after successfully launching the mail client."
+  },
+  "feedback_mail_open_failed": "Could not open an email app. Configure a mail account and try again.",
+  "@feedback_mail_open_failed": {
+    "description": "SnackBar when mailto launch fails."
   }
 }

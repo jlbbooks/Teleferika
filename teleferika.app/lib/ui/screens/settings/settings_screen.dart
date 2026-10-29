@@ -6,6 +6,7 @@ import 'package:teleferika/core/app_config.dart';
 import 'package:teleferika/core/settings_service.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/screens/ble/rtk_devices_screen.dart';
+import 'package:teleferika/ui/screens/feedback/feedback_screen.dart';
 import 'package:teleferika/ui/screens/settings/cable_types_screen.dart';
 import 'package:teleferika/db/drift_database_helper.dart';
 
@@ -526,6 +527,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 S.of(context)?.information_section ?? 'Information',
                 Icons.info_outline,
               ),
+              const SizedBox(height: 8),
+
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.feedback_outlined, color: Colors.blue),
+                  title: Text(
+                    S.of(context)?.send_feedback ?? 'Send feedback',
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                  subtitle: Text(
+                    S.of(context)?.send_feedback_description ??
+                        'Tell us what you think about the app',
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FeedbackScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
               const SizedBox(height: 8),
 
               Card(

@@ -15,6 +15,7 @@ Under `lib/ui/screens/`.
 | `points/` | Points list + editor + photo sections |
 | `map/` | Field map |
 | `settings/` | App settings + cable types |
+| `feedback/` | Send feedback form → [[Feedback]] |
 | `ble/` | RTK devices screen |
 
 Shared widgets: status indicator, photo gallery/manager, permission handler, BLE scan tile, NTRIP config, compass calibration, project points layer.

@@ -244,6 +244,9 @@ class AppConfig {
   static String get licenseServerUrl =>
       'http://$licenseServerHost:$licenseServerPort';
 
+  /// Recipient address for in-app feedback (`mailto:` until a server endpoint exists).
+  static const String feedbackEmail = 'info@jlbbooks.it';
+
   // Private constructor to prevent instantiation if all members are static
   AppConfig._();
 }

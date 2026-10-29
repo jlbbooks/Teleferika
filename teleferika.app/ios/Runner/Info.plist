@@ -55,6 +55,10 @@
 		<true/>
 		<key>UIFileSharingEnabled</key>
 		<true/>
+		<key>LSApplicationQueriesSchemes</key>
+		<array>
+			<string>mailto</string>
+		</array>
 
 		<key>UIApplicationSceneManifest</key>
 		<dict>

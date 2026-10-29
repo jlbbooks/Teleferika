@@ -23,6 +23,7 @@ Field-relevant capabilities for ropeway / log-transport professionals (from `tel
 11. **Line visualization** — polylines, arrowheads, slope colors → [[Map]]
 12. **Data export** (licensed) → [[Export]]
 13. **Location accuracy feedback** — accuracy circle; RTK fix quality colors
+14. **Send feedback** — Settings form opens device mail to `info@jlbbooks.it` → [[Feedback]]
 
 ## Precision GPS (related)
 

@@ -3237,6 +3237,78 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Retry'**
   String get retry;
+
+  /// Settings list tile title that opens the feedback page.
+  ///
+  /// In en, this message translates to:
+  /// **'Send feedback'**
+  String get send_feedback;
+
+  /// Settings list tile subtitle for feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Tell us what you think about the app'**
+  String get send_feedback_description;
+
+  /// App bar title on the feedback screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback'**
+  String get feedback_title;
+
+  /// Intro text on the feedback form explaining mailto delivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe your feedback. Your email app will open with a message ready to send to {email}.'**
+  String feedback_page_description(String email);
+
+  /// Label for the feedback message field.
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get feedback_message_label;
+
+  /// Hint for the feedback message field.
+  ///
+  /// In en, this message translates to:
+  /// **'What would you like to tell us?'**
+  String get feedback_message_hint;
+
+  /// Validation when feedback message is empty.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a message'**
+  String get feedback_message_required;
+
+  /// Label for optional reply-to email on the feedback form.
+  ///
+  /// In en, this message translates to:
+  /// **'Your email (optional)'**
+  String get feedback_reply_email_label;
+
+  /// Validation when optional reply email is malformed.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email address'**
+  String get feedback_email_invalid;
+
+  /// Primary button on the feedback form.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get feedback_send;
+
+  /// SnackBar after successfully launching the mail client.
+  ///
+  /// In en, this message translates to:
+  /// **'Email app opened. Send the message to finish.'**
+  String get feedback_mail_opened;
+
+  /// SnackBar when mailto launch fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open an email app. Configure a mail account and try again.'**
+  String get feedback_mail_open_failed;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

@@ -2242,5 +2242,59 @@
   "cableTypesEmpty": "Nessun tipo di cavo.",
   "cableTypesEmptyHint": "Tocca + per aggiungere un tipo di cavo da usare nei progetti.",
   "required": "Obbligatorio",
-  "retry": "Riprova"
+  "retry": "Riprova",
+  "send_feedback": "Invia feedback",
+  "@send_feedback": {
+    "description": "Titolo della voce Impostazioni che apre la pagina di feedback."
+  },
+  "send_feedback_description": "Dicci cosa ne pensi dell'app",
+  "@send_feedback_description": {
+    "description": "Sottotitolo della voce Impostazioni per il feedback."
+  },
+  "feedback_title": "Feedback",
+  "@feedback_title": {
+    "description": "Titolo della barra della pagina di feedback."
+  },
+  "feedback_page_description": "Descrivi il tuo feedback. Si aprirà l'app email con un messaggio pronto da inviare a {email}.",
+  "@feedback_page_description": {
+    "description": "Testo introduttivo del modulo di feedback che spiega l'invio via mailto.",
+    "placeholders": {
+      "email": {
+        "type": "String",
+        "example": "info@jlbbooks.it"
+      }
+    }
+  },
+  "feedback_message_label": "Messaggio",
+  "@feedback_message_label": {
+    "description": "Etichetta del campo messaggio di feedback."
+  },
+  "feedback_message_hint": "Cosa vorresti dirci?",
+  "@feedback_message_hint": {
+    "description": "Suggerimento per il campo messaggio di feedback."
+  },
+  "feedback_message_required": "Inserisci un messaggio",
+  "@feedback_message_required": {
+    "description": "Validazione quando il messaggio di feedback è vuoto."
+  },
+  "feedback_reply_email_label": "La tua email (opzionale)",
+  "@feedback_reply_email_label": {
+    "description": "Etichetta dell'email di risposta opzionale nel modulo di feedback."
+  },
+  "feedback_email_invalid": "Inserisci un indirizzo email valido",
+  "@feedback_email_invalid": {
+    "description": "Validazione quando l'email di risposta opzionale non è valida."
+  },
+  "feedback_send": "Invia",
+  "@feedback_send": {
+    "description": "Pulsante principale del modulo di feedback."
+  },
+  "feedback_mail_opened": "App email aperta. Invia il messaggio per completare.",
+  "@feedback_mail_opened": {
+    "description": "SnackBar dopo l'apertura del client email."
+  },
+  "feedback_mail_open_failed": "Impossibile aprire un'app email. Configura un account di posta e riprova.",
+  "@feedback_mail_open_failed": {
+    "description": "SnackBar quando l'apertura mailto fallisce."
+  }
 }

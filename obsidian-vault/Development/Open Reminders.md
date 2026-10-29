@@ -11,6 +11,7 @@ From root `REMINDERS.md` (check that file for live status).
 - New DB tables/columns → always add FKs (`.cursor/rules/db-foreign-keys.mdc`)
 - Test BLE data path on physical RTK device (`ble_service` optimizations)
 - Enable `public_member_api_docs` when dartdoc coverage is ready
+- Server-side feedback (`POST /feedback`) when license server is live — see [[Feedback]] / issue #25
 
 ## Other plan files
 

@@ -1848,4 +1848,44 @@ class SIt extends S {
 
   @override
   String get retry => 'Riprova';
+
+  @override
+  String get send_feedback => 'Invia feedback';
+
+  @override
+  String get send_feedback_description => 'Dicci cosa ne pensi dell\'app';
+
+  @override
+  String get feedback_title => 'Feedback';
+
+  @override
+  String feedback_page_description(String email) {
+    return 'Descrivi il tuo feedback. Si aprirà l\'app email con un messaggio pronto da inviare a $email.';
+  }
+
+  @override
+  String get feedback_message_label => 'Messaggio';
+
+  @override
+  String get feedback_message_hint => 'Cosa vorresti dirci?';
+
+  @override
+  String get feedback_message_required => 'Inserisci un messaggio';
+
+  @override
+  String get feedback_reply_email_label => 'La tua email (opzionale)';
+
+  @override
+  String get feedback_email_invalid => 'Inserisci un indirizzo email valido';
+
+  @override
+  String get feedback_send => 'Invia';
+
+  @override
+  String get feedback_mail_opened =>
+      'App email aperta. Invia il messaggio per completare.';
+
+  @override
+  String get feedback_mail_open_failed =>
+      'Impossibile aprire un\'app email. Configura un account di posta e riprova.';
 }

@@ -1829,4 +1829,45 @@ class SEn extends S {
 
   @override
   String get retry => 'Retry';
+
+  @override
+  String get send_feedback => 'Send feedback';
+
+  @override
+  String get send_feedback_description =>
+      'Tell us what you think about the app';
+
+  @override
+  String get feedback_title => 'Feedback';
+
+  @override
+  String feedback_page_description(String email) {
+    return 'Describe your feedback. Your email app will open with a message ready to send to $email.';
+  }
+
+  @override
+  String get feedback_message_label => 'Message';
+
+  @override
+  String get feedback_message_hint => 'What would you like to tell us?';
+
+  @override
+  String get feedback_message_required => 'Please enter a message';
+
+  @override
+  String get feedback_reply_email_label => 'Your email (optional)';
+
+  @override
+  String get feedback_email_invalid => 'Enter a valid email address';
+
+  @override
+  String get feedback_send => 'Send';
+
+  @override
+  String get feedback_mail_opened =>
+      'Email app opened. Send the message to finish.';
+
+  @override
+  String get feedback_mail_open_failed =>
+      'Could not open an email app. Configure a mail account and try again.';
 }

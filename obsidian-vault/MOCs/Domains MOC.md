@@ -18,7 +18,7 @@ Product/domain areas inside the app.
 | Licensing | [[Licensing]] · [[Device Fingerprint]] · [[License Model]] |
 | Persistence | [[Database]] · [[Drift]] |
 | Premium export / offline maps | [[Export]] |
-| UI | [[UI Screens]] |
+| UI | [[UI Screens]] · [[Feedback]] |
 
 ## Data models
 

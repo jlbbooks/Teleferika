@@ -8,6 +8,9 @@
 - [ ] **Enable `public_member_api_docs`** (when public APIs have dartdoc)  
   → `teleferika.app/analysis_options.yaml`: set `public_member_api_docs: true` after adding dartdoc to public members. Run `dart analyze` to see remaining violations.
 
+- [ ] **Server-side feedback send** (when license server is live)  
+  → App currently uses `mailto:` (`AppConfig.feedbackEmail`). Add license-server `POST /feedback` (or similar) for silent email delivery; keep mailto as fallback. See `obsidian-vault/Domains/Feedback.md` and issue #25.
+
 ---
 
 ## Other TODOs and plans (one place to find them)
