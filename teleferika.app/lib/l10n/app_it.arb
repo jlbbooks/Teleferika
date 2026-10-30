@@ -1791,6 +1791,86 @@
   "@settings_reset_to_defaults": {
     "description": "Messaggio di successo quando le impostazioni vengono ripristinate ai predefiniti."
   },
+  "backup_restore_section": "Backup e ripristino",
+  "@backup_restore_section": {
+    "description": "Sezione impostazioni per backup e ripristino completo dei dati."
+  },
+  "backup_export_title": "Esporta dati app",
+  "@backup_export_title": {
+    "description": "Titolo per l'esportazione completa dei dati dell'app."
+  },
+  "backup_export_description": "Salva progetti, foto, impostazioni e licenza in un file zip da conservare o usare su un'altra installazione di Teleferika su questo dispositivo.",
+  "@backup_export_description": {
+    "description": "Descrizione per l'esportazione completa dei dati."
+  },
+  "backup_import_title": "Importa dati app",
+  "@backup_import_title": {
+    "description": "Titolo per l'importazione completa dei dati dell'app."
+  },
+  "backup_import_description": "Sostituisci tutti i dati locali con un backup zip esportato in precedenza. Utile dopo aver installato una build di debug al posto della versione Play Store.",
+  "@backup_import_description": {
+    "description": "Descrizione per l'importazione completa dei dati."
+  },
+  "backup_export_in_progress": "Creazione backup…",
+  "@backup_export_in_progress": {
+    "description": "Messaggio di avanzamento durante la creazione del backup."
+  },
+  "backup_import_in_progress": "Ripristino backup…",
+  "@backup_import_in_progress": {
+    "description": "Messaggio di avanzamento durante il ripristino del backup."
+  },
+  "backup_export_success": "Backup pronto: {fileName}",
+  "@backup_export_success": {
+    "description": "Messaggio di successo dopo l'esportazione del backup.",
+    "placeholders": {
+      "fileName": {
+        "type": "String",
+        "example": "teleferika_backup_20261030_120000.zip"
+      }
+    }
+  },
+  "backup_import_success": "Backup ripristinato. Chiudi e riapri l'app per completare.",
+  "@backup_import_success": {
+    "description": "Messaggio di successo dopo l'importazione; l'utente deve riavviare."
+  },
+  "backup_import_confirm_title": "Sostituire tutti i dati?",
+  "@backup_import_confirm_title": {
+    "description": "Titolo del dialogo di conferma importazione distruttiva."
+  },
+  "backup_import_confirm_message": "Questo sovrascriverà progetti, foto, impostazioni e licenza su questo dispositivo con il contenuto del backup. L'operazione non è reversibile.",
+  "@backup_import_confirm_message": {
+    "description": "Corpo del dialogo di conferma importazione distruttiva."
+  },
+  "backup_import_confirm_button": "Sostituisci dati",
+  "@backup_import_confirm_button": {
+    "description": "Pulsante di conferma per l'importazione del backup."
+  },
+  "backup_failed": "Backup non riuscito: {error}",
+  "@backup_failed": {
+    "description": "Messaggio di errore per export/import backup.",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "Disco pieno"
+      }
+    }
+  },
+  "backup_restart_title": "Riavvio necessario",
+  "@backup_restart_title": {
+    "description": "Titolo del dialogo dopo import riuscito."
+  },
+  "backup_restart_message": "I dati sono stati ripristinati. Riavvia Teleferika per caricare i dati ripristinati.",
+  "@backup_restart_message": {
+    "description": "Corpo del dialogo dopo import riuscito."
+  },
+  "backup_restart_button": "Riavvia app",
+  "@backup_restart_button": {
+    "description": "Pulsante che riavvia l'app dopo l'importazione del backup."
+  },
+  "backup_restart_later": "Più tardi",
+  "@backup_restart_later": {
+    "description": "Chiude il dialogo di riavvio senza riavviare subito."
+  },
   "error_resetting_settings": "Errore nel ripristino delle impostazioni: {error}",
   "@error_resetting_settings": {
     "description": "Messaggio di errore quando il ripristino delle impostazioni fallisce.",

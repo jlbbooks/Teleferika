@@ -1365,6 +1365,66 @@ class SIt extends S {
       'Impostazioni ripristinate ai predefiniti';
 
   @override
+  String get backup_restore_section => 'Backup e ripristino';
+
+  @override
+  String get backup_export_title => 'Esporta dati app';
+
+  @override
+  String get backup_export_description =>
+      'Salva progetti, foto, impostazioni e licenza in un file zip da conservare o usare su un\'altra installazione di Teleferika su questo dispositivo.';
+
+  @override
+  String get backup_import_title => 'Importa dati app';
+
+  @override
+  String get backup_import_description =>
+      'Sostituisci tutti i dati locali con un backup zip esportato in precedenza. Utile dopo aver installato una build di debug al posto della versione Play Store.';
+
+  @override
+  String get backup_export_in_progress => 'Creazione backup…';
+
+  @override
+  String get backup_import_in_progress => 'Ripristino backup…';
+
+  @override
+  String backup_export_success(String fileName) {
+    return 'Backup pronto: $fileName';
+  }
+
+  @override
+  String get backup_import_success =>
+      'Backup ripristinato. Chiudi e riapri l\'app per completare.';
+
+  @override
+  String get backup_import_confirm_title => 'Sostituire tutti i dati?';
+
+  @override
+  String get backup_import_confirm_message =>
+      'Questo sovrascriverà progetti, foto, impostazioni e licenza su questo dispositivo con il contenuto del backup. L\'operazione non è reversibile.';
+
+  @override
+  String get backup_import_confirm_button => 'Sostituisci dati';
+
+  @override
+  String backup_failed(String error) {
+    return 'Backup non riuscito: $error';
+  }
+
+  @override
+  String get backup_restart_title => 'Riavvio necessario';
+
+  @override
+  String get backup_restart_message =>
+      'I dati sono stati ripristinati. Riavvia Teleferika per caricare i dati ripristinati.';
+
+  @override
+  String get backup_restart_button => 'Riavvia app';
+
+  @override
+  String get backup_restart_later => 'Più tardi';
+
+  @override
   String error_resetting_settings(String error) {
     return 'Errore nel ripristino delle impostazioni: $error';
   }

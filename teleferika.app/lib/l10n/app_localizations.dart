@@ -2362,6 +2362,108 @@ abstract class S {
   /// **'Settings reset to defaults'**
   String get settings_reset_to_defaults;
 
+  /// Settings section for full app data backup and restore.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup & restore'**
+  String get backup_restore_section;
+
+  /// Title for exporting a full app data backup.
+  ///
+  /// In en, this message translates to:
+  /// **'Export app data'**
+  String get backup_export_title;
+
+  /// Description for full app data export.
+  ///
+  /// In en, this message translates to:
+  /// **'Save projects, photos, settings, and licence to a zip file you can keep or move to another install of Teleferika on this device.'**
+  String get backup_export_description;
+
+  /// Title for importing a full app data backup.
+  ///
+  /// In en, this message translates to:
+  /// **'Import app data'**
+  String get backup_import_title;
+
+  /// Description for full app data import.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace all local app data with a previously exported backup zip. Use this after installing a debug build over a Play Store install.'**
+  String get backup_import_description;
+
+  /// Progress message while creating a backup zip.
+  ///
+  /// In en, this message translates to:
+  /// **'Creating backup…'**
+  String get backup_export_in_progress;
+
+  /// Progress message while restoring a backup zip.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring backup…'**
+  String get backup_import_in_progress;
+
+  /// Success message after backup export.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup ready: {fileName}'**
+  String backup_export_success(String fileName);
+
+  /// Success message after backup import; user should restart.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup restored. Close and reopen the app to finish.'**
+  String get backup_import_success;
+
+  /// Title for destructive import confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace all app data?'**
+  String get backup_import_confirm_title;
+
+  /// Body for destructive import confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'This will overwrite projects, photos, settings, and licence on this device with the contents of the backup. This cannot be undone.'**
+  String get backup_import_confirm_message;
+
+  /// Confirm button for destructive backup import.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace data'**
+  String get backup_import_confirm_button;
+
+  /// Error message when backup export or import fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup failed: {error}'**
+  String backup_failed(String error);
+
+  /// Dialog title after successful import.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart required'**
+  String get backup_restart_title;
+
+  /// Dialog body after successful import.
+  ///
+  /// In en, this message translates to:
+  /// **'Your data was restored. Restart Teleferika to load the restored data.'**
+  String get backup_restart_message;
+
+  /// Button that restarts the app after backup import.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart app'**
+  String get backup_restart_button;
+
+  /// Dismiss restart dialog without restarting yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get backup_restart_later;
+
   /// Error message when resetting settings fails.
   ///
   /// In en, this message translates to:

@@ -114,10 +114,17 @@ compileOptions {
                 "proguard-rules.pro",
             )
         }
-        // You might have a debug build type as well, typically it doesn't need explicit signing here
-        // as it uses the debug keystore by default.
+        // Use the release keystore for debug when available so installing a debug
+        // build upgrades the store/sideload release in place instead of uninstalling
+        // (signature mismatch) and wiping app data (DB, photos, prefs).
         getByName("debug") {
-            // ...
+            val storePath = keystoreProperties.getProperty("storeFile")
+            if (keystoreProperties.isNotEmpty() &&
+                !storePath.isNullOrBlank() &&
+                rootProject.file(storePath).exists()
+            ) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 

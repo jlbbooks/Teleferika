@@ -1352,6 +1352,66 @@ class SEn extends S {
   String get settings_reset_to_defaults => 'Settings reset to defaults';
 
   @override
+  String get backup_restore_section => 'Backup & restore';
+
+  @override
+  String get backup_export_title => 'Export app data';
+
+  @override
+  String get backup_export_description =>
+      'Save projects, photos, settings, and licence to a zip file you can keep or move to another install of Teleferika on this device.';
+
+  @override
+  String get backup_import_title => 'Import app data';
+
+  @override
+  String get backup_import_description =>
+      'Replace all local app data with a previously exported backup zip. Use this after installing a debug build over a Play Store install.';
+
+  @override
+  String get backup_export_in_progress => 'Creating backup…';
+
+  @override
+  String get backup_import_in_progress => 'Restoring backup…';
+
+  @override
+  String backup_export_success(String fileName) {
+    return 'Backup ready: $fileName';
+  }
+
+  @override
+  String get backup_import_success =>
+      'Backup restored. Close and reopen the app to finish.';
+
+  @override
+  String get backup_import_confirm_title => 'Replace all app data?';
+
+  @override
+  String get backup_import_confirm_message =>
+      'This will overwrite projects, photos, settings, and licence on this device with the contents of the backup. This cannot be undone.';
+
+  @override
+  String get backup_import_confirm_button => 'Replace data';
+
+  @override
+  String backup_failed(String error) {
+    return 'Backup failed: $error';
+  }
+
+  @override
+  String get backup_restart_title => 'Restart required';
+
+  @override
+  String get backup_restart_message =>
+      'Your data was restored. Restart Teleferika to load the restored data.';
+
+  @override
+  String get backup_restart_button => 'Restart app';
+
+  @override
+  String get backup_restart_later => 'Later';
+
+  @override
   String error_resetting_settings(String error) {
     return 'Error resetting settings: $error';
   }

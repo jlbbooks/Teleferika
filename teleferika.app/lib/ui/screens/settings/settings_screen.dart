@@ -2,7 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:restart_app/restart_app.dart';
 import 'package:teleferika/core/app_config.dart';
+import 'package:teleferika/core/backup/app_backup_service.dart';
 import 'package:teleferika/core/settings_service.dart';
 import 'package:teleferika/l10n/app_localizations.dart';
 import 'package:teleferika/ui/screens/ble/rtk_devices_screen.dart';
@@ -520,6 +522,63 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
 
+              const SizedBox(height: 16),
+
+              // Backup & restore
+              _buildSectionHeader(
+                S.of(context)?.backup_restore_section ?? 'Backup & restore',
+                Icons.backup_outlined,
+              ),
+              const SizedBox(height: 8),
+
+              Card(
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(
+                        Icons.upload_file,
+                        color: Colors.blue,
+                      ),
+                      title: Text(
+                        S.of(context)?.backup_export_title ??
+                            'Export app data',
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      subtitle: Text(
+                        S.of(context)?.backup_export_description ??
+                            'Save projects, photos, settings, and licence to a zip file.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      onTap: _exportAppBackup,
+                    ),
+                    const Divider(height: 1),
+                    ListTile(
+                      leading: const Icon(
+                        Icons.download,
+                        color: Colors.orange,
+                      ),
+                      title: Text(
+                        S.of(context)?.backup_import_title ??
+                            'Import app data',
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                      subtitle: Text(
+                        S.of(context)?.backup_import_description ??
+                            'Replace all local data from a previously exported backup zip.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                      onTap: _importAppBackup,
+                    ),
+                  ],
+                ),
+              ),
+
               const SizedBox(height: 24),
 
               // Information Section
@@ -614,6 +673,177 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ],
     );
+  }
+
+  Future<void> _exportAppBackup() async {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          content: Row(
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  S.of(dialogContext)?.backup_export_in_progress ??
+                      'Creating backup…',
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    try {
+      final result = await AppBackupService.instance.exportBackup();
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            S.of(context)?.backup_export_success(result.fileName) ??
+                'Backup ready: ${result.fileName}',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e, stackTrace) {
+      logger.severe('Backup export failed', e, stackTrace);
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            S.of(context)?.backup_failed('$e') ?? 'Backup failed: $e',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _importAppBackup() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(
+            S.of(dialogContext)?.backup_import_confirm_title ??
+                'Replace all app data?',
+          ),
+          content: Text(
+            S.of(dialogContext)?.backup_import_confirm_message ??
+                'This will overwrite projects, photos, settings, and licence.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(S.of(dialogContext)?.cancel ?? 'Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: Text(
+                S.of(dialogContext)?.backup_import_confirm_button ??
+                    'Replace data',
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          content: Row(
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  S.of(dialogContext)?.backup_import_in_progress ??
+                      'Restoring backup…',
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    try {
+      final result = await AppBackupService.instance.importBackup();
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+
+      if (result.cancelled) return;
+
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: Text(
+              S.of(dialogContext)?.backup_restart_title ?? 'Restart required',
+            ),
+            content: Text(
+              S.of(dialogContext)?.backup_restart_message ??
+                  'Your data was restored. Restart Teleferika to load the restored data.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: Text(
+                  S.of(dialogContext)?.backup_restart_later ?? 'Later',
+                ),
+              ),
+              FilledButton(
+                onPressed: () async {
+                  Navigator.of(dialogContext).pop();
+                  final result = await Restart.restartApp();
+                  if (!result.success && mounted) {
+                    final message =
+                        S.of(context)?.backup_failed(
+                              result.message ?? 'restart failed',
+                            ) ??
+                        'Could not restart automatically. Please close and reopen the app.';
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(message),
+                        backgroundColor: Colors.orange,
+                      ),
+                    );
+                  }
+                },
+                child: Text(
+                  S.of(dialogContext)?.backup_restart_button ?? 'Restart app',
+                ),
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e, stackTrace) {
+      logger.severe('Backup import failed', e, stackTrace);
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            S.of(context)?.backup_failed('$e') ?? 'Backup failed: $e',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Future<void> _deleteAllNtripHosts() async {

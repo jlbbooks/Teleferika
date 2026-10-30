@@ -114,6 +114,17 @@ These were cleaned up at the same time; keep them in mind if device detection or
    adb devices -l
    ```
 
+## Play Store → debug without losing data
+
+Play installs are signed with Google’s key; local debug (even release-keystore–signed) cannot upgrade in place. Before installing debug:
+
+1. On the Play Store build: **Settings → Backup & restore → Export app data** (saves/shares a `teleferika_backup_*.zip`).
+2. Install / run the debug build (uninstall of Play version is expected).
+3. **Settings → Backup & restore → Import app data** and pick the zip.
+4. Fully close and reopen the app.
+
+See `teleferika.app/lib/core/backup/app_backup_service.dart`.
+
 ## Checklist when F5 hangs again
 
 1. `adb devices` — device `device`, not `unauthorized` / missing.
