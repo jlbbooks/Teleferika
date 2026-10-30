@@ -124,11 +124,20 @@ Once your device is connected via ADB:
   ./scripts/wireless-debug.sh connect
   ```
 
+### Honor / Magic OS: “Waiting for VM Service port to be available…”
+
+If F5 hangs after `am start … start-paused` and the app stays on the splash screen, Honor may be encrypting app logcat so Flutter cannot discover the Dart VM Service URL. Fix and verification steps:
+
+→ [docs/knowledge/honor_flutter_vm_service_debug.md](docs/knowledge/honor_flutter_vm_service_debug.md)
+
 ### ADB Not Found
 
-Install Android SDK Platform Tools:
+Prefer the Android Studio / Flutter SDK copy only (`$ANDROID_HOME/platform-tools/adb`). Do **not** also install a second `adb` on `PATH` (e.g. distro `android-tools` + a `~/.local/bin/adb` wrapper) — Flutter will warn about multiple binaries and debug attach can break.
 
-- **Linux:**
+If you still need platform-tools:
+
+- **Linux (Arch/CachyOS):** use the SDK under `ANDROID_HOME` (already on PATH in this project’s shell config)
+- **Linux (Debian/Ubuntu) — only if you have no SDK adb:**
   ```bash
   sudo apt-get install android-tools-adb
   ```

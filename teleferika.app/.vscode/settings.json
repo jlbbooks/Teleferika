@@ -12,7 +12,9 @@
   "dart.flutterSdkPath": ".fvm/flutter_sdk",
   "dart.env": {
     "ANDROID_HOME": "/home/michael/.AndroidStudio_sdk",
-    "ANDROID_SDK_ROOT": "/home/michael/.AndroidStudio_sdk"
+    "ANDROID_SDK_ROOT": "/home/michael/.AndroidStudio_sdk",
+    "ANDROID_USER_HOME": "/home/michael/.local/share/android",
+    "ANDROID_AVD_HOME": "/home/michael/.local/share/android/avd"
   },
   "java.compile.nullAnalysis.mode": "automatic",
   "java.configuration.updateBuildConfiguration": "automatic",

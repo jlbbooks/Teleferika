@@ -1,8 +1,39 @@
 # AGP 9 migration notes
 
-## Current status (AGP 8.13.2 + Gradle 9.5.1)
+## Current status (AGP 9.2.1 + Gradle 9.8.1)
 
-The project uses **AGP 8.13.2** and **Gradle 9.5.1**. Gradle 9 removes `jcenter()`, which breaks stock `usb_serial` 0.5.2.
+The project uses **AGP 9.2.1** and **Gradle 9.8.1**, with Flutter-required opt-outs in `gradle.properties`:
+
+```properties
+android.builtInKotlin=false
+android.newDsl=false
+```
+
+### Warnings: Deprecated `org.jetbrains.kotlin.android` plugin (sqflite / url_launcher / …)
+
+During configure you may see:
+
+```text
+w: ⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':sqflite_android' is no longer required …
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` …
+```
+
+**Safe to ignore for now.** They are deprecation noise from AGP 9 while we stay on the Flutter-compatible opt-out path.
+
+**Do not** follow that “Solution” yet:
+
+- This repo sets `android.builtInKotlin=false` (not `true`) on purpose so plugins that still apply `kotlin-android` / use the Kotlin DSL can build.
+- Turning built-in Kotlin back on (or dropping both flags) currently breaks plugins such as **objectbox_flutter_libs** (`Cannot add extension with name 'kotlin'…`) and anything else that still applies `org.jetbrains.kotlin.android`.
+- `android.newDsl=false` is still required for Flutter’s Android Gradle plugin / old DSL until Flutter and plugins fully migrate (opt-out goes away in **AGP 10**, ~mid-2026).
+
+When all Android Flutter plugins in the lockfile stop applying the old Kotlin plugin **and** Flutter supports AGP built-in Kotlin + new DSL, remove the two properties and drop `id("org.jetbrains.kotlin.android")` from `app/build.gradle.kts` / `settings.gradle.kts` per <https://kotl.in/gradle/agp-built-in-kotlin>.
+
+---
+
+### Historical note (pre–AGP 9)
+
+Earlier we used **AGP 8.13.2**. Gradle 9 removes `jcenter()`, which breaks stock `usb_serial` 0.5.2.
 
 **Symptom:** Flutter prints a misleading “Starting AGP 9+, only the new DSL…” box. That handler matches any `NullPointerException` while applying `dev.flutter.flutter-gradle-plugin`. The real failure is usually:
 
