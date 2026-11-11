@@ -399,6 +399,7 @@ Examples:
 6. **PR Review**
    
    - Ensure all tests pass
+   - Apply mechanical checks in [CODING_STANDARDS.md](../CODING_STANDARDS.md) (e.g. new `launchUrl` schemes → platform queries)
    - Address review comments
    - Update PR description with changes
    - Verify documentation is complete
