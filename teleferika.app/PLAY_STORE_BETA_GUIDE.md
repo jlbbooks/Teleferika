@@ -88,7 +88,7 @@ cd /home/michael/StudioProjects/Teleferika/teleferika.app
 ./scripts/setup-flavor.sh full
 
 # Build the release app bundle
-./scripts/build-app.sh build full release appbundle
+./scripts/build-app.sh build full --mode release --type appbundle
 ```
 
 **Option B: Using Flutter directly**
@@ -276,7 +276,10 @@ Update `play_store_changelog.txt` with your beta release notes. The file should 
 # Setup full flavor
 ./scripts/setup-flavor.sh full
 
-# Build release AAB
+# Build release AAB (preferred)
+./scripts/build-app.sh build full --mode release --type appbundle
+
+# Or Flutter directly
 flutter build appbundle --flavor full --release
 
 # Check AAB location

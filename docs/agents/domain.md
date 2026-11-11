@@ -2,6 +2,15 @@
 
 How the engineering skills should consume this repo's domain documentation when exploring the codebase.
 
+## Where knowledge lives
+
+| Kind of knowledge | Put it here | Examples |
+| ----------------- | ----------- | -------- |
+| Engineering terms and decisions | `GLOSSARY.md` / `GLOSSARY-MAP.md` + `docs/adr/` (per context as mapped) | Domain vocabulary; “we chose X over Y for the write model” |
+| Product / ops memory | `obsidian-vault/` | Feature narrative, ops runbooks, future product intent (e.g. server-side feedback) |
+
+Agents exploring or changing code: reach the glossary/ADR path first. Use the vault when the task is product context, ops, or a note already linked from `REMINDERS.md` / vault MOCs. A durable engineering decision that starts life in the vault still needs an ADR (or glossary entry) on this path so later agents find it.
+
 ## Before exploring, read these
 
 - **`GLOSSARY.md`** at the repo root, or

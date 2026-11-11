@@ -2,6 +2,10 @@
 
 Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all operations.
 
+## Shell permissions
+
+Every `gh` / `gh api` call that hits GitHub must pass Shell `required_permissions: ["full_network"]` on the first attempt. The default sandbox allowlists GitHub in theory, but GraphQL still returns `Post "https://api.github.com/graphql": Forbidden`.
+
 ## Conventions
 
 - **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies.
